@@ -1,0 +1,5 @@
+ReBench utilizes SciPy for its statistic calculations.
+
+Instructions to install SciPy can be found at 
+http://www.scipy.org/Installing_SciPy
+This includes, that you will also need to install NumPy.
