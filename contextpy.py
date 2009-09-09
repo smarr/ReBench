@@ -24,7 +24,7 @@
 
 import sys, threading, types
 
-__all__ = ['layer']
+__all__ =  ['layer']
 __all__ += ['activelayer', 'activelayers', 'inactivelayer', 'inactivelayers']
 __all__ += ['proceed']
 __all__ += ['before', 'after', 'around', 'base']
@@ -202,7 +202,9 @@ class _layeredmethoddescriptor(object):
 		# For each active layer, get all methods and the when advice class related to this layer
 		methods = sum([
 			list(reversed(
-				[(lmwgm[1], lmwgm[2]) for lmwgm in self._methods if lmwgm[0] is currentlayer and lmwgm[3](activelayers)]
+				[(lmwgm[1], lmwgm[2]) for lmwgm in self._methods if ((lmwgm[0] is None and currentlayer is None) 
+																	 or (not (lmwgm[0] is None or currentlayer is None) 
+																		 and lmwgm[0]._name == currentlayer._name)) and lmwgm[3](activelayers)]
 			)) for currentlayer in layers], [])
 
 		self._cache[activelayers] =	result = _advice.createchain(methods)
