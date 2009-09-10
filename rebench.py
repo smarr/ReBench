@@ -65,7 +65,7 @@ Argument:
                            help="Specify a run definition to be used form given config.")
         options.add_option("-n", "--without-nice", action="store_false", dest="use_nice",
                            help="Used for debugging and environments without the tool nice.",
-                           default=True)
+                           default=False)
         options.add_option("-o", "--out", dest="output_file", default=None,
                            help="Report is saved to the given file. Report is always verbose.")
         return options
@@ -117,7 +117,7 @@ Argument:
         results = executor.get_results()
         
         reporter = Reporter(self.config, self.options.output_file)
-        reporter.set_benchmark_data(*results)
+        reporter.set_data(results)
         reporter.report(self.options.verbose)
             
     def extract_rundefinition_from_options(self):
