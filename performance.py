@@ -64,6 +64,23 @@ class LogPerformance(Performance):
       if m:
         return float(m.group(3))
 
+class TimePerformance(Performance):
+  """TimePerformance uses the systems time utility to allow measurement of
+     unmodified programs or aspects which need to cover the whole program
+     execution time.
+  """
+  re_realtime  = re.compile("^real")
+
+  def acquire_command(self, command):
+    return "/usr/bin/time -p %s"%(command)
+
+  def get_performance_data(self, data):
+    for line in data.split("\n"):
+      if self.check_for_error(line):
+        return None
+      if self.re_realtime.search(line):
+        return float(line.strip().split(" ")[-1])
+
 class TestPerformance(Performance):
     
     test_data = [45872, 45871, 45868, 45869, 45873,
