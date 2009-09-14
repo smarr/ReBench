@@ -50,17 +50,25 @@ class Executor:
         self.perf_reader = None
         
     def _construct_cmdline(self, command, input_size, benchmark, ulimit,
-                           bench_location, path, binary, extra_args = None):
+                           bench_location, path, binary, vm_args, perf_reader, extra_args):
         cmdline  = ""
         cmdline += "cd %s && "%(bench_location)
-        cmdline += "ulimit -t %s && "%(ulimit)
+        
+        if ulimit:
+            cmdline += "ulimit -t %s && "%(ulimit)
                 
         if self.config["options"]["use_nice"]:
             cmdline += "sudo nice -n-20 "
-        cmdline += "%s/%s "%(path, binary)
+        
+        vm_cmd = "%s/%s %s"%(path, binary, vm_args or "")
+            
+        if perf_reader:
+            vm_cmd = perf_reader.acquire_command(vm_cmd)
+            
+        cmdline += vm_cmd 
         cmdline += command%(dict(benchmark=benchmark, input=input_size))
         if extra_args is not None:
-            cmdline += " %s"%(extra_args)
+            cmdline += " %s"%(extra_args or "")
         return cmdline
     
     def _exec_vm_run(self, input_size):
@@ -78,23 +86,32 @@ class Executor:
         for bench in self.current_benchmark_suite["benchmarks"]:
             if type(bench) == dict:
                 bench_name = bench.keys()[0]
-                extra_args = str(bench[bench_name]['extra-args'])
+                extra_args = str(bench[bench_name].get('extra-args', ""))
+                perf_reader= bench[bench_name].get('performance_reader', None)
+                if perf_reader:
+                    perf_reader = self._get_performance_reader_instance(perf_reader)
             else:
                 extra_args = None
                 bench_name = bench
+                perf_reader = None
             
             self.current_benchmark = bench_name
             
             self.current_data = []
             self.benchmark_data[self.current_vm][bench_name] = self.current_data
             
+            if not perf_reader:
+                perf_reader = self.perf_reader
+            
             cmdline = self._construct_cmdline(self.current_benchmark_suite["command"],
                                               input_size,
                                               bench_name,
-                                              self.current_benchmark_suite["ulimit"],
+                                              self.current_benchmark_suite.get("ulimit", None),
                                               bench_location, 
                                               vm_cfg["path"], 
                                               vm_cfg["binary"],
+                                              vm_cfg.get("args", None),
+                                              perf_reader,
                                               extra_args)
             logging.debug("command = " + cmdline)
             
@@ -102,7 +119,7 @@ class Executor:
             error = (0, 0)  # (consequent_erroneous_runs, erroneous_runs)
             
             while not terminate:
-                terminate, error = self._exec_benchmark_run(cmdline, error)
+                terminate, error = self._exec_benchmark_run(cmdline, error, perf_reader)
                 logging.debug("Run: #%d"%(len(self.current_data)))
                     
             result = self._confidence(self.current_data, 
@@ -113,18 +130,21 @@ class Executor:
             logging.debug("Run completed for %s:%s, mean=%f, sdev=%f"%(self.current_vm, bench_name, mean, sdev))
             
             # TODO add here some user-interface stuff to show progress
+            
+    def _get_performance_reader_instance(self, reader):
+        p = __import__("performance", fromlist=reader)
+        return getattr(p, reader)()
 
     @before(benchmark)
     def _exec_vm_run(self, input_size):
         logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self.config["statistics"]["min_runs"],
                                                                  self.config["statistics"]["max_runs"]))
         
-        p = __import__("performance", fromlist=self.current_benchmark_suite["performance_reader"])
-        self.perf_reader = getattr(p, self.current_benchmark_suite["performance_reader"])()    
+        self.perf_reader = self._get_performance_reader_instance(self.current_benchmark_suite["performance_reader"])
         
-    def _exec_benchmark_run(self, cmdline, error):
+    def _exec_benchmark_run(self, cmdline, error, perf_reader):
         (consequent_erroneous_runs, erroneous_runs) = error
-        p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         (output, tmp) = p.communicate()
         
         if p.returncode != 0:
@@ -133,16 +153,16 @@ class Executor:
             logging.warning("Run #%d of %s:%s failed"%(len(self.current_data), self.current_vm, self.current_benchmark))
         else:
             logging.debug(u"Output: %s"%(output))
-            self._eval_output(output, consequent_erroneous_runs, erroneous_runs)
+            self._eval_output(output, perf_reader, consequent_erroneous_runs, erroneous_runs)
         
         return self._check_termination_condition(consequent_erroneous_runs, erroneous_runs)
     
-    def _eval_output(self, output, consequent_erroneous_runs, erroneous_runs):
+    def _eval_output(self, output, perf_reader, consequent_erroneous_runs, erroneous_runs):
         pass
     
     @after(benchmark)
-    def _eval_output(self, output, consequent_erroneous_runs, erroneous_runs, __result__):
-        exec_time = self.perf_reader.parse_data(output)
+    def _eval_output(self, output, perf_reader, consequent_erroneous_runs, erroneous_runs, __result__):
+        exec_time = perf_reader.parse_data(output)
         if exec_time is None:
             consequent_erroneous_runs += 1
             erroneous_runs += 1

@@ -45,10 +45,10 @@ class ReBench:
         self.config = None
     
     def shell_options(self):
-        usage = """%prog [options] [rundefinition]
+        usage = """%prog [options] [run_name]
         
 Argument:
-  rundefinition  optional argument specifying a run definition
+  run_name  optional argument, the name of a run definition
                  from the config file"""
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
@@ -61,8 +61,8 @@ Argument:
                            help="Out more details in the report.")
         options.add_option("-c", "--config", dest="config", default="%s.conf"%(self.__class__.__name__.lower()),
                            help="Config file to be used.")
-        options.add_option("-r", "--run", dest="run", default=None,
-                           help="Specify a run definition to be used form given config.")
+        #options.add_option("-r", "--run", dest="run", default=None,
+        #                   help="Specify a run definition to be used form given config.")
         options.add_option("-n", "--without-nice", action="store_false", dest="use_nice",
                            help="Used for debugging and environments without the tool nice.",
                            default=False)
@@ -88,6 +88,10 @@ Argument:
             argv = sys.argv
             
         self.options, args = self.shell_options().parse_args(argv[1:])
+        if len(args) > 0:
+            self.options.run = args[0]
+        else:
+            self.options.run = None
         
         if self.options.debug:
             logging.basicConfig(level=logging.DEBUG)
@@ -121,7 +125,7 @@ Argument:
         reporter.report(self.options.verbose)
             
     def extract_rundefinition_from_options(self):
-        if self.options.run != None:
+        if self.options.run:
             return self.options.run
         else:
             # TODO: implement complex CLI interface to provide adhoc run definitions 

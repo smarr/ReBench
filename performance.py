@@ -30,7 +30,7 @@ class Performance:
   re_segfault = re.compile("Segmentation fault")
   re_buserror = re.compile("Bus error") 
   
-  def acquire_command(self, commmand):
+  def acquire_command(self, command):
     return command
 
   def parse_data(self, data):
@@ -54,7 +54,7 @@ class LogPerformance(Performance):
      It is used to read a simple log format which includes the number of iterations of
      a benchmark and its runtime in microseconds.
   """
-  re_logline  = re.compile(r"^(\w*): iterations=([0-9]+) runtime: ([0-9]+)us")
+  re_logline  = re.compile(r"^(?:.*: )?(\w*): iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
 
   def parse_data(self, data):      
     for line in data.split("\n"):
@@ -62,7 +62,10 @@ class LogPerformance(Performance):
         return None
       m = self.re_logline.match(line)
       if m:
-        return float(m.group(3))
+        if m.group(4) == "m":
+          return float(m.group(3)) * 1000
+        else:
+          return float(m.group(3))
 
 class TimePerformance(Performance):
   """TimePerformance uses the systems time utility to allow measurement of
@@ -74,12 +77,12 @@ class TimePerformance(Performance):
   def acquire_command(self, command):
     return "/usr/bin/time -p %s"%(command)
 
-  def get_performance_data(self, data):
+  def parse_data(self, data):
     for line in data.split("\n"):
       if self.check_for_error(line):
         return None
       if self.re_realtime.search(line):
-        return float(line.strip().split(" ")[-1])
+        return float(line.strip().split(" ")[-1]) * 1000 * 1000
 
 class TestPerformance(Performance):
     
