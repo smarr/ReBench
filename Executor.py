@@ -23,13 +23,15 @@ import logging
 import subprocess
 import math
 import numpy
+import time
 import scipy.stats as stats
 import scipy.stats.distributions as distributions
 
-from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalDeactivateLayer
+from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
 
 benchmark = layer("benchmark")
 profile = layer("profile")
+quick   = layer("quick")
 
 class Executor:
     
@@ -48,6 +50,7 @@ class Executor:
         self.current_benchmark = None
         
         self.perf_reader = None
+        self.start_time = time.clock()
         
     def _construct_cmdline(self, command, input_size, benchmark, ulimit,
                            bench_location, path, binary, vm_args, perf_reader, extra_args):
@@ -168,20 +171,21 @@ class Executor:
             erroneous_runs += 1
             logging.warning("Run of %s:%s failed"%(self.current_vm, self.current_benchmark))
         else:    
-            self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
+            #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
+            self.current_data.append(exec_time)
             consequent_erroneous_runs = 0
             logging.debug("Run %s:%s result=%s"%(self.current_vm, self.current_benchmark, exec_time))
+        
+    def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs):
+        return False, (consequent_erroneous_runs, erroneous_runs)
     
     @after(profile)
     def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs, __result__):
         return True, (consequent_erroneous_runs, erroneous_runs)
     
-    def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs):
-        return False, (consequent_erroneous_runs, erroneous_runs)
-    
     @after(benchmark)
     def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs, __result__):
-        terminate = False
+        terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
         
         if consequent_erroneous_runs >= 3:
             logging.error("Three runs of %s have failed in a row, benchmark is aborted"%(self.current_benchmark))
@@ -199,6 +203,20 @@ class Executor:
         
         return terminate, (consequent_erroneous_runs, erroneous_runs)
     
+    @after(quick)
+    def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs, __result__):
+        terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
+        
+        if len(self.current_data) >= self.config["quick_runs"]["max_runs"]:
+            logging.debug("Reached max_runs for %s"%(self.current_benchmark))
+            terminate = True
+        elif (len(self.current_data) > self.config["quick_runs"]["min_runs"]
+              and sum(self.current_data)  / (1000 * 1000) > self.config["quick_runs"]["max_time"]):
+            logging.debug("Maximum runtime is reached for %s"%(self.current_benchmark))
+            terminate = True
+        
+        return terminate, (consequent_erroneous_runs, erroneous_runs)
+   
                 
     def _confidence_reached(self, values):
         (mean, sdev, norm_dist, t_dist) = \
@@ -243,7 +261,7 @@ class Executor:
     def execute(self):
         if isinstance(self.actions, basestring):
             self.actions = [self.actions]
-        
+                
         for action in self.actions:
             with activelayers(layer(action)):
                 for vm in self.executions:

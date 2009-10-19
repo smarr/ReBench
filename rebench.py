@@ -37,6 +37,11 @@ from Executor import Executor
 from Reporter import Reporter
 from optparse import OptionParser
 
+from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
+
+
+quick = layer("quick")
+
 class ReBench:
     
     def __init__(self):
@@ -52,6 +57,8 @@ Argument:
                  from the config file"""
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
+        options.add_option("-q", "--quick", action="store_true", dest="quick",
+                           help="Do a quick benchmark run instead a full, statistical relevant experiment.", default=False)
         options.add_option("-p", "--profile", action="store_true", dest="profile",
                            help="Profile dynamic characteristics instead measuring execution time.",
                            default=False)
@@ -98,6 +105,10 @@ Argument:
             logging.debug("Enabled debug output.")
         else:
             logging.basicConfig(level=logging.ERROR)
+            
+        if self.options.quick:
+            globalActivateLayer(quick)
+
             
         self.config = self.load_config(self.options.config)
         # add some basic options to config
