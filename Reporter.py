@@ -23,6 +23,7 @@ from contextpy import layer, proceed, activelayer, activelayers, after, around, 
 
 benchmark = layer("benchmark")
 profile = layer("profile")
+log_to_file = layer("log_to_file")
 
 class Reporter:
     
@@ -32,6 +33,11 @@ class Reporter:
         self.benchmark_data = None
         self.profile_data = None
         self.output_file = output_file
+        
+        if output_file:
+            globalActivateLayer(log_to_file)
+            self.header_written = False
+            self.file = open(self.output_file, 'w+')
     
     def set_data(self, data):
         (result, benchmark_data) = data
@@ -85,15 +91,30 @@ class Reporter:
         report = self.compile_report(verbose)
         return report
     
-    def report(self, verbose):
-        profile = ""
-        if self.profile_data is not None:
-            profile = self.report_profile_results(verbose)
-            print profile
+    def report(self, data, current_vm, num_cores, input_size):
+        pass
+    
+    @after(log_to_file)
+    def report(self, data, current_vm, num_cores, input_size, __result__):
+        if not self.header_written:
+            self.file.write("VM\tCores\tInputSize\tBenchmark\tMean\tStdDev\tInterv_low\tInterv_high\tError\n")
+            self.header_written = True
+            
+        for bench_name, values in data.iteritems():
+            (mean, sdev, ((i_low, i_high), error), interval_t) = values
+            line = "\t".join((current_vm, str(num_cores), str(input_size), bench_name, str(mean), str(sdev), str(i_low), str(i_high), str(error)))
+            self.file.write(line + "\n")
+            
+        self.file.flush()
+    
+    def final_report(self, verbose):
+        if self.profile_data:
+            print self.report_profile_results(verbose)
         
-        benchmark = self.report_benchmark_results(verbose)
-        print benchmark
+        if self.benchmark_data:
+            print self.report_benchmark_results(verbose)
         
+    def old(self):
         if self.output_file is not None:
             if not verbose:
                 if self.profile_data is not None:

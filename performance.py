@@ -54,35 +54,60 @@ class LogPerformance(Performance):
      It is used to read a simple log format which includes the number of iterations of
      a benchmark and its runtime in microseconds.
   """
-  re_logline  = re.compile(r"^(?:.*: )?(\w*): iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+  re_logline  = re.compile(r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
 
-  def parse_data(self, data):      
+  def parse_data(self, data):
+    result = []
+    total = None
+     
     for line in data.split("\n"):
       if self.check_for_error(line):
         return None
+    
       m = self.re_logline.match(line)
       if m:
-        if m.group(4) == "m":
-          return float(m.group(3)) * 1000
-        else:
-          return float(m.group(3))
+        time = float(m.group(4))
+        if m.group(5) == "m":
+          time = time * 1000
+        criterion = (m.group(2) or 'total').strip()
+        
+        result.append({ 'bench': m.group(1), 'subCriterion':criterion, 'time':time })
+        
+        if criterion == 'total':
+            assert total == None, "benchmark run returned more than one 'total' value"
+            total = time
+        
+    return (total, result)
 
 class TimePerformance(Performance):
   """TimePerformance uses the systems time utility to allow measurement of
      unmodified programs or aspects which need to cover the whole program
      execution time.
   """
-  re_realtime  = re.compile("^real")
+  re_time  = re.compile(r"^(\w+)\s*(\d+)m(\d+\.\d+)s")
 
   def acquire_command(self, command):
     return "/usr/bin/time -p %s"%(command)
 
   def parse_data(self, data):
+    result = []
+    total = None
+      
     for line in data.split("\n"):
       if self.check_for_error(line):
         return None
-      if self.re_realtime.search(line):
-        return float(line.strip().split(" ")[-1]) * 1000 * 1000
+        
+      m = re_time.match(line)
+      if m:
+        criterion = 'total' if m.group(1) == 'real' else m.group(1)
+        time = (float(m.group(2)) * 60 + float(m.group(3))) * 1000 * 1000
+        result.append({ 'bench': None, 'subCriterion':criterion, 'time':time })
+        
+        if criterion == 'total':
+            assert total == None, "benchmark run returned more than one 'total' value"
+            total = time
+    
+    return (total, result)
 
 class TestPerformance(Performance):
     

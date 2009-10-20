@@ -52,6 +52,13 @@ class Executor:
         self.perf_reader = None
         self.start_time = time.clock()
         
+        self.num_cores = 1
+        
+        self.reporter = None
+        
+    def set_reporter(self, reporter):
+        self.reporter = reporter
+        
     def _construct_cmdline(self, command, input_size, benchmark, ulimit,
                            bench_location, path, binary, vm_args, perf_reader, extra_args):
         cmdline  = ""
@@ -63,7 +70,7 @@ class Executor:
         if self.config["options"]["use_nice"]:
             cmdline += "sudo nice -n-20 "
         
-        vm_cmd = "%s/%s %s"%(path, binary, vm_args or "")
+        vm_cmd = "%s/%s %s"%(path, binary, (vm_args or "")%(dict(cores=self.num_cores)))
             
         if perf_reader:
             vm_cmd = perf_reader.acquire_command(vm_cmd)
@@ -76,6 +83,8 @@ class Executor:
     
     def _exec_vm_run(self, input_size):
         self.result[self.current_vm] = {}
+        self.result[self.current_vm][self.num_cores] = {}
+        self.result[self.current_vm][self.num_cores][input_size] = {}
         self.benchmark_data[self.current_vm] = {}
         vm_cfg = self.config["virtual_machines"][self.current_vm]
         
@@ -125,15 +134,35 @@ class Executor:
                 terminate, error = self._exec_benchmark_run(cmdline, error, perf_reader)
                 logging.debug("Run: #%d"%(len(self.current_data)))
                     
-            result = self._confidence(self.current_data, 
-                                      self.config["statistics"]['confidence_level'])
-            self.result[self.current_vm][bench_name] = result
+            self._consolidate_result(bench_name, input_size)
             
-            (mean, sdev, interval_details, interval_details_t) = result 
-            logging.debug("Run completed for %s:%s, mean=%f, sdev=%f"%(self.current_vm, bench_name, mean, sdev))
             
             # TODO add here some user-interface stuff to show progress
+        
+        if self.reporter:
+            self.reporter.report(self.result[self.current_vm][self.num_cores][input_size],
+                                 self.current_vm, self.num_cores, input_size)
+        
+        
+        
+    def _consolidate_result(self, bench_name, input_size):
+        results = {}
+        
+        for run in self.current_data:
+            for result in run[1]:
+                bench = result['bench'] + "-" + result.get('subCriterion', "")
+                values = results.get(bench, [])
+                values.append(result['time'])
+                results[bench] = values
+        
+        for bench_name, values in results.iteritems():
+            result = self._confidence(values, 
+                                      self.config["statistics"]['confidence_level'])
+            self.result[self.current_vm][self.num_cores][input_size][bench_name] = result
             
+            (mean, sdev, interval_details, interval_details_t) = result 
+            logging.debug("Run completed for %s:%s (size: %s, cores: %d), mean=%f, sdev=%f"%(self.current_vm, bench_name, input_size, self.num_cores, mean, sdev))
+    
     def _get_performance_reader_instance(self, reader):
         p = __import__("performance", fromlist=reader)
         return getattr(p, reader)()
@@ -166,7 +195,7 @@ class Executor:
     @after(benchmark)
     def _eval_output(self, output, perf_reader, consequent_erroneous_runs, erroneous_runs, __result__):
         exec_time = perf_reader.parse_data(output)
-        if exec_time is None:
+        if exec_time[0] is None:
             consequent_erroneous_runs += 1
             erroneous_runs += 1
             logging.warning("Run of %s:%s failed"%(self.current_vm, self.current_benchmark))
@@ -174,7 +203,7 @@ class Executor:
             #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
             self.current_data.append(exec_time)
             consequent_erroneous_runs = 0
-            logging.debug("Run %s:%s result=%s"%(self.current_vm, self.current_benchmark, exec_time))
+            logging.debug("Run %s:%s result=%s"%(self.current_vm, self.current_benchmark, exec_time[0]))
         
     def _check_termination_condition(self, consequent_erroneous_runs, erroneous_runs):
         return False, (consequent_erroneous_runs, erroneous_runs)
@@ -196,8 +225,8 @@ class Executor:
         elif len(self.current_data) >= self.config["statistics"]["max_runs"]:
             logging.debug("Reached max_runs for %s"%(self.current_benchmark))
             terminate = True
-        elif (len(self.current_data) > self.config["statistics"]["min_runs"]
-              and self._confidence_reached(self.current_data)):
+        elif (len(self.current_data) >= self.config["statistics"]["min_runs"]
+              and self._confidence_reached([val[0] for val in self.current_data])):
             logging.debug("Confidence is reached for %s"%(self.current_benchmark))
             terminate = True
         
@@ -259,6 +288,9 @@ class Executor:
                 (interval_t, (interval_high_t - interval_low_t) / mean)) 
     
     def execute(self):
+        startTime = None
+        runsCompleted = 0
+        
         if isinstance(self.actions, basestring):
             self.actions = [self.actions]
                 
@@ -266,7 +298,37 @@ class Executor:
             with activelayers(layer(action)):
                 for vm in self.executions:
                     self.current_vm = vm
-                    self._exec_vm_run(self.input_size)
+                    cur_vm = self.config["virtual_machines"][self.current_vm]
+                    cores = cur_vm["cores"] or [1]
+                    
+                    if self.input_size is None:
+                        self.input_size = self.current_benchmark_suite["input_sizes"]
+                        
+                    for num_cores in cores:
+                        self.num_cores = num_cores
+                        
+                        if not isinstance(self.input_size, list):
+                            self.input_size = [self.input_size]
+                            
+                        for input_size in self.input_size:
+                            totalRuns = len(self.executions) * len(cores) * len(self.input_size)
+                            print "Runs left: %d"%( totalRuns - runsCompleted )
+                            
+                            if runsCompleted > 0:
+                                current = time.time()
+                                
+                                etl = (current - startTime) / runsCompleted * ( totalRuns - runsCompleted )
+                                sec = etl % 60
+                                min = (etl - sec) / 60 % 60
+                                h   = (etl - sec - min) / 60 / 60
+                                print "Estimated time left: %02d:%02d:%02d"%(round(h), round(min), round(sec))
+                            else:
+                                startTime = time.time()
+                            
+                            self._exec_vm_run(input_size)
+                            
+                            runsCompleted = runsCompleted + 1
+                            
     
     def get_results(self):
         return (self.result, self.benchmark_data)

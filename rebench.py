@@ -128,12 +128,14 @@ Argument:
             run = self.config["run_definitions"][run]
         
         executor = Executor(self.config, **run)
+        reporter = Reporter(self.config, self.options.output_file)
+        
+        executor.set_reporter(reporter)
         executor.execute()
+        
         results = executor.get_results()
         
-        reporter = Reporter(self.config, self.options.output_file)
-        reporter.set_data(results)
-        reporter.report(self.options.verbose)
+        reporter.final_report(results)
             
     def extract_rundefinition_from_options(self):
         if self.options.run:
