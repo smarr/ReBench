@@ -79,6 +79,33 @@ class LogPerformance(Performance):
         
     return (total, result)
 
+class JGFPerformance(Performance):
+  """JGFPerformance is used to read the output of the JGF barrier benchmarks.
+  """
+  re_logline  = re.compile(r"^(?:.*:.*:)(.*)(?:\s+)([0-9\.E]+)(?:\s+)\(barriers/s\)")
+
+  def parse_data(self, data):
+    result = []
+    
+    for line in data.split("\n"):
+      #print "DEBUG OUT:" + line
+      if self.check_for_error(line):
+        return None
+    
+      m = self.re_logline.match(line)
+      if m:
+        time = float(m.group(2))
+        criterion = 'total'
+        
+        result.append({ 'bench': m.group(1), 'subCriterion':criterion, 'time':time })
+        #print "DEBUG OUT:" + time
+
+    if not time:
+      print "Failed parsing: " + data
+      return None    
+
+    return (time, result)
+
 class TimePerformance(Performance):
   """TimePerformance uses the systems time utility to allow measurement of
      unmodified programs or aspects which need to cover the whole program
