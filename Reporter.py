@@ -26,6 +26,57 @@ profile = layer("profile")
 log_to_file = layer("log_to_file")
 
 class Reporter:
+    def initialize(self):
+        pass
+    
+    def info(self, msg, level = None):
+        pass
+    
+    def warning(self, msg, level = None):
+        pass
+    
+    def failure(self, msg, level = None):
+        pass
+    
+    def beginSeparatLog(self, task, level = None):
+        pass
+    
+    def endSeparatLog(self, task, level = None):
+        pass
+    
+    def logDataPoint(self, runId, data):
+        pass
+    
+    def logDataSet(self, runId, dataSet):
+        pass
+
+class CliReporter(Reporter):
+    pass
+
+class DataFileReporter(Reporter):
+    pass
+
+class LogFileReporter(Reporter):
+    pass
+
+class ResultReporter(Reporter):
+    pass
+
+class DiagramResultReporter(Reporter):
+    pass
+
+class Reporters(Reporter):
+    
+    def __init__(self, reporters):
+        if type(reporters) is list:
+            self.reporters = reporters
+        else:
+            self.reporters = [reporters]
+
+
+
+
+class ReporterOld:
     
     def __init__(self, config, output_file = None):
         self.config = config

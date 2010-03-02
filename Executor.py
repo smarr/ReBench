@@ -22,10 +22,7 @@ from __future__ import with_statement
 import logging
 import subprocess
 import math
-import numpy
 import time
-import scipy.stats as stats
-import scipy.stats.distributions as distributions
 
 from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
 
@@ -260,32 +257,7 @@ class Executor:
         else:
             return False
         
-    def _confidence(self, samples, confidence_level):
-        """This function determines the confidence interval for a given set of samples, 
-           as well as the mean, the standard deviation, and the size of the confidence 
-           interval as a percentage of the mean.
-        """
-        
-        mean = numpy.mean(samples)
-        sdev = numpy.std(samples)
-        n    = len(samples)
-        norm = distributions.norm.ppf((1 + confidence_level)/2.0)
-        
-        
-        interval_low  = mean - (norm * sdev / math.sqrt(n))
-        interval_high = mean + (norm * sdev / math.sqrt(n))
-        interval = (interval_low, interval_high)
-        
-        # original calculations from javastats, using students i.e. t distribution for fewer values
-        df   = n - 1
-        t    = distributions.t.ppf((1 + confidence_level)/2.0, df)
-        interval_t = (interval_low_t, interval_high_t) = ( mean - t * sdev / math.sqrt(n) , mean + t * sdev / math.sqrt(n) )
-        
-        interval_size = interval_high - interval_low
-        interval_percentage = interval_size / mean
-        return (mean, sdev,
-                (interval, interval_percentage), 
-                (interval_t, (interval_high_t - interval_low_t) / mean)) 
+
     
     def execute(self):
         startTime = None
