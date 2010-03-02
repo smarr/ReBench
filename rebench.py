@@ -31,7 +31,6 @@
 import sys
 import logging
 import traceback
-import yaml
 
 from Executor import Executor
 from Reporter import Reporter
@@ -45,29 +44,34 @@ quick = layer("quick")
 class ReBench:
     
     def __init__(self):
-        self.version = "0.0.9"
+        self.version = "0.1.1"
         self.options = None
         self.config = None
     
     def shell_options(self):
-        usage = """%prog [options] [run_name]
+        usage = """%prog [options] <config> [run_name]
         
 Argument:
+  config    required argument, file containing the run definition to be executed
   run_name  optional argument, the name of a run definition
-                 from the config file"""
+            from the config file"""
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
         options.add_option("-q", "--quick", action="store_true", dest="quick",
                            help="Do a quick benchmark run instead a full, statistical relevant experiment.", default=False)
-        options.add_option("-p", "--profile", action="store_true", dest="profile",
-                           help="Profile dynamic characteristics instead measuring execution time.",
-                           default=False)
+        #@TODO: Profiling is part of the run definition, not a cmd-line option...
+        #options.add_option("-p", "--profile", action="store_true", dest="profile",
+        #                   help="Profile dynamic characteristics instead measuring execution time.",
+        #                   default=False)
         options.add_option("-d", "--debug", action="store_true", dest="debug", default=False,
                            help="Enable debug output.")
         options.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
                            help="Out more details in the report.")
-        options.add_option("-c", "--config", dest="config", default="%s.conf"%(self.__class__.__name__.lower()),
-                           help="Config file to be used.")
+        
+        #@removed: not an option anymore, has to be suplied explicitly
+        #options.add_option("-c", "--config", dest="config", default="%s.conf"%(self.__class__.__name__.lower()),
+        #                   help="Config file to be used.")
+
         #options.add_option("-r", "--run", dest="run", default=None,
         #                   help="Specify a run definition to be used form given config.")
         options.add_option("-n", "--without-nice", action="store_false", dest="use_nice",
@@ -75,20 +79,11 @@ Argument:
                            default=False)
         options.add_option("-o", "--out", dest="output_file", default=None,
                            help="Report is saved to the given file. Report is always verbose.")
+        options.add_option("-c", "--clean", action="store_true", dest="clean", default=False,
+                           help="Discard old data from the data file (configured in the run description).")
         return options
         
-    def load_config(self, file_name):
-        try:
-            f = file(file_name, 'r')
-            return yaml.load(f)
-        except IOError:
-            logging.error("There was an error opening the config file (%s)."%(file_name))
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
-        except yaml.YAMLError:
-            logging.error("Failed parsing the config file (%s)."%(file_name))
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1) 
+
     
     def run(self, argv = None):
         if argv is None:
