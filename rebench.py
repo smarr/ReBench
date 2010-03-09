@@ -30,16 +30,14 @@
 
 import sys
 import logging
-import traceback
 
 from Executor import Executor
-from Reporter import Reporter
+from Reporter import *
+from Configurator import Configurator
+from DataAggregator import DataAggregator
 from optparse import OptionParser
 
-from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
-
-
-quick = layer("quick")
+#from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
 
 class ReBench:
     
@@ -76,7 +74,7 @@ Argument:
         #                   help="Specify a run definition to be used form given config.")
         options.add_option("-n", "--without-nice", action="store_false", dest="use_nice",
                            help="Used for debugging and environments without the tool nice.",
-                           default=False)
+                           default=True)
         options.add_option("-o", "--out", dest="output_file", default=None,
                            help="Report is saved to the given file. Report is always verbose.")
         options.add_option("-c", "--clean", action="store_true", dest="clean", default=False,
@@ -89,56 +87,27 @@ Argument:
         if argv is None:
             argv = sys.argv
             
-        self.options, args = self.shell_options().parse_args(argv[1:])
-        if len(args) > 0:
-            self.options.run = args[0]
-        else:
-            self.options.run = None
+        cli_options, args = self.shell_options().parse_args(argv[1:])
+        if len(args) < 1:
+            logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
+            sys.exit(-1)
         
-        if self.options.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.debug("Enabled debug output.")
-        else:
-            logging.basicConfig(level=logging.ERROR)
-            
-        if self.options.quick:
-            globalActivateLayer(quick)
 
-            
-        self.config = self.load_config(self.options.config)
-        # add some basic options to config
-        self.config["options"] = {}
-        self.config["options"]["use_nice"] = self.options.use_nice
-                
-        run = self.extract_rundefinition_from_options()
-        if run is None:
-            run = self.config["standard_run"]
-            
-        self.execute_run(run)
+        self.config = Configurator(args[0], cli_options, args[1:])
         
-    def execute_run(self, run):
-        logging.debug("execute run: %s"%(run))
+        self.execute_run()
         
-        if type(run) == str:
-            run = self.config["run_definitions"][run]
+    def execute_run(self):
+        logging.debug("execute run: %s"%(self.config.runName()))
         
-        executor = Executor(self.config, **run)
-        reporter = Reporter(self.config, self.options.output_file)
+        data     = DataAggregator(self.config.dataFileName(), self.config.options.clean, True)
+        reporter = FileReporter(self.config.options.output_file)
         
-        executor.set_reporter(reporter)
+        executor = Executor(self.config, data, reporter)
+        
         executor.execute()
         
-        results = executor.get_results()
-        
-        reporter.final_report(results)
-            
-    def extract_rundefinition_from_options(self):
-        if self.options.run:
-            return self.options.run
-        else:
-            # TODO: implement complex CLI interface to provide adhoc run definitions 
-            pass
-
+        reporter.generate_final_report()
 
 # remember __import__(), obj.__dict__["foo"] == obj.foo
     

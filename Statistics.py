@@ -3,7 +3,7 @@
 """
 
 import numpy
-import scipy.stats as stats
+#import scipy.stats as stats
 import scipy.stats.distributions as distributions
 
 

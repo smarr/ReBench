@@ -9,9 +9,10 @@ The data aggregator supports the following data dimensions:
   - benchmark
   - an additional free variable
   
-  These are the dimensions over which the benchmark runs vary.
+  These are the dimensions over which the benchmark suite varies its
+  configurations.
   
-  Furthermore, a single benchmark run can produce multiple results,
+  Furthermore, a single benchmark configuration can produce multiple results,
   which are combined to a data point.
   
   For example the NPB Integer Sort benchmark generates
@@ -20,14 +21,14 @@ The data aggregator supports the following data dimensions:
   Thus, a data point is either a ``float`` value, or a dict containing
   different criteria.
   
-  These results still constitute one datapoint.
+  These results still constitutes one datapoint.
   Points are generated as long as the desired statistic properties are not
   satisfied and eventually constitute a single 'run'.
   
   'runs' are varied over the above mentioned variables.
   All variations constitute over the runs constitute a suite.
   
-  This leads to: point < run < suite 
+  This leads to: point < configuration < suite < runs 
 
 
   @author: smarr
@@ -39,7 +40,7 @@ class DataAggregator(object):
     '''
 
 
-    def __init__(self, dataFileName, automaticallyPersistNewDataPoints = True):
+    def __init__(self, dataFileName, discardOldData, automaticallyPersistNewDataPoints = True):
         '''
         Constructor
         '''
@@ -92,6 +93,9 @@ class DataAggregator(object):
         self._lastRunId   = runId
         
         return dataSet
+    
+    def getNumberOfDataPoints(self, runId):
+        return len(self.getDataSet(runId))
     
     def getDataSample(self, runId, criterion = "total"):
         """

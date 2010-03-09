@@ -53,11 +53,14 @@ class Reporter:
 class CliReporter(Reporter):
     pass
 
-class DataFileReporter(Reporter):
-    pass
 
-class LogFileReporter(Reporter):
-    pass
+class FileReporter(Reporter):
+    """ should be mainly a log file
+        data is the responsability of the DataAggregator
+    """
+    
+    def __init__(self, fileName):
+        pass
 
 class ResultReporter(Reporter):
     pass
