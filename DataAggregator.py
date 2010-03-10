@@ -73,6 +73,8 @@ class DataAggregator(object):
         dataSet = self._data
         
         for criteria in runId:
+            assert type(dataSet) is dict
+            
             if dataSet.has_key(criteria):
                 pass  # nothing to do here, but ``if`` looks readable
             elif createDataStructures:
@@ -110,16 +112,42 @@ class DataAggregator(object):
         else:
             return dataSet
     
-    def addDataPoint(self, runId, dataPoint):
+    def _flattenData(self, dataPoints):
+        benchmarks = {}
+        
+        for point in dataPoints:
+            benchmarks.setdefault(point.benchName, {}).setdefault(point.criterion, []).append(point.time)
+            
+        return benchmarks
+    
+    def addDataPoints(self, runId, dataPoints):
         """
         Add the data point to the run which is indicated by the given
-        ``runId``
+        ``runId``.
+        Data points itself can be from different benchmarks of the same run
+        or contain different criteria, so we are going to sort that out first.
         """
-        dataSet = self.getDataSet(runId)
-        dataSet.append(dataPoint)
+        origRunId = runId
+        flatData = self._flattenData(dataPoints)
         
-        if self.automaticallyPersistNewDataPoints:
-            self._persistDataPoint(runId, dataPoint)
+        if None in flatData:
+            assert len(flatData) == 1
+        
+        for bench, criteria in flatData.iteritems():
+            for criterion, value in criteria.iteritems():
+                assert type(value[0]) is float
+                
+                runId = origRunId
+                if bench is not None:
+                    runId = runId + (bench,)
+                if criterion is not None:
+                    runId = runId + (criterion,)
+                
+                dataSet = self.getDataSet(runId)
+                dataSet += value
+        
+                if self._automaticallyPersistNewDataPoints:
+                    self._persistDataPoint(runId, value)
     
     def saveData(self):
         # we need that only if it is not done automatically
@@ -128,3 +156,12 @@ class DataAggregator(object):
 
     def _persistDataPoint(self, runId, dataPoint):
         pass
+
+class DataPoint:
+    def __init__(self, time, benchName = None, criterion = 'total'):
+        self.benchName = benchName
+        self.criterion = criterion
+        self.time = time
+        
+    def isTotal(self):
+        return self.criterion == 'total'

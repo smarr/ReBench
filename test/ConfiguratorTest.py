@@ -1,7 +1,6 @@
 import unittest
 
 from Configurator import Configurator
-from rebench import ReBench
 
 class ConfiguratorTest(unittest.TestCase):
         

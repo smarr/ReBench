@@ -21,7 +21,7 @@ from __future__ import with_statement
 
 import logging
 import subprocess
-#import math
+import os
 import time
 from Statistics import StatisticProperties
 
@@ -44,20 +44,22 @@ class Executor:
         cmdline  = ""
         cmdline += "cd %s && "%(bench_cfg.suite['location'])
         
-        if bench_cfg.suite['ulimit']:
+        if 'ulimit' in bench_cfg.suite:
             cmdline += "ulimit -t %s && "%(bench_cfg.suite['ulimit'])
                 
         if self._configurator.options.use_nice:
             cmdline += "sudo nice -n-20 "
         
-        vm_cmd = "%s/%s %s" % (bench_cfg.vm['path'],
+        vm_cmd = "%s/%s %s" % (os.path.abspath(bench_cfg.vm['path']),
                                bench_cfg.vm['binary'],
-                               bench_cfg.vm.get('args', "") % {'cores' : cores})
+                               bench_cfg.vm.get('args', ""))
             
         vm_cmd = perf_reader.acquire_command(vm_cmd)
             
         cmdline += vm_cmd 
-        cmdline += bench_cfg.suite['command'] % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable}
+        cmdline += bench_cfg.suite['command']
+        
+        cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
         
         if bench_cfg.extra_args is not None:
             cmdline += " %s" % (bench_cfg.extra_args or "")
@@ -90,8 +92,8 @@ class Executor:
         # TODO add here some user-interface stuff to show progress
     
     
-        self.reporter.report(self.result[self.current_vm][self.num_cores][input_size],
-                             self.current_vm, self.num_cores, input_size)
+        #self._reporter.report(self.result[self.current_vm][self.num_cores][input_size],
+        #                      self.current_vm, self.num_cores, input_size)
         
         
         
@@ -137,25 +139,29 @@ class Executor:
                                                        cnf.vm['name'], cnf.name))
         else:
             logging.debug(u"Output: %s"%(output))
-            self._eval_output(output, perf_reader, consequent_erroneous_runs, erroneous_runs)
+            self._eval_output(output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs)
         
         return self._check_termination_condition(runId, consequent_erroneous_runs, erroneous_runs)
     
-    def _eval_output(self, output, perf_reader, consequent_erroneous_runs, erroneous_runs):
+    def _eval_output(self, output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs):
         pass
     
     @after(benchmark)
-    def _eval_output(self, output, perf_reader, consequent_erroneous_runs, erroneous_runs, __result__):
-        exec_time = perf_reader.parse_data(output)
-        if exec_time[0] is None:
+    def _eval_output(self, output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs, __result__):
+        (cfg, _, _, _) = runId
+        
+        try:
+            
+            (total, dataPoints) = perf_reader.parse_data(output)
+            #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
+            self._data.addDataPoints(runId, dataPoints)
+            consequent_erroneous_runs = 0
+            logging.debug("Run %s:%s result=%s"%(cfg.vm['name'], cfg.name, total))
+            
+        except RuntimeError:
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            logging.warning("Run of %s:%s failed"%(self.current_vm, self.current_benchmark))
-        else:    
-            #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
-            self.current_data.append(exec_time)
-            consequent_erroneous_runs = 0
-            logging.debug("Run %s:%s result=%s"%(self.current_vm, self.current_benchmark, exec_time[0]))
+            logging.warning("Run of %s:%s failed"%(cfg.vm['name'], cfg.name))
         
     def _check_termination_condition(self, runId, consequent_erroneous_runs, erroneous_runs):
         return False, (consequent_erroneous_runs, erroneous_runs)
