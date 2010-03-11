@@ -57,7 +57,7 @@ Argument:
         
         options.add_option("-q", "--quick", action="store_true", dest="quick",
                            help="Do a quick benchmark run instead a full, statistical relevant experiment.", default=False)
-        #@TODO: Profiling is part of the run definition, not a cmd-line option...
+        #TODO: Profiling is part of the run definition, not a cmd-line option...
         #options.add_option("-p", "--profile", action="store_true", dest="profile",
         #                   help="Profile dynamic characteristics instead measuring execution time.",
         #                   default=False)
@@ -65,10 +65,6 @@ Argument:
                            help="Enable debug output.")
         options.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
                            help="Out more details in the report.")
-        
-        #@removed: not an option anymore, has to be suplied explicitly
-        #options.add_option("-c", "--config", dest="config", default="%s.conf"%(self.__class__.__name__.lower()),
-        #                   help="Config file to be used.")
 
         #options.add_option("-r", "--run", dest="run", default=None,
         #                   help="Specify a run definition to be used form given config.")
