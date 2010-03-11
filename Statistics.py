@@ -3,6 +3,7 @@
 """
 
 import numpy
+import math
 #import scipy.stats as stats
 import scipy.stats.distributions as distributions
 
@@ -33,7 +34,7 @@ class StatisticProperties:
         self.min = min(self._dataSamples)
         self.max = max(self._dataSamples)
 
-    def _confidence(self):
+    def _calcConfidence(self, confidence_level):
         """
         Depending on the number of samples, different distributions
         are more optimal.
@@ -45,7 +46,7 @@ class StatisticProperties:
         if self.numSamples > 30:
             distribution = distributions.norm.ppf((1 + confidence_level)/2.0)
         else:
-            df   = n - 1
+            df   = self.numSamples - 1
             distribution = distributions.t.ppf((1 + confidence_level)/2.0, df)
             
         self._confidenceForSamples(distribution)
