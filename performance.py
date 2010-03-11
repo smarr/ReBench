@@ -172,6 +172,9 @@ class TestVMPerformance(Performance):
                     total = val.time
                 results.append(val)
         
+        if total is None:
+            raise RuntimeError("Output of bench program did not contain a total value")
+        
         return (total, results)
 
 

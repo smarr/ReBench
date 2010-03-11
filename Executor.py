@@ -78,42 +78,20 @@ class Executor:
                                           var_val)
         
         logging.debug("command = " + cmdline)
-            
-        terminate = False
-        error = (0, 0)  # (consequent_erroneous_runs, erroneous_runs)
         
+        #error = (consequent_erroneous_runs, erroneous_runs)    
+        terminate, error = self._check_termination_condition(runId, (0, 0))
         while not terminate:
             terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
             logging.debug("Run: #%d"%(self._data.getNumberOfDataPoints(runId)))
-                
-        #self._consolidate_result(bench_name, input_size)
+
         
-        
-        # TODO add here some user-interface stuff to show progress
-    
+        #TODO: add here some user-interface stuff to show progress
     
         #self._reporter.report(self.result[self.current_vm][self.num_cores][input_size],
         #                      self.current_vm, self.num_cores, input_size)
         
-        
-        
-    def _consolidate_result(self, bench_name, input_size):
-        results = {}
-        
-        for run in self.current_data:
-            for result in run[1]:
-                bench = result['bench'] + "-" + result.get('subCriterion', "")
-                values = results.get(bench, [])
-                values.append(result['time'])
-                results[bench] = values
-        
-        for bench_name, values in results.iteritems():
-            result = self._confidence(values, 
-                                      self.config["statistics"]['confidence_level'])
-            self.result[self.current_vm][self.num_cores][input_size][bench_name] = result
-            
-            (mean, sdev, interval_details, interval_details_t) = result 
-            logging.debug("Run completed for %s:%s (size: %s, cores: %d), mean=%f, sdev=%f"%(self.current_vm, bench_name, input_size, self.num_cores, mean, sdev))
+        #TODO: logging.debug("Run completed for %s:%s (size: %s, cores: %d), mean=%f, sdev=%f"%(self.current_vm, bench_name, input_size, self.num_cores, mean, sdev))
     
     def _get_performance_reader_instance(self, reader):
         p = __import__("performance", fromlist=reader)
@@ -126,32 +104,33 @@ class Executor:
         
         
     def _generate_data_point(self, cmdline, error, perf_reader, runId):
-        (consequent_erroneous_runs, erroneous_runs) = error
         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         (output, _) = p.communicate()
         
         (cnf, _, _, _) = runId
-        
         if p.returncode != 0:
+            (consequent_erroneous_runs, erroneous_runs) = error
+            
             consequent_erroneous_runs += 1
             erroneous_runs += 1
             logging.warning("Run #%d of %s:%s failed"%(self._data.getNumberOfDataPoints(runId),
                                                        cnf.vm['name'], cnf.name))
+            error = (consequent_erroneous_runs, erroneous_runs)
         else:
             logging.debug(u"Output: %s"%(output))
-            self._eval_output(output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs)
+            error = self._eval_output(output, runId, perf_reader, error)
         
-        return self._check_termination_condition(runId, consequent_erroneous_runs, erroneous_runs)
+        return self._check_termination_condition(runId, error)
     
-    def _eval_output(self, output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs):
-        pass
+    def _eval_output(self, output, runId, perf_reader, error):
+        return error
     
     @after(benchmark)
-    def _eval_output(self, output, runId, perf_reader, consequent_erroneous_runs, erroneous_runs, __result__):
+    def _eval_output(self, output, runId, perf_reader, error, __result__):
         (cfg, _, _, _) = runId
+        consequent_erroneous_runs, erroneous_runs = error
         
         try:
-            
             (total, dataPoints) = perf_reader.parse_data(output)
             #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
             self._data.addDataPoints(runId, dataPoints)
@@ -162,16 +141,19 @@ class Executor:
             consequent_erroneous_runs += 1
             erroneous_runs += 1
             logging.warning("Run of %s:%s failed"%(cfg.vm['name'], cfg.name))
+            
+        return consequent_erroneous_runs, erroneous_runs
         
-    def _check_termination_condition(self, runId, consequent_erroneous_runs, erroneous_runs):
-        return False, (consequent_erroneous_runs, erroneous_runs)
+        
+    def _check_termination_condition(self, runId, error):
+        return False, error
     
     @after(profile)
-    def _check_termination_condition(self, runId, consequent_erroneous_runs, erroneous_runs, __result__):
-        return True, (consequent_erroneous_runs, erroneous_runs)
+    def _check_termination_condition(self, runId, error, __result__):
+        return True, error
     
     @after(benchmark)
-    def _check_termination_condition(self, runId, consequent_erroneous_runs, erroneous_runs, __result__):
+    def _check_termination_condition(self, runId, error, __result__):
         terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
         
         numDataPoints = self._data.getNumberOfDataPoints(runId)
@@ -194,8 +176,8 @@ class Executor:
         return terminate, (consequent_erroneous_runs, erroneous_runs)
     
     @after(quick)
-    def _check_termination_condition(self, runId, consequent_erroneous_runs, erroneous_runs, __result__):
-        terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
+    def _check_termination_condition(self, runId, error, __result__):
+        terminate, error = __result__
         
         (cfg, _, _, _) = runId
         
@@ -207,7 +189,7 @@ class Executor:
             logging.debug("Maximum runtime is reached for %s"%(cfg.name))
             terminate = True
         
-        return terminate, (consequent_erroneous_runs, erroneous_runs)
+        return terminate, error
    
                 
     def _confidence_reached(self, runId):
