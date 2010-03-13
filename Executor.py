@@ -24,6 +24,7 @@ import subprocess
 import os
 import time
 from Statistics import StatisticProperties
+from numbers import Number
 
 from contextpy import layer, activelayers, after,before
 # proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
@@ -66,12 +67,12 @@ class Executor:
         
         return cmdline
     
-    def _exec_configuration(self, cfg, cores, input_size, var_val):
-        runId = (cfg, cores, input_size, var_val)
+    def _exec_configuration(self, runId):
+        (cores, input_size, var_val) = runId.variables
         
-        perf_reader = self._get_performance_reader_instance(cfg.performance_reader)
+        perf_reader = self._get_performance_reader_instance(runId.cfg.performance_reader)
         
-        cmdline = self._construct_cmdline(cfg,
+        cmdline = self._construct_cmdline(runId.cfg,
                                           perf_reader,
                                           cores,
                                           input_size,
@@ -107,14 +108,13 @@ class Executor:
         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         (output, _) = p.communicate()
         
-        (cnf, _, _, _) = runId
         if p.returncode != 0:
             (consequent_erroneous_runs, erroneous_runs) = error
             
             consequent_erroneous_runs += 1
             erroneous_runs += 1
             logging.warning("Run #%d of %s:%s failed"%(self._data.getNumberOfDataPoints(runId),
-                                                       cnf.vm['name'], cnf.name))
+                                                       runId.cfg.vm['name'], runId.cfg.name))
             error = (consequent_erroneous_runs, erroneous_runs)
         else:
             logging.debug(u"Output: %s"%(output))
@@ -127,7 +127,6 @@ class Executor:
     
     @after(benchmark)
     def _eval_output(self, output, runId, perf_reader, error, __result__):
-        (cfg, _, _, _) = runId
         consequent_erroneous_runs, erroneous_runs = error
         
         try:
@@ -135,12 +134,12 @@ class Executor:
             #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
             self._data.addDataPoints(runId, dataPoints)
             consequent_erroneous_runs = 0
-            logging.debug("Run %s:%s result=%s"%(cfg.vm['name'], cfg.name, total))
+            logging.debug("Run %s:%s result=%s"%(runId.cfg.vm['name'], runId.cfg.name, total))
             
         except RuntimeError:
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            logging.warning("Run of %s:%s failed"%(cfg.vm['name'], cfg.name))
+            logging.warning("Run of %s:%s failed"%(runId.cfg.vm['name'], runId.cfg.name))
             
         return consequent_erroneous_runs, erroneous_runs
         
@@ -157,7 +156,7 @@ class Executor:
         terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
         
         numDataPoints = self._data.getNumberOfDataPoints(runId)
-        (cfg, _, _, _) = runId
+        cfg = runId.cfg
         
         if consequent_erroneous_runs >= 3:
             logging.error("Three runs of %s have failed in a row, benchmark is aborted"%(cfg.name))
@@ -179,7 +178,7 @@ class Executor:
     def _check_termination_condition(self, runId, error, __result__):
         terminate, error = __result__
         
-        (cfg, _, _, _) = runId
+        cfg = runId.cfg
         
         if len(self.current_data) >= self.config["quick_runs"]["max_runs"]:
             logging.debug("Reached max_runs for %s"%(cfg.name))
@@ -209,15 +208,15 @@ class Executor:
             return False
     
     def _generate_all_configs(self, benchConfigs):
-        result = []
+        configurations = []
         
         for cfg in benchConfigs:
             for cores  in cfg.vm['cores']:
                 for input_size in cfg.suite['input_sizes']:
                     for var_val in cfg.suite['variable_values']:
-                        result.append((cfg, cores, input_size, var_val))
+                        configurations.append(RunId(cfg, (cores, input_size, var_val)))
         
-        return result
+        return configurations
     
     def execute(self):
         startTime = None
@@ -229,7 +228,7 @@ class Executor:
         
         for action in actions:
             with activelayers(layer(action)):
-                for (cfg, cores, input_size, var_val) in configs:
+                for runId in configs:
                     self._reporter.info("Configurations left: %d"%(runsRemaining))
                     
                     if runsCompleted > 0:
@@ -243,6 +242,22 @@ class Executor:
                     else:
                         startTime = time.time()
                     
-                    self._exec_configuration(cfg, cores, input_size, var_val)
+                    self._exec_configuration(runId)
                     
                     runsCompleted = runsCompleted + 1
+
+class RunId:
+    def __init__(self, cfg, variables, terminationCriterion='total'):
+        self.cfg = cfg
+        self.variables = self._stringify(variables)
+        self.criterion = 'total'
+        
+    def _stringify(self, tuple):
+        result = ()
+        for item in tuple:
+            if isinstance(item, Number):
+                result += (str(item), )
+            else:
+                result += (item, )
+                
+        return result

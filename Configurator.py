@@ -181,11 +181,13 @@ class BenchmarkConfig:
     @classmethod
     def getConfig(cls, name, suiteName, vmName, extra_args = None):
         tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args, False)
+        assert tmp not in cls._registry:
+        
         return cls._registry[tmp]
     
     def __init__(self, name, performance_reader, suite, vm, extra_args = None, register = True):
         self.name = name
-        self.extra_args = extra_args if extra_args else None
+        self.extra_args = str(extra_args) if extra_args else None
         self.performance_reader = performance_reader
         self.suite = suite
         self.vm = vm

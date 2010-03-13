@@ -37,6 +37,8 @@ The data aggregator supports the following data dimensions:
 import re
 from datetime import datetime
 from Configurator import BenchmarkConfig
+from Executor import RunId
+from copy import copy
 
 class DataAggregator(object):
     '''
@@ -50,7 +52,7 @@ class DataAggregator(object):
         '''
         self._dataFileName = dataFileName
         self._data = {}
-        self._lastRunId = None
+        self._lastCriteria = None
         self._lastDataSet = None
         self._automaticallyPersistNewDataPoints = automaticallyPersistNewDataPoints
         self._file = None
@@ -81,58 +83,57 @@ class DataAggregator(object):
         I know, premature optimization...
         """
         
-        if runId == self._lastRunId:
+        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
+        
+        if criteria == self._lastCriteria:
             return self._lastDataSet
         
         previous = None
         dataSet = self._data
         
-        for criteria in runId:
-            assert type(dataSet) is dict, "last dataSet is of type %s instead of being a dict (criteria: %s, runId: %s)" % (type(dataSet), criteria, runId)
+        for criterion in criteria:
+            if type(dataSet) is not dict:
+                pass
+            assert type(dataSet) is dict, "last dataSet is of type %s instead of being a dict (criteria: %s, runId: %s)" % (type(dataSet), criterion, runId)
             
-            if criteria in dataSet:
+            if criterion in dataSet:
                 pass  # nothing to do here, but ``if`` looks readable
             elif createDataStructures:
-                dataSet[criteria] = {}
+                dataSet[criterion] = {}
             else:
                 return None
             
             previous = dataSet
-            dataSet = dataSet[criteria]
+            dataSet = dataSet[criterion]
         
         if type(dataSet) is dict:       #equals type(previous[runId[-1]]) is dict
-            # here we have the assumption, that all benchmarks generate a total value
-            # which allows us to terminate the execution when a certain statitical property
-            # is reached
-            if runId[-1] != 'total' and 'total' in dataSet:
-                previous = dataSet
-                dataSet = dataSet['total']
-            elif len(dataSet) == 0: 
-                previous[runId[-1]] = []  ## should be a list of datapoints instead
-                dataSet = previous[runId[-1]]
+            if len(dataSet) == 0: 
+                previous[criteria[-1]] = []  ## should be a list of datapoints instead
+                dataSet = previous[criteria[-1]]
             
         assert type(dataSet) is list
         
         self._lastDataSet = dataSet
-        self._lastRunId   = runId
+        self._lastCriteria= criteria
         
         return dataSet
     
     def getNumberOfDataPoints(self, runId):
         return len(self.getDataSet(runId))
     
-    def getDataSample(self, runId, criterion = "total"):
+    def getDataSample(self, runId):
         """
         Returns the plain data for a run and a chosen criterion.
         This is necessary for the statistical computations.
         
         Plain data is returned as a list of values.
         """
-        dataSet = self.getDataSet(runId)
-        if type(dataSet[0]) is dict:
-            return list(val[criterion] for val in dataSet)
-        else:
-            return dataSet
+        return self.getDataSet(runId)
+        #REMOVE: TODO:
+        #if type(dataSet[0]) is dict:
+        #    return list(val[criterion] for val in dataSet)
+        #else:
+        #    return dataSet
     
     def _flattenData(self, dataPoints):
         benchmarks = {}
@@ -152,7 +153,6 @@ class DataAggregator(object):
         Data points itself can be from different benchmarks of the same run
         or contain different criteria, so we are going to sort that out first.
         """
-        origRunId = runId
         flatData = self._flattenData(dataPoints)
         
         if None in flatData:
@@ -162,24 +162,26 @@ class DataAggregator(object):
             for criterion, value in criteria.iteritems():
                 assert type(value[0]) is float
                 
-                runId = origRunId
-                if bench is not None:
-                    runId = runId + (bench,)
+                tmpRunId = copy(runId)
+                
+                if bench is not None and bench != 'total':
+                    tmpRunId.variables += (bench,)
+                
                 if criterion is not None:
                     # here we encode, that there might be a benchmark name total
                     # which generates data for the criterion total, 
                     # but for nothing else
                     if criterion == 'total' and bench == 'total':
                         assert len(criteria) == 1
-                    else:
-                        runId = runId + (criterion,)
+                    
+                    tmpRunId.criterion = criterion
                 
-                dataSet = self.getDataSet(runId)
+                dataSet = self.getDataSet(tmpRunId)
                 dataSet += value
         
                 assert len(value) == 1
                 if self._automaticallyPersistNewDataPoints and not deserializing:
-                    self._persistDataPoint(runId, value[0])
+                    self._persistDataPoint(tmpRunId, value[0])
     
     def saveData(self):
         # we need that only if it is not done automatically
@@ -200,7 +202,9 @@ class DataAggregator(object):
         result = []
         result.append("[%s]" % datetime.now())
         
-        for criterion in runId:
+        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
+        
+        for criterion in criteria:
             result.append("\t%s" % criterion)
             
         result.append(" = %f\n" % dataPoint)
@@ -216,15 +220,14 @@ class DataAggregator(object):
         suiteName = m.group(3)
         args = m.group(4) if m.group(4) else None
         restRunId = m.group(5).strip().split("\t")
-        dataPoint = DataPoint(float(m.group(6)), None, None)
         
         cfg = BenchmarkConfig.getConfig(benchName, suiteName, vmName, args)
         
-        runId = (cfg, )
-        for id in restRunId:
-            runId = runId + (id,)
+        criterion = restRunId[-1]
+        restRunId = restRunId[:-1]
+        dataPoint = DataPoint(float(m.group(6)), None, criterion)
         
-        return runId, dataPoint
+        return RunId(cfg, restRunId, criterion), dataPoint
 
 class DataPoint:
     def __init__(self, time, benchName = None, criterion = 'total'):
