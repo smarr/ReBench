@@ -19,8 +19,13 @@ class StatisticProperties:
         self._dataSamples = dataSamples
         self._confidenceLevel = confidence_level
         
-        self._calcBasicStatistics()
-        self._calcConfidence(confidence_level)
+        if self._dataSamples:
+            self._calcBasicStatistics()
+            self._calcConfidence(confidence_level)
+        else:
+            self.failedRun = True
+            self.numSamples = 0
+            
         
     def _calcBasicStatistics(self):
         """This function determines the mean and the standard deviation

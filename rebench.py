@@ -29,7 +29,6 @@
 # THE SOFTWARE.
 
 import sys
-import logging
 
 from Executor import Executor
 from Reporter import *
@@ -97,13 +96,16 @@ Argument:
         logging.debug("execute run: %s"%(self.config.runName()))
         
         data     = DataAggregator(self.config.dataFileName(), self.config.options.clean, True)
-        reporter = FileReporter(self.config.options.output_file)
         
-        executor = Executor(self.config, data, reporter)
+        reporters = []
+        if self.config.options.output_file:
+            reporters.append(FileReporter(self.config.options.output_file))
+            
+        reporters.append(CliReporter())
+        
+        executor = Executor(self.config, data, Reporters(reporters))
         
         executor.execute()
-        
-        reporter.generate_final_report()
 
 # remember __import__(), obj.__dict__["foo"] == obj.foo
     

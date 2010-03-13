@@ -19,47 +19,116 @@
 # THE SOFTWARE.
 
 from __future__ import with_statement
-from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer
+from datetime import datetime
+import logging
+from contextpy import layer, after, globalActivateLayer
+# proceed, activelayer, activelayers, around, before, base,
 
 benchmark = layer("benchmark")
 profile = layer("profile")
 log_to_file = layer("log_to_file")
 
 class Reporter:
-    def initialize(self):
-        pass
+
+    # only domain specific stuff here..., we are not interested in the details
+    # and general logging here
+    #def info(self, msg, level = None):
+    #    pass
+    #
+    #def warning(self, msg, level = None):
+    #    pass
+    #
+    #def failure(self, msg, level = None):
+    #    pass
+    #
+    #def beginSeparatLog(self, task, level = None):
+    #    pass
+    #
+    #def endSeparatLog(self, task, level = None):
+    #    pass
     
-    def info(self, msg, level = None):
-        pass
+    def configurationCompleted(self, runId, statistics):
+        raise NotImplementedError('Subclass responsibility')
     
-    def warning(self, msg, level = None):
-        pass
+    def jobCompleted(self, configurations, dataAggregator):
+        raise NotImplementedError('Subclass responsibility')
+
+class Reporters(Reporter):
+    """Distributes the information to all registered reporters."""
     
-    def failure(self, msg, level = None):
-        pass
+    def __init__(self, reporters):
+        if type(reporters) is list:
+            self._reporters = reporters
+        else:
+            self._reporters = [reporters]
+
+    def configurationCompleted(self, runId, statistics):
+        for reporter in self._reporters:
+            reporter.configurationCompleted(runId, statistics)
     
-    def beginSeparatLog(self, task, level = None):
-        pass
+    def jobCompleted(self, configurations, dataAggregator):
+        for reporter in self._reporters:
+            reporter.jobCompleted(configurations, dataAggregator)
+
+class TextReporter(Reporter):
     
-    def endSeparatLog(self, task, level = None):
-        pass
+    def _configuration_details(self, runId, statistics):
+        result = []
+        
+        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
+        
+        for criterion in criteria:
+            result.append(" %s" % criterion)
+            
+        result.append(" = ")
+        
+        for field, value in statistics.__dict__.iteritems():
+            if not field.startswith('_'):
+                result.append("%s: %s " % (field, value))
+            
+        return result
+
+class CliReporter(TextReporter):
+    """ Reports to standard out using the logging framework """
     
-    def logDataPoint(self, runId, data):
-        pass
-    
-    def logDataSet(self, runId, dataSet):
+    def configurationCompleted(self, runId, statistics):
+        result = []
+        result.append("[%s] Configuration completed: " % datetime.now())
+        
+        result += self._configuration_details(runId, statistics) 
+            
+        result.append("\n")
+        
+        result = "".join(result)
+        
+        logging.debug(result)
+
+    def jobCompleted(self, configurations, dataAggregator):
+        #TODO: here we have to report all generated criteria/benchmarks values
+        #      this is not done by the configurationCompleted, which is only reporting total criteria
         pass
 
-class CliReporter(Reporter):
-    pass
-
-
-class FileReporter(Reporter):
+class FileReporter(TextReporter):
     """ should be mainly a log file
-        data is the responsability of the DataAggregator
+        data is the responsibility of the DataAggregator
     """
     
     def __init__(self, fileName):
+        self._file = open(fileName, 'a+')
+        
+    def configurationCompleted(self, runId, statistics):
+        result = []
+        result.append("[%s] Configuration completed: " % datetime.now())
+        
+        result += self._configuration_details(runId, statistics) 
+            
+        result.append("\n")
+        
+        self._file.writelines(result)
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        #TODO: here we have to report all generated criteria/benchmarks values
+        #      this is not done by the configurationCompleted, which is only reporting total criteria
         pass
 
 class ResultReporter(Reporter):
@@ -67,16 +136,6 @@ class ResultReporter(Reporter):
 
 class DiagramResultReporter(Reporter):
     pass
-
-class Reporters(Reporter):
-    
-    def __init__(self, reporters):
-        if type(reporters) is list:
-            self.reporters = reporters
-        else:
-            self.reporters = [reporters]
-
-
 
 
 class ReporterOld:

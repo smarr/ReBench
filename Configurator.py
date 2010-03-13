@@ -181,7 +181,7 @@ class BenchmarkConfig:
     @classmethod
     def getConfig(cls, name, suiteName, vmName, extra_args = None):
         tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args, False)
-        assert tmp not in cls._registry:
+        assert tmp in cls._registry
         
         return cls._registry[tmp]
     

@@ -82,17 +82,17 @@ class Executor:
         
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
+        stats = StatisticProperties(self._data.getDataSet(runId),
+                                    self._configurator.statistics['confidence_level'])
         while not terminate:
             terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
-            logging.debug("Run: #%d"%(self._data.getNumberOfDataPoints(runId)))
+            
+            stats = StatisticProperties(self._data.getDataSet(runId),
+                                        self._configurator.statistics['confidence_level'])
+            
+            logging.debug("Run: #%d"%(stats.numSamples))
 
-        
-        #TODO: add here some user-interface stuff to show progress
-    
-        #self._reporter.report(self.result[self.current_vm][self.num_cores][input_size],
-        #                      self.current_vm, self.num_cores, input_size)
-        
-        #TODO: logging.debug("Run completed for %s:%s (size: %s, cores: %d), mean=%f, sdev=%f"%(self.current_vm, bench_name, input_size, self.num_cores, mean, sdev))
+        self._reporter.configurationCompleted(runId, stats)
     
     def _get_performance_reader_instance(self, reader):
         p = __import__("performance", fromlist=reader)
@@ -196,8 +196,6 @@ class Executor:
         stats = StatisticProperties(self._data.getDataSet(runId),
                                     self._configurator.statistics['confidence_level'])
         
-        
-        
         logging.debug("Run: %d, Mean: %f, current error: %f, Interval: [%f, %f]"%(
                       stats.numSamples, stats.mean,
                       stats.confIntervalSize, stats.confIntervalLow, stats.confIntervalHigh))
@@ -229,7 +227,7 @@ class Executor:
         for action in actions:
             with activelayers(layer(action)):
                 for runId in configs:
-                    self._reporter.info("Configurations left: %d"%(runsRemaining))
+                    logging.info("Configurations left: %d"%(runsRemaining))
                     
                     if runsCompleted > 0:
                         current = time.time()
@@ -238,13 +236,15 @@ class Executor:
                         sec = etl % 60
                         min = (etl - sec) / 60 % 60
                         h   = (etl - sec - min) / 60 / 60
-                        self._reporter.info("Estimated time left: %02d:%02d:%02d"%(round(h), round(min), round(sec)))
+                        logging.info("Estimated time left: %02d:%02d:%02d"%(round(h), round(min), round(sec)))
                     else:
                         startTime = time.time()
                     
                     self._exec_configuration(runId)
                     
                     runsCompleted = runsCompleted + 1
+                    
+                self._reporter.jobCompleted(configs, self._data)
 
 class RunId:
     def __init__(self, cfg, variables, terminationCriterion='total'):
