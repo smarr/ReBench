@@ -99,9 +99,9 @@ Argument:
         
         reporters = []
         if self.config.options.output_file:
-            reporters.append(FileReporter(self.config.options.output_file))
+            reporters.append(FileReporter(self.config.options.output_file, self.config))
             
-        reporters.append(CliReporter())
+        reporters.append(CliReporter(self.config))
         
         executor = Executor(self.config, data, Reporters(reporters))
         

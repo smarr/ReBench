@@ -21,6 +21,7 @@
 from __future__ import with_statement
 from datetime import datetime
 import logging
+from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 # proceed, activelayer, activelayers, around, before, base,
 
@@ -72,6 +73,9 @@ class Reporters(Reporter):
 
 class TextReporter(Reporter):
     
+    def __init__(self, configurator):
+        self._configurator = configurator
+    
     def _configuration_details(self, runId, statistics):
         result = []
         
@@ -82,14 +86,42 @@ class TextReporter(Reporter):
             
         result.append(" = ")
         
-        for field, value in statistics.__dict__.iteritems():
-            if not field.startswith('_'):
-                result.append("%s: %s " % (field, value))
+        self._output_stats(result, statistics)
             
         return result
+    
+    def _output_stats(self, outputList, statistics):
+        for field, value in statistics.__dict__.iteritems():
+            if not field.startswith('_'):
+                outputList.append("%s: %s " % (field, value))
+    
+    def _generate_all_output(self, data, path):
+        assert type(data) is dict or type(data) is list
+        
+        if type(data) is dict:
+            for key, val in data.iteritems():
+                for result in self._generate_all_output(val, path + (key,)):
+                    yield result
+        else:
+            stats = StatisticProperties(data, 
+                                        self._configurator.statistics['confidence_level'])
+            
+            out = []
+            for item in path:
+                out.append(str(item))
+                
+            out = [ " ".join(out) + " " ]
+            
+            self._output_stats(out, stats)
+            
+            result = "".join(out)
+            yield result
 
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
+    
+    def __init__(self, configurator):
+        TextReporter.__init__(self, configurator)
     
     def configurationCompleted(self, runId, statistics):
         result = []
@@ -104,16 +136,19 @@ class CliReporter(TextReporter):
         logging.debug(result)
 
     def jobCompleted(self, configurations, dataAggregator):
-        #TODO: here we have to report all generated criteria/benchmarks values
-        #      this is not done by the configurationCompleted, which is only reporting total criteria
-        pass
+        logging.info("[%s] Job completed" % datetime.now())
+        for line in self._generate_all_output(dataAggregator.getData(), ()):
+            logging.info(line)
+    
+    
 
 class FileReporter(TextReporter):
     """ should be mainly a log file
         data is the responsibility of the DataAggregator
     """
     
-    def __init__(self, fileName):
+    def __init__(self, fileName, configurator):
+        TextReporter.__init__(self, configurator)
         self._file = open(fileName, 'a+')
         
     def configurationCompleted(self, runId, statistics):
@@ -127,9 +162,10 @@ class FileReporter(TextReporter):
         self._file.writelines(result)
     
     def jobCompleted(self, configurations, dataAggregator):
-        #TODO: here we have to report all generated criteria/benchmarks values
-        #      this is not done by the configurationCompleted, which is only reporting total criteria
-        pass
+        self._file.write("[%s] Job completed\n" % datetime.now())
+        for line in self._generate_all_output(dataAggregator.getData(), ()):
+            self._file.write(line + "\n")
+
 
 class ResultReporter(Reporter):
     pass

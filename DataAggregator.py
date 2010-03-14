@@ -62,6 +62,9 @@ class DataAggregator(object):
                 pass
         
         self.loadData()
+        
+    def getData(self):
+        return self._data
     
     def loadData(self):
         '''
