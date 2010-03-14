@@ -93,16 +93,19 @@ class Executor:
             logging.debug("Run: #%d"%(stats.numSamples))
 
         self._reporter.configurationCompleted(runId, stats)
+        
+    @before(quick)
+    def _exec_configuration(self, runId):
+        self._quickStartTime = time.time()
+
+    @before(benchmark)
+    def _exec_configuration(self, runId):
+        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self._configurator.statistics["min_runs"],
+                                                                 self._configurator.statistics["max_runs"]))
     
     def _get_performance_reader_instance(self, reader):
         p = __import__("performance", fromlist=reader)
         return getattr(p, reader)()
-
-    @before(benchmark)
-    def _exec_vm_run(self, input_size):
-        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self.config["statistics"]["min_runs"],
-                                                                 self.config["statistics"]["max_runs"]))
-        
         
     def _generate_data_point(self, cmdline, error, perf_reader, runId):
         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
@@ -177,14 +180,15 @@ class Executor:
     @after(quick)
     def _check_termination_condition(self, runId, error, __result__):
         terminate, error = __result__
-        
         cfg = runId.cfg
         
-        if len(self.current_data) >= self.config["quick_runs"]["max_runs"]:
+        numDataPoints = self._data.getNumberOfDataPoints(runId)
+        
+        if numDataPoints >= self._configurator.quick_runs["max_runs"]:
             logging.debug("Reached max_runs for %s"%(cfg.name))
             terminate = True
-        elif (len(self.current_data) > self.config["quick_runs"]["min_runs"]
-              and sum(self.current_data)  / (1000 * 1000) > self.config["quick_runs"]["max_time"]):
+        elif (numDataPoints > self._configurator.quick_runs["min_runs"]
+              and time.time() - self._quickStartTime > self._configurator.quick_runs["max_time"]):
             logging.debug("Maximum runtime is reached for %s"%(cfg.name))
             terminate = True
         
