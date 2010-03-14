@@ -39,6 +39,7 @@ from datetime import datetime
 from Configurator import BenchmarkConfig
 from Executor import RunId
 from copy import copy
+import logging
 
 class DataAggregator(object):
     '''
@@ -70,10 +71,13 @@ class DataAggregator(object):
         '''
         Loads the data from the configured data file
         '''
-        with open(self._dataFileName, 'r') as f:
-            for line in f:
-                runId, value = self._deserializeDataPoint(line)
-                self.addDataPoints(runId, value, True)
+        try:
+            with open(self._dataFileName, 'r') as f:
+                for line in f:
+                    runId, value = self._deserializeDataPoint(line)
+                    self.addDataPoints(runId, value, True)
+        except IOError:
+            logging.info("No data loaded %s does not exist." % self._dataFileName)
                 
     
     def getDataSet(self, runId, createDataStructures = True):

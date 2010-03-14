@@ -91,7 +91,9 @@ class LogPerformance(Performance):
 class JGFPerformance(Performance):
   """JGFPerformance is used to read the output of the JGF barrier benchmarks.
   """
-  re_logline  = re.compile(r"^(?:.*:.*:)(.*)(?:\s+)([0-9\.E]+)(?:\s+)\(barriers/s\)")
+  re_barrierSec1 = re.compile(r"^(?:.*:.*:)(.*)(?:\s+)([0-9\.E]+)(?:\s+)\(barriers/s\)") # for the barrier benchmarks in sec 1 of the JGF benchmarks
+  re_sec2 = re.compile(r"^(?:Section2:.*:)(.*)(?::.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")            # for the benchmarks from sec 2
+  re_sec3 = re.compile(r"^(?:Section3:.*:)(.*)(?::Run:.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")        # for the benchmarks from sec 3, the time of 'Run' is used
 
   def parse_data(self, data):
     result = []
@@ -101,7 +103,12 @@ class JGFPerformance(Performance):
       if self.check_for_error(line):
         return None
     
-      m = self.re_logline.match(line)
+      m = self.re_barrierSec1.match(line)
+      if not m:
+        m = self.re_sec2.match(line)
+        if not m:
+          m = self.re_sec3.match(line)
+
       if m:
         time = float(m.group(2))
         criterion = 'total'
