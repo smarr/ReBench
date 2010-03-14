@@ -13,6 +13,8 @@ class Configurator:
         self._processCliOptions(cliOptions)
         self._runName = runName
         self._config = self._compileBenchConfigurations(self.runName())
+        
+        self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None) 
     
     def __getattr__(self, name):
         return self._rawConfig[name]

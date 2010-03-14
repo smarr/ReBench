@@ -103,6 +103,9 @@ Argument:
             
         reporters.append(CliReporter(self.config))
         
+        if self.config.visualization:
+            reporters.append(DiagramResultReporter(self.config))
+        
         executor = Executor(self.config, data, Reporters(reporters))
         
         executor.execute()
