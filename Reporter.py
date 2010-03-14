@@ -166,12 +166,169 @@ class FileReporter(TextReporter):
         for line in self._generate_all_output(dataAggregator.getData(), ()):
             self._file.write(line + "\n")
 
-
-class ResultReporter(Reporter):
-    pass
-
 class DiagramResultReporter(Reporter):
-    pass
+    
+    def __init__(self, configurator):
+        self._configurator = configurator
+        self._separateByMapping = {'cores' : 1, 'input_sizes' : 2, 'variable_values': 3}
+        self._separateByIndexes = None
+    
+    def configurationCompleted(self, runId, statistics):
+        pass
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        
+        data = self._filter_by_criterion(dataAggregator.getData())
+        data = self._separate(data)
+        data = self._group(data)
+        data = self._sortAndName(data)
+        
+        self._prepareDiagram
+        
+    def _filter_by_criterion(self, data):
+        if 'criterion' in self._configurator.visualization:
+            return self._filter_by_criterion_(data, self._configurator.visualization['criterion'])
+        else:
+            return data
+        
+    def _filter_by_criterion_(self, data, criterion):
+        assert type(data) is dict
+        
+        result = {}
+        
+        for key, val in data.iteritems():
+            if type(val) is dict:
+                result[key] = self._filter_by_criterion_(val, criterion)
+            else:
+                assert type(val) is list
+                # rem: that is not correct, from a strict point of view, we are not ensuring,
+                #      that all values in the dict are lists...
+                if key == criterion:
+                    return val
+        
+        return result
+    
+    def _separate(self, data):
+        if 'separateBy' in self._configurator.visualization:
+            separateBy =  self._configurator.visualization['separateBy']
+            if type(separateBy) is not list:
+                separateBy = [separateBy]
+                
+            return self._separate_(data, separateBy)
+        else:
+            return data
+        
+    def _separate_(self, data, separateBy):
+        separateByIndexes = []
+        for dimName in separateBy:
+            assert dimName in self._separateByMapping, "The separateBy criterion '%s' you used is not known, has to be specified in DiagramResultReporter()._separateByMapping" % dimName
+            dim = self._separateByMapping[dimName]
+            separateByIndexes.append(dim)
+        
+        self._separateByIndexes = separateByIndexes
+        
+        result = {}
+        self._separate__(data, (), result, (), separateByIndexes)
+        
+        return result
+        
+    def _separate__(self, data, path, result, separateBy, separateByIndexes):
+        if type(data) is dict:
+            for key, val in data.iteritems():
+                newPath = path
+                newSeparateBy = separateBy
+                if (len(path) + len(separateBy)) in separateByIndexes:
+                    newSeparateBy += (key,)
+                else:
+                    newPath += (key,)
+                
+                self._separate__(val, newPath, result, newSeparateBy, separateByIndexes)
+        else:
+            assert type(data) is list
+            
+            result = result.setdefault(separateBy, {})
+            
+            for item in path[:-1]:
+                result = result.setdefault(item, {})
+            
+            result[path[-1]] = data
+
+    def _group(self, data):
+        if 'groupBy' in self._configurator.visualization:
+            groupBy =  self._configurator.visualization['groupBy']
+            if type(groupBy) is not list:
+                groupBy = [groupBy]
+                
+            return self._group_(data, groupBy)
+        else:
+            return data
+        
+    def _group_(self, data, groupBy):
+        indexes = []
+        for dimName in groupBy:
+            assert dimName in self._separateByMapping, "The separateBy criterion '%s' you used is not known, has to be specified in DiagramResultReporter()._separateByMapping" % dimName
+            dim = self._separateByMapping[dimName]
+            origDim = dim
+            # we need to adjust them since we might have separated out data already
+            for sepI in self._separateByIndexes:
+                assert sepI != origDim, "You can not groupBy '%s' since it was already separated out" % dimName
+                if sepI < origDim:
+                    dim -= 1
+
+            indexes.append(dim)
+            
+        # this is the already separated data
+        for sepKey, val in data.iteritems():
+            result = {}
+            self._separate__(val, (), result, (), indexes)
+            data[sepKey] = result
+        
+        return data
+    
+    def _sortAndName(self, data):
+        if 'columnName' in self._configurator.visualization:
+            columnName = self._configurator.visualization['columnName']
+        else:
+            columnName = None
+        
+        if 'sortBy' in self._configurator.visualization:
+            sortBy = self._configurator.visualization['sortBy'].copy() #copy since we use popitem() to access the only expected item
+            
+            # REM: here we do hard coded stuff!!!
+            assert type(sortBy) is dict
+            assert len(sortBy) == 1, "At the moment only a single sortBy criterium is supported."
+            key, val = sortBy.popitem()
+            
+            assert key == 'stats', "It is only implemented to sort for statistic properties ATM..."
+            
+            # TODO: fix this, I feel pain while writting this, lets hope it is
+            #       fast enough... how often do i have calculated the StatProps for every single item now???
+            def myCmp(x, y):
+                statX = StatisticProperties(x[1], self._configurator.statistics['confidence_level'])
+                statY = StatisticProperties(y[1], self._configurator.statistics['confidence_level'])
+                return cmp(statX.__dict__[val], statY.__dict__[val])
+                
+            def name(benchCfg):
+                if columnName:
+                    return columnName.format(benchCfg.__dict__)
+                else:
+                    return str(benchCfg)
+                
+            #REM: lazy... assert that we have actually used separateBy and groupBy already
+            for separateFile, sepData in data.iteritems():
+                assert type(separateFile) is tuple
+                for group, groupData in sepData.items():
+                    assert type(group) is tuple
+                    assert type(groupData) is dict
+                    
+                    #now only the benchConfig keys and the data lists should be left
+                    list = [(name(key), points) for key, points in groupData.iteritems()]
+                    list.sort(cmp=myCmp)
+                    
+                    sepData[group] = list
+                    # REM: list can be unzipped later by: nameList, valList = zip(*list)
+        
+        return data
 
 
 class ReporterOld:
