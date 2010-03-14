@@ -29,121 +29,83 @@
 # THE SOFTWARE.
 
 import sys
-import logging
-import traceback
-import yaml
 
 from Executor import Executor
-from Reporter import Reporter
+from Reporter import *
+from Configurator import Configurator
+from DataAggregator import DataAggregator
 from optparse import OptionParser
 
-from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
-
-
-quick = layer("quick")
+#from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
 
 class ReBench:
     
     def __init__(self):
-        self.version = "0.0.9"
+        self.version = "0.1.1"
         self.options = None
         self.config = None
     
     def shell_options(self):
-        usage = """%prog [options] [run_name]
+        usage = """%prog [options] <config> [run_name]
         
 Argument:
+  config    required argument, file containing the run definition to be executed
   run_name  optional argument, the name of a run definition
-                 from the config file"""
+            from the config file"""
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
         options.add_option("-q", "--quick", action="store_true", dest="quick",
                            help="Do a quick benchmark run instead a full, statistical relevant experiment.", default=False)
-        options.add_option("-p", "--profile", action="store_true", dest="profile",
-                           help="Profile dynamic characteristics instead measuring execution time.",
-                           default=False)
+        #TODO: Profiling is part of the run definition, not a cmd-line option...
+        #options.add_option("-p", "--profile", action="store_true", dest="profile",
+        #                   help="Profile dynamic characteristics instead measuring execution time.",
+        #                   default=False)
         options.add_option("-d", "--debug", action="store_true", dest="debug", default=False,
                            help="Enable debug output.")
         options.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
                            help="Out more details in the report.")
-        options.add_option("-c", "--config", dest="config", default="%s.conf"%(self.__class__.__name__.lower()),
-                           help="Config file to be used.")
+
         #options.add_option("-r", "--run", dest="run", default=None,
         #                   help="Specify a run definition to be used form given config.")
         options.add_option("-n", "--without-nice", action="store_false", dest="use_nice",
                            help="Used for debugging and environments without the tool nice.",
-                           default=False)
+                           default=True)
         options.add_option("-o", "--out", dest="output_file", default=None,
                            help="Report is saved to the given file. Report is always verbose.")
+        options.add_option("-c", "--clean", action="store_true", dest="clean", default=False,
+                           help="Discard old data from the data file (configured in the run description).")
         return options
         
-    def load_config(self, file_name):
-        try:
-            f = file(file_name, 'r')
-            return yaml.load(f)
-        except IOError:
-            logging.error("There was an error opening the config file (%s)."%(file_name))
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
-        except yaml.YAMLError:
-            logging.error("Failed parsing the config file (%s)."%(file_name))
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1) 
+
     
     def run(self, argv = None):
         if argv is None:
             argv = sys.argv
             
-        self.options, args = self.shell_options().parse_args(argv[1:])
-        if len(args) > 0:
-            self.options.run = args[0]
-        else:
-            self.options.run = None
+        cli_options, args = self.shell_options().parse_args(argv[1:])
+        if len(args) < 1:
+            logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
+            sys.exit(-1)
         
-        if self.options.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.debug("Enabled debug output.")
-        else:
-            logging.basicConfig(level=logging.ERROR)
-            
-        if self.options.quick:
-            globalActivateLayer(quick)
 
+        self.config = Configurator(args[0], cli_options, args[1:])
+        
+        self.execute_run()
+        
+    def execute_run(self):
+        logging.debug("execute run: %s"%(self.config.runName()))
+        
+        data     = DataAggregator(self.config.dataFileName(), self.config.options.clean, True)
+        
+        reporters = []
+        if self.config.options.output_file:
+            reporters.append(FileReporter(self.config.options.output_file, self.config))
             
-        self.config = self.load_config(self.options.config)
-        # add some basic options to config
-        self.config["options"] = {}
-        self.config["options"]["use_nice"] = self.options.use_nice
-                
-        run = self.extract_rundefinition_from_options()
-        if run is None:
-            run = self.config["standard_run"]
-            
-        self.execute_run(run)
+        reporters.append(CliReporter(self.config))
         
-    def execute_run(self, run):
-        logging.debug("execute run: %s"%(run))
+        executor = Executor(self.config, data, Reporters(reporters))
         
-        if type(run) == str:
-            run = self.config["run_definitions"][run]
-        
-        executor = Executor(self.config, **run)
-        reporter = Reporter(self.config, self.options.output_file)
-        
-        executor.set_reporter(reporter)
         executor.execute()
-        
-        results = executor.get_results()
-        
-        reporter.final_report(results)
-            
-    def extract_rundefinition_from_options(self):
-        if self.options.run:
-            return self.options.run
-        else:
-            # TODO: implement complex CLI interface to provide adhoc run definitions 
-            pass
-
 
 # remember __import__(), obj.__dict__["foo"] == obj.foo
     

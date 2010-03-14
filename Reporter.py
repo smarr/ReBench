@@ -19,13 +19,162 @@
 # THE SOFTWARE.
 
 from __future__ import with_statement
-from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer
+from datetime import datetime
+import logging
+from Statistics import StatisticProperties
+from contextpy import layer, after, globalActivateLayer
+# proceed, activelayer, activelayers, around, before, base,
 
 benchmark = layer("benchmark")
 profile = layer("profile")
 log_to_file = layer("log_to_file")
 
 class Reporter:
+
+    # only domain specific stuff here..., we are not interested in the details
+    # and general logging here
+    #def info(self, msg, level = None):
+    #    pass
+    #
+    #def warning(self, msg, level = None):
+    #    pass
+    #
+    #def failure(self, msg, level = None):
+    #    pass
+    #
+    #def beginSeparatLog(self, task, level = None):
+    #    pass
+    #
+    #def endSeparatLog(self, task, level = None):
+    #    pass
+    
+    def configurationCompleted(self, runId, statistics):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        raise NotImplementedError('Subclass responsibility')
+
+class Reporters(Reporter):
+    """Distributes the information to all registered reporters."""
+    
+    def __init__(self, reporters):
+        if type(reporters) is list:
+            self._reporters = reporters
+        else:
+            self._reporters = [reporters]
+
+    def configurationCompleted(self, runId, statistics):
+        for reporter in self._reporters:
+            reporter.configurationCompleted(runId, statistics)
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        for reporter in self._reporters:
+            reporter.jobCompleted(configurations, dataAggregator)
+
+class TextReporter(Reporter):
+    
+    def __init__(self, configurator):
+        self._configurator = configurator
+    
+    def _configuration_details(self, runId, statistics):
+        result = []
+        
+        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
+        
+        for criterion in criteria:
+            result.append(" %s" % criterion)
+            
+        result.append(" = ")
+        
+        self._output_stats(result, statistics)
+            
+        return result
+    
+    def _output_stats(self, outputList, statistics):
+        for field, value in statistics.__dict__.iteritems():
+            if not field.startswith('_'):
+                outputList.append("%s: %s " % (field, value))
+    
+    def _generate_all_output(self, data, path):
+        assert type(data) is dict or type(data) is list
+        
+        if type(data) is dict:
+            for key, val in data.iteritems():
+                for result in self._generate_all_output(val, path + (key,)):
+                    yield result
+        else:
+            stats = StatisticProperties(data, 
+                                        self._configurator.statistics['confidence_level'])
+            
+            out = []
+            for item in path:
+                out.append(str(item))
+                
+            out = [ " ".join(out) + " " ]
+            
+            self._output_stats(out, stats)
+            
+            result = "".join(out)
+            yield result
+
+class CliReporter(TextReporter):
+    """ Reports to standard out using the logging framework """
+    
+    def __init__(self, configurator):
+        TextReporter.__init__(self, configurator)
+    
+    def configurationCompleted(self, runId, statistics):
+        result = []
+        result.append("[%s] Configuration completed: " % datetime.now())
+        
+        result += self._configuration_details(runId, statistics) 
+            
+        result.append("\n")
+        
+        result = "".join(result)
+        
+        logging.debug(result)
+
+    def jobCompleted(self, configurations, dataAggregator):
+        logging.info("[%s] Job completed" % datetime.now())
+        for line in self._generate_all_output(dataAggregator.getData(), ()):
+            logging.info(line)
+    
+    
+
+class FileReporter(TextReporter):
+    """ should be mainly a log file
+        data is the responsibility of the DataAggregator
+    """
+    
+    def __init__(self, fileName, configurator):
+        TextReporter.__init__(self, configurator)
+        self._file = open(fileName, 'a+')
+        
+    def configurationCompleted(self, runId, statistics):
+        result = []
+        result.append("[%s] Configuration completed: " % datetime.now())
+        
+        result += self._configuration_details(runId, statistics) 
+            
+        result.append("\n")
+        
+        self._file.writelines(result)
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        self._file.write("[%s] Job completed\n" % datetime.now())
+        for line in self._generate_all_output(dataAggregator.getData(), ()):
+            self._file.write(line + "\n")
+
+
+class ResultReporter(Reporter):
+    pass
+
+class DiagramResultReporter(Reporter):
+    pass
+
+
+class ReporterOld:
     
     def __init__(self, config, output_file = None):
         self.config = config

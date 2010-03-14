@@ -18,36 +18,45 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
+from DataAggregator import DataPoint
 
 class Performance:
-  """Performance provides a common interface and some helper functionality
-     to evaluate the output of benchmarks and to determine measured performance
-     values.
-  """
-  
-  # definition of some regular expression to identify erroneous runs
-  re_error    = re.compile("Error")
-  re_segfault = re.compile("Segmentation fault")
-  re_buserror = re.compile("Bus error") 
-  
-  def acquire_command(self, command):
-    return command
-
-  def parse_data(self, data):
-    pass
-
-  def check_for_error(self, line):
-    """Check whether the output line contains one of the common error
-       messages. If its an erroneous run, the result has to be discarded.
+    """Performance provides a common interface and some helper functionality
+       to evaluate the output of benchmarks and to determine measured performance
+       values.
     """
-    if self.re_error.search(line):
-      return True
-    if self.re_segfault.search(line):
-      return True
-    if self.re_buserror.search(line):
-      return True
     
-    return False
+    # definition of some regular expression to identify erroneous runs
+    re_error    = re.compile("Error")
+    re_segfault = re.compile("Segmentation fault")
+    re_buserror = re.compile("Bus error")
+    
+    def __init__(self):
+        self._otherErrorDefinitions = None
+    
+    def acquire_command(self, command):
+        return command
+    
+    def parse_data(self, data):
+        raise NotImplementedError()
+    
+    def check_for_error(self, line):
+        """Check whether the output line contains one of the common error
+           messages. If its an erroneous run, the result has to be discarded.
+        """
+        if self.re_error.search(line):
+            return True
+        if self.re_segfault.search(line):
+            return True
+        if self.re_buserror.search(line):
+            return True
+        
+        if self._otherErrorDefinitions:
+            for regEx in self._otherErrorDefinitions:
+                if regEx.search(line):
+                    return True
+        
+        return False
 
 class LogPerformance(Performance):
   """LogPerformance is the standard for ReBench.
@@ -135,6 +144,40 @@ class TimePerformance(Performance):
             total = time
     
     return (total, result)
+
+class TestVMPerformance(Performance):
+    """Perfromance reader for the test case and the definitions
+       in test/test.conf
+    """
+    
+    re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
+    
+    def __init__(self):
+        self._otherErrorDefinitions = [re.compile("FAILED")]
+    
+    def parse_data(self, data):
+        results = []
+        total = None
+        
+        
+        for line in data.split("\n"):
+            if self.check_for_error(line):
+                raise RuntimeError("Output of bench program indicated error.")
+            
+            m = TestVMPerformance.re_time.match(line)
+            if m:
+                val = DataPoint(float(m.group(2)), None, m.group(1))
+                if val.isTotal():
+                    assert total is None
+                    total = val.time
+                results.append(val)
+        
+        if total is None:
+            raise RuntimeError("Output of bench program did not contain a total value")
+        
+        return (total, results)
+
+
 
 class TestPerformance(Performance):
     
