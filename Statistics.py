@@ -33,6 +33,7 @@ class StatisticProperties:
            Forthermore, several other simple properties are determined.
         """
         self.mean       = numpy.mean(self._dataSamples)
+        self.median     = numpy.median(self._dataSamples)
         self.stdDev     = numpy.std(self._dataSamples)
         self.numSamples = len(self._dataSamples)
 
