@@ -25,6 +25,14 @@ from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 # proceed, activelayer, activelayers, around, before, base,
 
+import matplotlib
+#check http://matplotlib.sourceforge.net/faq/installing_faq.html#what-is-a-backend for backends
+matplotlib.use('AGG') #PDF crashes with test.conf :(
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+
 benchmark = layer("benchmark")
 profile = layer("profile")
 log_to_file = layer("log_to_file")
@@ -183,8 +191,136 @@ class DiagramResultReporter(Reporter):
         data = self._group(data)
         data = self._sortAndName(data)
         
-        self._prepareDiagram
+        for characteristics, groups in data.iteritems():
+            self._createDiagram(characteristics, groups)
+    
+    def _createDiagram(self, character, groups):
+        assert type(character) is tuple
+        assert type(groups) is dict
         
+        fileName = self._configurator.visualization.get('fileName', "%s-%s.pdf") % character
+        
+        fig, ax1 = self._createFigure()
+        data, titles = self._prepareData(groups)
+        
+        bp = self._plotBoxes(data)
+        self._brushUpBoxes(bp, data, ax1)
+        
+        self._addDataLabels(ax1, titles, len(data))
+        self._addAdditionalXAxisValueLabels(len(data), ax1)
+        self._addLegend()
+        
+        plt.savefig(fileName)
+        
+    def _addLegend(self):
+        # Finally, add a basic legend
+        plt.figtext(0.80, 0.08,  '500 Random Numbers' ,
+                   backgroundcolor=self._boxColors[0], color='black', weight='roman',
+                   size='x-small')
+        plt.figtext(0.80, 0.045, 'IID Bootstrap Resample',
+        backgroundcolor=self._boxColors[1],
+                   color='white', weight='roman', size='x-small')
+        plt.figtext(0.80, 0.015, '*', color='white', backgroundcolor='silver',
+                   weight='roman', size='medium')
+        plt.figtext(0.815, 0.013, ' Average Value', color='black', weight='roman',
+                   size='x-small')
+
+        
+    def _addAdditionalXAxisValueLabels(self, numBoxes, ax1):
+        # Due to the Y-axis scale being different across samples, it can be
+        # hard to compare differences in medians across the samples. Add upper
+        # X-axis tick labels with the sample medians to aid in comparison
+        # (just use two decimal places of precision)
+        pos = np.arange(numBoxes)+1
+        upperLabels = [str(np.round(s, 2)) for s in self._medians]
+        weights = ['bold', 'semibold']
+        for tick,label in zip(range(numBoxes),ax1.get_xticklabels()):
+            k = tick % 2
+            ax1.text(pos[tick], self._top-(self._top*0.05), upperLabels[tick],
+                     horizontalalignment='center', size='x-small', weight=weights[k],
+                     color=self._boxColors[k])
+    
+    def _addDataLabels(self, ax1, titles, numBoxes):
+        # Set the axes ranges and axes labels
+        ax1.set_xlim(0.5, numBoxes+0.5)
+        self._top = 900
+        bottom = 600
+        ax1.set_ylim(bottom, self._top)
+        xtickNames = plt.setp(ax1, xticklabels=titles)
+        plt.setp(xtickNames, rotation=45, fontsize=8)
+    
+    def _createFigure(self):
+        title = self._configurator.visualization.get('title', '')
+        fig = plt.figure(figsize=(10,6))
+        #fig.canvas.set_window_title(title)
+        ax1 = fig.add_subplot(111)
+        plt.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
+
+        # Add a horizontal grid to the plot, but make it very light in color
+        # so we can use it for reading data values but not be distracting
+        ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+              alpha=0.5)
+        
+        # Hide these grid behind plot objects
+        ax1.set_axisbelow(True)
+        ax1.set_title(title)
+        ax1.set_xlabel(self._configurator.visualization.get('labelXAxis', ''))
+        ax1.set_ylabel(self._configurator.visualization.get('labelYAxis', ''))
+        
+        return fig, ax1
+    
+    def _plotBoxes(self, data):
+        bp = plt.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
+        plt.setp(bp['boxes'], color='black')
+        plt.setp(bp['whiskers'], color='black')
+        plt.setp(bp['fliers'], color='red', marker='+')
+        
+        return bp
+    
+    def _brushUpBoxes(self, bp, data, ax1):
+        # Now fill the boxes with desired colors
+        self._boxColors = ['darkkhaki','royalblue']
+        numBoxes = len(data)
+        self._medians = range(numBoxes)
+        for i in range(numBoxes):
+            box = bp['boxes'][i]
+            boxX = []
+            boxY = []
+            for j in range(5):
+                boxX.append(box.get_xdata()[j])
+                boxY.append(box.get_ydata()[j])
+            boxCoords = zip(boxX,boxY)
+            # Alternate between Dark Khaki and Royal Blue
+            k = i % 2
+            boxPolygon = Polygon(boxCoords, facecolor=self._boxColors[k])
+            ax1.add_patch(boxPolygon)
+            # Now draw the median lines back over what we just filled in
+            med = bp['medians'][i]
+            medianX = []
+            medianY = []
+            for j in range(2):
+                medianX.append(med.get_xdata()[j])
+                medianY.append(med.get_ydata()[j])
+                plt.plot(medianX, medianY, 'k')
+                self._medians[i] = medianY[0]
+            # Finally, overplot the sample averages, with horixzontal alignment
+            # in the center of each box
+            plt.plot([np.average(med.get_xdata())], [np.average(data[i])],
+                   color='w', marker='*', markeredgecolor='k')
+    
+    def _prepareData(self, groups):
+        #hm, ignore grouping for now, we will incooperate that later if necessary
+        data = []
+        titles = []
+        for group, values in groups.iteritems():
+            tmpTiles, tmpVals = zip(*values)
+            
+            data += tmpVals
+            titles += [group[0] + " " + title for title in tmpTiles] 
+        
+        return data, titles
+        
+    
     def _filter_by_criterion(self, data):
         if 'criterion' in self._configurator.visualization:
             return self._filter_by_criterion_(data, self._configurator.visualization['criterion'])
