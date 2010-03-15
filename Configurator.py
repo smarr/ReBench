@@ -223,4 +223,7 @@ class BenchmarkConfig:
                 hash(self.extra_args) ^ 
                 hash(self.suite['name']) ^
                 hash(self.vm['name']))
+    
+    def as_tuple(self):
+        return (self.name, self.vm['name'], self.suite['name'], self.extra_args)
         

@@ -178,7 +178,8 @@ class DiagramResultReporter(Reporter):
     
     def __init__(self, configurator):
         self._configurator = configurator
-        self._separateByMapping = {'cores' : 1, 'input_sizes' : 2, 'variable_values': 3}
+        self._separateByMapping = {'bench' : 0, 'vm' : 1, 'suite' : 2, 'extra_args' : 3,
+                                   'cores' : 4, 'input_sizes' : 5, 'variable_values': 6}
         self._separateByIndexes = None
     
     def configurationCompleted(self, runId, statistics):
@@ -186,13 +187,29 @@ class DiagramResultReporter(Reporter):
     
     def jobCompleted(self, configurations, dataAggregator):
         
-        data = self._filter_by_criterion(dataAggregator.getData())
+        data = self._unfoldConfig(dataAggregator.getData())
+        data = self._filter_by_criterion(data)
         data = self._separate(data)
         data = self._group(data)
         data = self._sortAndName(data)
         
         for characteristics, groups in data.iteritems():
             self._createDiagram(characteristics, groups)
+    
+    def _unfoldConfig(self, data):
+        """Unfold the config object to be able to query data better"""
+        result = {}
+        for cfg, items in data.iteritems():
+            r = result
+            cfgTuple = cfg.as_tuple()
+            
+            for i in cfgTuple[:-1]:
+                r = r.setdefault(i, {})
+            
+            r[cfgTuple[-1]] = items
+            
+        return result    
+        
     
     def _createDiagram(self, character, groups):
         assert type(character) is tuple
@@ -440,15 +457,18 @@ class DiagramResultReporter(Reporter):
             # TODO: fix this, I feel pain while writting this, lets hope it is
             #       fast enough... how often do i have calculated the StatProps for every single item now???
             def myCmp(x, y):
+                if len(x[1]) == 0 or len(y[1]) == 0:
+                    return cmp(x[1], y[1])
+                
                 statX = StatisticProperties(x[1], self._configurator.statistics['confidence_level'])
                 statY = StatisticProperties(y[1], self._configurator.statistics['confidence_level'])
                 return cmp(statX.__dict__[val], statY.__dict__[val])
                 
-            def name(benchCfg):
+            def name(tuple):
                 if columnName:
-                    return columnName.format(benchCfg.__dict__)
+                    return columnName.format(*tuple)
                 else:
-                    return str(benchCfg)
+                    return str(tuple)
                 
             #REM: lazy... assert that we have actually used separateBy and groupBy already
             for separateFile, sepData in data.iteritems():
@@ -457,7 +477,9 @@ class DiagramResultReporter(Reporter):
                     assert type(group) is tuple
                     assert type(groupData) is dict
                     
-                    #now only the benchConfig keys and the data lists should be left
+                    groupData = self._flatten(groupData)
+                    
+                    #now the tuple with potential names and the data lists should be left
                     list = [(name(key), points) for key, points in groupData.iteritems()]
                     list.sort(cmp=myCmp)
                     
@@ -466,6 +488,18 @@ class DiagramResultReporter(Reporter):
         
         return data
 
+    def _flatten(self, data):
+        result = {}
+        self._flatten_((), data, result)
+        return result
+    
+    def _flatten_(self, path, data, result):
+        for key, val in data.iteritems():
+            newPath = path + (key, )
+            if type(val) is dict:
+                self._flatten_(newPath, val, result)
+            else:
+                result[newPath] = val
 
 class ReporterOld:
     
