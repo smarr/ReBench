@@ -109,11 +109,11 @@ class JGFPerformance(Performance):
                 if not m:
                     m = self.re_sec3.match(line)
 
-                if m:
-                    time = float(m.group(2))
-                    val = DataPoint(time, None)
-                    result.append(val)
-                    #print "DEBUG OUT:" + time
+            if m:
+                time = float(m.group(2))
+                val = DataPoint(time, None)
+                result.append(val)
+                #print "DEBUG OUT:" + time
 
         if not time:
             print "Failed parsing: " + data
