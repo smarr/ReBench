@@ -220,14 +220,24 @@ class DiagramResultReporter(Reporter):
         fig, ax1 = self._createFigure()
         data, titles = self._prepareData(groups)
         
+        self._estimanteInterval(data)
+        
         bp = self._plotBoxes(data)
         self._brushUpBoxes(bp, data, ax1)
         
         self._addDataLabels(ax1, titles, len(data))
-        self._addAdditionalXAxisValueLabels(len(data), ax1)
+        self._addAdditionalXAxisValueLabels(len(bp['boxes']), ax1)
         self._addLegend()
         
         plt.savefig(fileName)
+        
+    def _estimanteInterval(self, data):
+        result = []
+        for list in data:
+            result += list
+            
+        self._top = max(result)    if result else 0
+        self._bottom = min(result) if result else 0
         
     def _addLegend(self):
         # Finally, add a basic legend
@@ -260,9 +270,7 @@ class DiagramResultReporter(Reporter):
     def _addDataLabels(self, ax1, titles, numBoxes):
         # Set the axes ranges and axes labels
         ax1.set_xlim(0.5, numBoxes+0.5)
-        self._top = 900
-        bottom = 600
-        ax1.set_ylim(bottom, self._top)
+        ax1.set_ylim(self._bottom, self._top)
         xtickNames = plt.setp(ax1, xticklabels=titles)
         plt.setp(xtickNames, rotation=45, fontsize=8)
     
@@ -297,7 +305,13 @@ class DiagramResultReporter(Reporter):
     def _brushUpBoxes(self, bp, data, ax1):
         # Now fill the boxes with desired colors
         self._boxColors = ['darkkhaki','royalblue']
-        numBoxes = len(data)
+        numBoxes = len(bp['boxes']) #len(data)
+        
+        if numBoxes != len(bp['boxes']):
+            foo
+        
+        assert numBoxes == len(bp['boxes'])
+        
         self._medians = range(numBoxes)
         for i in range(numBoxes):
             box = bp['boxes'][i]
