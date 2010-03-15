@@ -246,7 +246,8 @@ class Executor:
                     
                     self._exec_configuration(runId)
                     
-                    runsCompleted = runsCompleted + 1
+                    runsCompleted += 1
+                    runsRemaining -= 1
                     
                 self._reporter.jobCompleted(configs, self._data)
 
