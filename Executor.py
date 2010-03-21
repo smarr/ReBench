@@ -49,7 +49,7 @@ class Executor:
             cmdline += "ulimit -t %s && "%(bench_cfg.suite['ulimit'])
                 
         if self._configurator.options.use_nice:
-            cmdline += "sudo nice -n-20 "
+            cmdline += "nice -n-20 "
         
         vm_cmd = "%s/%s %s" % (os.path.abspath(bench_cfg.vm['path']),
                                bench_cfg.vm['binary'],
