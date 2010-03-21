@@ -95,13 +95,17 @@ class JGFPerformance(Performance):
     re_sec2 = re.compile(r"^(?:Section2:.*:)(.*)(?::.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")            # for the benchmarks from sec 2
     re_sec3 = re.compile(r"^(?:Section3:.*:)(.*)(?::Run:.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")        # for the benchmarks from sec 3, the time of 'Run' is used
 
+    re_invalid = re.compile("Validation failed")
+
+    def __init__(self):
+        self._otherErrorDefinitions = [JGFPerformance.re_invalid]
+
     def parse_data(self, data):
         result = []
     
         for line in data.split("\n"):
-            #print "DEBUG OUT:" + line
             if self.check_for_error(line):
-                return None
+                raise RuntimeError("Output of bench program indicated error.")
     
             m = self.re_barrierSec1.match(line)
             if not m:
@@ -117,7 +121,7 @@ class JGFPerformance(Performance):
 
         if not time:
             print "Failed parsing: " + data
-            return None    
+            raise RuntimeError("Output of bench program did not contain a total value")
 
         return (time, result)
 
