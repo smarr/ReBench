@@ -21,6 +21,7 @@
 from __future__ import with_statement
 from datetime import datetime
 import logging
+from copy import copy
 from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 # proceed, activelayer, activelayers, around, before, base,
@@ -191,7 +192,7 @@ class DiagramResultReporter(Reporter):
         data = self._filter_by_criterion(data)
         data = self._separate(data)
         data = self._group(data)
-        data = self._sortAndName(data)
+        data = self._sort(data)
         
         for characteristics, groups in data.iteritems():
             self._createDiagram(characteristics, groups)
@@ -212,10 +213,13 @@ class DiagramResultReporter(Reporter):
         
     
     def _createDiagram(self, character, groups):
-        assert type(character) is tuple
+        assert type(character) is tuple, "character was expected to be a tuple but is " + str(type(character)) + ":" + str(character)
         assert type(groups) is dict
         
-        fileName = self._configurator.visualization.get('fileName', "%s-%s.pdf") % character
+        try:
+            fileName = self._configurator.visualization.get('fileName', "%s-%s.pdf") % character
+        except TypeError:
+            raise ValueError("fileName template given in configuration does not match the given arguments. Tpl: " + self._configurator.visualization.get('fileName', "%s-%s.pdf") + " args: " + character.__str__())
         
         fig, ax1 = self._createFigure()
         data, titles = self._prepareData(groups)
@@ -241,6 +245,8 @@ class DiagramResultReporter(Reporter):
         
     def _addLegend(self):
         # Finally, add a basic legend
+        return
+    
         plt.figtext(0.80, 0.08,  '500 Random Numbers' ,
                    backgroundcolor=self._boxColors[0], color='black', weight='roman',
                    size='x-small')
@@ -272,7 +278,7 @@ class DiagramResultReporter(Reporter):
         ax1.set_xlim(0.5, numBoxes+0.5)
         ax1.set_ylim(self._bottom, self._top)
         xtickNames = plt.setp(ax1, xticklabels=titles)
-        plt.setp(xtickNames, rotation=45, fontsize=8)
+        plt.setp(xtickNames, rotation=90, fontsize=8)
     
     def _createFigure(self):
         title = self._configurator.visualization.get('title', '')
@@ -340,14 +346,30 @@ class DiagramResultReporter(Reporter):
                    color='w', marker='*', markeredgecolor='k')
     
     def _prepareData(self, groups):
+        if 'columnName' in self._configurator.visualization:
+            columnName = self._configurator.visualization['columnName']
+        else:
+            columnName = None
+        
         #hm, ignore grouping for now, we will incooperate that later if necessary
         data = []
         titles = []
         for group, values in groups.iteritems():
-            tmpTiles, tmpVals = zip(*values)
+            tmpTitles, tmpVals = zip(*values)
+            
+            def name(tuple):
+                if columnName:
+                    return columnName.format(*tuple)
+                else:
+                    return str(tuple)
             
             data += tmpVals
-            titles += [group[0] + " " + title for title in tmpTiles] 
+            
+            for title in tmpTitles:
+                if type(group) is str:
+                    titles.append(name((group,) + title))
+                else:
+                    titles.append(name(group + title))
         
         return data, titles
         
@@ -452,12 +474,7 @@ class DiagramResultReporter(Reporter):
         
         return data
     
-    def _sortAndName(self, data):
-        if 'columnName' in self._configurator.visualization:
-            columnName = self._configurator.visualization['columnName']
-        else:
-            columnName = None
-        
+    def _sort(self, data):
         if 'sortBy' in self._configurator.visualization:
             sortBy = self._configurator.visualization['sortBy'].copy() #copy since we use popitem() to access the only expected item
             
@@ -476,26 +493,21 @@ class DiagramResultReporter(Reporter):
                 
                 statX = StatisticProperties(x[1], self._configurator.statistics['confidence_level'])
                 statY = StatisticProperties(y[1], self._configurator.statistics['confidence_level'])
-                return cmp(statX.__dict__[val], statY.__dict__[val])
-                
-            def name(tuple):
-                if columnName:
-                    return columnName.format(*tuple)
-                else:
-                    return str(tuple)
+                #print val, statX.__dict__[val], statY.__dict__[val], cmp(statX.__dict__[val], statY.__dict__[val])
+                return cmp(statY.__dict__[val], statX.__dict__[val])
                 
             #REM: lazy... assert that we have actually used separateBy and groupBy already
             for separateFile, sepData in data.iteritems():
                 assert type(separateFile) is tuple
                 for group, groupData in sepData.items():
-                    assert type(group) is tuple
+                    assert type(group) is tuple or type(group) is str, "Group is not a tuple or string: " + str(type(group)) + " " + str(group)
                     assert type(groupData) is dict
                     
                     groupData = self._flatten(groupData)
                     
                     #now the tuple with potential names and the data lists should be left
-                    list = [(name(key), points) for key, points in groupData.iteritems()]
-                    list.sort(cmp=myCmp)
+                    list = [(key, points) for key, points in groupData.iteritems()]
+                    list = sorted(list, cmp=myCmp)
                     
                     sepData[group] = list
                     # REM: list can be unzipped later by: nameList, valList = zip(*list)
