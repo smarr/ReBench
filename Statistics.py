@@ -4,7 +4,6 @@
 
 import numpy
 import math
-#import scipy.stats as stats
 import scipy.stats.distributions as distributions
 
 

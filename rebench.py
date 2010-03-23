@@ -35,6 +35,7 @@ from Reporter import *
 from Configurator import Configurator
 from DataAggregator import DataAggregator
 from optparse import OptionParser
+import logging
 
 #from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
 
