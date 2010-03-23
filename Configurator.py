@@ -183,7 +183,8 @@ class BenchmarkConfig:
     @classmethod
     def getConfig(cls, name, suiteName, vmName, extra_args = None):
         tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args, False)
-        assert tmp in cls._registry
+        if tmp not in cls._registry:
+            raise ValueError("Requested configuration is not available: " + (cls, name, suiteName, vmName, extra_args).__str__())
         
         return cls._registry[tmp]
     

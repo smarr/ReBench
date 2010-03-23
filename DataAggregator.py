@@ -74,8 +74,12 @@ class DataAggregator(object):
         try:
             with open(self._dataFileName, 'r') as f:
                 for line in f:
-                    runId, value = self._deserializeDataPoint(line)
-                    self.addDataPoints(runId, value, True)
+                    try:
+                        runId, value = self._deserializeDataPoint(line)
+                        self.addDataPoints(runId, value, True)
+                    except ValueError, e:
+                        # Configuration is not available, skip data point
+                        logging.debug(e)
         except IOError:
             logging.info("No data loaded %s does not exist." % self._dataFileName)
                 
