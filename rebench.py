@@ -89,7 +89,7 @@ Argument:
             sys.exit(-1)
         
 
-        self.config = Configurator(args[0], cli_options, args[1:])
+        self.config = Configurator(args[0], cli_options, *args[1:])
         
         self.execute_run()
         
