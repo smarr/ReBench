@@ -263,7 +263,7 @@ class RunId:
     def _stringify(self, tuple):
         result = ()
         for item in tuple:
-            if isinstance(item, Number):
+            if isinstance(item, Number) or item is None:
                 result += (str(item), )
             else:
                 result += (item, )
