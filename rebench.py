@@ -31,7 +31,7 @@
 import sys
 
 from Executor import Executor
-from Reporter import *
+from Reporter import FileReporter, Reporters, CliReporter, DiagramResultReporter
 from Configurator import Configurator
 from DataAggregator import DataAggregator
 from optparse import OptionParser
