@@ -140,6 +140,10 @@ class Configurator:
                 
             if 'location' not in benchmark:
                 benchmark['location'] = vmDef['path']
+
+            # REM: not sure whether that is the best place to encode that default
+            if 'variable_values' not in bench:
+                benchmark['variable_values'] = []
              
             benchmark['vm'] = cleanVMDef.copy() 
             suiteDefs.append(benchmark)
@@ -168,7 +172,7 @@ class Configurator:
             
             bench['name'] = name
             bench['suite'] = cleanSuite
-            
+
             if 'performance_reader' not in bench:
                 bench['performance_reader'] = suite['performance_reader']
             

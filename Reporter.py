@@ -26,13 +26,16 @@ from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 # proceed, activelayer, activelayers, around, before, base,
 
-import matplotlib
-#check http://matplotlib.sourceforge.net/faq/installing_faq.html#what-is-a-backend for backends
-matplotlib.use('AGG') #PDF crashes with test.conf :(
+try:
+    import matplotlib
+    #check http://matplotlib.sourceforge.net/faq/installing_faq.html#what-is-a-backend for backends
+    matplotlib.use('AGG') #PDF crashes with test.conf :(
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Polygon
+except ImportError:
+    logging.info("matplotlib was not found, import failed: " + str(ImportError))
 
 benchmark = layer("benchmark")
 profile = layer("profile")

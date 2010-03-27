@@ -125,6 +125,32 @@ class JGFPerformance(Performance):
 
         return (time, result)
 
+class EPCCPerformance(Performance):
+    """EPCCPerformance is used to read the output of the EPCC barrier benchmarks.
+    """
+    barrier_time = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
+    
+    def parse_data(self, data):
+        result = []
+    
+        for line in data.split("\n"):
+            if self.check_for_error(line):
+                raise RuntimeError("Output of bench program indicated error.")
+    
+            m = self.barrier_time.match(line)
+
+            if m:
+                time = float(m.group(1))
+                val = DataPoint(time, None)
+                result.append(val)
+
+        if not time:
+            print "Failed parsing: " + data
+            raise RuntimeError("Output of bench program did not contain a total value")
+
+        return (time, result)
+
+
 class TimePerformance(Performance):
   """TimePerformance uses the systems time utility to allow measurement of
      unmodified programs or aspects which need to cover the whole program
