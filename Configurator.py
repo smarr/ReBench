@@ -38,9 +38,11 @@ class Configurator:
         
         if options.debug:
             logging.basicConfig(level=logging.DEBUG)
+            logging.getLogger().setLevel(logging.DEBUG)
             logging.debug("Enabled debug output.")
         else:
             logging.basicConfig(level=logging.ERROR)
+            logging.getLogger().setLevel(logging.ERROR)
             
         if options.quick:
             globalActivateLayer(layer("quick"))
