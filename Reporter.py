@@ -60,6 +60,9 @@ class Reporter:
     #def endSeparatLog(self, task, level = None):
     #    pass
     
+    def runFailed(self, runId):
+        raise NotImplementedError('Subclass responsibility')
+    
     def configurationCompleted(self, runId, statistics):
         raise NotImplementedError('Subclass responsibility')
     
@@ -75,6 +78,10 @@ class Reporters(Reporter):
         else:
             self._reporters = [reporters]
 
+    def runFailed(self, runId):
+        for reporter in self._reporters:
+            reporter.runFailed(runId)
+            
     def configurationCompleted(self, runId, statistics):
         for reporter in self._reporters:
             reporter.configurationCompleted(runId, statistics)
@@ -134,7 +141,19 @@ class CliReporter(TextReporter):
     
     def __init__(self, configurator):
         TextReporter.__init__(self, configurator)
-    
+
+    def runFailed(self, runId):
+        result = []
+        result.append("[%s] Run failed: " % datetime.now())
+
+        result += self._configuration_details(runId, {}) 
+
+        result.append("\n")
+
+        result = "".join(result)
+
+        logging.debug(result)    
+
     def configurationCompleted(self, runId, statistics):
         result = []
         result.append("[%s] Configuration completed: " % datetime.now())
@@ -162,6 +181,16 @@ class FileReporter(TextReporter):
     def __init__(self, fileName, configurator):
         TextReporter.__init__(self, configurator)
         self._file = open(fileName, 'a+')
+
+    def runFailed(self, runId):
+        result = []
+        result.append("[%s] Run failed: " % datetime.now())
+
+        result += self._configuration_details(runId, {}) 
+
+        result.append("\n")
+
+        self._file.writelines(result)
         
     def configurationCompleted(self, runId, statistics):
         result = []
@@ -185,6 +214,10 @@ class DiagramResultReporter(Reporter):
         self._separateByMapping = {'bench' : 0, 'vm' : 1, 'suite' : 2, 'extra_args' : 3,
                                    'cores' : 4, 'input_sizes' : 5, 'variable_values': 6}
         self._separateByIndexes = None
+
+    def runFailed(self, runId):
+        pass
+
     
     def configurationCompleted(self, runId, statistics):
         pass

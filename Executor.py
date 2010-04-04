@@ -119,6 +119,7 @@ class Executor:
             logging.warning("Run #%d of %s:%s failed"%(self._data.getNumberOfDataPoints(runId),
                                                        runId.cfg.vm['name'], runId.cfg.name))
             error = (consequent_erroneous_runs, erroneous_runs)
+            self._reporter.runFailed(runId)
         else:
             logging.debug(u"Output: %s"%(output))
             error = self._eval_output(output, runId, perf_reader, error)
