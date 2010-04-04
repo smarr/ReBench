@@ -95,7 +95,7 @@ class TextReporter(Reporter):
     def __init__(self, configurator):
         self._configurator = configurator
     
-    def _configuration_details(self, runId, statistics):
+    def _configuration_details(self, runId, statistics = None):
         result = []
         
         criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
@@ -110,6 +110,9 @@ class TextReporter(Reporter):
         return result
     
     def _output_stats(self, outputList, statistics):
+        if not statistics:
+            return
+        
         for field, value in statistics.__dict__.iteritems():
             if not field.startswith('_'):
                 outputList.append("%s: %s " % (field, value))
@@ -146,7 +149,7 @@ class CliReporter(TextReporter):
         result = []
         result.append("[%s] Run failed: " % datetime.now())
 
-        result += self._configuration_details(runId, {}) 
+        result += self._configuration_details(runId) 
 
         result.append("\n")
 
@@ -186,7 +189,7 @@ class FileReporter(TextReporter):
         result = []
         result.append("[%s] Run failed: " % datetime.now())
 
-        result += self._configuration_details(runId, {}) 
+        result += self._configuration_details(runId) 
 
         result.append("\n")
 
