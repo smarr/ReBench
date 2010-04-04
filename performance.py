@@ -102,6 +102,7 @@ class JGFPerformance(Performance):
 
     def parse_data(self, data):
         result = []
+        time = None
     
         for line in data.split("\n"):
             if self.check_for_error(line):

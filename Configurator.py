@@ -144,7 +144,7 @@ class Configurator:
                 benchmark['location'] = vmDef['path']
 
             # REM: not sure whether that is the best place to encode that default
-            if 'variable_values' not in bench:
+            if 'variable_values' not in benchmark:
                 benchmark['variable_values'] = []
              
             benchmark['vm'] = cleanVMDef.copy() 
