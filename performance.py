@@ -129,7 +129,10 @@ class JGFPerformance(Performance):
 class EPCCPerformance(Performance):
     """EPCCPerformance is used to read the output of the EPCC barrier benchmarks.
     """
-    barrier_time = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
+    barrier_time  = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
+    barrier_time2 = re.compile(r"^Total time without initialization :\s+([0-9]+)")
+    
+    
     
     def parse_data(self, data):
         result = []
@@ -140,6 +143,8 @@ class EPCCPerformance(Performance):
                 raise RuntimeError("Output of bench program indicated error.")
     
             m = self.barrier_time.match(line)
+            if not m:
+                m = self.barrier_time2.match(line)
 
             if m:
                 time = float(m.group(1))
