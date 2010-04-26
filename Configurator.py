@@ -142,6 +142,8 @@ class Configurator:
                 
             if 'location' not in benchmark:
                 benchmark['location'] = vmDef['path']
+            if 'cores' not in benchmark:
+	            benchmark['cores'] = vmDef['cores']
 
             # REM: not sure whether that is the best place to encode that default
             if 'variable_values' not in benchmark:

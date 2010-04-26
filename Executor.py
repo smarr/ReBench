@@ -214,7 +214,7 @@ class Executor:
         configurations = []
         
         for cfg in benchConfigs:
-            for cores  in cfg.vm['cores']:
+            for cores in cfg.suite['cores']:
                 for input_size in cfg.suite['input_sizes']:
                     if len(cfg.suite['variable_values']):
                         for var_val in cfg.suite['variable_values']:
