@@ -116,8 +116,8 @@ class Executor:
             
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            logging.warning("Run #%d of %s:%s failed"%(self._data.getNumberOfDataPoints(runId),
-                                                       runId.cfg.vm['name'], runId.cfg.name))
+            logging.warning("Run #%d of %s:%s failed returncode: %s Output: %s"%(self._data.getNumberOfDataPoints(runId),
+                                                       runId.cfg.vm['name'], runId.cfg.name, p.returncode, output))
             error = (consequent_erroneous_runs, erroneous_runs)
             self._reporter.runFailed(runId)
         else:
