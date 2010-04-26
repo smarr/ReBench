@@ -130,21 +130,24 @@ class EPCCPerformance(Performance):
     """EPCCPerformance is used to read the output of the EPCC barrier benchmarks.
     """
     barrier_time  = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
-    barrier_time2 = re.compile(r"^Total time without initialization :\s+([0-9]+)")
-    
-    
+    barrier_time2 = re.compile(r"\s*Total time without initialization\s+:?\s+([0-9]+)")
+    barnes = re.compile(r"COMPUTETIME\s+=\s+([0-9]+)") 
+    re_error = re.compile("Error [^t][^o][^l]") 
     
     def parse_data(self, data):
         result = []
         time = None
     
         for line in data.split("\n"):
+            print line
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicated error.")
-    
+            #import pdb; pdb.set_trace() 
             m = self.barrier_time.match(line)
             if not m:
                 m = self.barrier_time2.match(line)
+                if not m:
+                    m = self.barnes.match(line)
 
             if m:
                 time = float(m.group(1))
