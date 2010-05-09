@@ -133,6 +133,7 @@ class EPCCPerformance(Performance):
     barrier_time2 = re.compile(r"\s*Total time without initialization\s+:?\s+([0-9]+)")
     barnes = re.compile(r"COMPUTETIME\s+=\s+([0-9]+)") 
     re_error = re.compile("Error [^t][^o][^l]") 
+    barrier_time3 = re.compile(r"^BARRIER overhead =\s+([0-9\.E]+) microseconds(?:.+)")
     
     def parse_data(self, data):
         result = []
@@ -148,6 +149,8 @@ class EPCCPerformance(Performance):
                 m = self.barrier_time2.match(line)
                 if not m:
                     m = self.barnes.match(line)
+                    if not m:
+                        m = self.barrier_time3.match(line)
 
             if m:
                 time = float(m.group(1))
