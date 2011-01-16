@@ -60,10 +60,10 @@ class Executor:
         cmdline += vm_cmd 
         cmdline += bench_cfg.suite['command']
         
-        cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
-        
         if bench_cfg.extra_args is not None:
             cmdline += " %s" % (bench_cfg.extra_args or "")
+
+        cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
         
         return cmdline
     
