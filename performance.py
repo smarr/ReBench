@@ -71,7 +71,7 @@ class LogPerformance(Performance):
      
     for line in data.split("\n"):
       if self.check_for_error(line):
-        return None
+        raise RuntimeError("Output of bench program indicated error.")
     
       m = self.re_logline.match(line)
       if m:
@@ -80,11 +80,16 @@ class LogPerformance(Performance):
           time = time * 1000
         criterion = (m.group(2) or 'total').strip()
         
-        result.append({ 'bench': m.group(1), 'subCriterion':criterion, 'time':time })
+        val = DataPoint(time, criterion)
+        result.append(val)
         
         if criterion == 'total':
             assert total == None, "benchmark run returned more than one 'total' value"
             total = time
+    
+    if not total:
+        print "Failed parsing: " + data
+        raise RuntimeError("Output of bench program did not contain a total value")
         
     return (total, result)
 
