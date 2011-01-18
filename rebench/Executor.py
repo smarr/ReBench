@@ -105,7 +105,7 @@ class Executor:
                                                                  self._configurator.statistics["max_runs"]))
     
     def _get_performance_reader_instance(self, reader):
-        p = __import__("performance", fromlist=reader)
+        p = __import__("rebench.performance", fromlist=reader)
         return getattr(p, reader)()
         
     def _generate_data_point(self, cmdline, error, perf_reader, runId):
