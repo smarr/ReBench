@@ -25,6 +25,7 @@ import os
 import time
 from Statistics import StatisticProperties
 from numbers import Number
+import multiprocessing   # used to determine max-number of cores
 
 from contextpy import layer, activelayers, after,before
 # proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
