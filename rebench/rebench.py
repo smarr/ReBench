@@ -112,6 +112,9 @@ Argument:
         executor.execute()
 
 # remember __import__(), obj.__dict__["foo"] == obj.foo
-    
+
+def main_func():
+    return ReBench().run()
+
 if __name__ == "__main__":
-    sys.exit(ReBench().run())
+    sys.exit(main_func())
