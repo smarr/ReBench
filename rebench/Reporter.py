@@ -28,6 +28,7 @@ from DataAggregator import DataAggregator
 import json
 import urllib2
 import urllib
+import re
 # proceed, activelayer, activelayers, around, before, base,
 
 try:
@@ -263,6 +264,13 @@ class CodespeedReporter(Reporter):
             'max':          None,
             'min':          None }
 
+    def _beautifyBenchmarkName(self, name):
+        """
+        Currently just remove all bench, or benchmark strings.
+        """
+        replace = re.compile('bench(mark)?', re.IGNORECASE)
+        return replace.sub('', name)
+
     def _prepareResult(self, run, measures):
         result = self._result_data_template()
         
@@ -276,7 +284,8 @@ class CodespeedReporter(Reporter):
         result['executable']   = run[self._indexMap['vm']]
         
         # TODO: that is still in question, what am I giving here?
-        result['benchmark']    = "%s (%s cores)" % (run[self._indexMap['bench']],
+        name = self._beautifyBenchmarkName(run[self._indexMap['bench']])
+        result['benchmark']    = "%s (%s cores)" % (name,
                                                     run[self._indexMap['cores']])
         
         return result
