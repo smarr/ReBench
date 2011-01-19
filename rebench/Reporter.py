@@ -24,6 +24,10 @@ import logging
 from copy import copy
 from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
+from DataAggregator import DataAggregator
+import json
+import urllib2
+import urllib
 # proceed, activelayer, activelayers, around, before, base,
 
 try:
@@ -210,12 +214,103 @@ class FileReporter(TextReporter):
         for line in self._generate_all_output(dataAggregator.getData(), ()):
             self._file.write(line + "\n")
 
+class CodespeedReporter(Reporter):
+    """
+    This report will report the recorded data on the completion of the job
+    to the configured Codespeed instance.
+    """
+    
+    def __init__(self, configurator):
+        self._configurator = configurator
+        
+        # ensure that all necessary configurations have been set
+        if self._configurator.options.commit_id is None:
+            raise ValueError("--commit-id has to be set on the command line for codespeed reporting.")
+        if self._configurator.options.environment is None:
+            raise ValueError("--environment has to be set on the command line for codespeed reporting.")
+        self._codespeed_cfg = self._configurator.reporting['codespeed']
+        
+        if "project" not in self._codespeed_cfg:
+            raise ValueError("The config file needs to configure a 'project' in the reporting.codespeed section")
+        if "url" not in self._codespeed_cfg:
+            raise ValueError("The config file needs to configure a URL to codespeed in the reporting.codespeed section")
+
+        
+        # contains the indexes into the data tuples for
+        # the parameters
+        self._indexMap = DataAggregator.data_mapping()
+        
+    def runFailed(self, runId):
+        pass
+
+
+    def configurationCompleted(self, runId, statistics):
+        pass
+    
+    def _result_data_template(self):
+        # all None values have to be filled in
+        return {
+            'commitid':     self._configurator.options.commit_id,
+            'project':      self._codespeed_cfg['project'],
+            #'revision_date': '', # Optional. Default is taken
+                                  # either from VCS integration or from current date
+            'executable':   None,
+            'benchmark':    None,
+            'environment':  self._configurator.options.environment,
+            'result_value': None,
+            # 'result_date': datetime.today(), # Optional
+            'std_dev':      None,
+            'max':          None,
+            'min':          None }
+
+    def _prepareResult(self, run, measures):
+        result = self._result_data_template()
+        
+        # get the statistics
+        stats = StatisticProperties(measures, self._configurator.statistics['confidence_level'])
+        
+        result['min']          = stats.min
+        result['max']          = stats.max
+        result['std_dev']      = stats.stdDev
+        result['result_value'] = stats.mean
+        result['executable']   = run[self._indexMap['vm']]
+        
+        # TODO: that is still in question, what am I giving here?
+        result['benchmark']    = "%s (%s cores)" % (run[self._indexMap['bench']],
+                                                    run[self._indexMap['cores']])
+        
+        return result
+    
+    def _sendToCodespeed(self, results):
+        payload = urllib.urlencode({'json' : json.dumps(results) })
+        
+        try:
+            fh = urllib2.urlopen(self._codespeed_cfg['url'], payload)
+            response = fh.read()
+            fh.close()
+            logging.info("Results were sent to codespeed, response was: " + response)
+        except urllib2.HTTPError as error:
+            logging.error(str(error) + " This is most likely caused by either a wrong URL in the config file, or an environment not configured in codespeed.")
+        
+
+    def jobCompleted(self, configurations, dataAggregator):
+        # get the data to be processed
+        data = dataAggregator.getDataFlattend()
+        
+        # create a list of results to be submitted
+        results = []
+        for run, measures in data.iteritems():
+            results.append(self._prepareResult(run, measures))
+        
+        # now, send them of to codespeed
+        self._sendToCodespeed(results)
+
+
 class DiagramResultReporter(Reporter):
     
     def __init__(self, configurator):
         self._configurator = configurator
-        self._separateByMapping = {'bench' : 0, 'vm' : 1, 'suite' : 2, 'extra_args' : 3,
-                                   'cores' : 4, 'input_sizes' : 5, 'variable_values': 6}
+        self._separateByMapping = DataAggregator.data_mapping()
         self._separateByIndexes = None
 
     def runFailed(self, runId):
@@ -227,7 +322,7 @@ class DiagramResultReporter(Reporter):
     
     def jobCompleted(self, configurations, dataAggregator):
         
-        data = self._unfoldConfig(dataAggregator.getData())
+        data = dataAggregator.getDataWithUnfoldedConfig()
         data = self._filter_by_criterion(data)
         data = self._separate(data)
         data = self._group(data)
@@ -235,20 +330,6 @@ class DiagramResultReporter(Reporter):
         
         for characteristics, groups in data.iteritems():
             self._createDiagram(characteristics, groups)
-    
-    def _unfoldConfig(self, data):
-        """Unfold the config object to be able to query data better"""
-        result = {}
-        for cfg, items in data.iteritems():
-            r = result
-            cfgTuple = cfg.as_tuple()
-            
-            for i in cfgTuple[:-1]:
-                r = r.setdefault(i, {})
-            
-            r[cfgTuple[-1]] = items
-            
-        return result    
         
     
     def _createDiagram(self, character, groups):

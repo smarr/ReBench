@@ -67,6 +67,52 @@ class DataAggregator(object):
     def getData(self):
         return self._data
     
+    def getDataWithUnfoldedConfig(self):
+        """Unfold the config object to be able to query data better"""
+        result = {}
+        for cfg, items in self._data.iteritems():
+            r = result
+            cfgTuple = cfg.as_tuple()
+            
+            for i in cfgTuple[:-1]:
+                r = r.setdefault(i, {})
+            
+            r[cfgTuple[-1]] = items
+            
+        return result
+    
+    def _flatten(self, data):
+        result = {}
+        self._flatten_((), data, result)
+        return result
+    
+    def _flatten_(self, path, data, result):
+        for key, val in data.iteritems():
+            newPath = path + (key, )
+            if type(val) is dict:
+                self._flatten_(newPath, val, result)
+            else:
+                result[newPath] = val
+    
+    def getDataFlattend(self):
+        """
+        Returns a dictionary of all data with a tuple as the key.
+        The key describes the used configuration.
+        The data is the list of obtained values.
+        """
+        return self._flatten(self.getDataWithUnfoldedConfig())
+    
+    @classmethod
+    def data_mapping(cls):
+        """
+        Returns a dictionary which describes the semantics of the indexes.
+        Currently it is mostly used to look up the index of a certain
+        property, thus, the dict contains 'parameter':index pairs.
+        """
+        standard_dimensions = {'cores' : 4, 'input_sizes' : 5, 'variable_values': 6}
+        return dict(BenchmarkConfig.tuple_mapping(), **standard_dimensions) 
+                                   
+    
     def loadData(self):
         '''
         Loads the data from the configured data file
