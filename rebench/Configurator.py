@@ -17,7 +17,7 @@ class Configurator:
         self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None) 
     
     def __getattr__(self, name):
-        return self._rawConfig[name]
+        return self._rawConfig.get(name, None)
     
     def _loadConfig(self, file_name):
         try:
@@ -236,3 +236,6 @@ class BenchmarkConfig:
     def as_tuple(self):
         return (self.name, self.vm['name'], self.suite['name'], self.extra_args)
         
+    @classmethod
+    def tuple_mapping(cls):
+        return {'bench' : 0, 'vm' : 1, 'suite' : 2, 'extra_args' : 3}
