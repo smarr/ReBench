@@ -1,3 +1,4 @@
 ReBench.egg-info
 *.pyc
 *.DS_Store
+rebench/test/test.data
