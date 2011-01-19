@@ -112,16 +112,21 @@ class Configurator:
         if vmDetails:
             benchmarks = self._valueOrListAllwaysAsList(vmDetails['benchmark']) if 'benchmark' in vmDetails else _benchmarks
             input_size = self._valueOrListAllwaysAsList(vmDetails['input_size']) if 'input_size' in vmDetails else _input_size
+            cores      = self._valueOrListAllwaysAsList(vmDetails['cores']) if 'cores' in vmDetails else None
         else:
             benchmarks = _benchmarks
             input_size = _input_size
+            cores      = None
             
         vmDef = self._rawConfig['virtual_machines'][vm].copy()
         vmDef['benchmark'] = benchmarks
         vmDef['input_size'] = input_size
-        vmDef['name'] = vm 
+        vmDef['name'] = vm
         
-        vmDef.setdefault('cores', [1])  # set a default value for the number cores list
+        if cores is not None:
+            vmDef['cores'] = cores
+        else:
+            vmDef.setdefault('cores', [1])  # set a default value for the number cores list
         
         return vmDef
 
