@@ -288,12 +288,14 @@ class CodespeedReporter(Reporter):
         result['executable']   = run[self._indexMap['vm']]
 
         
-        # TODO: that is still in question, what am I giving here?
+        # TODO: make that configurable and find a way
+        #       that the place holder expansion is done in a sane and consistent way
         name = self._beautifyBenchmarkName(run[self._indexMap['bench']])
-        result['benchmark']    = "%s (%s cores, %s %s)" % (name,
-                                                    run[self._indexMap['cores']],
-                                                    run[self._indexMap['input_sizes']],
-                                                    run[self._indexMap['extra_args']])
+        name = "%s (%s cores, %s %s)" % (name, run[self._indexMap['cores']] or "",
+                                               run[self._indexMap['input_sizes']] or "",
+                                               run[self._indexMap['extra_args']] or "")
+        name = name % {'cores' : run[self._indexMap['cores']] }
+        result['benchmark'] = name
         
         return result
     
