@@ -285,8 +285,10 @@ class CodespeedReporter(Reporter):
         
         # TODO: that is still in question, what am I giving here?
         name = self._beautifyBenchmarkName(run[self._indexMap['bench']])
-        result['benchmark']    = "%s (%s cores)" % (name,
-                                                    run[self._indexMap['cores']])
+        result['benchmark']    = "%s (%s cores, %s %s)" % (name,
+                                                    run[self._indexMap['cores']],
+                                                    run[self._indexMap['input_sizes']],
+                                                    run[self._indexMap['extra_args']])
         
         return result
     
