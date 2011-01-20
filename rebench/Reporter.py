@@ -274,14 +274,19 @@ class CodespeedReporter(Reporter):
     def _prepareResult(self, run, measures):
         result = self._result_data_template()
         
-        # get the statistics
-        stats = StatisticProperties(measures, self._configurator.statistics['confidence_level'])
+        if measures:
+            # get the statistics
+            stats = StatisticProperties(measures, self._configurator.statistics['confidence_level'])
         
-        result['min']          = stats.min
-        result['max']          = stats.max
-        result['std_dev']      = stats.stdDev
-        result['result_value'] = stats.mean
+            result['min']          = stats.min
+            result['max']          = stats.max
+            result['std_dev']      = stats.stdDev
+            result['result_value'] = stats.mean
+        else:
+            result['result_value'] = -1
+
         result['executable']   = run[self._indexMap['vm']]
+
         
         # TODO: that is still in question, what am I giving here?
         name = self._beautifyBenchmarkName(run[self._indexMap['bench']])
