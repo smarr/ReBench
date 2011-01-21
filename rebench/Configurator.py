@@ -12,9 +12,12 @@ class Configurator:
         self._loadConfig(fileName)
         self._processCliOptions(cliOptions)
         self._runName = runName
+        self.statistics = self._rawConfig.get('statistics', {})
+        
         self._config = self._compileBenchConfigurations(self.runName())
         
-        self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None) 
+        self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None)
+         
     
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
@@ -73,7 +76,10 @@ class Configurator:
     
     def _compileBenchConfigurations(self, runName):
         runDef = self._rawConfig['run_definitions'][runName]
-        #runDef.__missing__ = lambda itemName: None # does not work *grml*
+        
+        # first thing, take the statistics configuration out of the runDef
+        # and merge it with the global configuration
+        self.statistics = dict(self.statistics, **runDef.get('statistics', {}))
         
         actions = self._valueOrListAllwaysAsList(runDef['actions'])
         _benchmarks = self._valueOrListAllwaysAsList(runDef['benchmark'])
