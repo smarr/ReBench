@@ -113,7 +113,7 @@ Argument:
     def run(self, argv = None):
         if argv is None:
             argv = sys.argv
-            
+                    
         cli_options, args = self.shell_options().parse_args(argv[1:])
         if len(args) < 1:
             logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
@@ -128,6 +128,7 @@ Argument:
         logging.debug("execute run: %s"%(self.config.runName()))
         
         data = DataAggregator(self.config.dataFileName(), self.config.options.clean, True)
+        data.includeShebangLine(sys.argv)
         
         reporters = []
         if self.config.options.output_file:

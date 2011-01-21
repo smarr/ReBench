@@ -35,11 +35,15 @@ The data aggregator supports the following data dimensions:
 '''
 
 import re
+import os
 from datetime import datetime
 from Configurator import BenchmarkConfig
 from Executor import RunId
 from copy import copy
 import logging
+import subprocess
+import shutil
+import time
 
 class DataAggregator(object):
     '''
@@ -121,8 +125,10 @@ class DataAggregator(object):
             with open(self._dataFileName, 'r') as f:
                 for line in f:
                     try:
-                        runId, value = self._deserializeDataPoint(line)
-                        self.addDataPoints(runId, value, True)
+                        # ignore shebang lines
+                        if not line.startswith('#!/'):
+                            runId, value = self._deserializeDataPoint(line)
+                            self.addDataPoints(runId, value, True)
                     except ValueError, e:
                         # Configuration is not available, skip data point
                         logging.debug(e)
@@ -130,6 +136,31 @@ class DataAggregator(object):
             logging.info("No data loaded %s does not exist." % self._dataFileName)
                 
     
+    def includeShebangLine(self, argv):
+        """
+        Insert a shebang (#!/path/to/executable) into the data file, allows it to be executable
+        """
+        shebang_line = "#!%s\n" % (subprocess.list2cmdline(argv))
+        
+        try:
+            if not os.path.exists(self._dataFileName):
+                with open(self._dataFileName, 'w') as f:
+                    f.write(shebang_line)
+                    f.flush()
+                    f.close()
+                return
+            
+            renamed_file = "%s-%.0f.tmp" % (self._dataFileName, time.time()) 
+            os.rename(self._dataFileName, renamed_file)
+            with open(self._dataFileName, 'w') as f:
+                f.write(shebang_line)
+                f.flush()
+                shutil.copyfileobj(open(renamed_file, 'r'), f)
+            os.remove(renamed_file)
+        except Exception as e:
+            logging.error("An error occurred while trying to insert a shebang line: %s", e)
+        
+        
     def getDataSet(self, runId, createDataStructures = True):
         """
         Returns the data set identified by ``runId``
