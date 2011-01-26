@@ -100,6 +100,9 @@ Argument:
                              default=None,
                              help="MANDATORY: name the machine on which the "
                                   "results are obtained.")
+        codespeed.add_option("-f", "--disable-inc-report",
+                             action="store_false", dest="report_incrementally",
+                             default=True, help="Does a final report at the end instead of reporting incrementally.")
         codespeed.add_option("-s", "--disable-codespeed",
                              action="store_false", dest="use_codespeed",
                              default=True, help="Override configuration and "

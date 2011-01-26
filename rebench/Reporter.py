@@ -223,6 +223,7 @@ class CodespeedReporter(Reporter):
     
     def __init__(self, configurator):
         self._configurator = configurator
+        self._incremental_report = self._configurator.options.report_incrementally
         
         # ensure that all necessary configurations have been set
         if self._configurator.options.commit_id is None:
@@ -246,7 +247,14 @@ class CodespeedReporter(Reporter):
 
 
     def configurationCompleted(self, runId, statistics):
-        pass
+        if not self._incremental_report:
+            return
+        
+        # if self._incremental_report is true we are going to talk to codespeed immediately
+        results = [self._formatForCodespeed(runId.as_tuple(), statistics)]
+        
+        # now, send them of to codespeed
+        self._sendToCodespeed(results)
     
     def _result_data_template(self):
         # all None values have to be filled in
@@ -271,13 +279,10 @@ class CodespeedReporter(Reporter):
         replace = re.compile('bench(mark)?', re.IGNORECASE)
         return replace.sub('', name)
 
-    def _prepareResult(self, run, measures):
+    def _formatForCodespeed(self, run, stats = None):
         result = self._result_data_template()
         
-        if measures:
-            # get the statistics
-            stats = StatisticProperties(measures, self._configurator.statistics['confidence_level'])
-        
+        if stats:
             result['min']          = stats.min
             result['max']          = stats.max
             result['std_dev']      = stats.stdDev
@@ -298,6 +303,15 @@ class CodespeedReporter(Reporter):
         result['benchmark'] = name
         
         return result
+
+    def _prepareResult(self, run, measures):
+        if measures:
+            # get the statistics
+            stats = StatisticProperties(measures, self._configurator.statistics['confidence_level'])
+        else:
+            stats = None
+            
+        return self._formatForCodespeed(run, stats)
     
     def _sendToCodespeed(self, results):
         payload = urllib.urlencode({'json' : json.dumps(results) })
@@ -312,6 +326,10 @@ class CodespeedReporter(Reporter):
         
 
     def jobCompleted(self, configurations, dataAggregator):
+        if self._incremental_report:
+            # in this case all duties are already completed
+            return
+        
         # get the data to be processed
         data = dataAggregator.getDataFlattend()
         

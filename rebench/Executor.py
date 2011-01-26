@@ -286,3 +286,6 @@ class RunId:
                 result += (item, )
                 
         return result
+    
+    def as_tuple(self):
+        return self.cfg.as_tuple() + self.variables + (self.criterion, )
