@@ -21,11 +21,11 @@ from __future__ import with_statement
 
 import logging
 import subprocess
+import SubprocessWithTimeout as subprocess_timeout
 import os
 import time
 from Statistics import StatisticProperties
 from numbers import Number
-import multiprocessing   # used to determine max-number of cores
 
 from contextpy import layer, activelayers, after,before
 # proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
@@ -44,10 +44,6 @@ class Executor:
                 
     def _construct_cmdline(self, bench_cfg, perf_reader, cores, input_size, variable):
         cmdline  = ""
-        cmdline += "cd %s && "%(bench_cfg.suite['location'])
-        
-        if 'ulimit' in bench_cfg.suite:
-            cmdline += "ulimit -t %s && "%(bench_cfg.suite['ulimit'])
                 
         if self._configurator.options.use_nice:
             cmdline += "nice -n-20 "
@@ -79,12 +75,18 @@ class Executor:
                                           input_size,
                                           var_val)
         
+        # do some logging for debugging purposes
         logging.debug("command = " + cmdline)
+        if 'max_runtime' in runId.cfg.suite:
+            logging.debug("max_runtime: %s" % (runId.cfg.suite['max_runtime']))
+        logging.debug("cwd: %s" % (runId.cfg.suite['location']))
         
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
         stats = StatisticProperties(self._data.getDataSet(runId),
                                     self._configurator.statistics['confidence_level'])
+        
+        # now start the actual execution
         while not terminate:
             terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
             
@@ -114,16 +116,24 @@ class Executor:
         return getattr(p, reader)()
         
     def _generate_data_point(self, cmdline, error, perf_reader, runId):
-        p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-        (output, _) = p.communicate()
+        # execute the external program here
+        (returncode, output, _) = subprocess_timeout.run(cmdline, cwd=runId.cfg.suite['location'],
+                                                         stdout=subprocess.PIPE,
+                                                         stderr=subprocess.STDOUT,
+                                                         shell=True, timeout=runId.cfg.suite.get('max_runtime', -1))
         
-        if p.returncode != 0:
+        if returncode != 0:
             (consequent_erroneous_runs, erroneous_runs) = error
             
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            logging.warning("Run #%d of %s:%s failed returncode: %s Output: %s"%(self._data.getNumberOfDataPoints(runId),
-                                                       runId.cfg.vm['name'], runId.cfg.name, p.returncode, output))
+            if returncode == -9:
+                log_msg = "Run #%d of %s:%s timed out. returncode: %s Output: %s"
+            else:
+                log_msg = "Run #%d of %s:%s failed returncode: %s Output: %s" 
+            logging.warning(log_msg%(self._data.getNumberOfDataPoints(runId),
+                                     runId.cfg.vm['name'], runId.cfg.name,
+                                     returncode, output))
             error = (consequent_erroneous_runs, erroneous_runs)
             self._reporter.runFailed(runId)
         else:
