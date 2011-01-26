@@ -76,8 +76,8 @@ class LogPerformance(Performance):
             m = self.re_logline.match(line)
             if m:
                 time = float(m.group(4))
-                if m.group(5) == "m":
-                    time = time * 1000
+                if m.group(5) == "u":
+                    time = time / 1000
                 criterion = (m.group(2) or 'total').strip()
               
                 val = DataPoint(time, criterion)
@@ -190,7 +190,7 @@ class TimePerformance(Performance):
             m = self.re_time.match(line)
             if m:
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
-                time = (float(m.group(2)) * 60 + float(m.group(3))) * 1000 * 1000
+                time = (float(m.group(2)) * 60 + float(m.group(3))) * 1000
                 result.append({ 'bench': None, 'subCriterion':criterion, 'time':time })
           
                 if criterion == 'total':
