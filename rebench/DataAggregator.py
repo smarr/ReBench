@@ -145,7 +145,7 @@ class DataAggregator(object):
                 for line in f:
                     try:
                         # ignore shebang lines
-                        if not line.startswith('#!/'):
+                        if not line.startswith('#!'):
                             runId, value = self._deserializeDataPoint(line)
                             self.addDataPoints(runId, value, True)
                     except ValueError, e:
@@ -321,7 +321,7 @@ class DataAggregator(object):
     _parseRegex = re.compile(r"\[.*?\]" "\t" r"(.*?), vm:(.*?), suite:(.*?), args:'(.*?)'((?:" "\t"  r"(?:.*?))+) = (.*)")
     
     def _deserializeDataPoint(self, line):
-        m = DataAggregator._parseRegex.match(line)
+        m = self._parseRegex.match(line)
         benchName = m.group(1)
         vmName = m.group(2)
         suiteName = m.group(3)
