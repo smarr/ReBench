@@ -282,7 +282,7 @@ class CodespeedReporter(Reporter):
     def _formatForCodespeed(self, run, stats = None):
         result = self._result_data_template()
         
-        if stats:
+        if stats and not stats.failedRun:
             result['min']          = stats.min
             result['max']          = stats.max
             result['std_dev']      = stats.stdDev

@@ -37,6 +37,7 @@ class StatisticProperties:
         if self._dataSamples:
             self._calcBasicStatistics()
             self._calcConfidence(confidence_level)
+            self.failedRun = False
         else:
             self.failedRun = True
             self.numSamples = 0
