@@ -63,7 +63,15 @@ class LogPerformance(Performance):
        It is used to read a simple log format which includes the number of iterations of
        a benchmark and its runtime in microseconds.
     """
-    re_logline  = re.compile(r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+    re_logline = re.compile(r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+    
+    
+    re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
+    re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
+    
+    def __init__(self):
+        self._otherErrorDefinitions = [self.re_NPB_partial_invalid, 
+                                       self.re_NPB_invalid]
 
     def parse_data(self, data):
         result = []
