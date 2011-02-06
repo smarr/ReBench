@@ -57,6 +57,29 @@ class StatisticProperties:
 
         self.min = min(self._dataSamples)
         self.max = max(self._dataSamples)
+        
+    def as_tuple(self):
+        if self.failedRun:
+            return (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        
+        return (self.mean,
+                self.geom_mean,
+                self.median,
+                self.stdDev,
+                self.numSamples,
+                self.min,
+                self.max,
+                self.confIntervalLow,
+                self.confIntervalHigh,
+                self.confIntervalSizeAbs,
+                self.confIntervalSize)
+    
+    @classmethod
+    def tuple_mapping(cls):
+        return ('arithmetic mean', 'geometric mean', 'median', 'stdDev',
+                '#samples', 'min', 'max', 'Conf. Interval Low',
+                'Conf. Interval High', 'Conf. Interval Size Abs.',
+                'Conf.IntervalSize/Mean')
 
     def _calcConfidence(self, confidence_level):
         """

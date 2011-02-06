@@ -29,6 +29,7 @@ import json
 import urllib2
 import urllib
 import re
+import locale
 # proceed, activelayer, activelayers, around, before, base,
 
 try:
@@ -214,6 +215,81 @@ class FileReporter(TextReporter):
         self._file.write("[%s] Job completed\n" % datetime.now())
         for line in self._generate_all_output(dataAggregator.getData(), ()):
             self._file.write(line + "\n")
+            
+        self._file.close()
+            
+class CSVFileReporter(Reporter):
+    """ Will generate a CSV file for processing in another program as for instance Excel or Numbers """
+    
+    def __init__(self, configurator):
+        self._file = open(configurator.reporting['csv_file'], 'a+')
+        self._configurator = configurator
+    
+    def runFailed(self, runId):
+        pass
+    
+    def configurationCompleted(self, runId, statistics):
+        pass
+    
+    def _prepareHeaderRow(self, data, dataAggregator, parameterMappings):
+        # since the data might be irregular find the item with the most parameters first
+        longestTuple = max(data.keys(), key=lambda tpl: len(tpl))
+        # and determine table width
+        table_width = len(longestTuple)
+        
+        # now generate the header
+        
+        # get sorted parameter mapping first
+        mapping = sorted(parameterMappings.items(), key=lambda entry:  entry[1])
+        
+        header_row = []
+        for (title, _index) in mapping:
+            header_row.append(title)
+        
+        # add empty columns to keep table aligned    
+        while len(header_row) < table_width:
+            header_row.append('')
+        
+        # now the statistic rows
+        for title in StatisticProperties.tuple_mapping():
+            header_row.append(title)
+        
+        return header_row, table_width
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        old_locale = locale.getlocale(locale.LC_ALL)
+        if 'csv_locale' in self._configurator.reporting:
+            locale.setlocale(locale.LC_ALL, self._configurator.reporting['csv_locale'])
+        
+        
+        # get the data to be processed
+        data = dataAggregator.getDataFlattend()
+        parameterMappings = dataAggregator.data_mapping()
+        num_common_parameters = len(parameterMappings)
+        
+        header_row, max_num_parameters = self._prepareHeaderRow(data, dataAggregator, parameterMappings)
+        
+        table = []
+        
+        # add the header row
+        table.append(header_row)
+        
+        # add the actual results to the table
+        for run, measures in data.iteritems():
+            row = []
+            row += run[0 : num_common_parameters]                 # add the common ones
+            row += [''] * (max_num_parameters - len(run))         # add fill for unused parameters
+            row += run[num_common_parameters : ]                  # add all remaining
+            row += list(StatisticProperties(measures, 
+                            self._configurator.statistics['confidence_level']).as_tuple()) # now add the actual result data
+            table.append(row)
+        
+        for row in table:
+            self._file.write(";".join([i if type(i) == str else locale.format("%f", i) for i in row]) + "\n")
+            
+        self._file.close()
+        locale.setlocale(locale.LC_ALL, old_locale)
+        
 
 class CodespeedReporter(Reporter):
     """

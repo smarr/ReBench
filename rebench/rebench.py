@@ -31,7 +31,7 @@
 import sys
 
 from Executor import Executor
-from Reporter import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter
+from Reporter import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter, CSVFileReporter
 from Configurator import Configurator
 from DataAggregator import DataAggregator
 from optparse import OptionParser, OptionGroup
@@ -142,10 +142,12 @@ Argument:
         if self.config.visualization:
             reporters.append(DiagramResultReporter(self.config))
             
-        if (self.config.reporting and 
-            'codespeed' in self.config.reporting and
-            self.config.options.use_codespeed):
-            reporters.append(CodespeedReporter(self.config))
+        if self.config.reporting:
+            if ('codespeed' in self.config.reporting and
+                self.config.options.use_codespeed):
+                reporters.append(CodespeedReporter(self.config))
+            if 'csv_file' in self.config.reporting:
+                reporters.append(CSVFileReporter(self.config))
         
         executor = Executor(self.config, data, Reporters(reporters))
         
