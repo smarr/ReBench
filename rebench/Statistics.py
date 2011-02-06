@@ -18,8 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-import numpy
 import math
+import numpy
+import scipy.stats
 import scipy.stats.distributions as distributions
 
 
@@ -46,9 +47,10 @@ class StatisticProperties:
     def _calcBasicStatistics(self):
         """This function determines the mean and the standard deviation
            of the data sample.
-           Forthermore, several other simple properties are determined.
+           Furthermore, several other simple properties are determined.
         """
         self.mean       = numpy.mean(self._dataSamples)
+        self.geom_mean  = scipy.stats.gmean(self._dataSamples)
         self.median     = numpy.median(self._dataSamples)
         self.stdDev     = numpy.std(self._dataSamples)
         self.numSamples = len(self._dataSamples)
