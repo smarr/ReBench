@@ -285,7 +285,7 @@ class CSVFileReporter(Reporter):
             table.append(row)
         
         for row in table:
-            self._file.write(";".join([i if type(i) == str else locale.format("%f", i) for i in row]) + "\n")
+            self._file.write(";".join([i if type(i) == str else locale.format("%f", i or 0.0) for i in row]) + "\n")
             
         self._file.close()
         locale.setlocale(locale.LC_ALL, old_locale)
