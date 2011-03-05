@@ -182,7 +182,8 @@ class TimePerformance(Performance):
        unmodified programs or aspects which need to cover the whole program
        execution time.
     """
-    re_time = re.compile(r"^(\w+)\s*((\d+)m?)?(\d+\.\d+)s?")
+    re_time = re.compile(r"^(\w+)\s*(\d+)m(\d+\.\d+)s")
+    re_time2 = re.compile(r"^(\w+)(\s*)(\d+\.\d+)")
     
     def acquire_command(self, command):
         return "/usr/bin/time -p %s"%(command)
@@ -195,10 +196,12 @@ class TimePerformance(Performance):
             if self.check_for_error(line):
                 return None
           
-            m = self.re_time.match(line)
-            if m:
+            m1 = self.re_time.match(line)
+            m2 = self.re_time2.match(line)
+            if m1 or m2:
+                m = m1 or m2
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
-                time = (float(m.group(3) or 0) * 60 + float(m.group(4))) * 1000
+                time = (float(m.group(2).strip() or 0) * 60 + float(m.group(3))) * 1000
                 val = DataPoint(time, criterion)
                 result.append(val)
           
