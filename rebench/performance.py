@@ -90,13 +90,13 @@ class LogPerformance(Performance):
               
                 val = DataPoint(time, criterion)
                 result.append(val)
-              
+
                 if criterion == 'total':
                     assert total == None, "benchmark run returned more than one 'total' value"
                     total = time
         
-        if not total:
-            print "Failed parsing: " + data
+        if total is None:
+            print "Failed parsing: ###" + data + "###"
             raise RuntimeError("Output of bench program did not contain a total value")
             
         return (total, result)
@@ -133,7 +133,7 @@ class JGFPerformance(Performance):
                 result.append(val)
                 #print "DEBUG OUT:" + time
 
-        if not time:
+        if time is None:
             print "Failed parsing: " + data
             raise RuntimeError("Output of bench program did not contain a total value")
 
@@ -153,7 +153,6 @@ class EPCCPerformance(Performance):
         time = None
     
         for line in data.split("\n"):
-            print line
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicated error.")
             #import pdb; pdb.set_trace() 
@@ -170,7 +169,7 @@ class EPCCPerformance(Performance):
                 val = DataPoint(time, None)
                 result.append(val)
 
-        if not time:
+        if time is None:
             print "Failed parsing: " + data
             raise RuntimeError("Output of bench program did not contain a total value")
 
