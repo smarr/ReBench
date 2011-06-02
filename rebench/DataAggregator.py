@@ -70,22 +70,30 @@ class DataAggregator(object):
     '''
 
 
-    def __init__(self, dataFileName, discardOldData, automaticallyPersistNewDataPoints = True):
+    def __init__(self, dataFileName, automaticallyPersistNewDataPoints = True):
         '''
         Constructor
         '''
-        self._dataFileName = dataFileName
+        self._dataFileName   = dataFileName
         self._data = {}
         self._lastCriteria = None
-        self._lastDataSet = None
+        self._lastDataSet  = None
         self._automaticallyPersistNewDataPoints = automaticallyPersistNewDataPoints
-        self._file = None
-        
-        if discardOldData:
-            with open(self._dataFileName, 'w'):
-                pass
-        
-        self.loadData()
+        self._file    = None
+        self._csvFile = None
+    
+    def discardOldData(self):
+        self._truncateFile(self._dataFileName)
+    
+    def _truncateFile(self, fileName):
+        with open(fileName, 'w'):
+            pass
+    
+    def setCsvRawFile(self, csvRawFileName):
+        """The CSV file is not the authorative data source, lets reset it
+           and recreate on the go."""
+        self._truncateFile(csvRawFileName)
+        self._csvFile = open(csvRawFileName, 'a+')
         
     def getData(self):
         return self._data
@@ -289,6 +297,7 @@ class DataAggregator(object):
                 assert len(value) == 1
                 if self._automaticallyPersistNewDataPoints and not deserializing:
                     self._persistDataPoint(tmpRunId, value[0])
+                self._persistDataPointAsCSV(tmpRunId, value[0])
     
     def saveData(self):
         # we need that only if it is not done automatically
@@ -304,6 +313,11 @@ class DataAggregator(object):
         
         self._file.writelines(self._serializeDataPoint(runId, dataPoint))
         self._file.flush()
+    
+    def _persistDataPointAsCSV(self, runId, dataPoint):
+        if self._csvFile:
+            self._csvFile.writelines(self._serializeDataPointAsCSV(runId, dataPoint))
+            self._csvFile.flush()
         
     def _serializeDataPoint(self, runId, dataPoint):
         result = []
@@ -315,6 +329,23 @@ class DataAggregator(object):
             result.append("\t%s" % criterion)
             
         result.append(" = %f\n" % dataPoint)
+        
+        return result
+    
+    def _serializeDataPointAsCSV(self, runId, dataPoint):
+        result = []
+        runCfg = runId.cfg.as_tuple()
+        # the extra args are often more complex, lets protect them with ""
+        
+        
+        criteria = runCfg[:-1] + ("\"%s\""%runCfg[-1],) + runId.variables + (runId.criterion, )
+        #tuple(["\"%s\""%x for x in runId.variables])
+        result.append("%f" % dataPoint)
+        
+        for criterion in criteria:
+            result.append("\t%s" % criterion)
+        
+        result.append("\n")
         
         return result
     

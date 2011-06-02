@@ -130,7 +130,7 @@ Argument:
     def execute_run(self):
         logging.debug("execute run: %s"%(self.config.runName()))
         
-        data = DataAggregator(self.config.dataFileName(), self.config.options.clean, True)
+        data = DataAggregator(self.config.dataFileName(), True)
         data.includeShebangLine(sys.argv)
         
         reporters = []
@@ -148,6 +148,13 @@ Argument:
                 reporters.append(CodespeedReporter(self.config))
             if 'csv_file' in self.config.reporting:
                 reporters.append(CSVFileReporter(self.config))
+            if 'csv_raw' in self.config.reporting:
+                data.setCsvRawFile(self.config.reporting['csv_raw'])
+        
+        # first load old data if available
+        if self.config.options.clean:
+            data.discardOldData()
+        data.loadData()
         
         executor = Executor(self.config, data, Reporters(reporters))
         
