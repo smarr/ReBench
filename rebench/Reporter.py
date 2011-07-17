@@ -342,6 +342,7 @@ class CodespeedReporter(Reporter):
             'executable':   None,
             'benchmark':    None,
             'environment':  self._configurator.options.environment,
+            'branch':       self._configurator.options.branch,
             'result_value': None,
             # 'result_date': datetime.today(), # Optional
             'std_dev':      None,
@@ -365,8 +366,11 @@ class CodespeedReporter(Reporter):
             result['result_value'] = stats.mean
         else:
             result['result_value'] = -1
-
-        result['executable']   = run[self._indexMap['vm']]
+        
+        if self._configurator.options.executable is None:
+            result['executable']   = run[self._indexMap['vm']]
+        else:
+            result['executable']   = self._configurator.options.executable
 
         
         # TODO: make that configurable and find a way

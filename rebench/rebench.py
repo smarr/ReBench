@@ -100,6 +100,14 @@ Argument:
                              default=None,
                              help="MANDATORY: name the machine on which the "
                                   "results are obtained.")
+        codespeed.add_option("--branch", dest="branch",
+                             default="HEAD",
+                             help="The branch for which the results have to be "
+                                  "recorded, i.e., to which the commit belongs. Default: HEAD")
+        codespeed.add_option("--executable", dest="executable",
+                             default=None,
+                             help="The executable name given to codespeed. Default: "
+                                  "The name used for the virtual machine.")
         codespeed.add_option("-f", "--disable-inc-report",
                              action="store_false", dest="report_incrementally",
                              default=True, help="Does a final report at the end instead of reporting incrementally.")
