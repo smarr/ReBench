@@ -402,7 +402,10 @@ class CodespeedReporter(Reporter):
             fh.close()
             logging.info("Results were sent to codespeed, response was: " + response)
         except urllib2.HTTPError as error:
-            logging.error(str(error) + " This is most likely caused by either a wrong URL in the config file, or an environment not configured in codespeed.")
+            logging.error(str(error) + " This is most likely caused by either " +
+                   "a wrong URL in the config file, or an environment not " +
+                   "configured in codespeed. URL: " +
+                   self._codespeed_cfg['url'])
         
 
     def jobCompleted(self, configurations, dataAggregator):
