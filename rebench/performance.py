@@ -210,6 +210,16 @@ class TimePerformance(Performance):
       
         return (total, result)
 
+
+class TimeManualPerformance(TimePerformance):
+    """TimeManualPerformance works like TimePerformance but does expect the
+       user to use the /usr/bin/time manually.
+       This is useful for runs on remote machines like the Tilera or ARM boards.
+    """
+    def acquire_command(self, command):
+        return command
+
+
 class TestVMPerformance(Performance):
     """Perfromance reader for the test case and the definitions
        in test/test.conf
