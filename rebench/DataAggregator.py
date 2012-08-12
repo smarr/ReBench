@@ -74,6 +74,9 @@ class DataAggregator(object):
         '''
         Constructor
         '''
+        if not dataFileName:
+            raise ValueError("DataAggregator expects a file name for dataFileName, but got: %s" % dataFileName)
+        
         self._dataFileName   = dataFileName
         self._data = {}
         self._lastCriteria = None
