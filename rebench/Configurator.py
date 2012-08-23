@@ -102,7 +102,7 @@ class Configurator:
         self.statistics = dict(self.statistics, **runDef.get('statistics', {}))
         
         actions = self._valueOrListAllwaysAsList(runDef['actions'])
-        _benchmarks = self._valueOrListAllwaysAsList(runDef['benchmark'])
+        _benchmarks = self._valueOrListAllwaysAsList(runDef.get( 'benchmark', None))
         _input_size = self._valueOrListAllwaysAsList(runDef.get('input_size', None))
         
         _executions = self._valueOrListAllwaysAsList(runDef['executions']) 
