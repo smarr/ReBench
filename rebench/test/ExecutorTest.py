@@ -23,7 +23,7 @@ class ExecutorTest(unittest.TestCase):
                                      'command' : '',
                                      'input_sizes': [1],
                                      'benchmarks': ['test-bench'],
-                                     'ulimit': None }},
+                                     'max_runtime': None }},
                     'options' : {'use_nice': False}
         }
         executions = ['test-vm']
