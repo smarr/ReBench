@@ -146,7 +146,7 @@ class Configurator:
             
         vmDef = self._rawConfig['virtual_machines'][vm].copy()
         vmDef['benchmark'] = benchmarks
-        vmDef['input_size'] = input_size
+        vmDef['input_sizes'] = input_sizes
         vmDef['name'] = vm
         
         if cores is not None:
@@ -162,14 +162,14 @@ class Configurator:
         
         cleanVMDef = vmDef.copy()
         del cleanVMDef['benchmark']
-        del cleanVMDef['input_size']
+        del cleanVMDef['input_sizes']
         
         for bench in vmDef['benchmark']:
             benchmark = self._rawConfig['benchmark_suites'][bench].copy()
             benchmark['name'] = bench
             
-            if vmDef['input_size']:
-                benchmark['input_size'] = vmDef['input_size']
+            if vmDef['input_sizes']:
+                benchmark['input_sizes'] = vmDef['input_sizes']
                 
             if 'location' not in benchmark:
                 benchmark['location'] = vmDef['path']
