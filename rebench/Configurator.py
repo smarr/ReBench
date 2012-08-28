@@ -102,8 +102,8 @@ class Configurator:
         self.statistics = dict(self.statistics, **runDef.get('statistics', {}))
         
         actions = self._valueOrListAllwaysAsList(runDef['actions'])
-        _benchmarks = self._valueOrListAllwaysAsList(runDef.get( 'benchmark', None))
-        _input_size = self._valueOrListAllwaysAsList(runDef.get('input_size', None))
+        _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
+        _input_sizes = self._valueOrListAllwaysAsList(runDef.get('input_sizes', None))
         
         _executions = self._valueOrListAllwaysAsList(runDef['executions']) 
         
@@ -117,7 +117,7 @@ class Configurator:
             else:
                 vmDetails = None
                 
-            vmDefinitions.append(self._compileVMDefinitionForVM(vm, vmDetails, _benchmarks, _input_size))
+            vmDefinitions.append(self._compileVMDefinitionForVM(vm, vmDetails, _benchmarks, _input_sizes))
         
         # second step: specialize the suite definitions for the VMs
         suiteDefinitions = []
@@ -131,17 +131,17 @@ class Configurator:
         
         return (actions, configurationDefinitions)
     
-    def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_size):
+    def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_sizes):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
         if vmDetails:
-            benchmarks = self._valueOrListAllwaysAsList(vmDetails['benchmark']) if 'benchmark' in vmDetails else _benchmarks
-            input_size = self._valueOrListAllwaysAsList(vmDetails['input_size']) if 'input_size' in vmDetails else _input_size
+            benchmarks = self._valueOrListAllwaysAsList(vmDetails['benchmark'])   if 'benchmark'   in vmDetails else _benchmarks
+            input_sizes= self._valueOrListAllwaysAsList(vmDetails['input_sizes']) if 'input_sizes' in vmDetails else _input_sizes
             cores      = self._valueOrListAllwaysAsList(vmDetails['cores']) if 'cores' in vmDetails else None
         else:
             benchmarks = _benchmarks
-            input_size = _input_size
+            input_sizes= _input_sizes
             cores      = None
             
         vmDef = self._rawConfig['virtual_machines'][vm].copy()
