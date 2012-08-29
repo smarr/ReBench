@@ -39,7 +39,7 @@ def dict_merge_recursively(a, b):
     
     for k, v in b.iteritems():
         if k in result:
-            result[k] = dict_merge(result[k], v)
+            result[k] = dict_merge_recursively(result[k], v)
         else:
             result[k] = deepcopy(v)
     
