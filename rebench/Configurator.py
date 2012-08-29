@@ -26,6 +26,26 @@ import traceback
 from contextpy import layer, globalActivateLayer
 #proceed, activelayer, activelayers, after, around, before, base, globalDeactivateLayer
 
+from copy import deepcopy
+
+def dict_merge_recursively(a, b):
+    """Merges two dicts recursively.
+       Both initial dicts remain unchanged."""
+    
+    if not isinstance(b, dict):
+        return deepcopy(b)
+    
+    result = deepcopy(a)
+    
+    for k, v in b.iteritems():
+        if k in result:
+            result[k] = dict_merge(result[k], v)
+        else:
+            result[k] = deepcopy(v)
+    
+    return result
+
+
 class Configurator:
     
     def __init__(self, fileName, cliOptions, runName = None):
@@ -37,7 +57,8 @@ class Configurator:
         self._config = self._compileBenchConfigurations(self.runName())
         
         self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None)
-         
+        self.reporting     = self._rawConfig.get('reporting', {})
+        dict_merge_recursively(self.reporting, self._rawConfig['run_definitions'][self.runName()].get('reporting', {}))
     
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
@@ -77,6 +98,11 @@ class Configurator:
     
     def dataFileName(self):
         """@TODO: might add a commandline option 'ff' is just a placeholder here..."""
+        
+        data_file = self._rawConfig['run_definitions'][self.runName()].get('data_file', None)
+        if data_file:
+            return data_file
+        
         return self.standard_data_file
     
     def getBenchmarkConfigurations(self):
