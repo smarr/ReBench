@@ -77,7 +77,7 @@ class Configurator:
     
     def dataFileName(self):
         """@TODO: might add a commandline option 'ff' is just a placeholder here..."""
-        return self.standard_dataFile
+        return self.standard_data_file
     
     def getBenchmarkConfigurations(self):
         """The configuration has be compiled before it can be handed out
