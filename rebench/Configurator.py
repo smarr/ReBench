@@ -58,7 +58,7 @@ class Configurator:
         
         self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None)
         self.reporting     = self._rawConfig.get('reporting', {})
-        dict_merge_recursively(self.reporting, self._rawConfig['run_definitions'][self.runName()].get('reporting', {}))
+        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['run_definitions'][self.runName()].get('reporting', {}))
     
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
