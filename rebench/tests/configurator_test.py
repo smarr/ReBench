@@ -1,27 +1,31 @@
 import unittest
+import os
 
 from ..Configurator import Configurator
 
 class ConfiguratorTest(unittest.TestCase):
+    
+    def setUp(self):
+        self._path = os.path.dirname(os.path.realpath(__file__))
         
     def test_loadAndAccessors(self):        
-        cnf = Configurator('test/test.conf', None)
-        
-        self.assertEqual(dict, type(cnf.quick_runs))
-        self.assertEqual(dict, type(cnf.benchmark_suites))
+        cnf = Configurator(self._path + '/test.conf', None)
+                
+        self.assertIsInstance(cnf.quick_runs,       dict)
+        self.assertIsInstance(cnf.benchmark_suites, dict)
         
     def test_runNameFromCli(self):
-        cnf = Configurator('test/test.conf', None, 'fooTest')
+        cnf = Configurator(self._path + '/test.conf', None, 'Test')
         
-        self.assertEqual('fooTest', cnf.runName())
+        self.assertEqual('Test', cnf.runName())
     
     def test_runNameFromConfigFile(self):
-        cnf = Configurator('test/test.conf', None)
+        cnf = Configurator(self._path + '/test.conf', None)
         self.assertEqual('Test', cnf.runName())
         
-    def test_getRunDefinitions(self):
-        cnf = Configurator('test/test.conf', None)
-        self.assert_(cnf.getRunDefinitions())
+    def test_getBenchmarkConfigurations(self):
+        cnf = Configurator(self._path + '/test.conf', None)
+        self.assertIsNotNone(cnf.getBenchmarkConfigurations())
 
 
 # allow commandline execution 
