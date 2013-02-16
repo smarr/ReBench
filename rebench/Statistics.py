@@ -19,9 +19,14 @@
 # IN THE SOFTWARE.
 
 import math
-import numpy
-import scipy.stats
-import scipy.stats.distributions as distributions
+import logging
+
+try:
+    import numpy
+    import scipy.stats
+    import scipy.stats.distributions as distributions
+except ImportError:
+    logging.error("Loading scipy.stats failed. No replacement for it implemented yet.")
 
 
 class StatisticProperties:
