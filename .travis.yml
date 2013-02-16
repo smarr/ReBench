@@ -8,9 +8,9 @@ before_install:
   - sudo apt-get install -q python-scipy
 
 install:
-  - pip install PyYAML
-  - pip install -U numpy
-  - pip install -U scipy
+  - pip -q install PyYAML
+  #- pip install numpy
+  #- pip install scipy
 # TODO: check whether we can do something like the proposed:
 #   "pip install -r requirements.txt --use-mirrors"
 
