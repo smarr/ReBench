@@ -1,6 +1,6 @@
 import unittest
 
-from Configurator import Configurator
+from ..Configurator import Configurator
 
 class ConfiguratorTest(unittest.TestCase):
         

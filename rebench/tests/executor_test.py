@@ -1,7 +1,7 @@
 import unittest
 import subprocess
 
-from Executor import Executor
+from ..Executor import Executor
 from rebench  import ReBench
 
 class ExecutorTest(unittest.TestCase):

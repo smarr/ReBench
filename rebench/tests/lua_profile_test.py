@@ -1,4 +1,4 @@
-from profile import LuaProfile
+from ..profile import LuaProfile
 import unittest
 
 class LuaProfileTest(unittest.TestCase):
