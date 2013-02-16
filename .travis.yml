@@ -5,7 +5,7 @@ python:
 
 # install dependencies
 before_install:
-  - sudo apt-get install -q python-scipy
+  - sudo apt-get install -qq python-scipy
 
 install:
   - pip -q install PyYAML
