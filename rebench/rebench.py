@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python2.7
 # ReBench is tool to run and document benchmarks.
 #
 # It is inspired by JavaStats implemented by Andy Georges.
