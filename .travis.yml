@@ -4,9 +4,13 @@ python:
   - "2.7"
 
 # install dependencies
-install:
+before_install:
   - sudo apt-get install -q python-scipy
-  - sudo pip install PyYAML
+
+install:
+  - pip install PyYAML
+  - pip install -U numpy
+  - pip install -U scipy
 # TODO: check whether we can do something like the proposed:
 #   "pip install -r requirements.txt --use-mirrors"
 
