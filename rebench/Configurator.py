@@ -246,6 +246,10 @@ class BenchmarkConfig:
     _registry = {}
     
     @classmethod
+    def reset(cls):
+        cls._registry = {}
+    
+    @classmethod
     def getConfig(cls, name, suiteName, vmName, extra_args = None):
         tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args, False)
         if tmp not in cls._registry:
@@ -253,16 +257,16 @@ class BenchmarkConfig:
         
         return cls._registry[tmp]
     
-    def __init__(self, name, performance_reader, suite, vm, extra_args = None, register = True):
+    def __init__(self, name, performance_reader, suite, vm, extra_args = None, do_register = True):
         self.name = name
         self.extra_args = str(extra_args) if extra_args else None
         self.performance_reader = performance_reader
         self.suite = suite
         self.vm = vm
         
-        if register:
+        if do_register:
             if self in BenchmarkConfig._registry:
-                assert False
+                raise ValueError("Configuration is already registered.")
             else:
                 BenchmarkConfig._registry[self] = self
         

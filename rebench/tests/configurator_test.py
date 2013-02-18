@@ -1,11 +1,12 @@
 import unittest
 import os
 
-from ..Configurator import Configurator
+from ..Configurator import Configurator, BenchmarkConfig
 
 class ConfiguratorTest(unittest.TestCase):
     
     def setUp(self):
+        BenchmarkConfig.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         
     def test_loadAndAccessors(self):        
