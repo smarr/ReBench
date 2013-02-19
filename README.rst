@@ -23,12 +23,24 @@ continue aborted benchmark runs at a later time.
 The data can be exported for instance as CSV or visualized with the help of
 box plots.
 
+Current Build Status
+====================
+
+|BuildStatus|_
+
+.. |BuildStatus| image:: https://api.travis-ci.org/smarr/ReBench.png
+.. _BuildStatus: https://travis-ci.org/smarr/ReBench
+
 Credits
 =======
 
 Even though, we do not share code with `JavaStats`_, it was a strong inspiration for the creation of ReBench.
 
 .. _JavaStats: http://www.elis.ugent.be/en/JavaStats
+
+Furthermore, our thanks go to `Travis CI`_ for their services.
+
+.. _Travis CI: http://travis-ci.org
 
 Related Work
 ============
