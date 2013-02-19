@@ -6,11 +6,12 @@ python:
 # install dependencies
 before_install:
   - sudo apt-get install -qq python-scipy
+  - cp -R /usr/lib/python2.7/dist-packages/scipy* /home/travis/virtualenv/python2.7/lib/python2.7/site-packages/
+  - cp -R /usr/lib/python2.7/dist-packages/numpy* /home/travis/virtualenv/python2.7/lib/python2.7/site-packages/
+  - cp -R /usr/lib/python2.7/dist-packages/PIL* /home/travis/virtualenv/python2.7/lib/python2.7/site-packages/
 
 install:
   - pip -q install PyYAML
-  - ls -lah /home/travis/virtualenv/python2.7/lib/python2.7/no-global-site-packages.txt
-  - ls -lah /home/travis/virtualenv/python2.7/lib/python2.7/
   #- pip install numpy
   #- pip install scipy
 # TODO: check whether we can do something like the proposed:
