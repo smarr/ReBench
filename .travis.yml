@@ -9,6 +9,8 @@ before_install:
 
 install:
   - pip -q install PyYAML
+  - ls -lah /home/travis/virtualenv/python2.7/lib/python2.7/no-global-site-packages.txt
+  - ls -lah /home/travis/virtualenv/python2.7/lib/python2.7/
   #- pip install numpy
   #- pip install scipy
 # TODO: check whether we can do something like the proposed:
