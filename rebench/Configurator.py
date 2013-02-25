@@ -47,6 +47,8 @@ def dict_merge_recursively(a, b):
 
 
 class Configurator:
+    # to warn users with old configurations
+    outdated_suite_elements = {'ulimit' : 'max_runtime'}
     
     def __init__(self, fileName, cliOptions, runName = None):
         self._loadConfig(fileName)
@@ -205,7 +207,14 @@ class Configurator:
             # REM: not sure whether that is the best place to encode that default
             if 'variable_values' not in benchmark:
                 benchmark['variable_values'] = []
-             
+            
+            # warn user when outdated config elements our found
+            # they are not supported anymore
+            for outdated, new in Configurator.outdated_suite_elements.iteritems():
+                if outdated in benchmark:
+                    logging.error("The config element '%s' was used. It is not supported anymore.", outdated)
+                    logging.error("Please replace all uses of '%s' with '%s'.", outdated, new)
+            
             benchmark['vm'] = cleanVMDef.copy() 
             suiteDefs.append(benchmark)
         

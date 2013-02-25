@@ -1,5 +1,6 @@
 import unittest
 import os
+import logging
 
 from ..Configurator import Configurator, BenchmarkConfig
 
@@ -8,6 +9,10 @@ class ConfiguratorTest(unittest.TestCase):
     def setUp(self):
         BenchmarkConfig.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
+        self._logging_error = logging.error
+    
+    def tearDown(self):
+        logging.error = self._logging_error  # restore normal logging
         
     def test_loadAndAccessors(self):        
         cnf = Configurator(self._path + '/test.conf', None)
@@ -27,6 +32,17 @@ class ConfiguratorTest(unittest.TestCase):
     def test_getBenchmarkConfigurations(self):
         cnf = Configurator(self._path + '/test.conf', None)
         self.assertIsNotNone(cnf.getBenchmarkConfigurations())
+
+    def test_warning_for_removed_ulimit(self):
+        def test_logging(msg, *args, **kwargs):
+            self.assertIn('ulimit', args, "Test that ulimit is recognized as unsupported")
+            raise RuntimeError("TEST-PASSED")
+        
+        logging.error = test_logging
+        
+        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
+            Configurator(self._path + '/test.conf', None, 'TestWarningForRemovedUlimitUsage')
+        
 
 
 # allow commandline execution 
