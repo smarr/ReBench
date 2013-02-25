@@ -8,6 +8,7 @@ from ..Reporter       import Reporters
 from rebench          import ReBench
 import tempfile
 import os
+import sys
 
 class ExecutorTest(unittest.TestCase):
     
@@ -15,11 +16,13 @@ class ExecutorTest(unittest.TestCase):
         BenchmarkConfig.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         self._tmpFile = tempfile.mkstemp()[1] # just use the file name
-        print self._path
         os.chdir(self._path + '/../')
+        
+        self._sys_exit = sys.exit  # make sure that we restore sys.exit   
     
     def tearDown(self):
         os.remove(self._tmpFile)
+        sys.exit = self._sys_exit
         
         
     def test_setup_and_run_benchmark(self):
@@ -46,6 +49,20 @@ class ExecutorTest(unittest.TestCase):
 #        self.assertAlmostEqual(45869.385195243565, i_low)
 #        self.assertAlmostEqual(45871.453514433859, i_high)
 #        self.assertAlmostEqual(0.00450904792104, interval_percentage)
+
+    def test_broken_command_format(self):
+        def test_exit(val):
+            self.assertEquals(-1, val, "got the correct error code")
+            raise RuntimeError("TEST-PASSED")
+        sys.exit = test_exit
+        
+        options = ReBench().shell_options().parse_args([])[0]
+        cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat')
+        data = DataAggregator(self._tmpFile)
+        ex = Executor(cnf, data, Reporters([]))
+        
+        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
+            ex.execute()
 
 def Popen_override(cmdline, stdout, shell):
     class Popen:

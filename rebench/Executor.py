@@ -24,8 +24,12 @@ import subprocess
 import SubprocessWithTimeout as subprocess_timeout
 import os
 import time
+
 from Statistics import StatisticProperties
 from numbers import Number
+
+import re
+import sys
 
 from contextpy import layer, activelayers, after,before
 # proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
@@ -41,7 +45,21 @@ class Executor:
         self._data = dataAggregator
         self._reporter = reporter
         self._jobs = [] # the list of configurations to be executed
-                
+    
+    def _report_cmdline_format_issue_and_exit(self, cmdline, bench_cfg):
+        logging.critical("The configuration of %s contains improper Python format strings.", bench_cfg.name)
+         
+        # figure out which format misses a conversion type
+        without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
+        logging.error("The command line configured is: %s", cmdline)
+        logging.error("The following elements do not have conversion types: \"%s\"",
+                      '", "'.join(without_conversion_type))
+        logging.error("This can be fixed be replacing for instance %s with %ss",
+                      without_conversion_type[0],
+                      without_conversion_type[0])
+        sys.exit(-1)
+         
+    
     def _construct_cmdline(self, bench_cfg, perf_reader, cores, input_size, variable):
         cmdline  = ""
                 
@@ -60,7 +78,10 @@ class Executor:
         if bench_cfg.extra_args is not None:
             cmdline += " %s" % (bench_cfg.extra_args or "")
 
-        cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
+        try:
+            cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
+        except ValueError:
+            self._report_cmdline_format_issue_and_exit(cmdline, bench_cfg)
         
         return cmdline
     
