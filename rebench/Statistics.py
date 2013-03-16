@@ -24,9 +24,20 @@ import logging
 try:
     import numpy
     import scipy.stats
-    import scipy.stats.distributions as distributions
+    import scipy.stats.distributions as dist
+    
+    # provide a common interface for the relevant functions
+    import imp
+    stats = imp.new_module("stats")
+    stats.mean     = numpy.mean
+    stats.median   = numpy.median
+    stats.geomean  = scipy.stats.gmean
+    stats.stddev   = numpy.std
+    stats.norm_ppf = dist.norm.ppf
+    stats.t_ppf    = dist.t.ppf
 except ImportError:
-    logging.error("Loading scipy.stats failed. No replacement for it implemented yet.")
+    logging.error("Loading scipy.stats failed. A replacement is not yet completely implemented.")
+    import stats
 
 
 class StatisticProperties:
@@ -54,10 +65,10 @@ class StatisticProperties:
            of the data sample.
            Furthermore, several other simple properties are determined.
         """
-        self.mean       = numpy.mean(self._dataSamples)
-        self.geom_mean  = scipy.stats.gmean(self._dataSamples)
-        self.median     = numpy.median(self._dataSamples)
-        self.stdDev     = numpy.std(self._dataSamples)
+        self.mean       = stats.mean(self._dataSamples)
+        self.geom_mean  = stats.geomean(self._dataSamples)
+        self.median     = stats.median(self._dataSamples)
+        self.stdDev     = stats.stddev(self._dataSamples)
         self.numSamples = len(self._dataSamples)
 
         self.min = min(self._dataSamples)
@@ -96,10 +107,10 @@ class StatisticProperties:
         i.e., t distribution for fewer values (<=30 values)
         """
         if self.numSamples > 30:
-            distribution = distributions.norm.ppf((1 + confidence_level)/2.0)
+            distribution = stats.norm_ppf((1 + confidence_level)/2.0)
         else:
             df   = self.numSamples - 1
-            distribution = distributions.t.ppf((1 + confidence_level)/2.0, df)
+            distribution = stats.t_ppf((1 + confidence_level)/2.0, df)
             
         self._confidenceForSamples(distribution)
             
