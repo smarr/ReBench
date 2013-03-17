@@ -59,8 +59,8 @@ class Performance:
         return False
 
 class LogPerformance(Performance):
-    """LogPerformance is the standard for ReBench.
-       It is used to read a simple log format which includes the number of iterations of
+    """LogPerformance is the standard log parser of ReBench.
+       It reads a simple log format, which includes the number of iterations of
        a benchmark and its runtime in microseconds.
     """
     re_logline = re.compile(r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
