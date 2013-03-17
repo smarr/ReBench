@@ -54,7 +54,7 @@ class Executor:
         logging.error("The command line configured is: %s", cmdline)
         logging.error("The following elements do not have conversion types: \"%s\"",
                       '", "'.join(without_conversion_type))
-        logging.error("This can be fixed be replacing for instance %s with %ss",
+        logging.error("This can be fixed by replacing for instance %s with %ss",
                       without_conversion_type[0],
                       without_conversion_type[0])
         sys.exit(-1)
@@ -81,6 +81,8 @@ class Executor:
         try:
             cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
         except ValueError:
+            self._report_cmdline_format_issue_and_exit(cmdline, bench_cfg)
+        except TypeError:
             self._report_cmdline_format_issue_and_exit(cmdline, bench_cfg)
         
         return cmdline

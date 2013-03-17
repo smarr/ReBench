@@ -63,6 +63,20 @@ class ExecutorTest(unittest.TestCase):
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
+    
+    def test_broken_command_format_with_TypeError(self):
+        def test_exit(val):
+            self.assertEquals(-1, val, "got the correct error code")
+            raise RuntimeError("TEST-PASSED")
+        sys.exit = test_exit
+        
+        options = ReBench().shell_options().parse_args([])[0]
+        cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat2')
+        data = DataAggregator(self._tmpFile)
+        ex = Executor(cnf, data, Reporters([]))
+        
+        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
+            ex.execute()
 
 def Popen_override(cmdline, stdout, shell):
     class Popen:
