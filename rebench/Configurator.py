@@ -231,7 +231,9 @@ class Configurator:
         del cleanSuite['performance_reader']
         del cleanSuite['vm']
         
-        for bench in suite['benchmarks']:
+        benchmarks = self._valueOrListAllwaysAsList(suite['benchmarks'])
+        
+        for bench in benchmarks:
             if type(bench) is dict:
                 assert len(bench) == 1
                 (name, bench) = bench.copy().popitem()
