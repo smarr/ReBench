@@ -296,11 +296,16 @@ class DataAggregator(object):
                 
                 dataSet = self.getDataSet(tmpRunId)
                 dataSet += value
-        
-                assert len(value) == 1
-                if self._automaticallyPersistNewDataPoints and not deserializing:
-                    self._persistDataPoint(tmpRunId, value[0])
-                self._persistDataPointAsCSV(tmpRunId, value[0])
+                
+                for point in value:
+                    if self._automaticallyPersistNewDataPoints and not deserializing:
+                        self._persistDataPoint(tmpRunId, point)
+                    self._persistDataPointAsCSV(tmpRunId, point)
+
+#                assert len(value) == 1
+#                if self._automaticallyPersistNewDataPoints and not deserializing:
+#                    self._persistDataPoint(tmpRunId, value[0])
+#                self._persistDataPointAsCSV(tmpRunId, value[0])
     
     def saveData(self):
         # we need that only if it is not done automatically

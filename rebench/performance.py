@@ -269,3 +269,42 @@ class TestPerformance(Performance):
         self.index = (self.index + 1) % len(self.test_data)
         return result
 
+
+class CaliperPerformance(Performance):
+    """CaliperPerformance parses the output of Caliper with
+       the ReBenchConsoleResultProcessor.
+    """
+    re_logline = re.compile(r"Measurement \(runtime\) for (.*?) in (.*?): (.*?)ns")
+    
+    
+    def parse_data(self, data):
+        results = []        
+        total_time = 0
+        total_bench = None # the benchmark we use to represent the total
+         
+        for line in data.split("\n"):
+            if self.check_for_error(line):
+                raise RuntimeError("Output of bench program indicates errors.")
+            
+            m = self.re_logline.match(line)
+            if m:
+                time = float(m.group(3)) / 1000000
+                results.append(DataPoint(time, criterion = m.group(1))) #m.group(2),
+                
+                if total_bench is None:
+                    total_bench = m.group(1)
+                    
+                # is used to determine when benchmark is completed, is currently 
+                # problematic with sources that produced multiple results
+                if total_bench == m.group(1):
+                    # well, so the overall total is going to be the last one
+                    total_time = time
+                    # this is the fake result, to determine whether to stop benchmarking
+                    results.append(DataPoint(time, criterion = 'total'))  # m.group(2),
+        
+        if total_time == 0:
+            print "Failed parsing: ###" + data + "###"
+            raise RuntimeError("Output of bench program did not contain a total value")
+            
+        return (total_time, results)
+
