@@ -254,7 +254,8 @@ class Executor:
         
         for cfg in benchConfigs:
             for cores in cfg.suite['cores']:
-                for input_size in cfg.suite['input_sizes']:
+                input_sizes = cfg.suite.get('input_sizes', [None])
+                for input_size in input_sizes:
                     if len(cfg.suite['variable_values']):
                         for var_val in cfg.suite['variable_values']:
                             configurations.append(RunId(cfg, (cores, input_size, var_val)))
