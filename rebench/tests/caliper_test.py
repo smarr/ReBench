@@ -85,7 +85,8 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
     def setUp(self):
         self._result1 = "Measurement (runtime) for SimpleExecution in AliasMOP.ExampleBench: 52.316778ns"
         self._result2 = "Measurement (runtime) for SimpleAdditionAmbientTalk in AliasMOP.ExampleBench: 17365.513556ns"
-        self._c = CaliperPerformance()
+        self._c       = CaliperPerformance()
+        self._path    = os.path.dirname(os.path.realpath(__file__))
     
     def assertIsProperTupleWithTotal(self, expected_total, aTuple):
         self.assertIsInstance(aTuple, types.TupleType)
@@ -150,5 +151,11 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         data_point = parsed[1][5] # another fake result
         self.assertEqual("total", data_point.criterion)
         self.assertEqual(0.000052316778, data_point.time)
+    
+    def test_parse_caliper_output_bug1(self):
+        with open (self._path + '/caliper-bug1.output', "r") as f:
+            data = f.read()
         
+        parsed = self._c.parse_data(data)
+        self.assertIsProperTupleWithTotal(4.507679245283001, parsed)
     

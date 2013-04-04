@@ -276,6 +276,11 @@ class CaliperPerformance(Performance):
     """
     re_logline = re.compile(r"Measurement \(runtime\) for (.*?) in (.*?): (.*?)ns")
     
+    def check_for_error(self, line):
+        ## for the moment we will simply not check fir errors, because
+        ## there are to many simple Error strings referring to class names
+        ## TODO: find better solution
+        pass
     
     def parse_data(self, data):
         results = []        
