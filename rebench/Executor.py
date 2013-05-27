@@ -215,6 +215,7 @@ class Executor:
             logging.debug("Confidence is reached for %s"%(cfg.name))
             terminate = True
         
+        logging.debug("Terminate: %r, error_runs: %s, data points: %d"%(terminate, erroneous_runs, numDataPoints))
         return terminate, (consequent_erroneous_runs, erroneous_runs)
     
     @after(quick)

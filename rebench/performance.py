@@ -87,7 +87,7 @@ class LogPerformance(Performance):
                 if m.group(5) == "u":
                     time = time / 1000
                 criterion = (m.group(2) or 'total').strip()
-              
+                
                 val = DataPoint(time, criterion)
                 result.append(val)
 
@@ -100,6 +100,90 @@ class LogPerformance(Performance):
             raise RuntimeError("Output of bench program did not contain a total value")
             
         return (total, result)
+
+class StatsPerformance(Performance):
+    """StatsPerformance is similar to LogPerformance but starts parsing
+       only between certain markers
+    """
+    start = "Stats{"
+    stop = "}Stats"
+    re_statline= re.compile(r"^([BNC]|T[smu]?):(\w+):\s*(\d*\.?\d+)?")
+
+    def parse_data(self, data):
+        from DataAggregator import NonTimeDataPoint
+        result = []
+        total = None
+        go = False
+        benchName = None
+        iterations = None
+
+        for line in data.split("\n"):
+            if self.check_for_error(line):
+                raise RuntimeError("Output of bench program indicated error.")
+
+            if self.start == line:
+                go = True
+                continue
+            elif self.stop == line:
+                go = False
+                continue
+
+            if not go:
+                continue
+
+            m = self.re_statline.match(line)
+            if m:
+                mult = 1
+                dp = NonTimeDataPoint
+                data = None
+                name = m.group(2).strip()
+                typ = m.group(1)
+                if typ[0] == "T":
+                    dp = DataPoint
+                    data = float(m.group(3).strip())
+                    if len(typ) == 2:
+                        if typ[1] == "s":
+                            mult = 1.0 / 1000
+                        elif typ[1] == "m":
+                            mult = 1
+                        elif typ[1] == "u":
+                            mult = 1000
+                        assert iterations is not None, \
+                            "iterations must be given before timed values"
+                        if mult > iterations:
+                            mult = float(mult) / iterations
+                        else:
+                            mult = mult / iterations
+                elif typ[0] == "C":
+                    data = int(m.group(3).strip())
+                    mult = 1
+                elif typ[0] == "N": #the iteration count
+                    iterations = int(m.group(3).strip())
+                elif typ[0] == "B": #the Benchmark name, breaks DataAggregator
+                    pass
+                    # benchName = name
+                    # if len(result) > 0:
+                    #     for dp in results:
+                    #         dp.benchName = benchName
+                else:
+                    print "Failed parsing: ###" + line + "###"
+                    raise RuntimeError("Unknown Stat entry")
+
+                if data:
+                    val = dp(data * mult, benchName, name)
+                    if val.isTotal():
+                        assert total is None, "there was more than one 'total'"
+                        total = val.time
+                        result.append(DataPoint(total, criterion='total'))
+                    else:
+                        result.append(val)
+
+        if total is None:
+            print "Failed parsing: ###" + data + "###"
+            raise RuntimeError("Output of bench did not contain a total value")
+        return (total, result)
+
+
 
 class JGFPerformance(Performance):
     """JGFPerformance is used to read the output of the JGF barrier benchmarks.
