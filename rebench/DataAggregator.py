@@ -202,7 +202,7 @@ class DataAggregator(object):
         """
         
         criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
-        
+
         if criteria == self._lastCriteria:
             return self._lastDataSet
         
@@ -258,10 +258,10 @@ class DataAggregator(object):
         
         if type(dataPoints) is list:
             for point in dataPoints:
-                benchmarks.setdefault(point.benchName, {}).setdefault(point.criterion, []).append(point.time)
+                point.putOn(benchmarks)
         else:
-            benchmarks.setdefault(dataPoints.benchName, {}).setdefault(dataPoints.criterion, []).append(dataPoints.time)
-        
+            dataPoints.putOn(benchmarks)
+
         return benchmarks
     
     def addDataPoints(self, runId, dataPoints, deserializing = False):
@@ -272,13 +272,13 @@ class DataAggregator(object):
         or contain different criteria, so we are going to sort that out first.
         """
         flatData = self._flattenData(dataPoints)
-        
+
         if None in flatData:
             assert len(flatData) == 1
         
         for bench, criteria in flatData.iteritems():
             for criterion, value in criteria.iteritems():
-                assert type(value[0]) is float
+                assert type(value[0]) is float or type(value[0]) is int
                 
                 tmpRunId = copy(runId)
                 
@@ -335,9 +335,11 @@ class DataAggregator(object):
         
         for criterion in criteria:
             result.append("\t%s" % criterion)
-            
-        result.append(" = %f\n" % dataPoint)
-        
+
+        if isinstance(dataPoint, float):
+            result.append(" = %f\n" % dataPoint)
+        else:
+            result.append(" = %r\n" % dataPoint)
         return result
     
     def _serializeDataPointAsCSV(self, runId, dataPoint):
@@ -348,7 +350,10 @@ class DataAggregator(object):
         
         criteria = runCfg[:-1] + ("\"%s\""%runCfg[-1],) + runId.variables + (runId.criterion, )
         #tuple(["\"%s\""%x for x in runId.variables])
-        result.append("%f" % dataPoint)
+        if isinstance(dataPoint, float):
+            result.append("%f" % dataPoint)
+        else:
+            result.append("%r" % dataPoint)
         
         for criterion in criteria:
             result.append("\t%s" % criterion)
@@ -380,6 +385,29 @@ class DataPoint:
         self.benchName = benchName
         self.criterion = criterion
         self.time = time
-        
+
     def isTotal(self):
         return self.criterion == 'total'
+
+    def putOn(self, benchDict):
+        benchDict.setdefault(self.benchName, {}).setdefault(self.criterion, []).append(self.time)
+
+    def __repr__(self):
+        return "<%s (%f, %r, %r)>" % (
+            self.__class__, self.time, self.benchName, self.criterion)
+
+class NonTimeDataPoint(DataPoint):
+    def __init__(self, data, benchName = None, criterion = None):
+        assert criterion is not None, "Non-time DataPoints must name their criterion"
+        DataPoint.__init__(self, None, benchName, criterion)
+        self.data = data
+
+    def isTotal(self):
+        return False
+
+    def __repr__(self):
+        return "<%s (%r, %r, %r)>" % (
+            self.__class__, self.data, self.benchName, self.criterion)
+
+    def putOn(self, benchDict):
+        benchDict.setdefault(self.benchName, {}).setdefault(self.criterion, []).append(self.data)
