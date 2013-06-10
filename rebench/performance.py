@@ -143,11 +143,11 @@ class StatsPerformance(Performance):
                     data = float(m.group(3).strip())
                     if len(typ) == 2:
                         if typ[1] == "s":
-                            mult = 1.0 / 1000
+                            mult = 1000
                         elif typ[1] == "m":
                             mult = 1
                         elif typ[1] == "u":
-                            mult = 1000
+                            mult = 1.0 / 1000
                         assert iterations is not None, \
                             "iterations must be given before timed values"
                         if mult > iterations:
