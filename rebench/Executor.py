@@ -88,6 +88,8 @@ class Executor:
         return cmdline
     
     def _exec_configuration(self, runId):
+        self._reporter.startConfiguration(runId)
+        
         (cores, input_size, var_val) = runId.variables
         
         perf_reader = self._get_performance_reader_instance(runId.cfg.performance_reader)
@@ -97,12 +99,6 @@ class Executor:
                                           cores,
                                           input_size,
                                           var_val)
-        
-        # do some logging for debugging purposes
-        logging.debug("command = " + cmdline)
-        if 'max_runtime' in runId.cfg.suite:
-            logging.debug("max_runtime: %s" % (runId.cfg.suite['max_runtime']))
-        logging.debug("cwd: %s" % (runId.cfg.suite['location']))
         
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
@@ -150,26 +146,19 @@ class Executor:
             
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            if returncode == -9:
-                log_msg = "Run #%d of %s:%s timed out. returncode: %s Output: %s"
-            else:
-                log_msg = "Run #%d of %s:%s failed returncode: %s Output: %s" 
-            logging.warning(log_msg%(self._data.getNumberOfDataPoints(runId),
-                                     runId.cfg.vm['name'], runId.cfg.name,
-                                     returncode, output))
+            
             error = (consequent_erroneous_runs, erroneous_runs)
-            self._reporter.runFailed(runId)
+            self._reporter.runFailed(runId, cmdline, returncode, output)
         else:
-            logging.debug(u"Output: %s"%(output))
-            error = self._eval_output(output, runId, perf_reader, error)
+            error = self._eval_output(output, runId, perf_reader, error, cmdline)
         
         return self._check_termination_condition(runId, error)
     
-    def _eval_output(self, output, runId, perf_reader, error):
+    def _eval_output(self, output, runId, perf_reader, error, cmdline):
         return error
     
     @after(benchmark)
-    def _eval_output(self, output, runId, perf_reader, error, __result__):
+    def _eval_output(self, output, runId, perf_reader, error, cmdline, __result__):
         consequent_erroneous_runs, erroneous_runs = error
         
         try:
@@ -182,7 +171,7 @@ class Executor:
         except RuntimeError:
             consequent_erroneous_runs += 1
             erroneous_runs += 1
-            logging.warning("Run of %s:%s failed"%(runId.cfg.vm['name'], runId.cfg.name))
+            self._reporter.runFailed(runId, cmdline, 0, output)
             
         return consequent_erroneous_runs, erroneous_runs
         
@@ -265,33 +254,15 @@ class Executor:
         return configurations
     
     def execute(self):
-        startTime = None
-        runsCompleted = 0
         (actions, benchConfigs) = self._configurator.getBenchmarkConfigurations()
         configs = self._generate_all_configs(benchConfigs)
         
-        runsRemaining = len(configs)
+        self._reporter.setTotalNumberOfConfigurations(len(configs))
         
         for action in actions:
             with activelayers(layer(action)):
                 for runId in configs:
-                    logging.info("Configurations left: %d"%(runsRemaining))
-                    
-                    if runsCompleted > 0:
-                        current = time.time()
-                        
-                        etl = (current - startTime) / runsCompleted * runsRemaining
-                        sec = etl % 60
-                        min = (etl - sec) / 60 % 60
-                        h   = (etl - sec - min) / 60 / 60
-                        logging.info("Estimated time left: %02d:%02d:%02d"%(round(h), round(min), round(sec)))
-                    else:
-                        startTime = time.time()
-                    
                     self._exec_configuration(runId)
-                    
-                    runsCompleted += 1
-                    runsRemaining -= 1
                     
                 self._reporter.jobCompleted(configs, self._data)
 

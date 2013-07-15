@@ -283,6 +283,12 @@ class BenchmarkConfig:
         
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s'" % (self.name, self.vm['name'], self.suite['name'], self.extra_args or '')
+    
+    def as_simple_string(self):
+        if self.extra_args:
+            return "%s (%s, %s, %s)"  % (self.name, self.vm['name'], self.suite['name'], self.extra_args)
+        else:
+            return "%s (%s, %s)"  % (self.name, self.vm['name'], self.suite['name'])
         
     def __eq__(self, other):
         """I am not exactly sure whether that will be right, or whether

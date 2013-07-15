@@ -21,8 +21,8 @@
 from __future__ import with_statement
 from __future__ import print_function
 from datetime import datetime
+import time
 import logging
-from copy import copy
 from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 from DataAggregator import DataAggregator
@@ -67,7 +67,7 @@ class Reporter:
     #def endSeparatLog(self, task, level = None):
     #    pass
     
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         raise NotImplementedError('Subclass responsibility')
     
     def configurationCompleted(self, runId, statistics):
@@ -75,7 +75,13 @@ class Reporter:
     
     def jobCompleted(self, configurations, dataAggregator):
         raise NotImplementedError('Subclass responsibility')
-
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def startConfiguration(self, runId):
+        raise NotImplementedError('Subclass responsibility')
+    
 class Reporters(Reporter):
     """Distributes the information to all registered reporters."""
     
@@ -85,9 +91,9 @@ class Reporters(Reporter):
         else:
             self._reporters = [reporters]
 
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         for reporter in self._reporters:
-            reporter.runFailed(runId)
+            reporter.runFailed(runId, cmdline, returncode, output)
             
     def configurationCompleted(self, runId, statistics):
         for reporter in self._reporters:
@@ -96,6 +102,14 @@ class Reporters(Reporter):
     def jobCompleted(self, configurations, dataAggregator):
         for reporter in self._reporters:
             reporter.jobCompleted(configurations, dataAggregator)
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        for reporter in self._reporters:
+            reporter.setTotalNumberOfConfigurations(numConfigs)
+    
+    def startConfiguration(self, runId):
+        for reporter in self._reporters:
+            reporter.startConfiguration(runId)
 
 class TextReporter(Reporter):
     
@@ -136,8 +150,10 @@ class TextReporter(Reporter):
                                         self._configurator.statistics['confidence_level'])
             
             out = []
-            for item in path:
-                out.append(str(item))
+            out.append(path[0].as_simple_string())
+            for item in path[1:]:
+                if item:
+                    out.append(str(item))
                 
             out = [ " ".join(out) + " " ]
             
@@ -151,18 +167,36 @@ class CliReporter(TextReporter):
     
     def __init__(self, configurator):
         TextReporter.__init__(self, configurator)
+        self._numConfigs    = None
+        self._runsCompleted = 0
+        self._startTime     = None
+        self._runsRemaining = 0
 
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
+        # Additional information in debug mode
         result = []
         result.append("[%s] Run failed: " % datetime.now())
-
         result += self._configuration_details(runId) 
-
         result.append("\n")
-
         result = "".join(result)
-
-        logging.debug(result)    
+        logging.debug(result)
+        
+        # Standard error output
+        if returncode == -9:
+            log_msg = "Run timed out. returncode: %s"
+        else:
+            log_msg = "Run failed returncode: %s"
+        
+        print(log_msg % returncode)
+        
+        print("Cmd: %s\n" % cmdline)
+        
+        if 'max_runtime' in runId.cfg.suite:
+            logging.debug("max_runtime: %s" % (runId.cfg.suite['max_runtime']))
+        logging.debug("cwd: %s" % (runId.cfg.suite['location']))
+        
+        if len(output.strip()) > 0:
+            print("Output:\n%s\n" % output)    
 
     def configurationCompleted(self, runId, statistics):
         result = []
@@ -175,12 +209,44 @@ class CliReporter(TextReporter):
         result = "".join(result)
         
         logging.debug(result)
+        
+        self._runsCompleted += 1
+        self._runsRemaining -= 1
 
     def jobCompleted(self, configurations, dataAggregator):
-        logging.info("[%s] Job completed" % datetime.now())
+        print("[%s] Job completed" % datetime.now())
         for line in self._generate_all_output(dataAggregator.getData(), ()):
-            logging.info(line)
+            print(line)
     
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        self._numConfigs = numConfigs
+        self._runsRemaining = numConfigs
+    
+    def startConfiguration(self, runId):
+        
+        
+        if self._runsCompleted > 0:
+            current = time.time()
+            
+            etl = (current - self._startTime) / self._runsCompleted * self._runsRemaining
+            sec = etl % 60
+            m   = (etl - sec) / 60 % 60
+            h   = (etl - sec - m) / 60 / 60
+            print("Run %s \t configurations left: %00d \t estimated time left: %02d:%02d:%02d"%(runId.cfg.name, self._runsRemaining, round(h), round(m), round(sec)))
+        else:
+            self._startTime = time.time()
+            print("Run %s \t configurations left: %d" % (runId.cfg.name, self._runsRemaining))
+            
+    def _output_stats(self, outputList, statistics):
+        if not statistics:
+            return
+        
+        if statistics.failedRun:
+            outputList.append("run failed.")
+        else:
+            outputList.append("\tmean: %.1f [%.1f, %.1f]" % (statistics.mean,
+                                                             statistics.confIntervalLow,
+                                                             statistics.confIntervalHigh))
     
 
 class FileReporter(TextReporter):
@@ -192,7 +258,7 @@ class FileReporter(TextReporter):
         TextReporter.__init__(self, configurator)
         self._file = open(fileName, 'a+')
 
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         result = []
         result.append("[%s] Run failed: " % datetime.now())
 
@@ -218,6 +284,13 @@ class FileReporter(TextReporter):
             self._file.write(line + "\n")
             
         self._file.close()
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        pass
+    
+    def startConfiguration(self, runId):
+        pass
+
             
 class CSVFileReporter(Reporter):
     """ Will generate a CSV file for processing in another program as for instance Excel or Numbers """
@@ -226,7 +299,7 @@ class CSVFileReporter(Reporter):
         self._file = open(configurator.reporting['csv_file'], 'a+')
         self._configurator = configurator
     
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         pass
     
     def configurationCompleted(self, runId, statistics):
@@ -290,6 +363,12 @@ class CSVFileReporter(Reporter):
             
         self._file.close()
         locale.setlocale(locale.LC_ALL, old_locale)
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        pass
+    
+    def startConfiguration(self, runId):
+        pass
         
 
 class CodespeedReporter(Reporter):
@@ -319,7 +398,7 @@ class CodespeedReporter(Reporter):
         # the parameters
         self._indexMap = DataAggregator.data_mapping()
         
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         pass
 
 
@@ -424,7 +503,13 @@ class CodespeedReporter(Reporter):
         
         # now, send them of to codespeed
         self._sendToCodespeed(results)
-
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        pass
+    
+    def startConfiguration(self, runId):
+        pass
+    
 
 class DiagramResultReporter(Reporter):
     
@@ -433,7 +518,7 @@ class DiagramResultReporter(Reporter):
         self._separateByMapping = DataAggregator.data_mapping()
         self._separateByIndexes = None
 
-    def runFailed(self, runId):
+    def runFailed(self, runId, cmdline, returncode, output):
         pass
 
     
