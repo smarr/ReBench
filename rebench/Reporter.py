@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 from __future__ import with_statement
+from __future__ import print_function
 from datetime import datetime
 import logging
 from copy import copy
@@ -850,10 +851,10 @@ class ReporterOld:
     
     def final_report(self, verbose):
         if self.profile_data:
-            print self.report_profile_results(verbose)
+            print(self.report_profile_results(verbose))
         
         if self.benchmark_data:
-            print self.report_benchmark_results(verbose)
+            print(self.report_benchmark_results(verbose))
         
     def old(self):
         if self.output_file is not None:
