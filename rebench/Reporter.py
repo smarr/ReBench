@@ -171,6 +171,11 @@ class CliReporter(TextReporter):
         self._runsCompleted = 0
         self._startTime     = None
         self._runsRemaining = 0
+        
+        if "min_runtime" in configurator.statistics:
+            self._min_runtime = configurator.statistics["min_runtime"]
+        else:
+            self._min_runtime = None
 
     def runFailed(self, runId, cmdline, returncode, output):
         # Additional information in debug mode
@@ -212,6 +217,16 @@ class CliReporter(TextReporter):
         
         self._runsCompleted += 1
         self._runsRemaining -= 1
+        
+        if self._min_runtime:
+            if statistics.mean < self._min_runtime:
+                print("WARNING: measured mean is smaller than min_runtime (%s) \t mean: %.1f [%.1f, %.1f]\trun id: %s"
+                      % (self._min_runtime,
+                         statistics.mean, statistics.confIntervalLow,
+                         statistics.confIntervalHigh, runId.as_simple_string())) 
+             
+        
+        self._configurator.statistics["min_runtime"]
 
     def jobCompleted(self, configurations, dataAggregator):
         print("[%s] Job completed" % datetime.now())
