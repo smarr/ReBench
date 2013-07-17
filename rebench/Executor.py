@@ -114,7 +114,7 @@ class Executor:
             
             logging.debug("Run: #%d"%(stats.numSamples))
 
-        self._reporter.configurationCompleted(runId, stats)
+        self._reporter.configurationCompleted(runId, stats, cmdline)
         
     @before(quick)
     def _exec_configuration(self, runId):

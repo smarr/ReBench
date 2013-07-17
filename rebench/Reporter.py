@@ -70,7 +70,7 @@ class Reporter:
     def runFailed(self, runId, cmdline, returncode, output):
         raise NotImplementedError('Subclass responsibility')
     
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         raise NotImplementedError('Subclass responsibility')
     
     def jobCompleted(self, configurations, dataAggregator):
@@ -95,9 +95,9 @@ class Reporters(Reporter):
         for reporter in self._reporters:
             reporter.runFailed(runId, cmdline, returncode, output)
             
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         for reporter in self._reporters:
-            reporter.configurationCompleted(runId, statistics)
+            reporter.configurationCompleted(runId, statistics, cmdline)
     
     def jobCompleted(self, configurations, dataAggregator):
         for reporter in self._reporters:
@@ -205,7 +205,7 @@ class CliReporter(TextReporter):
         if len(output.strip()) > 0:
             print("Output:\n%s\n" % output)    
 
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         result = []
         result.append("[%s] Configuration completed: " % datetime.now())
         
@@ -226,6 +226,7 @@ class CliReporter(TextReporter):
                       % (self._min_runtime,
                          statistics.mean, statistics.confIntervalLow,
                          statistics.confIntervalHigh, runId.as_simple_string())) 
+                print("Cmd: %s" % cmdline)
              
         
         self._configurator.statistics["min_runtime"]
@@ -285,7 +286,7 @@ class FileReporter(TextReporter):
 
         self._file.writelines(result)
         
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         result = []
         result.append("[%s] Configuration completed: " % datetime.now())
         
@@ -319,7 +320,7 @@ class CSVFileReporter(Reporter):
     def runFailed(self, runId, cmdline, returncode, output):
         pass
     
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         pass
     
     def _prepareHeaderRow(self, data, dataAggregator, parameterMappings):
@@ -419,7 +420,7 @@ class CodespeedReporter(Reporter):
         pass
 
 
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         if not self._incremental_report:
             return
         
@@ -539,7 +540,7 @@ class DiagramResultReporter(Reporter):
         pass
 
     
-    def configurationCompleted(self, runId, statistics):
+    def configurationCompleted(self, runId, statistics, cmdline):
         pass
     
     def jobCompleted(self, configurations, dataAggregator):
