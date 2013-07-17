@@ -138,6 +138,14 @@ class TextReporter(Reporter):
             if not field.startswith('_'):
                 outputList.append("%s: %s " % (field, value))
     
+    def _path_to_string(self, path):
+        out = []
+        out.append(path[0].as_simple_string())
+        for item in path[1:]:
+            if item:
+                out.append(str(item))
+        return " ".join(out) + " "
+    
     def _generate_all_output(self, data, path):
         assert type(data) is dict or type(data) is list
         
@@ -148,14 +156,8 @@ class TextReporter(Reporter):
         else:
             stats = StatisticProperties(data, 
                                         self._configurator.statistics['confidence_level'])
-            
-            out = []
-            out.append(path[0].as_simple_string())
-            for item in path[1:]:
-                if item:
-                    out.append(str(item))
                 
-            out = [ " ".join(out) + " " ]
+            out = [ self._path_to_string(path) ]
             
             self._output_stats(out, stats)
             
