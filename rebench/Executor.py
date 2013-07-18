@@ -272,9 +272,9 @@ class RunId:
         self.variables = self._stringify(variables)
         self.criterion = 'total'
         
-    def _stringify(self, tuple):
+    def _stringify(self, aTuple):
         result = ()
-        for item in tuple:
+        for item in aTuple:
             if isinstance(item, Number) or item is None:
                 result += (str(item), )
             else:
