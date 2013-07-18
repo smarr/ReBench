@@ -123,6 +123,9 @@ class Configurator:
             return [value]
     
     def _compileBenchConfigurations(self, runName):
+        if runName not in self._rawConfig['run_definitions']:
+            raise ValueError("Requested run_definition '%s' not available." % runName)
+        
         runDef = self._rawConfig['run_definitions'][runName]
         
         # first thing, take the statistics configuration out of the runDef
@@ -133,7 +136,7 @@ class Configurator:
         _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
         _input_sizes = self._valueOrListAllwaysAsList(runDef.get('input_sizes', None))
         
-        _executions = self._valueOrListAllwaysAsList(runDef['executions']) 
+        _executions = self._valueOrListAllwaysAsList(runDef['executions'])
         
         vmDefinitions = []
         
@@ -145,7 +148,7 @@ class Configurator:
             else:
                 vmDetails = None
                 
-            vmDefinitions.append(self._compileVMDefinitionForVM(vm, vmDetails, _benchmarks, _input_sizes))
+            vmDefinitions.append(self._compileVMDefinitionForVM(vm, vmDetails, _benchmarks, _input_sizes, runName))
         
         # second step: specialize the suite definitions for the VMs
         suiteDefinitions = []
@@ -159,7 +162,7 @@ class Configurator:
         
         return (actions, configurationDefinitions)
     
-    def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_sizes):
+    def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_sizes, runName):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
@@ -171,6 +174,9 @@ class Configurator:
             benchmarks = _benchmarks
             input_sizes= _input_sizes
             cores      = None
+        
+        if vm not in self._rawConfig['virtual_machines']:
+            raise ValueError("The VM '%s' requested in %s was not found." % (vm, runName))
             
         vmDef = self._rawConfig['virtual_machines'][vm].copy()
         vmDef['benchmark'] = benchmarks
