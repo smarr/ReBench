@@ -303,10 +303,10 @@ class BenchmarkConfig:
         if type(other) != type(self):
             return False
         
-        return (    self.name == other.name
-                and self.extra_args == other.extra_args
-                and self.suite['name'] == other.suite['name']
-                and self.vm['name'] == other.vm['name'])
+        return (    self.name           == other.name
+                and self.extra_args     == other.extra_args
+                and 0 == cmp(self.suite, other.suite)
+                and 0 == cmp(self.vm,    other.vm))
                 
     def __ne__(self, other):
         return not self.__eq__(other)
