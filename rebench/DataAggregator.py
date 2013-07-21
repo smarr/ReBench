@@ -56,13 +56,14 @@ The data aggregator supports the following data dimensions:
 import re
 import os
 from datetime import datetime
-from Configurator import BenchmarkConfig
+from model.BenchmarkConfig import BenchmarkConfig
 from Executor import RunId
 from copy import copy
 import logging
 import subprocess
 import shutil
 import time
+from model.DataPoint import DataPoint
 
 class DataAggregator(object):
     '''
@@ -367,7 +368,7 @@ class DataAggregator(object):
         args = m.group(4) if m.group(4) else None
         restRunId = m.group(5).strip().split("\t")
         
-        cfg = BenchmarkConfig.getConfig(benchName, suiteName, vmName, args)
+        cfg = BenchmarkConfig.get_config(benchName, suiteName, vmName, args)
         
         criterion = restRunId[-1]
         restRunId = restRunId[:-1]

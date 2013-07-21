@@ -2,7 +2,8 @@ import unittest
 import os
 import logging
 
-from ..Configurator import Configurator, BenchmarkConfig
+from ..Configurator import Configurator
+from ..model.BenchmarkConfig import BenchmarkConfig
 
 class ConfiguratorTest(unittest.TestCase):
     

@@ -3,8 +3,9 @@ import subprocess
 
 from ..Executor       import Executor
 from ..DataAggregator import DataAggregator
-from ..Configurator   import Configurator, BenchmarkConfig
+from ..Configurator   import Configurator
 from ..Reporter       import Reporters
+from ..model.BenchmarkConfig import BenchmarkConfig
 from rebench          import ReBench
 import tempfile
 import os
