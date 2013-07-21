@@ -46,59 +46,22 @@ class Executor:
         self._reporter = reporter
         self._jobs = [] # the list of configurations to be executed
     
-    def _report_cmdline_format_issue_and_exit(self, cmdline, bench_cfg):
-        logging.critical("The configuration of %s contains improper Python format strings.", bench_cfg.name)
-         
-        # figure out which format misses a conversion type
-        without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
-        logging.error("The command line configured is: %s", cmdline)
-        logging.error("The following elements do not have conversion types: \"%s\"",
-                      '", "'.join(without_conversion_type))
-        logging.error("This can be fixed by replacing for instance %s with %ss",
-                      without_conversion_type[0],
-                      without_conversion_type[0])
-        sys.exit(-1)
-         
-    
-    def _construct_cmdline(self, bench_cfg, perf_reader, cores, input_size, variable):
+    def _construct_cmdline(self, runId, perf_reader):
         cmdline  = ""
                 
         if self._configurator.options.use_nice:
             cmdline += "nice -n-20 "
         
-        vm_cmd = "%s/%s %s" % (os.path.abspath(bench_cfg.vm['path']),
-                               bench_cfg.vm['binary'],
-                               bench_cfg.vm.get('args', ""))
-            
-        vm_cmd = perf_reader.acquire_command(vm_cmd)
-            
-        cmdline += vm_cmd 
-        cmdline += bench_cfg.suite['command']
-        
-        if bench_cfg.extra_args is not None:
-            cmdline += " %s" % (bench_cfg.extra_args or "")
-
-        try:
-            cmdline = cmdline % {'benchmark':bench_cfg.name, 'input':input_size, 'variable':variable, 'cores' : cores}
-        except ValueError:
-            self._report_cmdline_format_issue_and_exit(cmdline, bench_cfg)
-        except TypeError:
-            self._report_cmdline_format_issue_and_exit(cmdline, bench_cfg)
-        
+        cmdline += perf_reader.acquire_command(runId.cmdline())
+                
         return cmdline
     
     def _exec_configuration(self, runId):
         self._reporter.startConfiguration(runId)
         
-        (cores, input_size, var_val) = runId.variables
-        
         perf_reader = self._get_performance_reader_instance(runId.cfg.performance_reader)
         
-        cmdline = self._construct_cmdline(runId.cfg,
-                                          perf_reader,
-                                          cores,
-                                          input_size,
-                                          var_val)
+        cmdline = self._construct_cmdline(runId, perf_reader)
         
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
@@ -239,7 +202,7 @@ class Executor:
             return False
     
     def _generate_all_configs(self, benchConfigs):
-        configurations = []
+        configurations = set()
         
         for cfg in benchConfigs:
             for cores in cfg.suite['cores']:
@@ -247,30 +210,50 @@ class Executor:
                 for input_size in input_sizes:
                     if len(cfg.suite['variable_values']):
                         for var_val in cfg.suite['variable_values']:
-                            configurations.append(RunId(cfg, (cores, input_size, var_val)))
+                            configurations.add(RunId.create(cfg, (cores, input_size, var_val)))
                     else:
-                        configurations.append(RunId(cfg, (cores, input_size, None)))
+                        configurations.add(RunId.create(cfg, (cores, input_size, None)))
         
-        return configurations
+        return list(configurations)
     
     def execute(self):
-        (actions, benchConfigs) = self._configurator.getBenchmarkConfigurations()
+        benchConfigs = self._configurator.getBenchmarkConfigurations()
         configs = self._generate_all_configs(benchConfigs)
         
         self._reporter.setTotalNumberOfConfigurations(len(configs))
         
-        for action in actions:
-            with activelayers(layer(action)):
-                for runId in configs:
+        for runId in configs:
+            for action in runId.actions():
+                with activelayers(layer(action)):
                     self._exec_configuration(runId)
                     
-                self._reporter.jobCompleted(configs, self._data)
+        self._reporter.jobCompleted(configs, self._data)
 
 class RunId:
+    _registry = {}
+    
+    @classmethod
+    def reset(cls):
+        cls._registry = {}
+    
+    @classmethod
+    def create(cls, cfg, variables, terminationCriterion='total'):
+        run = RunId(cfg, variables, terminationCriterion)
+        if run in RunId._registry:
+            return RunId._registry[run]
+        else:
+            RunId._registry[run] = run
+            return run
+    
     def __init__(self, cfg, variables, terminationCriterion='total'):
         self.cfg = cfg
         self.variables = self._stringify(variables)
         self.criterion = 'total'
+    
+    def __hash__(self):
+        return (hash(self.cfg) ^ 
+                hash(self.variables) ^ 
+                hash(self.criterion))
         
     def _stringify(self, aTuple):
         result = ()
@@ -287,3 +270,50 @@ class RunId:
     
     def as_tuple(self):
         return self.cfg.as_tuple() + self.variables + (self.criterion, )
+    
+    def actions(self):
+        return self.cfg.actions()
+    
+    def cmdline(self):
+        cmdline  = ""
+                
+        vm_cmd = "%s/%s %s" % (os.path.abspath(self.cfg.vm['path']),
+                               self.cfg.vm['binary'],
+                               self.cfg.vm.get('args', ''))
+            
+        cmdline += vm_cmd 
+        cmdline += self.cfg.suite['command']
+        
+        if self.cfg.extra_args is not None:
+            cmdline += " %s" % (self.cfg.extra_args or "")
+            
+        (cores, input_size, var_val) = self.variables
+
+        try:
+            cmdline = cmdline % {'benchmark':self.cfg.name, 'input':input_size, 'variable':var_val, 'cores' : cores}
+        except ValueError:
+            self._report_cmdline_format_issue_and_exit(cmdline)
+        except TypeError:
+            self._report_cmdline_format_issue_and_exit(cmdline)
+        
+        return cmdline.strip()
+    
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+            and self.cmdline() == other.cmdline())
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def _report_cmdline_format_issue_and_exit(self, cmdline):
+        logging.critical("The configuration of %s contains improper Python format strings.", self.cfg.name)
+         
+        # figure out which format misses a conversion type
+        without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
+        logging.error("The command line configured is: %s", cmdline)
+        logging.error("The following elements do not have conversion types: \"%s\"",
+                      '", "'.join(without_conversion_type))
+        logging.error("This can be fixed by replacing for instance %s with %ss",
+                      without_conversion_type[0],
+                      without_conversion_type[0])
+        sys.exit(-1)
