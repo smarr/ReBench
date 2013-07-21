@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-from DataAggregator import DataPoint
+from model.DataPoint import DataPoint
 
 class Performance:
     """Performance provides a common interface and some helper functionality
@@ -242,7 +242,7 @@ class TestVMPerformance(Performance):
             m = TestVMPerformance.re_time.match(line)
             if m:
                 val = DataPoint(float(m.group(2)), None, m.group(1))
-                if val.isTotal():
+                if val.is_total():
                     assert total is None
                     total = val.time
                 results.append(val)

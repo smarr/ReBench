@@ -374,12 +374,3 @@ class DataAggregator(object):
         dataPoint = DataPoint(float(m.group(6)), None, criterion)
         
         return RunId(cfg, restRunId, criterion), dataPoint
-
-class DataPoint:
-    def __init__(self, time, benchName = None, criterion = 'total'):
-        self.benchName = benchName
-        self.criterion = criterion
-        self.time = time
-        
-    def isTotal(self):
-        return self.criterion == 'total'

@@ -24,7 +24,8 @@ import tempfile
 import os
 
 from ..performance import CaliperPerformance
-from ..DataAggregator import DataAggregator, DataPoint
+from ..DataAggregator import DataAggregator
+from ..model.DataPoint import DataPoint
 from .. import ReBench
 from ..Configurator import Configurator
 from ..Executor import Executor
