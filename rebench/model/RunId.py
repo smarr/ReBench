@@ -22,14 +22,26 @@ class RunId:
             return run
     
     def __init__(self, cfg, variables, terminationCriterion='total'):
-        self.cfg = cfg
-        self.variables = self._stringify(variables)
-        self.criterion = 'total'
+        self._cfg = cfg
+        self._variables = self._stringify(variables)
+        self._criterion = 'total'
+    
+    @property
+    def cfg(self):
+        return self._cfg
+    
+    @property
+    def variables(self):
+        return self._variables
+    
+    @property
+    def criterion(self):
+        return self._criterion
     
     def __hash__(self):
-        return (hash(self.cfg) ^ 
-                hash(self.variables) ^ 
-                hash(self.criterion))
+        return (hash(self._cfg) ^ 
+                hash(self._variables) ^ 
+                hash(self._criterion))
         
     def _stringify(self, aTuple):
         result = ()
@@ -42,31 +54,31 @@ class RunId:
         return result
     
     def as_simple_string(self):
-        return "%s %s %s" % (self.cfg.as_simple_string(), self.variables, self.criterion)
+        return "%s %s %s" % (self._cfg.as_simple_string(), self._variables, self._criterion)
     
     def as_tuple(self):
-        return self.cfg.as_tuple() + self.variables + (self.criterion, )
+        return self._cfg.as_tuple() + self._variables + (self._criterion, )
     
     def actions(self):
-        return self.cfg.actions()
+        return self._cfg.actions()
     
     def cmdline(self):
         cmdline  = ""
                 
-        vm_cmd = "%s/%s %s" % (os.path.abspath(self.cfg.vm['path']),
-                               self.cfg.vm['binary'],
-                               self.cfg.vm.get('args', ''))
+        vm_cmd = "%s/%s %s" % (os.path.abspath(self._cfg.vm['path']),
+                               self._cfg.vm['binary'],
+                               self._cfg.vm.get('args', ''))
             
         cmdline += vm_cmd 
-        cmdline += self.cfg.suite['command']
+        cmdline += self._cfg.suite['command']
         
-        if self.cfg.extra_args is not None:
-            cmdline += " %s" % (self.cfg.extra_args or "")
+        if self._cfg.extra_args is not None:
+            cmdline += " %s" % (self._cfg.extra_args or "")
             
-        (cores, input_size, var_val) = self.variables
+        (cores, input_size, var_val) = self._variables
 
         try:
-            cmdline = cmdline % {'benchmark':self.cfg.name, 'input':input_size, 'variable':var_val, 'cores' : cores}
+            cmdline = cmdline % {'benchmark':self._cfg.name, 'input':input_size, 'variable':var_val, 'cores' : cores}
         except ValueError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         except TypeError:
@@ -82,7 +94,7 @@ class RunId:
         return not self.__eq__(other)
     
     def _report_cmdline_format_issue_and_exit(self, cmdline):
-        logging.critical("The configuration of %s contains improper Python format strings.", self.cfg.name)
+        logging.critical("The configuration of %s contains improper Python format strings.", self._cfg.name)
          
         # figure out which format misses a conversion type
         without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)

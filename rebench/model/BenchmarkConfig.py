@@ -25,21 +25,47 @@ class BenchmarkConfig:
         return cfg
     
     def __init__(self, name, performance_reader, suite, vm, extra_args = None):
-        self.name = name
-        self.extra_args = str(extra_args) if extra_args else None
-        self.performance_reader = performance_reader
-        self.suite = suite
-        self.vm = vm
+        self._name = name
+        self._extra_args = str(extra_args) if extra_args else None
+        self._performance_reader = performance_reader
+        self._suite = suite
+        self._vm = vm
         self._actions = None
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def extra_args(self):
+        return self._extra_args
+    
+    @property
+    def performance_reader(self):
+        return self._performance_reader
+    
+    @property
+    def suite(self):
+        return self._suite
+    
+    @property
+    def vm(self):
+        return self._vm
         
     def __str__(self):
-        return "%s, vm:%s, suite:%s, args:'%s'" % (self.name, self.vm['name'], self.suite['name'], self.extra_args or '')
+        return "%s, vm:%s, suite:%s, args:'%s'" % (self._name,
+                                                   self._vm['name'],
+                                                   self._suite['name'],
+                                                   self._extra_args or '')
     
     def as_simple_string(self):
-        if self.extra_args:
-            return "%s (%s, %s, %s)"  % (self.name, self.vm['name'], self.suite['name'], self.extra_args)
+        if self._extra_args:
+            return "%s (%s, %s, %s)"  % (self._name,
+                                         self._vm['name'],
+                                         self._suite['name'],
+                                         self._extra_args)
         else:
-            return "%s (%s, %s)"  % (self.name, self.vm['name'], self.suite['name'])
+            return "%s (%s, %s)"  % (self._name, self._vm['name'], self._suite['name'])
         
     def __eq__(self, other):
         """I am not exactly sure whether that will be right, or whether
@@ -48,22 +74,22 @@ class BenchmarkConfig:
         if type(other) != type(self):
             return False
         
-        return (    self.name           == other.name
-                and self.extra_args     == other.extra_args
-                and 0 == cmp(self.suite, other.suite)
-                and 0 == cmp(self.vm,    other.vm))
+        return (    self._name           == other.name
+                and self._extra_args     == other.extra_args
+                and 0 == cmp(self._suite, other.suite)
+                and 0 == cmp(self._vm,    other.vm))
                 
     def __ne__(self, other):
         return not self.__eq__(other)
     
     def __hash__(self):
-        return (hash(self.name) ^ 
-                hash(self.extra_args) ^ 
-                hash(self.suite['name']) ^
-                hash(self.vm['name']))
+        return (hash(self._name) ^ 
+                hash(self._extra_args) ^ 
+                hash(self._suite['name']) ^
+                hash(self._vm['name']))
     
     def as_tuple(self):
-        return (self.name, self.vm['name'], self.suite['name'], self.extra_args)
+        return (self._name, self._vm['name'], self._suite['name'], self._extra_args)
     
     def set_actions(self, actions):
         if self._actions and 0 != cmp(self._actions, actions):
