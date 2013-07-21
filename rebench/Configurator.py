@@ -158,9 +158,9 @@ class Configurator:
         # third step: create final configurations to be executed
         configurationDefinitions = []
         for suite in suiteDefinitions:
-            configurationDefinitions += self._compileConfigurations(suite)
+            configurationDefinitions += self._compileConfigurations(suite, actions)
         
-        return (actions, configurationDefinitions)
+        return configurationDefinitions
     
     def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_sizes, runName):
         """Specializing the VM details in the run definitions with the settings from
@@ -226,7 +226,7 @@ class Configurator:
         
         return suiteDefs
     
-    def _compileConfigurations(self, suite):
+    def _compileConfigurations(self, suite, actions):
         """Specialization of the configurations which get executed by using the
            suite definitions.
         """
@@ -255,7 +255,7 @@ class Configurator:
                 bench['performance_reader'] = suite['performance_reader']
             
             bench['vm'] = suite['vm']
-            configs.append(BenchmarkConfig(**bench))
+            configs.append(BenchmarkConfig.create(bench, actions))
         
         return configs
 
@@ -268,24 +268,30 @@ class BenchmarkConfig:
     
     @classmethod
     def getConfig(cls, name, suiteName, vmName, extra_args = None):
-        tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args, False)
+        tmp = BenchmarkConfig(name, None, {'name':suiteName}, {'name':vmName}, extra_args)
         if tmp not in cls._registry:
             raise ValueError("Requested configuration is not available: " + (cls, name, suiteName, vmName, extra_args).__str__())
         
         return cls._registry[tmp]
     
-    def __init__(self, name, performance_reader, suite, vm, extra_args = None, do_register = True):
+    @classmethod
+    def create(cls, bench_def, actions):
+        cfg = BenchmarkConfig(**bench_def)
+        if cfg in BenchmarkConfig._registry:
+            cfg = BenchmarkConfig._registry[cfg]
+        else:
+            BenchmarkConfig._registry[cfg] = cfg
+        
+        cfg.set_actions(actions)
+        return cfg
+    
+    def __init__(self, name, performance_reader, suite, vm, extra_args = None):
         self.name = name
         self.extra_args = str(extra_args) if extra_args else None
         self.performance_reader = performance_reader
         self.suite = suite
         self.vm = vm
-        
-        if do_register:
-            if self in BenchmarkConfig._registry:
-                raise ValueError("Configuration is already registered.")
-            else:
-                BenchmarkConfig._registry[self] = self
+        self._actions = None
         
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s'" % (self.name, self.vm['name'], self.suite['name'], self.extra_args or '')
@@ -319,6 +325,16 @@ class BenchmarkConfig:
     
     def as_tuple(self):
         return (self.name, self.vm['name'], self.suite['name'], self.extra_args)
+    
+    def set_actions(self, actions):
+        if self._actions and 0 != cmp(self._actions, actions):
+            raise ValueError("Currently the actions for each BenchmarkConfigurations need to be equal.")
+        
+        self._actions = actions
+        return self
+    
+    def actions(self):
+        return self._actions
         
     @classmethod
     def tuple_mapping(cls):
