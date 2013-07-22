@@ -63,14 +63,14 @@ class Executor:
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
         stats = StatisticProperties(self._data.getDataSet(runId),
-                                    self._configurator.statistics['confidence_level'])
+                                    self._configurator.statistics.confidence_level)
         
         # now start the actual execution
         while not terminate:
             terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
             
             stats = StatisticProperties(self._data.getDataSet(runId),
-                                        self._configurator.statistics['confidence_level'])
+                                        self._configurator.statistics.confidence_level)
             
             logging.debug("Run: #%d"%(stats.numSamples))
 
@@ -82,8 +82,8 @@ class Executor:
 
     @before(benchmark)
     def _exec_configuration(self, runId):
-        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self._configurator.statistics["min_runs"],
-                                                                 self._configurator.statistics["max_runs"]))
+        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self._configurator.statistics.min_runs,
+                                                                 self._configurator.statistics.max_runs))
     
     def _get_performance_reader_instance(self, reader):
         # depending on how ReBench was executed, the name might one of the two 
@@ -156,10 +156,10 @@ class Executor:
         elif erroneous_runs > numDataPoints / 2 and erroneous_runs > 6:
             logging.error("Many runs of %s are failing, benchmark is aborted."%(cfg.name))
             terminate = True
-        elif numDataPoints >= self._configurator.statistics["max_runs"]:
+        elif numDataPoints >= self._configurator.statistics.max_runs:
             logging.debug("Reached max_runs for %s"%(cfg.name))
             terminate = True
-        elif (numDataPoints >= self._configurator.statistics["min_runs"]
+        elif (numDataPoints >= self._configurator.statistics.min_runs
               and self._confidence_reached(runId)):
             logging.debug("Confidence is reached for %s"%(cfg.name))
             terminate = True
@@ -187,13 +187,13 @@ class Executor:
     def _confidence_reached(self, runId):
         
         stats = StatisticProperties(self._data.getDataSet(runId),
-                                    self._configurator.statistics['confidence_level'])
+                                    self._configurator.statistics.confidence_level)
         
         logging.debug("Run: %d, Mean: %f, current error: %f, Interval: [%f, %f]"%(
                       stats.numSamples, stats.mean,
                       stats.confIntervalSize, stats.confIntervalLow, stats.confIntervalHigh))
         
-        if stats.confIntervalSize < self._configurator.statistics["error_margin"]:
+        if stats.confIntervalSize < self._configurator.statistics.error_margin:
             return True
         else:
             return False
