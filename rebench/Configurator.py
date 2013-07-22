@@ -23,6 +23,7 @@ import yaml
 import logging
 import traceback
 from model.benchmark_config import BenchmarkConfig
+from model.statistics       import Statistics
 
 from contextpy import layer, globalActivateLayer
 #proceed, activelayer, activelayers, after, around, before, base, globalDeactivateLayer
@@ -55,7 +56,7 @@ class Configurator:
         self._loadConfig(fileName)
         self._processCliOptions(cliOptions)
         self._runName = runName
-        self.statistics = self._rawConfig.get('statistics', {})
+        self.statistics = Statistics(**self._rawConfig.get('statistics', {}))
         
         self._config = self._compileBenchConfigurations(self.runName())
         
@@ -131,7 +132,8 @@ class Configurator:
         
         # first thing, take the statistics configuration out of the runDef
         # and merge it with the global configuration
-        self.statistics = dict(self.statistics, **runDef.get('statistics', {}))
+        self.statistics = self.statistics.combine(runDef.get('statistics', {}))
+        
         
         actions = self._valueOrListAllwaysAsList(runDef['actions'])
         _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
