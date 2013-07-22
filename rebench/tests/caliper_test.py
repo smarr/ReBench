@@ -25,7 +25,7 @@ import os
 
 from ..performance import CaliperPerformance
 from ..DataAggregator import DataAggregator
-from ..model.DataPoint import DataPoint
+from ..model.data_point import DataPoint
 from .. import ReBench
 from ..Configurator import Configurator
 from ..Executor import Executor

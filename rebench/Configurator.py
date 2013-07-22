@@ -22,7 +22,7 @@ import sys
 import yaml
 import logging
 import traceback
-from model.BenchmarkConfig import BenchmarkConfig
+from model.benchmark_config import BenchmarkConfig
 
 from contextpy import layer, globalActivateLayer
 #proceed, activelayer, activelayers, after, around, before, base, globalDeactivateLayer

@@ -24,7 +24,7 @@ import subprocess
 import SubprocessWithTimeout as subprocess_timeout
 import time
 
-from model.RunId import RunId
+from model.run_id import RunId
 
 from Statistics import StatisticProperties
 

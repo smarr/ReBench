@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-from model.DataPoint import DataPoint
+from model.data_point import DataPoint
 
 class Performance:
     """Performance provides a common interface and some helper functionality

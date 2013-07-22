@@ -56,14 +56,14 @@ The data aggregator supports the following data dimensions:
 import re
 import os
 from datetime import datetime
-from model.BenchmarkConfig import BenchmarkConfig
 from Executor import RunId
 from copy import copy
 import logging
 import subprocess
 import shutil
 import time
-from model.DataPoint import DataPoint
+from model.benchmark_config import BenchmarkConfig
+from model.data_point       import DataPoint
 
 class DataAggregator(object):
     '''

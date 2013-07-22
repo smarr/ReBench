@@ -5,7 +5,7 @@ from ..Executor       import Executor
 from ..DataAggregator import DataAggregator
 from ..Configurator   import Configurator
 from ..Reporter       import Reporters
-from ..model.BenchmarkConfig import BenchmarkConfig
+from ..model.benchmark_config import BenchmarkConfig
 from rebench          import ReBench
 import tempfile
 import os
