@@ -108,6 +108,10 @@ Argument:
                              default=None,
                              help="The executable name given to codespeed. Default: "
                                   "The name used for the virtual machine.")
+        codespeed.add_option("--project", dest="project",
+                             default=None,
+                             help="The project name given to codespeed. Default: "
+                                  "Value given in the config file.")
         codespeed.add_option("-f", "--disable-inc-report",
                              action="store_false", dest="report_incrementally",
                              default=True, help="Does a final report at the end instead of reporting incrementally.")

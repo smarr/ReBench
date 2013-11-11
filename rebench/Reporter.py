@@ -428,10 +428,15 @@ class CodespeedReporter(Reporter):
         self._sendToCodespeed(results)
     
     def _result_data_template(self):
+        if self._configurator.options.project:
+            project = self._configurator.options.project
+        else:
+            project = self._codespeed_cfg['project']
+        
         # all None values have to be filled in
         return {
             'commitid':     self._configurator.options.commit_id,
-            'project':      self._codespeed_cfg['project'],
+            'project':      project,
             #'revision_date': '', # Optional. Default is taken
                                   # either from VCS integration or from current date
             'executable':   None,
