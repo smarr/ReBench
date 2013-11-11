@@ -404,8 +404,9 @@ class CodespeedReporter(Reporter):
             raise ValueError("--environment has to be set on the command line for codespeed reporting.")
         self._codespeed_cfg = self._configurator.reporting['codespeed']
         
-        if "project" not in self._codespeed_cfg:
-            raise ValueError("The config file needs to configure a 'project' in the reporting.codespeed section")
+        if "project" not in self._codespeed_cfg or self._configurator.options.project is None:
+            raise ValueError("The config file needs to configure a 'project' in the reporting.codespeed section, or --project has to be given on the command line.")
+        
         if "url" not in self._codespeed_cfg:
             raise ValueError("The config file needs to configure a URL to codespeed in the reporting.codespeed section")
 
