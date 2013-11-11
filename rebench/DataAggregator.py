@@ -152,6 +152,7 @@ class DataAggregator(object):
         '''
         Loads the data from the configured data file
         '''
+        errors = set()
         try:
             with open(self._dataFileName, 'r') as f:
                 for line in f:
@@ -161,8 +162,11 @@ class DataAggregator(object):
                             runId, value = self._deserializeDataPoint(line)
                             self.addDataPoints(runId, value, True)
                     except ValueError, e:
-                        # Configuration is not available, skip data point
-                        logging.debug(e)
+                        msg = str(e)
+                        if msg not in errors:
+                            # Configuration is not available, skip data point
+                            logging.debug(msg)
+                            errors.add(msg)
         except IOError:
             logging.info("No data loaded %s does not exist." % self._dataFileName)
                 
