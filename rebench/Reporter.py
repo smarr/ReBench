@@ -26,6 +26,7 @@ import logging
 from Statistics import StatisticProperties
 from contextpy import layer, after, globalActivateLayer
 from DataAggregator import DataAggregator
+from model.benchmark_config import BenchmarkConfig
 import json
 import urllib2
 import urllib
@@ -422,7 +423,7 @@ class CodespeedReporter(Reporter):
             return
         
         # if self._incremental_report is true we are going to talk to codespeed immediately
-        results = [self._formatForCodespeed(runId.as_tuple(), statistics)]
+        results = [self._formatForCodespeed(runId, statistics)]
         
         # now, send them of to codespeed
         self._sendToCodespeed(results)
@@ -456,7 +457,8 @@ class CodespeedReporter(Reporter):
         replace = re.compile('bench(mark)?', re.IGNORECASE)
         return replace.sub('', name)
 
-    def _formatForCodespeed(self, run, stats = None):
+    def _formatForCodespeed(self, runId, stats = None):
+        run = runId.as_tuple()
         result = self._result_data_template()
         
         if stats and not stats.failedRun:
@@ -471,15 +473,16 @@ class CodespeedReporter(Reporter):
             result['executable']   = run[self._indexMap['vm']]
         else:
             result['executable']   = self._configurator.options.executable
-
         
-        # TODO: make that configurable and find a way
-        #       that the place holder expansion is done in a sane and consistent way
-        name = self._beautifyBenchmarkName(run[self._indexMap['bench']])
-        name = "%s (%s cores, %s %s)" % (name, run[self._indexMap['cores']] or "",
-                                               run[self._indexMap['input_sizes']] or "",
-                                               run[self._indexMap['extra_args']] or "")
-        name = name % {'cores' : run[self._indexMap['cores']] }
+        if 'codespeed_name' in runId.cfg.additional_config:
+            name = runId.cfg.additional_config['codespeed_name']
+        else:
+            name = self._beautifyBenchmarkName(run[self._indexMap['bench']]) + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)"
+
+        name = name % {'cores' : run[self._indexMap['cores']]             or "",
+                       'input_sizes' : run[self._indexMap['input_sizes']] or "",
+                       'extra_args'  : run[self._indexMap['extra_args']]  or ""}
+        
         result['benchmark'] = name
         
         return result

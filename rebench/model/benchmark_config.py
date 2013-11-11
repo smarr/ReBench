@@ -24,13 +24,14 @@ class BenchmarkConfig:
         cfg.set_actions(actions)
         return cfg
     
-    def __init__(self, name, performance_reader, suite, vm, extra_args = None):
+    def __init__(self, name, performance_reader, suite, vm, extra_args = None, **kwargs):
         self._name = name
         self._extra_args = str(extra_args) if extra_args else None
         self._performance_reader = performance_reader
         self._suite = suite
         self._vm = vm
         self._actions = None
+        self._additional_config = kwargs
     
     @property
     def name(self):
@@ -51,6 +52,10 @@ class BenchmarkConfig:
     @property
     def vm(self):
         return self._vm
+    
+    @property
+    def additional_config(self):
+        return self._additional_config
         
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s'" % (self._name,
