@@ -125,6 +125,12 @@ class Configurator:
             return [value]
     
     def _compileBenchConfigurations(self, runName):
+        if runName == "all":
+            confDefs = []
+            for run in self._rawConfig['run_definitions']:
+                confDefs = confDefs + self._compileBenchConfigurations(run)
+            return confDefs
+        
         if runName not in self._rawConfig['run_definitions']:
             raise ValueError("Requested run_definition '%s' not available." % runName)
         
