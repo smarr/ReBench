@@ -140,8 +140,6 @@ class Configurator:
         # and merge it with the global configuration
         self.statistics = self.statistics.combine(runDef.get('statistics', {}))
         
-        
-        actions = self._valueOrListAllwaysAsList(runDef['actions'])
         _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
         _input_sizes = self._valueOrListAllwaysAsList(runDef.get('input_sizes', None))
         
@@ -167,7 +165,7 @@ class Configurator:
         # third step: create final configurations to be executed
         configurationDefinitions = []
         for suite in suiteDefinitions:
-            configurationDefinitions += self._compileConfigurations(suite, actions)
+            configurationDefinitions += self._compileConfigurations(suite)
         
         return configurationDefinitions
     
@@ -235,7 +233,7 @@ class Configurator:
         
         return suiteDefs
     
-    def _compileConfigurations(self, suite, actions):
+    def _compileConfigurations(self, suite):
         """Specialization of the configurations which get executed by using the
            suite definitions.
         """
@@ -264,6 +262,6 @@ class Configurator:
                 bench['performance_reader'] = suite['performance_reader']
             
             bench['vm'] = suite['vm']
-            configs.append(BenchmarkConfig.create(bench, actions))
+            configs.append(BenchmarkConfig.create(bench))
         
         return configs

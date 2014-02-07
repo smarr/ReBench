@@ -32,7 +32,6 @@ from contextpy import layer, activelayers, after,before
 # proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
 
 benchmark = layer("benchmark")
-profile = layer("profile")
 quick   = layer("quick")
 
 class Executor:
@@ -138,11 +137,7 @@ class Executor:
         
     def _check_termination_condition(self, runId, error):
         return False, error
-    
-    @after(profile)
-    def _check_termination_condition(self, runId, error, __result__):
-        return True, error
-    
+        
     @after(benchmark)
     def _check_termination_condition(self, runId, error, __result__):
         terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
@@ -220,9 +215,8 @@ class Executor:
         self._reporter.setTotalNumberOfConfigurations(len(configs))
         
         for runId in configs:
-            for action in runId.actions():
-                with activelayers(layer(action)):
-                    self._exec_configuration(runId)
+            with activelayers(layer("benchmark")):
+                self._exec_configuration(runId)
                     
         self._reporter.jobCompleted(configs, self._data)
 

@@ -59,9 +59,6 @@ class RunId:
     def as_tuple(self):
         return self._cfg.as_tuple() + self._variables + (self._criterion, )
     
-    def actions(self):
-        return self._cfg.actions()
-    
     def cmdline(self):
         cmdline  = ""
                 

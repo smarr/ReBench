@@ -14,14 +14,12 @@ class BenchmarkConfig:
         return cls._registry[tmp]
     
     @classmethod
-    def create(cls, bench_def, actions):
+    def create(cls, bench_def):
         cfg = BenchmarkConfig(**bench_def)
         if cfg in BenchmarkConfig._registry:
             cfg = BenchmarkConfig._registry[cfg]
         else:
             BenchmarkConfig._registry[cfg] = cfg
-        
-        cfg.set_actions(actions)
         return cfg
     
     def __init__(self, name, performance_reader, suite, vm, extra_args = None, **kwargs):
@@ -30,7 +28,6 @@ class BenchmarkConfig:
         self._performance_reader = performance_reader
         self._suite = suite
         self._vm = vm
-        self._actions = None
         self._additional_config = kwargs
     
     @property
@@ -95,17 +92,7 @@ class BenchmarkConfig:
     
     def as_tuple(self):
         return (self._name, self._vm['name'], self._suite['name'], self._extra_args)
-    
-    def set_actions(self, actions):
-        if self._actions and 0 != cmp(self._actions, actions):
-            raise ValueError("Currently the actions for each BenchmarkConfigurations need to be equal.")
-        
-        self._actions = actions
-        return self
-    
-    def actions(self):
-        return self._actions
-        
+            
     @classmethod
     def tuple_mapping(cls):
         return {'bench' : 0, 'vm' : 1, 'suite' : 2, 'extra_args' : 3}

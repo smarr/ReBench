@@ -59,13 +59,6 @@ Argument:
                            help="Do a quick benchmark run instead of a full, "
                                 "statistical rigorous experiment.",
                            default=False)
-        #TODO: Profiling is part of the run definition, not a cmd-line
-        #      option...
-        #options.add_option("-p", "--profile", action="store_true",
-        #                   dest="profile",
-        #                   help="Profile dynamic characteristics instead "
-        #                        " measuring execution time.",
-        #                   default=False)
         options.add_option("-d", "--debug", action="store_true", dest="debug",
                            default=False, help="Enable debug output.")
         options.add_option("-v", "--verbose", action="store_true",
