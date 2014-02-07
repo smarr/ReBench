@@ -40,7 +40,7 @@ import logging
 class ReBench:
     
     def __init__(self):
-        self.version = "0.2.2"
+        self.version = "0.3.0"
         self.options = None
         self.config = None
     
