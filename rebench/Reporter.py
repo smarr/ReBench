@@ -24,7 +24,6 @@ from datetime import datetime
 import time
 import logging
 from Statistics import StatisticProperties
-from contextpy import layer, after, globalActivateLayer
 from DataAggregator import DataAggregator
 from model.benchmark_config import BenchmarkConfig
 import json
@@ -32,7 +31,6 @@ import urllib2
 import urllib
 import re
 import locale
-# proceed, activelayer, activelayers, around, before, base,
 
 try:
     import matplotlib
@@ -44,9 +42,6 @@ try:
     from matplotlib.patches import Polygon
 except ImportError:
     logging.info("matplotlib was not found, import failed: " + str(ImportError))
-
-benchmark = layer("benchmark")
-log_to_file = layer("log_to_file")
 
 class Reporter:
 

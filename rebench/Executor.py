@@ -28,11 +28,6 @@ from model.run_id import RunId
 
 from Statistics import StatisticProperties
 
-from contextpy import layer, activelayers, after,before
-# proceed, activelayer, around, base, globalActivateLayer, globalDeactivateLayer
-
-benchmark = layer("benchmark")
-quick   = layer("quick")
 
 class Executor:
     
@@ -53,6 +48,12 @@ class Executor:
         return cmdline
     
     def _exec_configuration(self, runId):
+        if self._configurator.options.quick:
+            self._quickStartTime = time.time()
+        
+        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self._configurator.statistics.min_runs,
+                                                                 self._configurator.statistics.max_runs))
+        
         self._reporter.startConfiguration(runId)
         
         perf_reader = self._get_performance_reader_instance(runId.cfg.performance_reader)
@@ -75,15 +76,6 @@ class Executor:
 
         self._reporter.configurationCompleted(runId, stats, cmdline)
         
-    @before(quick)
-    def _exec_configuration(self, runId):
-        self._quickStartTime = time.time()
-
-    @before(benchmark)
-    def _exec_configuration(self, runId):
-        logging.debug("Statistic cfg: min_runs=%s, max_runs=%s"%(self._configurator.statistics.min_runs,
-                                                                 self._configurator.statistics.max_runs))
-    
     def _get_performance_reader_instance(self, reader):
         # depending on how ReBench was executed, the name might one of the two 
         try:
@@ -114,10 +106,6 @@ class Executor:
         return self._check_termination_condition(runId, error)
     
     def _eval_output(self, output, runId, perf_reader, error, cmdline):
-        return error
-    
-    @after(benchmark)
-    def _eval_output(self, output, runId, perf_reader, error, cmdline, __result__):
         consequent_erroneous_runs, erroneous_runs = error
         
         try:
@@ -133,17 +121,22 @@ class Executor:
             self._reporter.runFailed(runId, cmdline, 0, output)
             
         return consequent_erroneous_runs, erroneous_runs
-        
-        
+
     def _check_termination_condition(self, runId, error):
-        return False, error
-        
-    @after(benchmark)
-    def _check_termination_condition(self, runId, error, __result__):
-        terminate, (consequent_erroneous_runs, erroneous_runs) = __result__
+        terminate = False
+        consequent_erroneous_runs, erroneous_runs = error
         
         numDataPoints = self._data.getNumberOfDataPoints(runId)
         cfg = runId.cfg
+        
+        if self._configurator.options.quick:
+            if numDataPoints >= self._configurator.quick_runs["max_runs"]:
+                logging.debug("Reached max_runs for %s"%(cfg.name))
+                terminate = True
+            elif (numDataPoints > self._configurator.quick_runs["min_runs"]
+                  and time.time() - self._quickStartTime > self._configurator.quick_runs["max_time"]):
+                logging.debug("Maximum runtime is reached for %s"%(cfg.name))
+                terminate = True
         
         if consequent_erroneous_runs >= 3:
             logging.error("Three runs of %s have failed in a row, benchmark is aborted"%(cfg.name))
@@ -159,26 +152,8 @@ class Executor:
             logging.debug("Confidence is reached for %s"%(cfg.name))
             terminate = True
         
-        return terminate, (consequent_erroneous_runs, erroneous_runs)
-    
-    @after(quick)
-    def _check_termination_condition(self, runId, error, __result__):
-        terminate, error = __result__
-        cfg = runId.cfg
-        
-        numDataPoints = self._data.getNumberOfDataPoints(runId)
-        
-        if numDataPoints >= self._configurator.quick_runs["max_runs"]:
-            logging.debug("Reached max_runs for %s"%(cfg.name))
-            terminate = True
-        elif (numDataPoints > self._configurator.quick_runs["min_runs"]
-              and time.time() - self._quickStartTime > self._configurator.quick_runs["max_time"]):
-            logging.debug("Maximum runtime is reached for %s"%(cfg.name))
-            terminate = True
-        
         return terminate, error
-   
-                
+    
     def _confidence_reached(self, runId):
         
         stats = StatisticProperties(self._data.getDataSet(runId),
@@ -215,8 +190,7 @@ class Executor:
         self._reporter.setTotalNumberOfConfigurations(len(configs))
         
         for runId in configs:
-            with activelayers(layer("benchmark")):
-                self._exec_configuration(runId)
+            self._exec_configuration(runId)
                     
         self._reporter.jobCompleted(configs, self._data)
 

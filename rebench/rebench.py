@@ -37,8 +37,6 @@ from DataAggregator import DataAggregator
 from optparse import OptionParser, OptionGroup
 import logging
 
-#from contextpy import layer, proceed, activelayer, activelayers, after, around, before, base, globalActivateLayer, globalDeactivateLayer
-
 class ReBench:
     
     def __init__(self):

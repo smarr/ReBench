@@ -25,9 +25,6 @@ import traceback
 from model.benchmark_config import BenchmarkConfig
 from model.statistics       import Statistics
 
-from contextpy import layer, globalActivateLayer
-#proceed, activelayer, activelayers, after, around, before, base, globalDeactivateLayer
-
 from copy import deepcopy
 
 def dict_merge_recursively(a, b):
@@ -91,10 +88,7 @@ class Configurator:
         else:
             logging.basicConfig(level=logging.ERROR)
             logging.getLogger().setLevel(logging.ERROR)
-            
-        if options.quick:
-            globalActivateLayer(layer("quick"))
-            
+                    
         self.options = options
         
     def runName(self):
