@@ -16,23 +16,23 @@ class ConfiguratorTest(unittest.TestCase):
     def tearDown(self):
         logging.error = self._logging_error  # restore normal logging
         
-    def test_loadAndAccessors(self):        
+    def test_structure(self):        
         cnf = Configurator(self._path + '/test.conf', None)
                 
         self.assertIsInstance(cnf.runs,             RunsConfig)
         self.assertIsInstance(cnf.quick_runs,       QuickRunsConfig)
         self.assertIsInstance(cnf.benchmark_suites, dict)
         
-    def test_runNameFromCli(self):
-        cnf = Configurator(self._path + '/test.conf', None, 'Test')
+    def test_runName_from_cli(self):
+        cnf = Configurator(self._path + '/test.conf', None, 'TestBrokenCommandFormat')
         
-        self.assertEqual('Test', cnf.runName())
+        self.assertEqual('TestBrokenCommandFormat', cnf.runName())
     
-    def test_runNameFromConfigFile(self):
+    def test_runName_from_config_file(self):
         cnf = Configurator(self._path + '/test.conf', None)
         self.assertEqual('Test', cnf.runName())
         
-    def test_getBenchmarkConfigurations(self):
+    def test_get_benchmark_configurations(self):
         cnf = Configurator(self._path + '/test.conf', None)
         self.assertIsNotNone(cnf.getBenchmarkConfigurations())
 
