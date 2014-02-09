@@ -50,24 +50,24 @@ class Configurator:
     OUTDATED_SUITE_ELEMENTS  = { 'ulimit' : 'max_runtime' }
     DEFAULT_CONFIG_REPORTING = { 'confidence_level' : 0.95 }
     
-    def __init__(self, fileName, cliOptions, runName = None):
-        self._loadConfig(fileName)
-        self._processCliOptions(cliOptions)
-        self._runName   = runName
+    def __init__(self, fileName, cliOptions, expName = None):
+        self._load_config(fileName)
+        self._process_cli_options(cliOptions)
+        self._exp_name  = expName
         
         self.runs       = RunsConfig(     **self._rawConfig.get(      'runs', {}))
         self.quick_runs = QuickRunsConfig(**self._rawConfig.get('quick_runs', {}))
         
-        self._config = self._compileBenchConfigurations(self.runName())
+        self._config = self._compileBenchConfigurations(self.experiment_name())
         
-        self.visualization = self._rawConfig['experiments'][self.runName()].get('visualization', None)
+        self.visualization = self._rawConfig['experiments'][self.experiment_name()].get('visualization', None)
         self.reporting = dict_merge_recursively(self._rawConfig.get('reporting', {}), self.DEFAULT_CONFIG_REPORTING)
-        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['experiments'][self.runName()].get('reporting', {}))
+        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['experiments'][self.experiment_name()].get('reporting', {}))
     
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
     
-    def _loadConfig(self, file_name):
+    def _load_config(self, file_name):
         try:
             f = file(file_name, 'r')
             self._rawConfig = yaml.load(f)
@@ -80,7 +80,7 @@ class Configurator:
             logging.error(traceback.format_exc(0))
             sys.exit(-1)
             
-    def _processCliOptions(self, options):
+    def _process_cli_options(self, options):
         if options is None:
             return
         
@@ -94,13 +94,13 @@ class Configurator:
                     
         self.options = options
         
-    def runName(self):
-        return self._runName or self.standard_experiment
+    def experiment_name(self):
+        return self._exp_name or self.standard_experiment
     
-    def dataFileName(self):
+    def data_file_name(self):
         """@TODO: might add a commandline option 'ff' is just a placeholder here..."""
         
-        data_file = self._rawConfig['experiments'][self.runName()].get('data_file', None)
+        data_file = self._rawConfig['experiments'][self.experiment_name()].get('data_file', None)
         if data_file:
             return data_file
         

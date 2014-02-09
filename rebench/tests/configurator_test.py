@@ -23,14 +23,14 @@ class ConfiguratorTest(unittest.TestCase):
         self.assertIsInstance(cnf.quick_runs,       QuickRunsConfig)
         self.assertIsInstance(cnf.benchmark_suites, dict)
         
-    def test_runName_from_cli(self):
+    def test_experiment_name_from_cli(self):
         cnf = Configurator(self._path + '/test.conf', None, 'TestBrokenCommandFormat')
         
-        self.assertEqual('TestBrokenCommandFormat', cnf.runName())
+        self.assertEqual('TestBrokenCommandFormat', cnf.experiment_name())
     
-    def test_runName_from_config_file(self):
+    def test_experiment_name_from_config_file(self):
         cnf = Configurator(self._path + '/test.conf', None)
-        self.assertEqual('Test', cnf.runName())
+        self.assertEqual('Test', cnf.experiment_name())
         
     def test_get_benchmark_configurations(self):
         cnf = Configurator(self._path + '/test.conf', None)
@@ -48,7 +48,7 @@ class ConfiguratorTest(unittest.TestCase):
         
 
 
-# allow commandline execution 
+# allow command-line execution 
 def test_suite():
     return unittest.makeSuite(ConfiguratorTest)
 

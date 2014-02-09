@@ -131,9 +131,9 @@ Argument:
         self.execute_run()
         
     def execute_run(self):
-        logging.debug("execute run: %s"%(self.config.runName()))
+        logging.debug("execute run: %s"%(self.config.experiment_name()))
         
-        data = DataAggregator(self.config.dataFileName(), True)
+        data = DataAggregator(self.config.data_file_name(), True)
         data.includeShebangLine(sys.argv)
         
         reporters = []
