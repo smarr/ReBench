@@ -150,7 +150,7 @@ class TextReporter(Reporter):
                     yield result
         else:
             stats = StatisticProperties(data, 
-                                        self._configurator.statistics.confidence_level)
+                                        self._configurator.reporting['confidence_level'])
                 
             out = [ self._path_to_string(path) ]
             
@@ -169,7 +169,8 @@ class CliReporter(TextReporter):
         self._startTime     = None
         self._runsRemaining = 0
         
-        self._min_runtime = configurator.statistics.min_runtime
+        # TODO: readd support, think, we need that based on the proper config, i.e., the run id
+#         self._min_runtime = configurator.statistics.min_runtime
 
     def runFailed(self, runId, cmdline, returncode, output):
         # Additional information in debug mode
@@ -211,17 +212,17 @@ class CliReporter(TextReporter):
         
         self._runsCompleted += 1
         self._runsRemaining -= 1
-        
-        if self._min_runtime:
-            if statistics.mean < self._min_runtime:
-                print("WARNING: measured mean is smaller than min_runtime (%s) \t mean: %.1f [%.1f, %.1f]\trun id: %s"
-                      % (self._min_runtime,
-                         statistics.mean, statistics.confIntervalLow,
-                         statistics.confIntervalHigh, runId.as_simple_string())) 
-                print("Cmd: %s" % cmdline)
-             
-        
-        self._configurator.statistics.min_runtime
+
+        # TODO: readd warning for min_runtime        
+#         if self._min_runtime:
+#             if statistics.mean < self._min_runtime:
+#                 print("WARNING: measured mean is smaller than min_runtime (%s) \t mean: %.1f [%.1f, %.1f]\trun id: %s"
+#                       % (self._min_runtime,
+#                          statistics.mean, statistics.confIntervalLow,
+#                          statistics.confIntervalHigh, runId.as_simple_string())) 
+#                 print("Cmd: %s" % cmdline)
+#         
+#         self._configurator.statistics.min_runtime
 
     def jobCompleted(self, configurations, dataAggregator):
         print("[%s] Job completed" % datetime.now())
@@ -365,7 +366,7 @@ class CSVFileReporter(Reporter):
             row += [''] * (max_num_parameters - len(run))         # add fill for unused parameters
             row += run[num_common_parameters : ]                  # add all remaining
             row += list(StatisticProperties(measures, 
-                            self._configurator.statistics.confidence_level).as_tuple()) # now add the actual result data
+                            self._configurator.reporting['confidence_level']).as_tuple()) # now add the actual result data
             table.append(row)
         
         for row in table:
@@ -485,7 +486,7 @@ class CodespeedReporter(Reporter):
     def _prepareResult(self, run, measures):
         if measures:
             # get the statistics
-            stats = StatisticProperties(measures, self._configurator.statistics.confidence_level)
+            stats = StatisticProperties(measures, self._configurator.reporting['confidence_level'])
         else:
             stats = None
             
@@ -834,8 +835,8 @@ class DiagramResultReporter(Reporter):
                 if len(x[1]) == 0 or len(y[1]) == 0:
                     return cmp(x[1], y[1])
                 
-                statX = StatisticProperties(x[1], self._configurator.statistics.confidence_level)
-                statY = StatisticProperties(y[1], self._configurator.statistics.confidence_level)
+                statX = StatisticProperties(x[1], self._configurator.reporting['confidence_level'])
+                statY = StatisticProperties(y[1], self._configurator.reporting['confidence_level'])
                 #print val, statX.__dict__[val], statY.__dict__[val], cmp(statX.__dict__[val], statY.__dict__[val])
                 return cmp(statY.__dict__[val], statX.__dict__[val])
                 

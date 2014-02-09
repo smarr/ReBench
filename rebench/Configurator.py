@@ -23,7 +23,7 @@ import yaml
 import logging
 import traceback
 from model.benchmark_config import BenchmarkConfig
-from model.statistics       import Statistics
+from model.runs_config      import RunsConfig, QuickRunsConfig
 
 from copy import deepcopy
 
@@ -47,18 +47,21 @@ def dict_merge_recursively(a, b):
 
 class Configurator:
     # to warn users with old configurations
-    outdated_suite_elements = {'ulimit' : 'max_runtime'}
+    OUTDATED_SUITE_ELEMENTS  = { 'ulimit' : 'max_runtime' }
+    DEFAULT_CONFIG_REPORTING = { 'confidence_level' : 0.95 }
     
     def __init__(self, fileName, cliOptions, runName = None):
         self._loadConfig(fileName)
         self._processCliOptions(cliOptions)
-        self._runName = runName
-        self.statistics = Statistics(**self._rawConfig.get('statistics', {}))
+        self._runName   = runName
+        
+        self.runs       = RunsConfig(     **self._rawConfig.get(      'runs', {}))
+        self.quick_runs = QuickRunsConfig(**self._rawConfig.get('quick_runs', {}))
         
         self._config = self._compileBenchConfigurations(self.runName())
         
         self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None)
-        self.reporting     = self._rawConfig.get('reporting', {})
+        self.reporting = dict_merge_recursively(self._rawConfig.get('reporting', {}), self.DEFAULT_CONFIG_REPORTING)
         self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['run_definitions'][self.runName()].get('reporting', {}))
     
     def __getattr__(self, name):
@@ -130,9 +133,9 @@ class Configurator:
         
         runDef = self._rawConfig['run_definitions'][runName]
         
-        # first thing, take the statistics configuration out of the runDef
+        # first thing, take the run configuration out of the runDef
         # and merge it with the global configuration
-        self.statistics = self.statistics.combine(runDef.get('statistics', {}))
+        self.runs = self.runs.combined(runDef)
         
         _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
         _input_sizes = self._valueOrListAllwaysAsList(runDef.get('input_sizes', None))
@@ -217,7 +220,7 @@ class Configurator:
             
             # warn user when outdated config elements our found
             # they are not supported anymore
-            for outdated, new in Configurator.outdated_suite_elements.iteritems():
+            for outdated, new in Configurator.OUTDATED_SUITE_ELEMENTS.iteritems():
                 if outdated in benchmark:
                     logging.error("The config element '%s' was used. It is not supported anymore.", outdated)
                     logging.error("Please replace all uses of '%s' with '%s'.", outdated, new)

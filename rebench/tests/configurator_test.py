@@ -4,6 +4,7 @@ import logging
 
 from ..Configurator import Configurator
 from ..model.benchmark_config import BenchmarkConfig
+from ..model.runs_config import RunsConfig, QuickRunsConfig
 
 class ConfiguratorTest(unittest.TestCase):
     
@@ -18,7 +19,8 @@ class ConfiguratorTest(unittest.TestCase):
     def test_loadAndAccessors(self):        
         cnf = Configurator(self._path + '/test.conf', None)
                 
-        self.assertIsInstance(cnf.quick_runs,       dict)
+        self.assertIsInstance(cnf.runs,             RunsConfig)
+        self.assertIsInstance(cnf.quick_runs,       QuickRunsConfig)
         self.assertIsInstance(cnf.benchmark_suites, dict)
         
     def test_runNameFromCli(self):
