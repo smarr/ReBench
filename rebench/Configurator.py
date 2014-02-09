@@ -60,9 +60,9 @@ class Configurator:
         
         self._config = self._compileBenchConfigurations(self.runName())
         
-        self.visualization = self._rawConfig['run_definitions'][self.runName()].get('visualization', None)
+        self.visualization = self._rawConfig['experiments'][self.runName()].get('visualization', None)
         self.reporting = dict_merge_recursively(self._rawConfig.get('reporting', {}), self.DEFAULT_CONFIG_REPORTING)
-        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['run_definitions'][self.runName()].get('reporting', {}))
+        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['experiments'][self.runName()].get('reporting', {}))
     
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
@@ -95,12 +95,12 @@ class Configurator:
         self.options = options
         
     def runName(self):
-        return self._runName or self.standard_run
+        return self._runName or self.standard_experiment
     
     def dataFileName(self):
         """@TODO: might add a commandline option 'ff' is just a placeholder here..."""
         
-        data_file = self._rawConfig['run_definitions'][self.runName()].get('data_file', None)
+        data_file = self._rawConfig['experiments'][self.runName()].get('data_file', None)
         if data_file:
             return data_file
         
@@ -124,14 +124,14 @@ class Configurator:
     def _compileBenchConfigurations(self, runName):
         if runName == "all":
             confDefs = []
-            for run in self._rawConfig['run_definitions']:
+            for run in self._rawConfig['experiments']:
                 confDefs = confDefs + self._compileBenchConfigurations(run)
             return confDefs
         
-        if runName not in self._rawConfig['run_definitions']:
+        if runName not in self._rawConfig['experiments']:
             raise ValueError("Requested run_definition '%s' not available." % runName)
         
-        runDef = self._rawConfig['run_definitions'][runName]
+        runDef = self._rawConfig['experiments'][runName]
         
         # first thing, take the run configuration out of the runDef
         # and merge it with the global configuration
