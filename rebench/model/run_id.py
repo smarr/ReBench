@@ -25,6 +25,16 @@ class RunId:
         self._cfg = cfg
         self._variables = self._stringify(variables)
         self._criterion = 'total'
+        self._reporting = set()
+        self._requested_confidence_level = 0
+    
+    def add_reporting(self, reporting):
+        self._reporting.add(reporting)
+        self._requested_confidence_level = max(reporting.confidence_level, self._requested_confidence_level)
+    
+    @property
+    def requested_confidence_level(self):
+        return self._requested_confidence_level
     
     @property
     def cfg(self):
@@ -62,12 +72,12 @@ class RunId:
     def cmdline(self):
         cmdline  = ""
                 
-        vm_cmd = "%s/%s %s" % (os.path.abspath(self._cfg.vm['path']),
-                               self._cfg.vm['binary'],
-                               self._cfg.vm.get('args', ''))
+        vm_cmd = "%s/%s %s" % (os.path.abspath(self._cfg.vm.path),
+                               self._cfg.vm.binary,
+                               self._cfg.vm.args)
             
         cmdline += vm_cmd 
-        cmdline += self._cfg.suite['command']
+        cmdline += self._cfg.suite.command
         
         if self._cfg.extra_args is not None:
             cmdline += " %s" % (self._cfg.extra_args or "")

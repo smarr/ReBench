@@ -62,14 +62,14 @@ class Executor:
         #error = (consequent_erroneous_runs, erroneous_runs)    
         terminate, error = self._check_termination_condition(runId, (0, 0))
         stats = StatisticProperties(self._data.getDataSet(runId),
-                                    self._configurator.reporting['confidence_level'])
+                                    runId.requested_confidence_level)
         
         # now start the actual execution
         while not terminate:
             terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
             
             stats = StatisticProperties(self._data.getDataSet(runId),
-                                        self._configurator.reporting['confidence_level'])
+                                        runId.requested_confidence_level)
             
             logging.debug("Run: #%d"%(stats.numSamples))
 
@@ -86,10 +86,10 @@ class Executor:
         
     def _generate_data_point(self, cmdline, error, perf_reader, runId):
         # execute the external program here
-        (returncode, output, _) = subprocess_timeout.run(cmdline, cwd=runId.cfg.suite['location'],
+        (returncode, output, _) = subprocess_timeout.run(cmdline, cwd=runId.cfg.suite.location,
                                                          stdout=subprocess.PIPE,
                                                          stderr=subprocess.STDOUT,
-                                                         shell=True, timeout=runId.cfg.suite.get('max_runtime', -1))
+                                                         shell=True, timeout=runId.cfg.suite.max_runtime)
         
         if returncode != 0:
             (consequent_erroneous_runs, erroneous_runs) = error
@@ -112,7 +112,7 @@ class Executor:
             #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
             self._data.addDataPoints(runId, dataPoints)
             consequent_erroneous_runs = 0
-            logging.debug("Run %s:%s result=%s"%(runId.cfg.vm['name'], runId.cfg.name, total))
+            logging.debug("Run %s:%s result=%s"%(runId.cfg.vm.name, runId.cfg.name, total))
             
         except RuntimeError:
             consequent_erroneous_runs += 1
@@ -149,29 +149,13 @@ class Executor:
         
         return terminate, error
     
-    def _generate_all_configs(self, benchConfigs):
-        configurations = set()
-        
-        for cfg in benchConfigs:
-            for cores in cfg.suite['cores']:
-                input_sizes = cfg.suite.get('input_sizes', [None])
-                for input_size in input_sizes:
-                    if len(cfg.suite['variable_values']):
-                        for var_val in cfg.suite['variable_values']:
-                            configurations.add(RunId.create(cfg, (cores, input_size, var_val)))
-                    else:
-                        configurations.add(RunId.create(cfg, (cores, input_size, None)))
-        
-        return list(configurations)
-    
     def execute(self):
-        benchConfigs = self._configurator.getBenchmarkConfigurations()
-        configs = self._generate_all_configs(benchConfigs)
+        runs = self._configurator.get_runs()
         
-        self._reporter.setTotalNumberOfConfigurations(len(configs))
+        self._reporter.setTotalNumberOfConfigurations(len(runs))
         
-        for runId in configs:
+        for runId in runs:
             self._exec_configuration(runId)
                     
-        self._reporter.jobCompleted(configs, self._data)
+        self._reporter.jobCompleted(runs, self._data)
 

@@ -32,21 +32,23 @@ class ConfiguratorTest(unittest.TestCase):
         cnf = Configurator(self._path + '/test.conf', None)
         self.assertEqual('Test', cnf.experiment_name())
         
-    def test_get_benchmark_configurations(self):
-        cnf = Configurator(self._path + '/test.conf', None)
-        self.assertIsNotNone(cnf.getBenchmarkConfigurations())
+    def test_number_of_experiments(self):
+        cnf = Configurator(self._path + '/small.conf', None)
+        self.assertEqual(1, len(cnf.get_experiments()))
+        
+        cnf = Configurator(self._path + '/test.conf', None, 'all')
+        self.assertEqual(6, len(cnf.get_experiments()))
+        
+    def test_get_experiment(self):
+        cnf = Configurator(self._path + '/small.conf', None)
+        exp = cnf.get_experiment('Test')
+        self.assertIsNotNone(exp)
+        return exp
 
-    def test_warning_for_removed_ulimit(self):
-        def test_logging(msg, *args, **kwargs):
-            self.assertIn('ulimit', args, "Test that ulimit is recognized as unsupported")
-            raise RuntimeError("TEST-PASSED")
-        
-        logging.error = test_logging
-        
-        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
-            Configurator(self._path + '/test.conf', None, 'TestWarningForRemovedUlimitUsage')
-        
-
+    def test_get_runs(self):
+        exp = self.test_get_experiment()
+        runs = exp.get_runs()
+        self.assertEqual(2 * 2 * 2, len(runs))
 
 # allow command-line execution 
 def test_suite():

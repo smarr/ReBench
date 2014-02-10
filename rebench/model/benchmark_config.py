@@ -1,3 +1,5 @@
+from . import value_with_optional_details
+
 class BenchmarkConfig:
     _registry = {}
     
@@ -14,12 +16,27 @@ class BenchmarkConfig:
         return cls._registry[tmp]
     
     @classmethod
+    def compile(cls, bench, suite):
+        """Specialization of the configurations which get executed by using the
+           suite definitions.
+        """
+        name, details = value_with_optional_details(bench, {})
+        
+        performance_reader = details.get('performance_reader', suite.performance_reader)
+        extra_args         = details.get('extra_args', None)
+        return cls._register(BenchmarkConfig(name, performance_reader, suite, suite.vm, extra_args))
+            
+    
+    @classmethod
     def create(cls, bench_def):
-        cfg = BenchmarkConfig(**bench_def)
-        if cfg in BenchmarkConfig._registry:
-            cfg = BenchmarkConfig._registry[cfg]
+        return cls._register(cls(**bench_def))
+    
+    @classmethod
+    def _register(cls, cfg):
+        if cfg in cls._registry:
+            cfg = cls._registry[cfg]
         else:
-            BenchmarkConfig._registry[cfg] = cfg
+            cls._registry[cfg] = cfg
         return cfg
     
     def __init__(self, name, performance_reader, suite, vm, extra_args = None, **kwargs):
@@ -29,6 +46,10 @@ class BenchmarkConfig:
         self._suite = suite
         self._vm = vm
         self._additional_config = kwargs
+        self._runs = set()      # the compiled runs, these might be shared with other benchmarks/suites
+    
+    def add_run(self, run):
+        self._runs.add(run)
     
     @property
     def name(self):
@@ -56,18 +77,18 @@ class BenchmarkConfig:
         
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s'" % (self._name,
-                                                   self._vm['name'],
-                                                   self._suite['name'],
+                                                   self._vm.name,
+                                                   self._suite.name,
                                                    self._extra_args or '')
     
     def as_simple_string(self):
         if self._extra_args:
             return "%s (%s, %s, %s)"  % (self._name,
-                                         self._vm['name'],
-                                         self._suite['name'],
+                                         self._vm.name,
+                                         self._suite.name,
                                          self._extra_args)
         else:
-            return "%s (%s, %s)"  % (self._name, self._vm['name'], self._suite['name'])
+            return "%s (%s, %s)"  % (self._name, self._vm.name, self._suite.name)
         
     def __eq__(self, other):
         """I am not exactly sure whether that will be right, or whether
@@ -87,11 +108,11 @@ class BenchmarkConfig:
     def __hash__(self):
         return (hash(self._name) ^ 
                 hash(self._extra_args) ^ 
-                hash(self._suite['name']) ^
-                hash(self._vm['name']))
+                hash(self._suite.name) ^
+                hash(self._vm.name))
     
     def as_tuple(self):
-        return (self._name, self._vm['name'], self._suite['name'], self._extra_args)
+        return (self._name, self._vm.name, self._suite.name, self._extra_args)
             
     @classmethod
     def tuple_mapping(cls):

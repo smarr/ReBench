@@ -24,6 +24,7 @@ import logging
 import traceback
 from model.benchmark_config import BenchmarkConfig
 from model.runs_config      import RunsConfig, QuickRunsConfig
+from model.experiment       import Experiment 
 
 from copy import deepcopy
 
@@ -46,9 +47,7 @@ def dict_merge_recursively(a, b):
 
 
 class Configurator:
-    # to warn users with old configurations
-    OUTDATED_SUITE_ELEMENTS  = { 'ulimit' : 'max_runtime' }
-    DEFAULT_CONFIG_REPORTING = { 'confidence_level' : 0.95 }
+    
     
     def __init__(self, fileName, cliOptions, expName = None):
         self._load_config(fileName)
@@ -58,12 +57,9 @@ class Configurator:
         self.runs       = RunsConfig(     **self._rawConfig.get(      'runs', {}))
         self.quick_runs = QuickRunsConfig(**self._rawConfig.get('quick_runs', {}))
         
-        self._config = self._compileBenchConfigurations(self.experiment_name())
+        self._experiments = self._compile_experiments()
         
         self.visualization = self._rawConfig['experiments'][self.experiment_name()].get('visualization', None)
-        self.reporting = dict_merge_recursively(self._rawConfig.get('reporting', {}), self.DEFAULT_CONFIG_REPORTING)
-        self.reporting = dict_merge_recursively(self.reporting, self._rawConfig['experiments'][self.experiment_name()].get('reporting', {}))
-    
     def __getattr__(self, name):
         return self._rawConfig.get(name, None)
     
@@ -98,7 +94,7 @@ class Configurator:
         return self._exp_name or self.standard_experiment
     
     def data_file_name(self):
-        """@TODO: might add a commandline option 'ff' is just a placeholder here..."""
+        """@TODO: might add a command-line option 'ff' is just a placeholder here..."""
         
         data_file = self._rawConfig['experiments'][self.experiment_name()].get('data_file', None)
         if data_file:
@@ -106,12 +102,23 @@ class Configurator:
         
         return self.standard_data_file
     
-    def getBenchmarkConfigurations(self):
-        """The configuration has be compiled before it can be handed out
+    def get_experiments(self):
+        """The configuration has been compiled before it is handed out
            to the client class, since some configurations can override
-           others
+           others and none of that should concern other parts of the
+           system.
         """
-        return self._config
+        return self._experiments
+    
+    def get_experiment(self, name):
+        return self._experiments[name]
+    
+    def get_runs(self):
+        runs = set()
+        for exp in self._experiments.values():
+            runs |= exp.get_runs()
+        return runs
+    
     
     def _valueOrListAllwaysAsList(self, value):
         if type(value) is list:
@@ -121,144 +128,27 @@ class Configurator:
         else:
             return [value]
     
-    def _compileBenchConfigurations(self, runName):
-        if runName == "all":
-            confDefs = []
-            for run in self._rawConfig['experiments']:
-                confDefs = confDefs + self._compileBenchConfigurations(run)
-            return confDefs
+    def _compile_experiments(self):
+        if not self.experiment_name():
+            raise ValueError("No experiment chosen.")
         
-        if runName not in self._rawConfig['experiments']:
-            raise ValueError("Requested run_definition '%s' not available." % runName)
+        confDefs = {}
         
-        runDef = self._rawConfig['experiments'][runName]
-        
-        # first thing, take the run configuration out of the runDef
-        # and merge it with the global configuration
-        self.runs = self.runs.combined(runDef)
-        
-        _benchmarks  = self._valueOrListAllwaysAsList(runDef.get(  'benchmark', None))
-        _input_sizes = self._valueOrListAllwaysAsList(runDef.get('input_sizes', None))
-        
-        _executions = self._valueOrListAllwaysAsList(runDef['executions'])
-        
-        vmDefinitions = []
-        
-        # first step: adding the VM details to the run definition settings
-        for vm in _executions:
-            if type(vm) is dict:
-                assert len(vm) == 1
-                (vm, vmDetails) = vm.popitem()
-            else:
-                vmDetails = None
-                
-            vmDefinitions.append(self._compileVMDefinitionForVM(vm, vmDetails, _benchmarks, _input_sizes, runName))
-        
-        # second step: specialize the suite definitions for the VMs
-        suiteDefinitions = []
-        for vmDef in vmDefinitions:
-            suiteDefinitions += self._compileSuiteDefinitionsFromVMDef(vmDef)
-        
-        # third step: create final configurations to be executed
-        configurationDefinitions = []
-        for suite in suiteDefinitions:
-            configurationDefinitions += self._compileConfigurations(suite)
-        
-        return configurationDefinitions
-    
-    def _compileVMDefinitionForVM(self, vm, vmDetails, _benchmarks, _input_sizes, runName):
-        """Specializing the VM details in the run definitions with the settings from
-           the VM definitions
-        """
-        if vmDetails:
-            benchmarks = self._valueOrListAllwaysAsList(vmDetails['benchmark'])   if 'benchmark'   in vmDetails else _benchmarks
-            input_sizes= self._valueOrListAllwaysAsList(vmDetails['input_sizes']) if 'input_sizes' in vmDetails else _input_sizes
-            cores      = self._valueOrListAllwaysAsList(vmDetails['cores']) if 'cores' in vmDetails else None
+        if self.experiment_name() == "all":
+            for exp_name in self._rawConfig['experiments']:
+                confDefs[exp_name] = self._compile_experiment(exp_name)
         else:
-            benchmarks = _benchmarks
-            input_sizes= _input_sizes
-            cores      = None
+            if self.experiment_name() not in self._rawConfig['experiments']:
+                raise ValueError("Requested experiment '%s' not available." % self.experiment_name())
+            confDefs[self.experiment_name()] = self._compile_experiment(self.experiment_name())
         
-        if vm not in self._rawConfig['virtual_machines']:
-            raise ValueError("The VM '%s' requested in %s was not found." % (vm, runName))
-            
-        vmDef = self._rawConfig['virtual_machines'][vm].copy()
-        vmDef['benchmark'] = benchmarks
-        vmDef['input_sizes'] = input_sizes
-        vmDef['name'] = vm
-        
-        if cores is not None:
-            vmDef['cores'] = cores
-        else:
-            vmDef.setdefault('cores', [1])  # set a default value for the number cores list
-        
-        return vmDef
-
-    def _compileSuiteDefinitionsFromVMDef(self, vmDef):
-        """Specialize the benchmark suites for the given VM"""
-        suiteDefs = []
-        
-        cleanVMDef = vmDef.copy()
-        del cleanVMDef['benchmark']
-        del cleanVMDef['input_sizes']
-        
-        for bench in vmDef['benchmark']:
-            benchmark = self._rawConfig['benchmark_suites'][bench].copy()
-            benchmark['name'] = bench
-            
-            if vmDef['input_sizes']:
-                benchmark['input_sizes'] = vmDef['input_sizes']
-                
-            if 'location' not in benchmark:
-                benchmark['location'] = vmDef['path']
-            if 'cores' not in benchmark:
-                benchmark['cores'] = vmDef['cores']
-
-            # REM: not sure whether that is the best place to encode that default
-            if 'variable_values' not in benchmark:
-                benchmark['variable_values'] = []
-            
-            # warn user when outdated config elements our found
-            # they are not supported anymore
-            for outdated, new in Configurator.OUTDATED_SUITE_ELEMENTS.iteritems():
-                if outdated in benchmark:
-                    logging.error("The config element '%s' was used. It is not supported anymore.", outdated)
-                    logging.error("Please replace all uses of '%s' with '%s'.", outdated, new)
-            
-            benchmark['vm'] = cleanVMDef.copy() 
-            suiteDefs.append(benchmark)
-        
-        return suiteDefs
+        return confDefs
     
-    def _compileConfigurations(self, suite):
-        """Specialization of the configurations which get executed by using the
-           suite definitions.
-        """
-        configs = []
-        cleanSuite = suite.copy()
-        
-        del cleanSuite['benchmarks']
-        del cleanSuite['performance_reader']
-        del cleanSuite['vm']
-        
-        benchmarks = self._valueOrListAllwaysAsList(suite['benchmarks'])
-        
-        for bench in benchmarks:
-            if type(bench) is dict:
-                assert len(bench) == 1
-                (name, bench) = bench.copy().popitem()
-            else:
-                name = bench
-                bench = {}
-            
-            
-            bench['name'] = name
-            bench['suite'] = cleanSuite
-
-            if 'performance_reader' not in bench:
-                bench['performance_reader'] = suite['performance_reader']
-            
-            bench['vm'] = suite['vm']
-            configs.append(BenchmarkConfig.create(bench))
-        
-        return configs
+    def _compile_experiment(self, exp_name):
+        expDef = self._rawConfig['experiments'][exp_name]
+        return Experiment(exp_name, expDef, self.runs,
+                         self._rawConfig['virtual_machines'],
+                         self._rawConfig['benchmark_suites'],
+                         self._rawConfig['reporting'])
+    
+    
