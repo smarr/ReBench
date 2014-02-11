@@ -2,14 +2,16 @@ import unittest
 import os
 import logging
 
-from ..Configurator import Configurator
+from ..Configurator           import Configurator
 from ..model.benchmark_config import BenchmarkConfig
-from ..model.runs_config import RunsConfig, QuickRunsConfig
+from ..model.runs_config      import RunsConfig, QuickRunsConfig
+from ..model.run_id           import RunId
 
 class ConfiguratorTest(unittest.TestCase):
     
     def setUp(self):
         BenchmarkConfig.reset()
+        RunId.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         self._logging_error = logging.error
     

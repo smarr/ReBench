@@ -6,6 +6,7 @@ from ..DataAggregator import DataAggregator
 from ..Configurator   import Configurator
 from ..Reporter       import Reporters
 from ..model.benchmark_config import BenchmarkConfig
+from ..model.run_id   import RunId
 from rebench          import ReBench
 import tempfile
 import os
@@ -15,6 +16,7 @@ class ExecutorTest(unittest.TestCase):
     
     def setUp(self):
         BenchmarkConfig.reset()
+        RunId.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         self._tmpFile = tempfile.mkstemp()[1] # just use the file name
         os.chdir(self._path + '/../')
