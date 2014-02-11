@@ -66,15 +66,8 @@ from model.benchmark_config import BenchmarkConfig
 from model.data_point       import DataPoint
 
 class DataAggregator(object):
-    '''
-    classdocs
-    '''
-
 
     def __init__(self, dataFileName, automaticallyPersistNewDataPoints = True):
-        '''
-        Constructor
-        '''
         if not dataFileName:
             raise ValueError("DataAggregator expects a file name for dataFileName, but got: %s" % dataFileName)
         
@@ -94,7 +87,7 @@ class DataAggregator(object):
             pass
     
     def setCsvRawFile(self, csvRawFileName):
-        """The CSV file is not the authorative data source, lets reset it
+        """The CSV file is not the authoritative data source, lets reset it
            and recreate on the go."""
         self._truncateFile(csvRawFileName)
         self._csvFile = open(csvRawFileName, 'a+')
