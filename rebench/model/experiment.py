@@ -10,7 +10,7 @@ class Experiment:
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg, global_suite_cfg, global_reporting_cfg):
         self._name           = name
         self._raw_definition = exp_def
-        self._runs           = global_runs_cfg.combined(exp_def)
+        self._runs_cfg       = global_runs_cfg.combined(exp_def)
         self._reporting      = Reporting(global_reporting_cfg).combined(exp_def.get('reporting', {}))
         
         self._vms            = self._compile_virtual_machines(global_vms_cfg)
@@ -39,6 +39,7 @@ class Experiment:
                         bench.add_run(run)
                         runs.add(run)
                         run.add_reporting(self._reporting)
+                        run.set_run_config(self._runs_cfg)
         return runs
     
     def _compile_virtual_machines(self, global_vms_cfg):

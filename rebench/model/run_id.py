@@ -27,10 +27,23 @@ class RunId:
         self._criterion = 'total'
         self._reporting = set()
         self._requested_confidence_level = 0
+        self._run_config = None
     
     def add_reporting(self, reporting):
         self._reporting.add(reporting)
         self._requested_confidence_level = max(reporting.confidence_level, self._requested_confidence_level)
+    
+    def set_run_config(self, run_cfg):
+        if self._run_config and self._run_config != run_cfg:
+            raise ValueError("Run config has already been set and is not the same.")
+        self._run_config = run_cfg
+    
+    def create_termination_check(self):
+        return self._run_config.create_termination_check(self._cfg)
+    
+    @property
+    def run_config(self):
+        return self._run_config
     
     @property
     def requested_confidence_level(self):

@@ -146,7 +146,9 @@ class Configurator:
     
     def _compile_experiment(self, exp_name):
         expDef = self._rawConfig['experiments'][exp_name]
-        return Experiment(exp_name, expDef, self.runs,
+        run_cfg = self.quick_runs if (self.options and self.options.quick) else self.runs
+        
+        return Experiment(exp_name, expDef, run_cfg,
                          self._rawConfig['virtual_machines'],
                          self._rawConfig['benchmark_suites'],
                          self._rawConfig['reporting'])

@@ -48,10 +48,9 @@ class Executor:
         return cmdline
     
     def _exec_configuration(self, runId):
-        if self._configurator.options.quick:
-            self._quickStartTime = time.time()
+        termination_check = runId.create_termination_check()
         
-        self._configurator.runs.log(logging)
+        runId.run_config.log()
         
         self._reporter.startConfiguration(runId)
         
@@ -60,13 +59,13 @@ class Executor:
         cmdline = self._construct_cmdline(runId, perf_reader)
         
         #error = (consequent_erroneous_runs, erroneous_runs)    
-        terminate, error = self._check_termination_condition(runId, (0, 0))
+        terminate, error = self._check_termination_condition(runId, (0, 0), termination_check)
         stats = StatisticProperties(self._data.getDataSet(runId),
                                     runId.requested_confidence_level)
         
         # now start the actual execution
         while not terminate:
-            terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId)
+            terminate, error = self._generate_data_point(cmdline, error, perf_reader, runId, termination_check)
             
             stats = StatisticProperties(self._data.getDataSet(runId),
                                         runId.requested_confidence_level)
@@ -84,7 +83,7 @@ class Executor:
         
         return getattr(p, reader)()
         
-    def _generate_data_point(self, cmdline, error, perf_reader, runId):
+    def _generate_data_point(self, cmdline, error, perf_reader, runId, termination_check):
         # execute the external program here
         (returncode, output, _) = subprocess_timeout.run(cmdline, cwd=runId.cfg.suite.location,
                                                          stdout=subprocess.PIPE,
@@ -102,7 +101,7 @@ class Executor:
         else:
             error = self._eval_output(output, runId, perf_reader, error, cmdline)
         
-        return self._check_termination_condition(runId, error)
+        return self._check_termination_condition(runId, error, termination_check)
     
     def _eval_output(self, output, runId, perf_reader, error, cmdline):
         consequent_erroneous_runs, erroneous_runs = error
@@ -121,30 +120,20 @@ class Executor:
             
         return consequent_erroneous_runs, erroneous_runs
 
-    def _check_termination_condition(self, runId, error):
+    def _check_termination_condition(self, runId, error, termination_check):
         terminate = False
         consequent_erroneous_runs, erroneous_runs = error
         
         numDataPoints = self._data.getNumberOfDataPoints(runId)
         cfg = runId.cfg
         
-        # TODO: compile number_of_data_points and other things into the run definition
-        if self._configurator.options.quick:
-            if numDataPoints >= self._configurator.quick_runs.number_of_data_points:
-                logging.debug("Reached number_of_data_points for %s"%(cfg.name))
-                terminate = True
-            elif time.time() - self._quickStartTime > self._configurator.quick_runs.max_time:
-                logging.debug("Maximum runtime is reached for %s"%(cfg.name))
-                terminate = True
-        
-        if consequent_erroneous_runs >= 3:
+        if termination_check.should_terminate(numDataPoints):
+            terminate = True
+        elif consequent_erroneous_runs >= 3:
             logging.error("Three runs of %s have failed in a row, benchmark is aborted"%(cfg.name))
             terminate = True
         elif erroneous_runs > numDataPoints / 2 and erroneous_runs > 6:
             logging.error("Many runs of %s are failing, benchmark is aborted."%(cfg.name))
-            terminate = True
-        elif numDataPoints >= self._configurator.runs.number_of_data_points:
-            logging.debug("Reached number_of_data_points for %s"%(cfg.name))
             terminate = True
         
         return terminate, error
