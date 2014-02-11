@@ -35,7 +35,7 @@ class ExecutorTest(unittest.TestCase):
         cnf  = Configurator(self._path + '/test.conf', options, 'Test')
         data = DataAggregator(self._tmpFile)
         
-        ex = Executor(cnf, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
         ex.execute()
         
 ### should test more details
@@ -60,7 +60,7 @@ class ExecutorTest(unittest.TestCase):
         options = ReBench().shell_options().parse_args([])[0]
         cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat')
         data = DataAggregator(self._tmpFile)
-        ex = Executor(cnf, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
@@ -74,7 +74,7 @@ class ExecutorTest(unittest.TestCase):
         options = ReBench().shell_options().parse_args([])[0]
         cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat2')
         data = DataAggregator(self._tmpFile)
-        ex = Executor(cnf, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()

@@ -68,7 +68,7 @@ class CaliperIntegrationTest(unittest.TestCase):
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
         data = DataAggregator(self._tmpFile)
         
-        ex = Executor(cnf, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
         ex.execute()
     
     def testCorrectNumberOfResultsFromRun(self):

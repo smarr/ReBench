@@ -31,16 +31,16 @@ from Statistics import StatisticProperties
 
 class Executor:
     
-    def __init__(self, configurator, dataAggregator, reporter = None):
-        self._configurator = configurator
-        self._data = dataAggregator
+    def __init__(self, runs, use_nice, data_aggregator, reporter = None):
+        self._runs     = runs
+        self._use_nice = use_nice
+        self._data     = data_aggregator
         self._reporter = reporter
-        self._jobs = [] # the list of configurations to be executed
     
     def _construct_cmdline(self, runId, perf_reader):
         cmdline  = ""
                 
-        if self._configurator.options.use_nice:
+        if self._use_nice:
             cmdline += "nice -n-20 "
         
         cmdline += perf_reader.acquire_command(runId.cmdline())
@@ -139,12 +139,9 @@ class Executor:
         return terminate, error
     
     def execute(self):
-        runs = self._configurator.get_runs()
+        self._reporter.setTotalNumberOfConfigurations(len(self._runs))
         
-        self._reporter.setTotalNumberOfConfigurations(len(runs))
-        
-        for runId in runs:
+        for runId in self._runs:
             self._exec_configuration(runId)
                     
-        self._reporter.jobCompleted(runs, self._data)
-
+        self._reporter.jobCompleted(self._runs, self._data)

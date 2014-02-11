@@ -89,6 +89,10 @@ class Configurator:
             logging.getLogger().setLevel(logging.ERROR)
                     
         self.options = options
+    
+    @property
+    def use_nice(self):
+        return self.options is not None and self.options.use_nice
         
     def experiment_name(self):
         return self._exp_name or self.standard_experiment
