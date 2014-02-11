@@ -206,7 +206,7 @@ class DataAggregator(object):
         I know, premature optimization...
         """
         
-        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
+        criteria = (runId.cfg, ) + runId.variables
         
         if criteria == self._lastCriteria:
             return self._lastDataSet

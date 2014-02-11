@@ -13,18 +13,17 @@ class RunId:
         cls._registry = {}
     
     @classmethod
-    def create(cls, cfg, variables, terminationCriterion='total'):
-        run = RunId(cfg, variables, terminationCriterion)
+    def create(cls, cfg, variables):
+        run = RunId(cfg, variables)
         if run in RunId._registry:
             return RunId._registry[run]
         else:
             RunId._registry[run] = run
             return run
     
-    def __init__(self, cfg, variables, terminationCriterion='total'):
+    def __init__(self, cfg, variables):
         self._cfg = cfg
         self._variables = self._stringify(variables)
-        self._criterion = 'total'
         self._reporting = set()
         self._requested_confidence_level = 0
         self._run_config = None
@@ -57,14 +56,9 @@ class RunId:
     def variables(self):
         return self._variables
     
-    @property
-    def criterion(self):
-        return self._criterion
-    
     def __hash__(self):
         return (hash(self._cfg) ^ 
-                hash(self._variables) ^ 
-                hash(self._criterion))
+                hash(self._variables))
         
     def _stringify(self, aTuple):
         result = ()
@@ -77,10 +71,10 @@ class RunId:
         return result
     
     def as_simple_string(self):
-        return "%s %s %s" % (self._cfg.as_simple_string(), self._variables, self._criterion)
+        return "%s %s" % (self._cfg.as_simple_string(), self._variables)
     
     def as_tuple(self):
-        return self._cfg.as_tuple() + self._variables + (self._criterion, )
+        return self._cfg.as_tuple() + self._variables
     
     def cmdline(self):
         cmdline  = ""
