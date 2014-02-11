@@ -22,9 +22,6 @@ from __future__ import with_statement
 import logging
 import subprocess
 import SubprocessWithTimeout as subprocess_timeout
-import time
-
-from model.run_id import RunId
 
 from Statistics import StatisticProperties
 
@@ -109,7 +106,7 @@ class Executor:
         try:
             (total, dataPoints) = perf_reader.parse_data(output)
             #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
-            self._data.addDataPoints(runId, dataPoints)
+            self._data.addMeasurements(runId, dataPoints)
             consequent_erroneous_runs = 0
             logging.debug("Run %s:%s result=%s"%(runId.cfg.vm.name, runId.cfg.name, total))
             
@@ -124,15 +121,15 @@ class Executor:
         terminate = False
         consequent_erroneous_runs, erroneous_runs = error
         
-        numDataPoints = self._data.getNumberOfDataPoints(runId)
+        numMeasurements = self._data.getNumberOfMeasurements(runId)
         cfg = runId.cfg
         
-        if termination_check.should_terminate(numDataPoints):
+        if termination_check.should_terminate(numMeasurements):
             terminate = True
         elif consequent_erroneous_runs >= 3:
             logging.error("Three runs of %s have failed in a row, benchmark is aborted"%(cfg.name))
             terminate = True
-        elif erroneous_runs > numDataPoints / 2 and erroneous_runs > 6:
+        elif erroneous_runs > numMeasurements / 2 and erroneous_runs > 6:
             logging.error("Many runs of %s are failing, benchmark is aborted."%(cfg.name))
             terminate = True
         

@@ -25,7 +25,7 @@ import os
 
 from ..performance import CaliperPerformance
 from ..DataAggregator import DataAggregator
-from ..model.data_point import DataPoint
+from ..model.measurement import Measurement
 from .. import ReBench
 from ..Configurator import Configurator
 from ..Executor import Executor
@@ -98,7 +98,7 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         self.assertIsInstance(aTuple[1], types.ListType)
         
         self.assertGreaterEqual(len(aTuple[1]), 1)
-        self.assertIsInstance(aTuple[1][0], DataPoint)
+        self.assertIsInstance(aTuple[1][0], Measurement)
     
     def test_unmodified_command(self):
         
@@ -114,44 +114,44 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
     def test_parse_single_result(self):
         parsed = self._c.parse_data(self._result1)
         self.assertIsProperTupleWithTotal(0.000052316778, parsed)
-        data_point = parsed[1][0]
-        self.assertEqual("SimpleExecution", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][0]
+        self.assertEqual("SimpleExecution", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
         
-        data_point = parsed[1][1] # a fake result for the totals
-        self.assertEqual("total", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][1] # a fake result for the totals
+        self.assertEqual("total", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
         
         parsed = self._c.parse_data(self._result2)
         self.assertIsProperTupleWithTotal(0.017365513556, parsed)
-        data_point = parsed[1][0]
-        self.assertEqual("SimpleAdditionAmbientTalk", data_point.criterion)
-        self.assertAlmostEqual(0.017365513556, data_point.time)
+        measurement = parsed[1][0]
+        self.assertEqual("SimpleAdditionAmbientTalk", measurement.criterion)
+        self.assertAlmostEqual(0.017365513556, measurement.value)
         
-        data_point = parsed[1][1] # a fake result for the totals
-        self.assertEqual("total", data_point.criterion)
-        self.assertAlmostEqual(0.017365513556, data_point.time)
+        measurement = parsed[1][1] # a fake result for the totals
+        self.assertEqual("total", measurement.criterion)
+        self.assertAlmostEqual(0.017365513556, measurement.value)
     
     def test_parse_multiple_results1(self):
         parsed = self._c.parse_data((self._result1 + "\n") * 10)
         self.assertIsProperTupleWithTotal(0.000052316778, parsed)
 
         self.assertEqual(20, len(parsed[1]))
-        data_point = parsed[1][0]
-        self.assertEqual("SimpleExecution", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][0]
+        self.assertEqual("SimpleExecution", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
         
-        data_point = parsed[1][1] # this is a fake result for the totals
-        self.assertEqual("total", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][1] # this is a fake result for the totals
+        self.assertEqual("total", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
         
-        data_point = parsed[1][4]
-        self.assertEqual("SimpleExecution", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][4]
+        self.assertEqual("SimpleExecution", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
         
-        data_point = parsed[1][5] # another fake result
-        self.assertEqual("total", data_point.criterion)
-        self.assertEqual(0.000052316778, data_point.time)
+        measurement = parsed[1][5] # another fake result
+        self.assertEqual("total", measurement.criterion)
+        self.assertEqual(0.000052316778, measurement.value)
     
     def test_parse_caliper_output_bug1(self):
         with open (self._path + '/caliper-bug1.output', "r") as f:

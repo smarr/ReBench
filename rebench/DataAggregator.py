@@ -56,18 +56,18 @@ The data aggregator supports the following data dimensions:
 import re
 import os
 from datetime import datetime
-from Executor import RunId
 from copy import copy
 import logging
 import subprocess
 import shutil
 import time
 from model.benchmark_config import BenchmarkConfig
-from model.data_point       import DataPoint
+from model.measurement      import Measurement
+from model.run_id           import RunId
 
 class DataAggregator(object):
 
-    def __init__(self, dataFileName, automaticallyPersistNewDataPoints = True):
+    def __init__(self, dataFileName, automaticallyPersistNewMeasurements = True):
         if not dataFileName:
             raise ValueError("DataAggregator expects a file name for dataFileName, but got: %s" % dataFileName)
         
@@ -75,7 +75,7 @@ class DataAggregator(object):
         self._data = {}
         self._lastCriteria = None
         self._lastDataSet  = None
-        self._automaticallyPersistNewDataPoints = automaticallyPersistNewDataPoints
+        self._automaticallyPersistNewMeasurements = automaticallyPersistNewMeasurements
         self._file    = None
         self._csvFile = None
     
@@ -152,8 +152,8 @@ class DataAggregator(object):
                     try:
                         # ignore shebang lines
                         if not line.startswith('#!'):
-                            runId, value = self._deserializeDataPoint(line)
-                            self.addDataPoints(runId, value, True)
+                            runId, value = self._deserializeMeasurement(line)
+                            self.addMeasurements(runId, value, True)
                     except ValueError, e:
                         msg = str(e)
                         if msg not in errors:
@@ -234,7 +234,7 @@ class DataAggregator(object):
         
         return dataSet
     
-    def getNumberOfDataPoints(self, runId):
+    def getNumberOfMeasurements(self, runId):
         return len(self.getDataSet(runId))
     
     def getDataSample(self, runId):
@@ -251,18 +251,18 @@ class DataAggregator(object):
         #else:
         #    return dataSet
     
-    def _flattenData(self, dataPoints):
+    def _flattenData(self, measurements):
         benchmarks = {}
         
-        if type(dataPoints) is list:
-            for point in dataPoints:
-                benchmarks.setdefault(point.benchName, {}).setdefault(point.criterion, []).append(point.time)
+        if type(measurements) is list:
+            for measure in measurements:
+                benchmarks.setdefault(measure.bench_name, {}).setdefault(measure.criterion, []).append(measure.value)
         else:
-            benchmarks.setdefault(dataPoints.benchName, {}).setdefault(dataPoints.criterion, []).append(dataPoints.time)
+            benchmarks.setdefault(measurements.bench_name, {}).setdefault(measurements.criterion, []).append(measurements.value)
         
         return benchmarks
     
-    def addDataPoints(self, runId, dataPoints, deserializing = False):
+    def addMeasurements(self, runId, dataPoints, deserializing = False):
         """
         Add the data point to the run which is indicated by the given
         ``runId``.
@@ -296,36 +296,36 @@ class DataAggregator(object):
                 dataSet += value
                 
                 for point in value:
-                    if self._automaticallyPersistNewDataPoints and not deserializing:
-                        self._persistDataPoint(tmpRunId, point)
-                    self._persistDataPointAsCSV(tmpRunId, point)
+                    if self._automaticallyPersistNewMeasurements and not deserializing:
+                        self._persistMeasurement(tmpRunId, point)
+                    self._persistMeasurementAsCSV(tmpRunId, point)
 
 #                assert len(value) == 1
-#                if self._automaticallyPersistNewDataPoints and not deserializing:
-#                    self._persistDataPoint(tmpRunId, value[0])
-#                self._persistDataPointAsCSV(tmpRunId, value[0])
+#                if self._automaticallyPersistNewMeasurements and not deserializing:
+#                    self._persistMeasurement(tmpRunId, value[0])
+#                self._persistMeasurementAsCSV(tmpRunId, value[0])
     
     def saveData(self):
         # we need that only if it is not done automatically
-        if not self.automaticallyPersistNewDataPoints:
+        if not self.automaticallyPersistNewMeasurements:
             self._persistData()
 
     def _openFileToAddNewData(self):
         if not self._file:
             self._file = open(self._dataFileName, 'a+')
 
-    def _persistDataPoint(self, runId, dataPoint):
+    def _persistMeasurement(self, runId, dataPoint):
         self._openFileToAddNewData()
         
-        self._file.writelines(self._serializeDataPoint(runId, dataPoint))
+        self._file.writelines(self._serializeMeasurement(runId, dataPoint))
         self._file.flush()
     
-    def _persistDataPointAsCSV(self, runId, dataPoint):
+    def _persistMeasurementAsCSV(self, runId, dataPoint):
         if self._csvFile:
-            self._csvFile.writelines(self._serializeDataPointAsCSV(runId, dataPoint))
+            self._csvFile.writelines(self._serializeMeasurementAsCSV(runId, dataPoint))
             self._csvFile.flush()
         
-    def _serializeDataPoint(self, runId, dataPoint):
+    def _serializeMeasurement(self, runId, dataPoint):
         result = []
         result.append("[%s]" % datetime.now())
         
@@ -338,7 +338,7 @@ class DataAggregator(object):
         
         return result
     
-    def _serializeDataPointAsCSV(self, runId, dataPoint):
+    def _serializeMeasurementAsCSV(self, runId, dataPoint):
         result = []
         runCfg = runId.cfg.as_tuple()
         # the extra args are often more complex, lets protect them with ""
@@ -357,7 +357,7 @@ class DataAggregator(object):
     
     _parseRegex = re.compile(r"\[.*?\]" "\t" r"(.*?), vm:(.*?), suite:(.*?), args:'(.*?)'((?:" "\t"  r"(?:.*?))+) = (.*)")
     
-    def _deserializeDataPoint(self, line):
+    def _deserializeMeasurement(self, line):
         m = self._parseRegex.match(line)
         benchName = m.group(1)
         vmName = m.group(2)
@@ -369,6 +369,6 @@ class DataAggregator(object):
         
         criterion = restRunId[-1]
         restRunId = restRunId[:-1]
-        dataPoint = DataPoint(float(m.group(6)), None, criterion)
+        dataPoint = Measurement(float(m.group(6)), None, criterion)
         
         return RunId(cfg, restRunId, criterion), dataPoint

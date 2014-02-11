@@ -22,7 +22,6 @@ import sys
 import yaml
 import logging
 import traceback
-from model.benchmark_config import BenchmarkConfig
 from model.runs_config      import RunsConfig, QuickRunsConfig
 from model.experiment       import Experiment 
 

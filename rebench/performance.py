@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-from model.data_point import DataPoint
+from model.measurement import Measurement
 
 class Performance:
     """Performance provides a common interface and some helper functionality
@@ -88,7 +88,7 @@ class LogPerformance(Performance):
                     time = time / 1000
                 criterion = (m.group(2) or 'total').strip()
               
-                val = DataPoint(time, criterion)
+                val = Measurement(time, criterion)
                 result.append(val)
 
                 if criterion == 'total':
@@ -129,7 +129,7 @@ class JGFPerformance(Performance):
 
             if m:
                 time = float(m.group(2))
-                val = DataPoint(time, None)
+                val = Measurement(time, None)
                 result.append(val)
                 #print "DEBUG OUT:" + time
 
@@ -166,7 +166,7 @@ class EPCCPerformance(Performance):
 
             if m:
                 time = float(m.group(1))
-                val = DataPoint(time, None)
+                val = Measurement(time, None)
                 result.append(val)
 
         if time is None:
@@ -201,7 +201,7 @@ class TimePerformance(Performance):
                 m = m1 or m2
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
                 time = (float(m.group(2).strip() or 0) * 60 + float(m.group(3))) * 1000
-                val = DataPoint(time, criterion)
+                val = Measurement(time, criterion)
                 result.append(val)
           
                 if criterion == 'total':
@@ -241,10 +241,10 @@ class TestVMPerformance(Performance):
             
             m = TestVMPerformance.re_time.match(line)
             if m:
-                val = DataPoint(float(m.group(2)), None, m.group(1))
+                val = Measurement(float(m.group(2)), None, m.group(1))
                 if val.is_total():
                     assert total is None
-                    total = val.time
+                    total = val.value
                 results.append(val)
         
         if total is None:
@@ -294,7 +294,7 @@ class CaliperPerformance(Performance):
             m = self.re_logline.match(line)
             if m:
                 time = float(m.group(3)) / 1000000
-                results.append(DataPoint(time, criterion = m.group(1))) #m.group(2),
+                results.append(Measurement(time, criterion = m.group(1))) #m.group(2),
                 
                 if total_bench is None:
                     total_bench = m.group(1)
@@ -305,7 +305,7 @@ class CaliperPerformance(Performance):
                     # well, so the overall total is going to be the last one
                     total_time = time
                     # this is the fake result, to determine whether to stop benchmarking
-                    results.append(DataPoint(time, criterion = 'total'))  # m.group(2),
+                    results.append(Measurement(time, criterion = 'total'))  # m.group(2),
         
         if total_time == 0:
             print "Failed parsing: ###" + data + "###"
