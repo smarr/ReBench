@@ -27,10 +27,17 @@ class RunId:
         self._reporting = set()
         self._requested_confidence_level = 0
         self._run_config = None
+        self._data_points = []
     
     def add_reporting(self, reporting):
         self._reporting.add(reporting)
         self._requested_confidence_level = max(reporting.confidence_level, self._requested_confidence_level)
+    
+    def add_data_point(self, data_point):
+        self._data_points.append(data_point)
+    
+    def get_data_points(self):
+        return self._data_points
     
     def set_run_config(self, run_cfg):
         if self._run_config and self._run_config != run_cfg:

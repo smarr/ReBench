@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 import re
 from model.measurement import Measurement
+from model.data_point  import DataPoint
 
 class Performance:
     """Performance provides a common interface and some helper functionality
@@ -37,7 +38,7 @@ class Performance:
     def acquire_command(self, command):
         return command
     
-    def parse_data(self, data):
+    def parse_data(self, data, run_id):
         raise NotImplementedError()
     
     def check_for_error(self, line):
@@ -73,9 +74,9 @@ class LogPerformance(Performance):
         self._otherErrorDefinitions = [self.re_NPB_partial_invalid, 
                                        self.re_NPB_invalid]
 
-    def parse_data(self, data):
-        result = []
-        total = None
+    def parse_data(self, data, run_id):
+        data_points = []
+        current = DataPoint(run_id)
          
         for line in data.split("\n"):
             if self.check_for_error(line):
@@ -88,92 +89,92 @@ class LogPerformance(Performance):
                     time = time / 1000
                 criterion = (m.group(2) or 'total').strip()
               
-                val = Measurement(time, criterion)
-                result.append(val)
-
-                if criterion == 'total':
-                    assert total == None, "benchmark run returned more than one 'total' value"
-                    total = time
+                measure = Measurement(time, m.group(1), criterion, 'ms')
+                current.add_measurement(measure)
+                
+                if measure.is_total():
+                    data_points.append(current)
+                    current = DataPoint(run_id)
         
-        if total is None:
+        if len(data_points) == 0:
             print "Failed parsing: ###" + data + "###"
-            raise RuntimeError("Output of bench program did not contain a total value")
+            raise RuntimeError("Output of bench program did not contain a total value, no data point completed parsing.")
             
-        return (total, result)
+        return data_points
 
-class JGFPerformance(Performance):
-    """JGFPerformance is used to read the output of the JGF barrier benchmarks.
-    """
-    re_barrierSec1 = re.compile(r"^(?:.*:.*:)(.*)(?:\s+)([0-9\.E]+)(?:\s+)\(barriers/s\)") # for the barrier benchmarks in sec 1 of the JGF benchmarks
-    re_sec2 = re.compile(r"^(?:Section2:.*:)(.*)(?::.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")            # for the benchmarks from sec 2
-    re_sec3 = re.compile(r"^(?:Section3:.*:)(.*)(?::Run:.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")        # for the benchmarks from sec 3, the time of 'Run' is used
+# class JGFPerformance(Performance):
+#     """JGFPerformance is used to read the output of the JGF barrier benchmarks.
+#     """
+#     re_barrierSec1 = re.compile(r"^(?:.*:.*:)(.*)(?:\s+)([0-9\.E]+)(?:\s+)\(barriers/s\)") # for the barrier benchmarks in sec 1 of the JGF benchmarks
+#     re_sec2 = re.compile(r"^(?:Section2:.*:)(.*)(?::.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")            # for the benchmarks from sec 2
+#     re_sec3 = re.compile(r"^(?:Section3:.*:)(.*)(?::Run:.*)(?:\s+)([0-9]+)(?:\s+)\(ms\)")        # for the benchmarks from sec 3, the time of 'Run' is used
+# 
+#     re_invalid = re.compile("Validation failed")
+# 
+#     def __init__(self):
+#         self._otherErrorDefinitions = [JGFPerformance.re_invalid]
+# 
+#     def parse_data(self, data, run_id):
+#         data_points = []
+#         current = DataPoint(run_id)
+#     
+#         for line in data.split("\n"):
+#             if self.check_for_error(line):
+#                 raise RuntimeError("Output of bench program indicated error.")
+#     
+#             m = self.re_barrierSec1.match(line)
+#             if not m:
+#                 m = self.re_sec2.match(line)
+#                 if not m:
+#                     m = self.re_sec3.match(line)
+# 
+#             if m:
+#                 time = float(m.group(2))
+#                 val = Measurement(time, None)
+#                 result.append(val)
+#                 #print "DEBUG OUT:" + time
+# 
+#         if time is None:
+#             print "Failed parsing: " + data
+#             raise RuntimeError("Output of bench program did not contain a total value")
+# 
+#         return (time, result)
 
-    re_invalid = re.compile("Validation failed")
-
-    def __init__(self):
-        self._otherErrorDefinitions = [JGFPerformance.re_invalid]
-
-    def parse_data(self, data):
-        result = []
-        time = None
-    
-        for line in data.split("\n"):
-            if self.check_for_error(line):
-                raise RuntimeError("Output of bench program indicated error.")
-    
-            m = self.re_barrierSec1.match(line)
-            if not m:
-                m = self.re_sec2.match(line)
-                if not m:
-                    m = self.re_sec3.match(line)
-
-            if m:
-                time = float(m.group(2))
-                val = Measurement(time, None)
-                result.append(val)
-                #print "DEBUG OUT:" + time
-
-        if time is None:
-            print "Failed parsing: " + data
-            raise RuntimeError("Output of bench program did not contain a total value")
-
-        return (time, result)
-
-class EPCCPerformance(Performance):
-    """EPCCPerformance is used to read the output of the EPCC barrier benchmarks.
-    """
-    barrier_time  = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
-    barrier_time2 = re.compile(r"\s*Total time without initialization\s+:?\s+([0-9]+)")
-    barnes = re.compile(r"COMPUTETIME\s+=\s+([0-9]+)") 
-    re_error = re.compile("Error [^t][^o][^l]") 
-    barrier_time3 = re.compile(r"^BARRIER overhead =\s+([0-9\.E]+) microseconds(?:.+)")
-    
-    def parse_data(self, data):
-        result = []
-        time = None
-    
-        for line in data.split("\n"):
-            if self.check_for_error(line):
-                raise RuntimeError("Output of bench program indicated error.")
-            #import pdb; pdb.set_trace() 
-            m = self.barrier_time.match(line)
-            if not m:
-                m = self.barrier_time2.match(line)
-                if not m:
-                    m = self.barnes.match(line)
-                    if not m:
-                        m = self.barrier_time3.match(line)
-
-            if m:
-                time = float(m.group(1))
-                val = Measurement(time, None)
-                result.append(val)
-
-        if time is None:
-            print "Failed parsing: " + data
-            raise RuntimeError("Output of bench program did not contain a total value")
-
-        return (time, result)
+# class EPCCPerformance(Performance):
+#     """EPCCPerformance is used to read the output of the EPCC barrier benchmarks.
+#     """
+#     barrier_time  = re.compile(r"^BARRIER time =\s+([0-9\.E]+) microseconds(?:.+)")
+#     barrier_time2 = re.compile(r"\s*Total time without initialization\s+:?\s+([0-9]+)")
+#     barnes = re.compile(r"COMPUTETIME\s+=\s+([0-9]+)") 
+#     re_error = re.compile("Error [^t][^o][^l]") 
+#     barrier_time3 = re.compile(r"^BARRIER overhead =\s+([0-9\.E]+) microseconds(?:.+)")
+#     
+#     def parse_data(self, data):
+#         result = []
+#         time = None
+#     
+#         for line in data.split("\n"):
+#             if self.check_for_error(line):
+#                 raise RuntimeError("Output of bench program indicated error.")
+#             #import pdb; pdb.set_trace() 
+#             m = self.barrier_time.match(line)
+#             if not m:
+#                 m = self.barrier_time2.match(line)
+#                 if not m:
+#                     m = self.barnes.match(line)
+#                     if not m:
+#                         m = self.barrier_time3.match(line)
+# 
+#             if m:
+#                 time = float(m.group(1))
+#                 val = Measurement(time, None)
+#                 result.append(val)
+# 
+#         if time is None:
+#             print "Failed parsing: " + data
+#             raise RuntimeError("Output of bench program did not contain a total value")
+# 
+#         return (time, result)
 
 
 class TimePerformance(Performance):
@@ -187,9 +188,9 @@ class TimePerformance(Performance):
     def acquire_command(self, command):
         return "/usr/bin/time -p %s"%(command)
     
-    def parse_data(self, data):
-        result = []
-        total = None
+    def parse_data(self, data, run_id):
+        data_points = []
+        current = DataPoint(run_id)
         
         for line in data.split("\n"):
             if self.check_for_error(line):
@@ -201,15 +202,18 @@ class TimePerformance(Performance):
                 m = m1 or m2
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
                 time = (float(m.group(2).strip() or 0) * 60 + float(m.group(3))) * 1000
-                val = Measurement(time, criterion)
-                result.append(val)
+                measure = Measurement(time, None, criterion, 'ms')
+                current.add_measurement(measure)
           
-                if criterion == 'total':
-                    assert total == None, "benchmark run returned more than one 'total' value"
-                    total = time
+                if measure.is_total():
+                    data_points.append(current)
+                    current = DataPoint(run_id)
       
-        return (total, result)
-
+        if len(data_points) == 0:
+            print "Failed parsing: ###" + data + "###"
+            raise RuntimeError("Output of bench program could not be parsed.")
+            
+        return data_points
 
 class TimeManualPerformance(TimePerformance):
     """TimeManualPerformance works like TimePerformance but does expect the
@@ -221,7 +225,7 @@ class TimeManualPerformance(TimePerformance):
 
 
 class TestVMPerformance(Performance):
-    """Perfromance reader for the test case and the definitions
+    """Performance reader for the test case and the definitions
        in test/test.conf
     """
     
@@ -230,10 +234,9 @@ class TestVMPerformance(Performance):
     def __init__(self):
         self._otherErrorDefinitions = [re.compile("FAILED")]
     
-    def parse_data(self, data):
-        results = []
-        total = None
-        
+    def parse_data(self, data, run_id):
+        data_points = []
+        current = DataPoint(run_id)
         
         for line in data.split("\n"):
             if self.check_for_error(line):
@@ -241,18 +244,18 @@ class TestVMPerformance(Performance):
             
             m = TestVMPerformance.re_time.match(line)
             if m:
-                val = Measurement(float(m.group(2)), None, m.group(1))
-                if val.is_total():
-                    assert total is None
-                    total = val.value
-                results.append(val)
+                measure = Measurement(float(m.group(2)), None, m.group(1), 'ms')
+                current.add_measurement(measure)
+                
+                if measure.is_total():
+                    data_points.append(current)
+                    current = DataPoint(run_id)
         
-        if total is None:
-            raise RuntimeError("Output of bench program did not contain a total value")
-        
-        return (total, results)
-
-
+        if len(data_points) == 0:  
+            print "Failed parsing: ###" + data + "###"
+            raise RuntimeError("Output of bench program could not be parsed.")
+            
+        return data_points
 
 class TestPerformance(Performance):
     
@@ -264,11 +267,11 @@ class TestPerformance(Performance):
                  45875, 45871, 45869, 45870, 45874]
     index = 0
     
-    def parse_data(self, data):
-        result = self.test_data[self.index]
+    def parse_data(self, data, run_id):
+        point = DataPoint(run_id)
+        point.add_measurement(Measurement(self.test_data[self.index]))
         self.index = (self.index + 1) % len(self.test_data)
-        return result
-
+        return [point]
 
 class CaliperPerformance(Performance):
     """CaliperPerformance parses the output of Caliper with
@@ -277,16 +280,15 @@ class CaliperPerformance(Performance):
     re_logline = re.compile(r"Measurement \(runtime\) for (.*?) in (.*?): (.*?)ns")
     
     def check_for_error(self, line):
-        ## for the moment we will simply not check fir errors, because
+        ## for the moment we will simply not check for errors, because
         ## there are to many simple Error strings referring to class names
         ## TODO: find better solution
         pass
     
-    def parse_data(self, data):
-        results = []        
-        total_time = 0
-        total_bench = None # the benchmark we use to represent the total
-         
+    def parse_data(self, data, run_id):
+        data_points = []
+        current = DataPoint(run_id)
+        
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicates errors.")
@@ -294,22 +296,12 @@ class CaliperPerformance(Performance):
             m = self.re_logline.match(line)
             if m:
                 time = float(m.group(3)) / 1000000
-                results.append(Measurement(time, criterion = m.group(1))) #m.group(2),
-                
-                if total_bench is None:
-                    total_bench = m.group(1)
-                    
-                # is used to determine when benchmark is completed, is currently 
-                # problematic with sources that produced multiple results
-                if total_bench == m.group(1):
-                    # well, so the overall total is going to be the last one
-                    total_time = time
-                    # this is the fake result, to determine whether to stop benchmarking
-                    results.append(Measurement(time, criterion = 'total'))  # m.group(2),
+                current.add_measurement(Measurement(time, criterion = m.group(1))) #m.group(2),
+                data_points.append(current)
+                current = DataPoint(run_id)
         
-        if total_time == 0:
+        if len(data_points) == 0:
             print "Failed parsing: ###" + data + "###"
             raise RuntimeError("Output of bench program did not contain a total value")
             
-        return (total_time, results)
-
+        return data_points

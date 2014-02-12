@@ -104,12 +104,14 @@ class Executor:
         consequent_erroneous_runs, erroneous_runs = error
         
         try:
-            (total, dataPoints) = perf_reader.parse_data(output)
-            #self.benchmark_data[self.current_vm][self.current_benchmark].append(exec_time)
-            self._data.addMeasurements(runId, dataPoints)
-            consequent_erroneous_runs = 0
-            logging.debug("Run %s:%s result=%s"%(runId.cfg.vm.name, runId.cfg.name, total))
+            data_points = perf_reader.parse_data(output, runId)
             
+            for data_point in data_points:
+                runId.add_data_point(data_point)
+                self._data.add_datapoint(data_point)
+                logging.debug("Run %s:%s result=%s"%(runId.cfg.vm.name, runId.cfg.name, data_point.get_total_value()))
+            
+            consequent_erroneous_runs = 0
         except RuntimeError:
             consequent_erroneous_runs += 1
             erroneous_runs += 1

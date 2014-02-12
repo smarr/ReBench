@@ -262,7 +262,7 @@ class DataAggregator(object):
         
         return benchmarks
     
-    def addMeasurements(self, runId, dataPoints, deserializing = False):
+    def add_datapoint(self, datapoint, deserializing = False):
         """
         Add the data point to the run which is indicated by the given
         ``runId``.
