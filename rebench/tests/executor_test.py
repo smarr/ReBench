@@ -1,10 +1,10 @@
 import unittest
 import subprocess
 
-from ..Executor          import Executor
+from ..executor          import Executor
 from ..persistence       import DataPointPersistence
 from ..configurator      import Configurator
-from ..Reporter          import Reporters
+from ..reporter          import Reporters
 from ..model.benchmark_config import BenchmarkConfig
 from ..model.run_id      import RunId
 from ..model.measurement import Measurement

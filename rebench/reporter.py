@@ -42,25 +42,9 @@ try:
 except ImportError:
     logging.info("matplotlib was not found, import failed: " + str(ImportError))
 
+
 class Reporter:
 
-    # only domain specific stuff here..., we are not interested in the details
-    # and general logging here
-    #def info(self, msg, level = None):
-    #    pass
-    #
-    #def warning(self, msg, level = None):
-    #    pass
-    #
-    #def failure(self, msg, level = None):
-    #    pass
-    #
-    #def beginSeparatLog(self, task, level = None):
-    #    pass
-    #
-    #def endSeparatLog(self, task, level = None):
-    #    pass
-    
     def runFailed(self, runId, cmdline, returncode, output):
         raise NotImplementedError('Subclass responsibility')
     

@@ -30,12 +30,15 @@
 
 import sys
 
-from .Executor       import Executor
-from .Reporter       import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter, CSVFileReporter
+from .executor       import Executor
+from .reporter       import FileReporter, Reporters, CliReporter,\
+                            DiagramResultReporter, CodespeedReporter,\
+                            CSVFileReporter
 from .configurator   import Configurator
 from .persistence import DataPointPersistence
 from optparse import OptionParser, OptionGroup
 import logging
+
 
 class ReBench:
     
@@ -164,6 +167,7 @@ Argument:
         executor.execute()
 
 # remember __import__(), obj.__dict__["foo"] == obj.foo
+
 
 def main_func():
     return ReBench().run()

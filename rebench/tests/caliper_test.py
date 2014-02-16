@@ -28,8 +28,8 @@ from rebench.persistence import DataPointPersistence
 from rebench.model.measurement import Measurement
 from rebench import ReBench
 from rebench.configurator import Configurator
-from rebench.Executor import Executor
-from rebench.Reporter import Reporters
+from rebench.executor import Executor
+from rebench.reporter import Reporters
 
 
 
