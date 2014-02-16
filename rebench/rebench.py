@@ -32,7 +32,7 @@ import sys
 
 from .Executor       import Executor
 from .Reporter       import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter, CSVFileReporter
-from .Configurator   import Configurator
+from .configurator   import Configurator
 from .persistence import DataPointPersistence
 from optparse import OptionParser, OptionGroup
 import logging

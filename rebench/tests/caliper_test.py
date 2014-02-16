@@ -27,7 +27,7 @@ from rebench.performance import CaliperPerformance
 from rebench.persistence import DataPointPersistence
 from rebench.model.measurement import Measurement
 from rebench import ReBench
-from rebench.Configurator import Configurator
+from rebench.configurator import Configurator
 from rebench.Executor import Executor
 from rebench.Reporter import Reporters
 

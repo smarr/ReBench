@@ -144,7 +144,7 @@ class Configurator:
                                                         self.experiment_name())
         
         return conf_defs
-    
+
     def _compile_experiment(self, exp_name):
         exp_def = self._raw_config['experiments'][exp_name]
         run_cfg = (self.quick_runs if (self.options and self.options.quick)

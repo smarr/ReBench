@@ -3,7 +3,7 @@ import subprocess
 
 from rebench.Executor       import Executor
 from rebench.persistence import DataPointPersistence
-from rebench.Configurator   import Configurator
+from rebench.configurator   import Configurator
 from rebench.Reporter       import Reporters
 from rebench.model.benchmark_config import BenchmarkConfig
 from rebench.model.run_id   import RunId

@@ -2,7 +2,7 @@ import unittest
 import os
 import logging
 
-from rebench.Configurator           import Configurator
+from rebench.configurator           import Configurator
 from rebench.model.benchmark_config import BenchmarkConfig
 from rebench.model.runs_config      import RunsConfig, QuickRunsConfig
 from rebench.model.run_id           import RunId
