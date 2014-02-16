@@ -407,7 +407,7 @@ class CodespeedReporter(Reporter):
         
         # contains the indexes into the data tuples for
         # the parameters
-        self._indexMap = DataAggregator.data_mapping()
+        self._indexMap = DataPointPersistence.data_mapping()
         
     def runFailed(self, runId, cmdline, returncode, output):
         pass
@@ -533,7 +533,7 @@ class DiagramResultReporter(Reporter):
     
     def __init__(self, configurator):
         self._configurator = configurator
-        self._separateByMapping = DataAggregator.data_mapping()
+        self._separateByMapping = DataPointPersistence.data_mapping()
         self._separateByIndexes = None
 
     def runFailed(self, runId, cmdline, returncode, output):
