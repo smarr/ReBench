@@ -6,7 +6,8 @@ import sys
 
 from rebench.model.benchmark_config import BenchmarkConfig
 
-class RunId:
+
+class RunId(object):
     _registry = {}
     
     @classmethod
@@ -14,20 +15,23 @@ class RunId:
         cls._registry = {}
     
     @classmethod
-    def create(cls, cfg, variables):
-        run = RunId(cfg, variables)
+    def create(cls, bench_cfg, cores, input_size, var_value):
+        run = RunId(bench_cfg, cores, input_size, var_value)
         if run in RunId._registry:
             return RunId._registry[run]
         else:
             RunId._registry[run] = run
             return run
     
-    def __init__(self, cfg, variables):
-        self._cfg = cfg
-        self._variables = self._stringify(variables)
-        self._reporting = set()
+    def __init__(self, bench_cfg, cores, input_size, var_value):
+        self._bench_cfg   = bench_cfg
+        self._cores       = cores
+        self._input_size  = input_size
+        self._var_value   = var_value
+
+        self._reporting   = set()
         self._requested_confidence_level = 0
-        self._run_config = None
+        self._run_config  = None
         self._data_points = []
     
     def add_reporting(self, reporting):
@@ -52,7 +56,7 @@ class RunId:
         self._run_config = run_cfg
     
     def create_termination_check(self):
-        return self._run_config.create_termination_check(self._cfg)
+        return self._run_config.create_termination_check(self._bench_cfg)
     
     @property
     def run_config(self):
@@ -63,50 +67,48 @@ class RunId:
         return self._requested_confidence_level
     
     @property
-    def cfg(self):
-        return self._cfg
+    def bench_cfg(self):
+        return self._bench_cfg
     
     @property
-    def variables(self):
-        return self._variables
+    def cores(self):
+        return self._cores
+
+    @property
+    def input_size(self):
+        return self._input_size
+
+    @property
+    def var_value(self):
+        return self._var_value
     
     def __hash__(self):
-        return (hash(self._cfg) ^ 
-                hash(self._variables))
-        
-    def _stringify(self, aTuple):
-        result = ()
-        for item in aTuple:
-            if isinstance(item, Number) or item is None:
-                result += (str(item), )
-            else:
-                result += (item, )
-                
-        return result
-    
+        return (hash(self._bench_cfg)  ^
+                hash(self._cores)      ^
+                hash(self._input_size) ^
+                hash(self._var_value))
+
     def as_simple_string(self):
-        return "%s %s" % (self._cfg.as_simple_string(), self._variables)
-    
-    def as_tuple(self):
-        return self._cfg.as_tuple() + self._variables
+        return "%s %s %s %s" % (self._bench_cfg.as_simple_string(),
+                                self._cores, self._input_size, self._var_value)
     
     def cmdline(self):
-        cmdline  = ""
-                
-        vm_cmd = "%s/%s %s" % (os.path.abspath(self._cfg.vm.path),
-                               self._cfg.vm.binary,
-                               self._cfg.vm.args)
-            
-        cmdline += vm_cmd 
-        cmdline += self._cfg.suite.command
-        
-        if self._cfg.extra_args is not None:
-            cmdline += " %s" % (self._cfg.extra_args or "")
-            
-        (cores, input_size, var_val) = self._variables
+        cmdline = ""
+        vm_cmd  = "%s/%s %s" % (os.path.abspath(self._bench_cfg.vm.path),
+                                self._bench_cfg.vm.binary,
+                                self._bench_cfg.vm.args)
 
+        cmdline += vm_cmd 
+        cmdline += self._bench_cfg.suite.command
+        
+        if self._bench_cfg.extra_args is not None:
+            cmdline += " %s" % self._bench_cfg.extra_args
+            
         try:
-            cmdline = cmdline % {'benchmark':self._cfg.name, 'input':input_size, 'variable':var_val, 'cores' : cores}
+            cmdline = cmdline % {'benchmark' : self._bench_cfg.name,
+                                 'input'     : self._input_size,
+                                 'variable'  : self._var_value,
+                                 'cores'     : self._cores}
         except ValueError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         except TypeError:
@@ -122,7 +124,7 @@ class RunId:
         return not self.__eq__(other)
     
     def _report_cmdline_format_issue_and_exit(self, cmdline):
-        logging.critical("The configuration of %s contains improper Python format strings.", self._cfg.name)
+        logging.critical("The configuration of %s contains improper Python format strings.", self._bench_cfg.name)
          
         # figure out which format misses a conversion type
         without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
