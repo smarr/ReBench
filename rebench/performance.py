@@ -1,4 +1,4 @@
-# Copyright (c) 2009 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,6 +60,14 @@ class Performance:
         
         return False
 
+
+class OutputNotParseable(Exception):
+    """The exception to be raised when no results were obtained from the given
+       data string."""
+    def __init__(self, unparsable_data):
+        self._unparseable_data = unparsable_data
+
+
 class LogPerformance(Performance):
     """LogPerformance is the standard log parser of ReBench.
        It reads a simple log format, which includes the number of iterations of
@@ -98,8 +106,7 @@ class LogPerformance(Performance):
                     current = DataPoint(run_id)
         
         if len(data_points) == 0:
-            print "Failed parsing: ###" + data + "###"
-            raise RuntimeError("Output of bench program did not contain a total value, no data point completed parsing.")
+            raise OutputNotParseable(data)
             
         return data_points
 
@@ -136,8 +143,7 @@ class LogPerformance(Performance):
 #                 #print "DEBUG OUT:" + time
 # 
 #         if time is None:
-#             print "Failed parsing: " + data
-#             raise RuntimeError("Output of bench program did not contain a total value")
+#             raise OutputNotParseable(data)
 # 
 #         return (time, result)
 
@@ -172,8 +178,7 @@ class LogPerformance(Performance):
 #                 result.append(val)
 # 
 #         if time is None:
-#             print "Failed parsing: " + data
-#             raise RuntimeError("Output of bench program did not contain a total value")
+#             raise OutputNotParseable(data)
 # 
 #         return (time, result)
 
@@ -211,10 +216,10 @@ class TimePerformance(Performance):
                     current = DataPoint(run_id)
       
         if len(data_points) == 0:
-            print "Failed parsing: ###" + data + "###"
-            raise RuntimeError("Output of bench program could not be parsed.")
+            raise OutputNotParseable(data)
             
         return data_points
+
 
 class TimeManualPerformance(TimePerformance):
     """TimeManualPerformance works like TimePerformance but does expect the
@@ -245,7 +250,7 @@ class TestVMPerformance(Performance):
             
             m = TestVMPerformance.re_time.match(line)
             if m:
-                measure = Measurement(float(m.group(2)), None, m.group(1), 'ms')
+                measure = Measurement(float(m.group(2)), 'ms', run_id, m.group(1))
                 current.add_measurement(measure)
                 
                 if measure.is_total():
@@ -253,10 +258,10 @@ class TestVMPerformance(Performance):
                     current = DataPoint(run_id)
         
         if len(data_points) == 0:  
-            print "Failed parsing: ###" + data + "###"
-            raise RuntimeError("Output of bench program could not be parsed.")
+            raise OutputNotParseable(data)
             
         return data_points
+
 
 class TestPerformance(Performance):
     
@@ -273,6 +278,7 @@ class TestPerformance(Performance):
         point.add_measurement(Measurement(self.test_data[self.index]))
         self.index = (self.index + 1) % len(self.test_data)
         return [point]
+
 
 class CaliperPerformance(Performance):
     """CaliperPerformance parses the output of Caliper with
@@ -297,12 +303,12 @@ class CaliperPerformance(Performance):
             m = self.re_logline.match(line)
             if m:
                 time = float(m.group(3)) / 1000000
-                current.add_measurement(Measurement(time, criterion = m.group(1))) #m.group(2),
+                current.add_measurement(Measurement(time, 'ms', run_id,
+                                                    criterion = m.group(1))) #m.group(2),
                 data_points.append(current)
                 current = DataPoint(run_id)
         
         if len(data_points) == 0:
-            print "Failed parsing: ###" + data + "###"
-            raise RuntimeError("Output of bench program did not contain a total value")
+            raise OutputNotParseable(data)
             
         return data_points
