@@ -18,13 +18,6 @@ class ConfiguratorTest(unittest.TestCase):
     def tearDown(self):
         logging.error = self._logging_error  # restore normal logging
         
-    def test_structure(self):        
-        cnf = Configurator(self._path + '/test.conf', None)
-                
-        self.assertIsInstance(cnf.runs,             RunsConfig)
-        self.assertIsInstance(cnf.quick_runs,       QuickRunsConfig)
-        self.assertIsInstance(cnf.benchmark_suites, dict)
-        
     def test_experiment_name_from_cli(self):
         cnf = Configurator(self._path + '/test.conf', None, 'TestBrokenCommandFormat')
         
