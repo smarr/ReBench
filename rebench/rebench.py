@@ -43,9 +43,9 @@ import logging
 class ReBench:
     
     def __init__(self):
-        self.version = "0.3.0"
+        self.version = "0.5.0"
         self.options = None
-        self.config = None
+        self.config  = None
     
     def shell_options(self):
         usage = """%prog [options] <config> [run_name]
