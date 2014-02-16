@@ -127,3 +127,17 @@ class RunId:
                       without_conversion_type[0],
                       without_conversion_type[0])
         sys.exit(-1)
+
+    def as_str_list(self):
+        result = self._bench_cfg.as_str_list()
+
+        result.append('' if self._cores      is None else str(self._cores))
+        result.append('' if self._input_size is None else str(self._input_size))
+        result.append('' if self._var_value  is None else str(self._var_value))
+
+        return result
+
+    @classmethod
+    def from_str_list(cls, str_list):
+        bench_cfg = BenchmarkConfig.from_str_list(str_list[:-3])
+        return RunId(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
