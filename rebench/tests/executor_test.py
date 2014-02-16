@@ -81,6 +81,26 @@ class ExecutorTest(unittest.TestCase):
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
+    
+    def test_basic_execution(self):
+        cnf = Configurator(self._path + '/small.conf', None)
+        runs = cnf.get_runs()
+        self.assertEquals(8, len(runs))
+
+        data = DataPointPersistence(self._tmpFile)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        ex.execute()
+
+        for run in runs:
+            data_points = run.get_data_points()
+            self.assertEquals(10, len(data_points))
+            for data_point in data_points:
+                measurements = data_point.get_measurements()
+                self.assertEquals(4, len(measurements))
+                self.assertIsInstance(measurements[0], Measurement)
+                self.assertTrue(measurements[3].is_total())
+                self.assertEquals(data_point.get_total_value(), measurements[3].value)
+        
 
 def Popen_override(cmdline, stdout, shell):
     class Popen:
