@@ -50,13 +50,13 @@ class Experiment:
         vms = []
         
         for vm in executions:
-            vm, vmDetails = value_with_optional_details(vm)
+            vm, vm_details = value_with_optional_details(vm)
             if vm not in global_vms_cfg:
                 raise ValueError("The VM '%s' requested in %s was not found." % (vm, self.name))
             
             global_cfg = global_vms_cfg[vm]
-            vms.append(VirtualMachine(vm, vmDetails, global_cfg, benchmarks,
-                                                input_sizes, self.name))
+            vms.append(VirtualMachine(vm, vm_details, global_cfg, benchmarks,
+                                      input_sizes, self.name))
         return vms
     
     def _compile_benchmark_suites(self, global_suite_cfg):
