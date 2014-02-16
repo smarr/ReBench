@@ -1,3 +1,6 @@
+from rebench.model import value_or_list_as_list
+
+
 class BenchmarkSuite(object):
 
     def __init__(self, suite_name, vm, global_suite_cfg):
@@ -13,10 +16,10 @@ class BenchmarkSuite(object):
         
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
-        self._variable_values = global_suite_cfg.get('variable_values', [None])
+        self._variable_values = value_or_list_as_list(global_suite_cfg.get('variable_values', None))
 
         self._vm                 = vm
-        self._benchmarks         = global_suite_cfg['benchmarks']
+        self._benchmarks         = value_or_list_as_list(global_suite_cfg['benchmarks'])
         self._performance_reader = global_suite_cfg['performance_reader']
         self._command            = global_suite_cfg['command']
         self._max_runtime        = global_suite_cfg.get('max_runtime', -1)
