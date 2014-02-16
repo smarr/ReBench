@@ -1,14 +1,14 @@
 import unittest
 import subprocess
 
-from rebench.Executor       import Executor
-from rebench.persistence import DataPointPersistence
-from rebench.configurator   import Configurator
-from rebench.Reporter       import Reporters
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.run_id   import RunId
-from rebench.model.measurement import Measurement
-from rebench          import ReBench
+from ..Executor          import Executor
+from ..persistence       import DataPointPersistence
+from ..configurator      import Configurator
+from ..Reporter          import Reporters
+from ..model.benchmark_config import BenchmarkConfig
+from ..model.run_id      import RunId
+from ..model.measurement import Measurement
+from ..                  import ReBench
 import tempfile
 import os
 import sys
