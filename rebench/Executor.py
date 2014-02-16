@@ -21,7 +21,7 @@ from __future__ import with_statement
 
 import logging
 import subprocess
-import SubprocessWithTimeout as subprocess_timeout
+import subprocess_with_timeout as subprocess_timeout
 
 from .statistics  import StatisticProperties
 from .performance import OutputNotParseable
