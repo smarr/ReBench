@@ -2,7 +2,7 @@ from rebench.model import value_or_list_as_list
 
 class VirtualMachine(object):
     
-    def __init__(self, vm, vm_details, global_cfg, _benchmarks, _input_sizes, exp_name):
+    def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes, experiment_name):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
@@ -15,7 +15,7 @@ class VirtualMachine(object):
             input_sizes = _input_sizes
             cores       = None
         
-        self._name             = vm
+        self._name             = name
         self._benchsuite_names = benchmarks
         self._input_sizes      = input_sizes
             
@@ -24,6 +24,7 @@ class VirtualMachine(object):
         self._path             = global_cfg['path']
         self._binary           = global_cfg['binary']
         self._args             = global_cfg.get('args', '')
+        self._experiment_name  = experiment_name
     
     @property
     def name(self):
