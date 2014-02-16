@@ -37,8 +37,14 @@ class RunId:
     def add_data_point(self, data_point):
         self._data_points.append(data_point)
     
+    def get_number_of_data_points(self):
+        return len(self._data_points)
+    
     def get_data_points(self):
         return self._data_points
+
+    def get_total_values(self):
+        return [dp.get_total_value() for dp in self._data_points]
     
     def set_run_config(self, run_cfg):
         if self._run_config and self._run_config != run_cfg:
