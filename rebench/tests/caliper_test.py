@@ -23,13 +23,13 @@ import types
 import tempfile
 import os
 
-from ..performance import CaliperPerformance
-from ..DataAggregator import DataAggregator
-from ..model.measurement import Measurement
-from .. import ReBench
-from ..Configurator import Configurator
-from ..Executor import Executor
-from ..Reporter import Reporters
+from rebench.performance import CaliperPerformance
+from rebench.persistence import DataPointPersistence
+from rebench.model.measurement import Measurement
+from rebench import ReBench
+from rebench.Configurator import Configurator
+from rebench.Executor import Executor
+from rebench.Reporter import Reporters
 
 
 

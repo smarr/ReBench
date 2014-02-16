@@ -22,8 +22,8 @@ import sys
 import yaml
 import logging
 import traceback
-from model.runs_config      import RunsConfig, QuickRunsConfig
-from model.experiment       import Experiment 
+from .model.runs_config import RunsConfig, QuickRunsConfig
+from .model.experiment  import Experiment
 
 from copy import deepcopy
 

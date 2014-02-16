@@ -1,4 +1,4 @@
-from . import value_or_list_as_list
+from rebench.model import value_or_list_as_list
 
 class VirtualMachine(object):
     

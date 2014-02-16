@@ -2,10 +2,10 @@ import unittest
 import os
 import logging
 
-from ..Configurator           import Configurator
-from ..model.benchmark_config import BenchmarkConfig
-from ..model.runs_config      import RunsConfig, QuickRunsConfig
-from ..model.run_id           import RunId
+from rebench.Configurator           import Configurator
+from rebench.model.benchmark_config import BenchmarkConfig
+from rebench.model.runs_config      import RunsConfig, QuickRunsConfig
+from rebench.model.run_id           import RunId
 
 class ConfiguratorTest(unittest.TestCase):
     

@@ -1,4 +1,4 @@
-from . import value_with_optional_details
+from rebench.model import value_with_optional_details
 
 class BenchmarkConfig:
     _registry = {}

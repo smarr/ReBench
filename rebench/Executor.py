@@ -23,8 +23,8 @@ import logging
 import subprocess
 import SubprocessWithTimeout as subprocess_timeout
 
-from Statistics import StatisticProperties
-
+from .statistics  import StatisticProperties
+from .performance import OutputNotParseable
 
 class Executor:
     

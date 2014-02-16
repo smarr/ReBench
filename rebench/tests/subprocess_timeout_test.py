@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 import unittest
 
-from .. import SubprocessWithTimeout as sub
+from rebench import SubprocessWithTimeout as sub
 
 import os
 import subprocess

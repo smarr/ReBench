@@ -23,9 +23,8 @@ from __future__ import print_function
 from datetime import datetime
 import time
 import logging
-from Statistics import StatisticProperties
-from DataAggregator import DataAggregator
-from model.benchmark_config import BenchmarkConfig
+from .statistics import StatisticProperties
+from .persistence import DataPointPersistence
 import json
 import urllib2
 import urllib

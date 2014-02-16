@@ -4,6 +4,7 @@ import os
 import re
 import sys
 
+from rebench.model.benchmark_config import BenchmarkConfig
 
 class RunId:
     _registry = {}
