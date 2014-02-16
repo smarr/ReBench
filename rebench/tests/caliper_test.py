@@ -66,7 +66,7 @@ class CaliperIntegrationTest(unittest.TestCase):
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
-        data = DataAggregator(self._tmpFile)
+        data = DataPointPersistence(self._tmpFile)
         
         ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
         ex.execute()
@@ -89,17 +89,6 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         self._c       = CaliperPerformance()
         self._path    = os.path.dirname(os.path.realpath(__file__))
     
-    def assertIsProperTupleWithTotal(self, expected_total, aTuple):
-        self.assertIsInstance(aTuple, types.TupleType)
-        self.assertEqual(2, len(aTuple))
-        
-        self.assertAlmostEqual(expected_total, aTuple[0])
-        
-        self.assertIsInstance(aTuple[1], types.ListType)
-        
-        self.assertGreaterEqual(len(aTuple[1]), 1)
-        self.assertIsInstance(aTuple[1][0], Measurement)
-    
     def test_unmodified_command(self):
         
         cmd = ""
@@ -112,9 +101,10 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         self.assertEqual(cmd, self._c.acquire_command(cmd))
     
     def test_parse_single_result(self):
-        parsed = self._c.parse_data(self._result1)
-        self.assertIsProperTupleWithTotal(0.000052316778, parsed)
-        measurement = parsed[1][0]
+        parsed = self._c.parse_data(self._result1, None)
+        self.assertAlmostEqual(0.000052316778, parsed[0].get_total_value())
+
+        measurement = parsed[0].get_measurements()[0]
         self.assertEqual("SimpleExecution", measurement.criterion)
         self.assertEqual(0.000052316778, measurement.value)
         
@@ -122,7 +112,7 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         self.assertEqual("total", measurement.criterion)
         self.assertEqual(0.000052316778, measurement.value)
         
-        parsed = self._c.parse_data(self._result2)
+        parsed = self._c.parse_data(self._result2, None)
         self.assertIsProperTupleWithTotal(0.017365513556, parsed)
         measurement = parsed[1][0]
         self.assertEqual("SimpleAdditionAmbientTalk", measurement.criterion)
@@ -133,9 +123,11 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         self.assertAlmostEqual(0.017365513556, measurement.value)
     
     def test_parse_multiple_results1(self):
-        parsed = self._c.parse_data((self._result1 + "\n") * 10)
-        self.assertIsProperTupleWithTotal(0.000052316778, parsed)
+        parsed = self._c.parse_data((self._result1 + "\n") * 10, None)
+        self.assertAlmostEqual(0.000052316778, parsed[0].get_total_value())
+        self.assertEquals(10, len(parsed))
 
+        # TODO
         self.assertEqual(20, len(parsed[1]))
         measurement = parsed[1][0]
         self.assertEqual("SimpleExecution", measurement.criterion)
@@ -157,6 +149,7 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         with open (self._path + '/caliper-bug1.output', "r") as f:
             data = f.read()
         
-        parsed = self._c.parse_data(data)
-        self.assertIsProperTupleWithTotal(4.507679245283001, parsed)
+        parsed = self._c.parse_data(data, None)
+        self.assertEquals(1, len(parsed))
+        self.assertAlmostEqual(4.507679245283001, parsed[0].get_total_value())
     
