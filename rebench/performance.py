@@ -24,14 +24,14 @@ from .model.data_point  import DataPoint
 
 class Performance:
     """Performance provides a common interface and some helper functionality
-       to evaluate the output of benchmarks and to determine measured performance
-       values.
+       to evaluate the output of benchmarks and to determine measured
+       performance values.
     """
     
     # definition of some regular expression to identify erroneous runs
-    re_error    = re.compile("Error")
-    re_segfault = re.compile("Segmentation fault")
-    re_buserror = re.compile("Bus error")
+    re_error     = re.compile("Error")
+    re_segfault  = re.compile("Segmentation fault")
+    re_bus_error = re.compile("Bus error")
     
     def __init__(self):
         self._otherErrorDefinitions = None
@@ -50,7 +50,7 @@ class Performance:
             return True
         if self.re_segfault.search(line):
             return True
-        if self.re_buserror.search(line):
+        if self.re_bus_error.search(line):
             return True
         
         if self._otherErrorDefinitions:
@@ -73,9 +73,9 @@ class LogPerformance(Performance):
        It reads a simple log format, which includes the number of iterations of
        a benchmark and its runtime in microseconds.
     """
-    re_logline = re.compile(r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
-    
-    
+    re_log_line = re.compile(
+        r"^(?:.*: )?(\w+)( \w+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
     
@@ -91,11 +91,11 @@ class LogPerformance(Performance):
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicated error.")
             
-            m = self.re_logline.match(line)
+            m = self.re_log_line.match(line)
             if m:
                 time = float(m.group(4))
                 if m.group(5) == "u":
-                    time = time / 1000
+                    time /= 1000
                 criterion = (m.group(2) or 'total').strip()
               
                 measure = Measurement(time, m.group(1), criterion, 'ms')
@@ -192,7 +192,7 @@ class TimePerformance(Performance):
     re_time2 = re.compile(r"^(\w+)(\s*)(\d+\.\d+)")
     
     def acquire_command(self, command):
-        return "/usr/bin/time -p %s"%(command)
+        return "/usr/bin/time -p %s" % command
     
     def parse_data(self, data, run_id):
         data_points = []
@@ -207,7 +207,8 @@ class TimePerformance(Performance):
             if m1 or m2:
                 m = m1 or m2
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
-                time = (float(m.group(2).strip() or 0) * 60 + float(m.group(3))) * 1000
+                time = (float(m.group(2).strip() or 0) * 60 +
+                        float(m.group(3))) * 1000
                 measure = Measurement(time, None, criterion, 'ms')
                 current.add_measurement(measure)
           
@@ -250,7 +251,8 @@ class TestVMPerformance(Performance):
             
             m = TestVMPerformance.re_time.match(line)
             if m:
-                measure = Measurement(float(m.group(2)), 'ms', run_id, m.group(1))
+                measure = Measurement(float(m.group(2)), 'ms', run_id,
+                                      m.group(1))
                 current.add_measurement(measure)
                 
                 if measure.is_total():
@@ -275,7 +277,8 @@ class TestPerformance(Performance):
     
     def parse_data(self, data, run_id):
         point = DataPoint(run_id)
-        point.add_measurement(Measurement(self.test_data[self.index]))
+        point.add_measurement(Measurement(self.test_data[self.index], None,
+                                          run_id))
         self.index = (self.index + 1) % len(self.test_data)
         return [point]
 
@@ -284,7 +287,7 @@ class CaliperPerformance(Performance):
     """CaliperPerformance parses the output of Caliper with
        the ReBenchConsoleResultProcessor.
     """
-    re_logline = re.compile(r"Measurement \(runtime\) for (.*?) in (.*?): (.*?)ns")
+    re_log_line = re.compile(r"Measurement \(runtime\) for (.*?) in (.*?): (.*?)ns")
     
     def check_for_error(self, line):
         ## for the moment we will simply not check for errors, because
@@ -300,11 +303,11 @@ class CaliperPerformance(Performance):
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicates errors.")
             
-            m = self.re_logline.match(line)
+            m = self.re_log_line.match(line)
             if m:
                 time = float(m.group(3)) / 1000000
                 current.add_measurement(Measurement(time, 'ms', run_id,
-                                                    criterion = m.group(1))) #m.group(2),
+                                                    criterion = m.group(1)))
                 data_points.append(current)
                 current = DataPoint(run_id)
         

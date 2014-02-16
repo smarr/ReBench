@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2011 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,48 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-"""
-Created on Feb 28, 2010
-
-The data aggregator supports the following data dimensions:
-
-  - VM
-  - input size
-  - number of cores
-  - benchmark
-  - an additional free variable
-  
-  These are the dimensions over which the benchmark suite varies its
-  configurations.
-  
-  Furthermore, a single benchmark configuration can produce multiple results,
-  which are combined to a data point.
-  
-  For example the NPB Integer Sort benchmark generates
-  results for the different phases:
-     keyInit, phase1, phase2, verifyComplete, total
-  Thus, a data point is either a ``float`` value, or a dict containing
-  different criteria.
-  
-  These results still constitutes one data point.
-  Points are generated as long as the desired statistic properties are not
-  satisfied and eventually constitute a single 'run'.
-"""
-
-import re
 import os
 import logging
 import subprocess
 import shutil
 import time
 
-from datetime import datetime
-from copy     import copy
-
-from .model.benchmark_config import BenchmarkConfig
 from .model.data_point       import DataPoint
 from .model.measurement      import Measurement
-from .model.run_id           import RunId
 
 
 class DataPointPersistence(object):
@@ -74,7 +40,8 @@ class DataPointPersistence(object):
     def discard_old_data(self):
         self._truncate_file(self._data_filename)
 
-    def _truncate_file(self, filename):
+    @staticmethod
+    def _truncate_file(filename):
         with open(filename, 'w'):
             pass
     
@@ -86,7 +53,8 @@ class DataPointPersistence(object):
             with open(self._data_filename, 'r') as f:
                 self._process_lines(f)
         except IOError:
-            logging.info("No data loaded %s does not exist." % self._data_filename)
+            logging.info("No data loaded %s does not exist."
+                         % self._data_filename)
     
     def _process_lines(self, f):
         """

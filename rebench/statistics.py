@@ -113,10 +113,10 @@ class StatisticProperties:
         i.e., t distribution for fewer values (<=30 values)
         """
         if self.num_samples > 30:
-            distribution = stats.norm_ppf((1 + confidence_level)/2.0)
+            distribution = stats.norm_ppf((1 + confidence_level) / 2.0)
         else:
             df   = self.num_samples - 1
-            distribution = stats.t_ppf((1 + confidence_level)/2.0, df)
+            distribution = stats.t_ppf((1 + confidence_level) / 2.0, df)
             
         self._confidence_for_samples(distribution)
             

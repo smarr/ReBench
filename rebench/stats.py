@@ -24,8 +24,10 @@ import math
 
 ## This code is inspired by https://code.google.com/p/python-statlib
 
+
 def mean(values):
     return sum(values) / float(len(values))
+
 
 def median(values):
     values_ = copy.deepcopy(values)
@@ -38,14 +40,17 @@ def median(values):
         index = len(values_) / 2
         return values_[index]
 
+
 def geomean(values):
     product = reduce(operator.mul, values, 1)
     return product ** (1.0 / len(values))
 
+
 def variance(values):
     avg = mean(values)
-    var = [(x - avg)**2 for x in values]
+    var = [(x - avg) ** 2 for x in values]
     return mean(var)
+
 
 def stddev(values):
     return math.sqrt(variance(values))
