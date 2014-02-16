@@ -27,10 +27,11 @@ class ConfiguratorTest(unittest.TestCase):
         cnf = Configurator(self._path + '/test.conf', None)
         self.assertEqual('Test', cnf.experiment_name())
         
-    def test_number_of_experiments(self):
+    def test_number_of_experiments_smallconf(self):
         cnf = Configurator(self._path + '/small.conf', None)
         self.assertEqual(1, len(cnf.get_experiments()))
-        
+
+    def test_number_of_experiments_testconf(self):
         cnf = Configurator(self._path + '/test.conf', None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
         
