@@ -35,7 +35,7 @@ class Experiment:
             for cores in bench.suite.cores:
                 for input_size in bench.suite.input_sizes:
                     for var_val in bench.suite.variable_values:
-                        run = RunId.create(bench, (cores, input_size, var_val)) 
+                        run = RunId.create(bench, cores, input_size, var_val)
                         bench.add_run(run)
                         runs.add(run)
                         run.add_reporting(self._reporting)
