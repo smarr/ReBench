@@ -25,26 +25,6 @@ import traceback
 from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
 
-from copy import deepcopy
-
-
-def dict_merge_recursively(a, b):
-    """Merges two dicts recursively.
-       Both initial dicts remain unchanged."""
-    
-    if not isinstance(b, dict):
-        return deepcopy(b)
-    
-    result = deepcopy(a)
-    
-    for k, v in b.iteritems():
-        if k in result:
-            result[k] = dict_merge_recursively(result[k], v)
-        else:
-            result[k] = deepcopy(v)
-    
-    return result
-
 
 class Configurator:
 
