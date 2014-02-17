@@ -66,9 +66,6 @@ Argument:
                            dest="verbose", default=False,
                            help="Out more details in the report.")
 
-        #options.add_option("-r", "--run", dest="run", default=None,
-        #                   help="Specify a run definition to be used form "
-        #                        " given config.")
         options.add_option("-n", "--without-nice", action="store_false",
                            dest="use_nice",
                            help="Used for debugging and environments without "
