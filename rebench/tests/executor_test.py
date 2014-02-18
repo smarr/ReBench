@@ -18,6 +18,7 @@ class ExecutorTest(unittest.TestCase):
     def setUp(self):
         BenchmarkConfig.reset()
         RunId.reset()
+        DataPointPersistence.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         self._tmpFile = tempfile.mkstemp()[1] # just use the file name
         os.chdir(self._path + '/../')

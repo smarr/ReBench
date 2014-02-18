@@ -3,8 +3,8 @@ import os
 import logging
 
 from rebench.configurator           import Configurator
+from rebench.persistence            import DataPointPersistence
 from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.runs_config      import RunsConfig, QuickRunsConfig
 from rebench.model.run_id           import RunId
 
 class ConfiguratorTest(unittest.TestCase):
@@ -12,6 +12,7 @@ class ConfiguratorTest(unittest.TestCase):
     def setUp(self):
         BenchmarkConfig.reset()
         RunId.reset()
+        DataPointPersistence.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
         self._logging_error = logging.error
     
