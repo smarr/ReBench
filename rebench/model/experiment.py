@@ -16,16 +16,13 @@ class Experiment:
         self._vms            = self._compile_virtual_machines(global_vms_cfg)
         self._suites         = self._compile_benchmark_suites(global_suite_cfg)
         self._benchmarks     = self._compile_benchmarks()
-        
-        self._runs = None
-    
+        self._runs           = self._compile_runs()
+
     @property
     def name(self):
         return self._name
     
     def get_runs(self):
-        if self._runs is None:
-            self._runs = self._compile_runs()
         return self._runs
     
     def _compile_runs(self):
