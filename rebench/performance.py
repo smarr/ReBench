@@ -98,7 +98,7 @@ class LogPerformance(Performance):
                     time /= 1000
                 criterion = (m.group(2) or 'total').strip()
               
-                measure = Measurement(time, m.group(1), criterion, 'ms')
+                measure = Measurement(time, 'ms', run_id, criterion)
                 current.add_measurement(measure)
                 
                 if measure.is_total():
@@ -209,7 +209,7 @@ class TimePerformance(Performance):
                 criterion = 'total' if m.group(1) == 'real' else m.group(1)
                 time = (float(m.group(2).strip() or 0) * 60 +
                         float(m.group(3))) * 1000
-                measure = Measurement(time, None, criterion, 'ms')
+                measure = Measurement(time, 'ms', run_id, criterion)
                 current.add_measurement(measure)
           
                 if measure.is_total():
