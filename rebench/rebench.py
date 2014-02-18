@@ -45,7 +45,7 @@ class ReBench:
     def __init__(self):
         self.version = "0.5.0"
         self.options = None
-        self.config  = None
+        self._config = None
     
     def shell_options(self):
         usage = """%prog [options] <config> [run_name]
@@ -113,9 +113,7 @@ Argument:
         
         options.add_option_group(codespeed)
         return options
-        
 
-    
     def run(self, argv = None):
         if argv is None:
             argv = sys.argv
@@ -124,46 +122,38 @@ Argument:
         if len(args) < 1:
             logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
             sys.exit(-1)
-        
 
-        self.config = Configurator(args[0], cli_options, *args[1:])
+        self._config = Configurator(args[0], cli_options, *args[1:])
+        DataPointPersistence.load_data()
+        self.execute_experiment()
         
-        self.execute_run()
-        
-    def execute_run(self):
-        logging.debug("execute run: %s"%(self.config.experiment_name()))
-        
-        data = DataPointPersistence(self.config.data_file_name(), True)
-        data.includeShebangLine(sys.argv)
+    def execute_experiment(self):
+        logging.debug("execute experiment: %s"%(self._config.experiment_name()))
         
         reporters = []
-        if self.config.options.output_file:
-            reporters.append(FileReporter(self.config.options.output_file, self.config))
+        if self._config.options.output_file:
+            reporters.append(FileReporter(self._config.options.output_file,
+                                          self._config))
             
-        reporters.append(CliReporter(self.config))
-        
-        if self.config.visualization:
-            reporters.append(DiagramResultReporter(self.config))
-            
-        if self.config.reporting:
-            if ('codespeed' in self.config.reporting and
-                self.config.options.use_codespeed):
-                reporters.append(CodespeedReporter(self.config))
-            if 'csv_file' in self.config.reporting:
-                reporters.append(CSVFileReporter(self.config))
-            if 'csv_raw' in self.config.reporting:
-                data.setCsvRawFile(self.config.reporting['csv_raw'])
+        reporters.append(CliReporter(self._config))
+
+        ## TODO: re-add support for reporting
+        # if self._config.reporting:
+        #     if ('codespeed' in self._config.reporting and
+        #         self._config.options.use_codespeed):
+        #         reporters.append(CodespeedReporter(self._config))
+        #     if 'csv_file' in self._config.reporting:
+        #         reporters.append(CSVFileReporter(self._config))
+        #     if 'csv_raw' in self._config.reporting:
+        #         data.setCsvRawFile(self._config.reporting['csv_raw'])
         
         # first load old data if available
-        if self.config.options.clean:
-            data.discardOldData()
-        data.loadData()
-        
-        executor = Executor(self.config, data, Reporters(reporters))
-        
-        executor.execute()
+        if self._config.options.clean:
+            pass
 
-# remember __import__(), obj.__dict__["foo"] == obj.foo
+        executor = Executor(self._config.get_runs(), self._config.use_nice,
+                            Reporters(reporters))
+        executor.execute()
 
 
 def main_func():
