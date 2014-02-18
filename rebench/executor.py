@@ -57,7 +57,7 @@ class Executor:
         
         terminate, consecutive_erroneous_runs = self._check_termination_condition(run_id, 0,
                                                              termination_check)
-        stats = StatisticProperties(run_id.get_data_points(),
+        stats = StatisticProperties(run_id.get_total_values(),
                                     run_id.requested_confidence_level)
         
         # now start the actual execution
