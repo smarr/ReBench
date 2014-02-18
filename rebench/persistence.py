@@ -18,26 +18,47 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import os
+import sys
 import logging
 import subprocess
 import shutil
 import time
 
-from .model.data_point       import DataPoint
-from .model.measurement      import Measurement
+from .model.data_point  import DataPoint
+from .model.measurement import Measurement
 
 
 class DataPointPersistence(object):
+    _registry = {}
 
-    def __init__(self, data_filename):
+    @classmethod
+    def reset(cls):
+        cls._registry = {}
+
+    @classmethod
+    def load_data(cls):
+        for persistence in cls._registry.values():
+            persistence._load_data()
+
+    @classmethod
+    def get(cls, filename, discard_old_data):
+        if filename not in cls._registry:
+            cls._registry[filename] = DataPointPersistence(filename,
+                                                           discard_old_data)
+        return cls._registry[filename]
+
+    def __init__(self, data_filename, discard_old_data):
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
                              "for data_filename, but got: %s" % data_filename)
         
         self._data_filename = data_filename
         self._file = None
+        if discard_old_data:
+            self._discard_old_data()
+        self._insert_shebang_line()
     
-    def discard_old_data(self):
+    def _discard_old_data(self):
         self._truncate_file(self._data_filename)
 
     @staticmethod
@@ -45,7 +66,7 @@ class DataPointPersistence(object):
         with open(filename, 'w'):
             pass
     
-    def load_data(self):
+    def _load_data(self):
         """
         Loads the data from the configured data file
         """
@@ -69,7 +90,8 @@ class DataPointPersistence(object):
                 continue
             
             try:
-                measurement = Measurement.from_str_list(line.split(self._SEP))
+                measurement = Measurement.from_str_list(line.rstrip('\n').
+                                                        split(self._SEP))
                 run_id = measurement.run_id
                 if previous_run_id is not run_id:
                     data_point      = DataPoint(run_id)
@@ -78,7 +100,7 @@ class DataPointPersistence(object):
                 data_point.add_measurement(measurement)
                 
                 if measurement.is_total():
-                    run_id.add_data_point(data_point)
+                    run_id.loaded_data_point(data_point)
                     data_point = DataPoint(run_id)
             
             except ValueError, e:
@@ -88,12 +110,12 @@ class DataPointPersistence(object):
                     logging.debug(msg)
                     errors.add(msg)
     
-    def insert_shebang_line(self, argv):
+    def _insert_shebang_line(self):
         """
         Insert a shebang (#!/path/to/executable) into the data file.
         This allows it theoretically to be executable.
         """
-        shebang_line = "#!%s\n" % (subprocess.list2cmdline(argv))
+        shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
         
         try:
             # if file doesn't exist, just create it
