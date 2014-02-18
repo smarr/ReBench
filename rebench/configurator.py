@@ -28,8 +28,12 @@ from .model.experiment  import Experiment
 
 class Configurator:
 
-    def __init__(self, file_name, cli_options, exp_name = None):
+    def __init__(self, file_name, cli_options, exp_name = None,
+                 standard_data_file = None):
         self._raw_config = self._load_config(file_name)
+        if standard_data_file:
+            self._raw_config['standard_data_file'] = standard_data_file
+
         self._options    = self._process_cli_options(cli_options)
         self._exp_name   = exp_name
         
@@ -82,14 +86,6 @@ class Configurator:
     def experiment_name(self):
         return self._exp_name or self._raw_config['standard_experiment']
     
-    def data_file_name(self):
-        data_file = self._raw_config['experiments'][self.experiment_name()].get(
-            'data_file', None)
-        if data_file:
-            return data_file
-        
-        return self._raw_config['standard_data_file']
-    
     def get_experiments(self):
         """The configuration has been compiled before it is handed out
            to the client class, since some configurations can override
@@ -133,4 +129,6 @@ class Configurator:
         return Experiment(exp_name, exp_def, run_cfg,
                           self._raw_config['virtual_machines'],
                           self._raw_config['benchmark_suites'],
-                          self._raw_config['reporting'])
+                          self._raw_config.get('reporting', {}),
+                          self._raw_config.get('standard_data_file', None),
+                          self._options.clean if self._options else False)
