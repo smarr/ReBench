@@ -174,4 +174,5 @@ class RunId(object):
     @classmethod
     def from_str_list(cls, str_list):
         bench_cfg = BenchmarkConfig.from_str_list(str_list[:-3])
-        return RunId(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
+        return cls.create(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
+
