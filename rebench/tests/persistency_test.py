@@ -31,14 +31,17 @@ from rebench.model.virtual_machine  import VirtualMachine
 class PersistencyTest(unittest.TestCase):
 
     def test_de_serialization(self):
-        vm        = VirtualMachine("MyVM", None, {'path':'','binary':''}, None, [1], None)
-        suite     = BenchmarkSuite("MySuite", vm, {'benchmarks':[], 'performance_reader':'', 'command':''})
+        vm        = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
+                                   None, [1], None)
+        suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
+                                                   'performance_reader': '',
+                                                   'command': ''})
         bench_cfg = BenchmarkConfig("Test Bench [>", None, suite, vm)
-
 
         run_id = RunId(bench_cfg, 1000, 44, 'sdf sdf sdf sdfsf')
         timestamp = datetime.now().replace(microsecond=0)
-        measurement = Measurement(2222.2222, 'ms', run_id, 'foobar crit', timestamp)
+        measurement = Measurement(2222.2222, 'ms', run_id, 'foobar crit',
+                                  timestamp)
 
         serialized = measurement.as_str_list()
         deserialized = Measurement.from_str_list(serialized)

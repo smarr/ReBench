@@ -17,12 +17,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import os
+import subprocess
 import unittest
 
 from rebench import subprocess_with_timeout as sub
-
-import os
-import subprocess
 
 
 class SubprocessTimeoutTest(unittest.TestCase):
@@ -31,37 +30,37 @@ class SubprocessTimeoutTest(unittest.TestCase):
     def setUp(self):
         self._path = os.path.dirname(os.path.realpath(__file__))
 
-    def testNormalExecNoTimeout(self):
+    def test_normal_exec_no_timeout(self):
         cmdline = "sleep 1; echo Done"
-        (returncode, output, err) = sub.run(cmdline, cwd=self._path,
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT,
-                                          shell=True, timeout=10)
+        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             shell=True, timeout=10)
 
-        self.assertEqual(0,        returncode)
-        self.assertEqual("Done\n", output)
-        self.assertEqual(None,     err)
+        self.assertEqual(       0, return_code)
+        self.assertEqual("Done\n",      output)
+        self.assertEqual(    None,         err)
 
-    def testExecWithTimeout(self):
+    def test_exec_with_timeout(self):
         cmdline = "sleep 100; echo Done"
-        (returncode, output, err) = sub.run(cmdline, cwd=self._path,
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT,
-                                          shell=True, timeout=1)
+        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             shell=True, timeout=1)
         
-        self.assertEqual(-9,   returncode)
+        self.assertEqual(-9,   return_code)
         self.assertEqual("",   output)
         self.assertEqual("", err)
     
-    def testExecWithTimeoutPythonInterpreter(self):
+    def test_exec_with_timeout_python_interpreter(self):
         cmdline = "python -c \"while True: pass\""
-        (returncode, output, err) = sub.run(cmdline, cwd=self._path,
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT,
-                                          shell=True, timeout=5)
+        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT,
+                                             shell=True, timeout=5)
         
-        self.assertEqual(-9,   returncode)
-        self.assertEqual("",   output)
+        self.assertEqual(-9, return_code)
+        self.assertEqual("", output)
         self.assertEqual("", err)
     
     

@@ -33,6 +33,7 @@ try:
 except ImportError:
     are_numpy_and_scipy_available = False
 
+
 class StatsTest(unittest.TestCase):
     
     def setUp(self):
@@ -53,7 +54,8 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(25 + 2.31,    stats.mean(self._floats2))
         self.assertAlmostEqual(27.295918367, stats.mean(self._mixed))
     
-    @unittest.skipUnless(are_numpy_and_scipy_available, "NumPy or SciPy is not available")
+    @unittest.skipUnless(are_numpy_and_scipy_available,
+                         "NumPy or SciPy is not available")
     def test_mean_vs_numpy(self):
         self.assertEqual(numpy.mean([1, 2, 3]),
                          stats.mean([1, 2, 3]))
@@ -81,7 +83,8 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(25 + 2.31, stats.median(self._floats2))
         self.assertAlmostEqual(27.5, stats.median(self._mixed))
     
-    @unittest.skipUnless(are_numpy_and_scipy_available, "NumPy or SciPy is not available")
+    @unittest.skipUnless(are_numpy_and_scipy_available,
+                         "NumPy or SciPy is not available")
     def test_median_vs_numpy(self):
         self.assertEqual(numpy.median([1, 2, 3, 4]),
                          stats.median([1, 2, 3, 4]))
@@ -109,7 +112,8 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(22.533409416, stats.geomean(self._floats2))
         self.assertAlmostEqual(22.245044799, stats.geomean(self._mixed))
     
-    @unittest.skipUnless(are_numpy_and_scipy_available, "NumPy or SciPy is not available")
+    @unittest.skipUnless(are_numpy_and_scipy_available,
+                         "NumPy or SciPy is not available")
     def test_geomean_vs_scipy(self):
         self.assertAlmostEqual(scipy.stats.gmean([1, 2, 3]),
                                    stats.geomean([1, 2, 3]))
@@ -146,7 +150,8 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(14.319929870,
                                stats.stddev(self._mixed))
     
-    @unittest.skipUnless(are_numpy_and_scipy_available, "NumPy or SciPy is not available")
+    @unittest.skipUnless(are_numpy_and_scipy_available,
+                         "NumPy or SciPy is not available")
     def test_stddev_vs_numpy(self):
         self.assertAlmostEqual(numpy.std(   [1, 2, 3]),
                                stats.stddev([1, 2, 3]))
