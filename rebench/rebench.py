@@ -28,16 +28,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+import logging
 import sys
 
-from .executor       import Executor
-from .reporter       import FileReporter, Reporters, CliReporter,\
-                            DiagramResultReporter, CodespeedReporter,\
-                            CSVFileReporter
-from .configurator   import Configurator
-from .persistence import DataPointPersistence
 from optparse import OptionParser, OptionGroup
-import logging
+
+from .executor       import Executor
+from .persistence    import DataPointPersistence
+from .reporter       import FileReporter, Reporters, CliReporter,\
+                            CodespeedReporter, CSVFileReporter
+from .configurator   import Configurator
 
 
 class ReBench:
