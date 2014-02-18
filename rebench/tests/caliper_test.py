@@ -56,22 +56,24 @@ class CaliperIntegrationTest(unittest.TestCase):
         os.chdir(self._cwd)
 
     # Integration Test
-    def testFullExecution(self):
+    def test_full_execution(self):
         ## assert for the expected measurements as results
         ## test for the expected number of executions of the
         ## caliper runner
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
-        data = DataPointPersistence(self._tmpFile)
+        data = DataPointPersistence.get(self._tmpFile)
         
-        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
         ex.execute()
     
-    def testCorrectNumberOfResultsFromRun(self):
+    def test_correct_number_of_results_from_run(self):
+        # TODO:
         ## Make sure that ReBench understands that a single
         ## execution can return multiple results
         ## Normally that should already be there...
+
         pass
 
 
