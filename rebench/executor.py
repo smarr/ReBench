@@ -29,10 +29,9 @@ from .performance import OutputNotParseable
 
 class Executor:
     
-    def __init__(self, runs, use_nice, data_aggregator, reporter = None):
+    def __init__(self, runs, use_nice, reporter = None):
         self._runs     = runs
         self._use_nice = use_nice
-        self._data     = data_aggregator
         self._reporter = reporter
     
     def _construct_cmdline(self, run_id, perf_reader):
@@ -49,31 +48,29 @@ class Executor:
         termination_check = run_id.create_termination_check()
         
         run_id.run_config.log()
-        
-        self._reporter.startConfiguration(run_id)
+        self._reporter.start_run(run_id)
         
         perf_reader = self._get_performance_reader_instance(
             run_id.bench_cfg.performance_reader)
         
         cmdline = self._construct_cmdline(run_id, perf_reader)
         
-        terminate, error = self._check_termination_condition(run_id, (0, 0),
+        terminate, consecutive_erroneous_runs = self._check_termination_condition(run_id, 0,
                                                              termination_check)
         stats = StatisticProperties(run_id.get_data_points(),
                                     run_id.requested_confidence_level)
         
         # now start the actual execution
         while not terminate:
-            terminate, error = self._generate_data_point(cmdline, error,
-                                                         perf_reader, run_id,
-                                                         termination_check)
+            terminate, consecutive_erroneous_runs = self._generate_data_point(
+                cmdline, consecutive_erroneous_runs, perf_reader, run_id,
+                termination_check)
             
             stats = StatisticProperties(run_id.get_total_values(),
                                         run_id.requested_confidence_level)
-            
             logging.debug("Run: #%d" % stats.num_samples)
 
-        self._reporter.configurationCompleted(run_id, stats, cmdline)
+        self._reporter.run_completed(run_id, stats, cmdline)
 
     @staticmethod
     def _get_performance_reader_instance(reader):
@@ -85,75 +82,71 @@ class Executor:
         
         return getattr(p, reader)()
         
-    def _generate_data_point(self, cmdline, error, perf_reader, run_id,
-                             termination_check):
+    def _generate_data_point(self, cmdline, consecutive_erroneous_runs,
+                             perf_reader, run_id, termination_check):
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(cmdline,
-                                                         cwd=run_id.bench_cfg.suite.location,
-                                                         stdout=subprocess.PIPE,
-                                                         stderr=subprocess.STDOUT,
-                                                         shell=True, timeout=run_id.bench_cfg.suite.max_runtime)
-        
+                                                          cwd=run_id.bench_cfg.suite.location,
+                                                          stdout=subprocess.PIPE,
+                                                          stderr=subprocess.STDOUT,
+                                                          shell=True,
+                                                          timeout=run_id.bench_cfg.suite.max_runtime)
         if return_code != 0:
-            (consequent_erroneous_runs, erroneous_runs) = error
-            
-            consequent_erroneous_runs += 1
-            erroneous_runs += 1
-            
-            error = (consequent_erroneous_runs, erroneous_runs)
-            self._reporter.runFailed(run_id, cmdline, return_code, output)
+            consecutive_erroneous_runs += 1
+            run_id.indicate_failed_execution()
+            self._reporter.run_failed(run_id, cmdline, return_code, output)
         else:
-            error = self._eval_output(output, run_id, perf_reader, error,
-                                      cmdline)
+            consecutive_erroneous_runs = self._eval_output(output, run_id,
+                                                           perf_reader,
+                                                           consecutive_erroneous_runs,
+                                                           cmdline)
         
-        return self._check_termination_condition(run_id, error,
+        return self._check_termination_condition(run_id,
+                                                 consecutive_erroneous_runs,
                                                  termination_check)
     
-    def _eval_output(self, output, run_id, perf_reader, error, cmdline):
-        consequent_erroneous_runs, erroneous_runs = error
-        
+    def _eval_output(self, output, run_id, perf_reader,
+                     consecutive_erroneous_runs, cmdline):
         try:
             data_points = perf_reader.parse_data(output, run_id)
             
             for data_point in data_points:
                 run_id.add_data_point(data_point)
-                self._data.persist_data_point(data_point)
                 logging.debug("Run %s:%s result=%s" % (run_id.bench_cfg.vm.name,
                                                        run_id.bench_cfg.name,
                                                        data_point.get_total_value()))
-            
-            consequent_erroneous_runs = 0
+            consecutive_erroneous_runs = 0
         except OutputNotParseable:
-            consequent_erroneous_runs += 1
-            erroneous_runs += 1
-            self._reporter.runFailed(run_id, cmdline, 0, output)
+            consecutive_erroneous_runs += 1
+            run_id.indicate_failed_execution()
+            self._reporter.run_failed(run_id, cmdline, 0, output)
             
-        return consequent_erroneous_runs, erroneous_runs
+        return consecutive_erroneous_runs
 
     @staticmethod
-    def _check_termination_condition(run_id, error, termination_check):
+    def _check_termination_condition(run_id, consecutive_erroneous_runs,
+                                     termination_check):
         terminate = False
-        consequent_erroneous_runs, erroneous_runs = error
 
         num_data_points = run_id.get_number_of_data_points()
 
         if termination_check.should_terminate(num_data_points):
             terminate = True
-        elif consequent_erroneous_runs >= 3:
-            logging.error("Three runs of %s have failed in a row, " +
-                          "benchmark is aborted" % run_id.bench_cfg.name)
+        elif consecutive_erroneous_runs >= 3:
+            logging.error(("Three runs of %s have failed in a row, " +
+                          "benchmark is aborted") % run_id.bench_cfg.name)
             terminate = True
-        elif erroneous_runs > num_data_points / 2 and erroneous_runs > 6:
+        elif run_id.run_failed():
             logging.error("Many runs of %s are failing, benchmark is aborted."
                           % run_id.bench_cfg.name)
             terminate = True
         
-        return terminate, error
+        return terminate, consecutive_erroneous_runs
     
     def execute(self):
-        self._reporter.setTotalNumberOfConfigurations(len(self._runs))
+        self._reporter.set_total_number_of_runs(len(self._runs))
         
         for run_id in self._runs:
             self._exec_configuration(run_id)
                     
-        self._reporter.jobCompleted(self._runs, self._data)
+        self._reporter.job_completed(self._runs)
