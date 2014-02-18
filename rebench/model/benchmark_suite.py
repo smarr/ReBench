@@ -13,6 +13,8 @@ class BenchmarkSuite(object):
             self._input_sizes = vm.input_sizes
         else:
             self._input_sizes = global_suite_cfg.get('input_sizes')
+        if self._input_sizes is None:
+            self._input_sizes = [None]
         
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
