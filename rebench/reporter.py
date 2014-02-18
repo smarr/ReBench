@@ -34,264 +34,250 @@ import locale
 
 class Reporter(object):
 
+    def __init__(self):
+        pass
 
+    def run_failed(self, run_id, cmdline, return_code, output):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def run_completed(self, run_id, statistics, cmdline):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def job_completed(self, run_ids):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def set_total_number_of_runs(self, num_runs):
+        raise NotImplementedError('Subclass responsibility')
+    
+    def start_run(self, run_id):
+        raise NotImplementedError('Subclass responsibility')
+    
 
-    def runFailed(self, runId, cmdline, returncode, output):
-        raise NotImplementedError('Subclass responsibility')
-    
-    def configurationCompleted(self, runId, statistics, cmdline):
-        raise NotImplementedError('Subclass responsibility')
-    
-    def jobCompleted(self, configurations, dataAggregator):
-        raise NotImplementedError('Subclass responsibility')
-    
-    def setTotalNumberOfConfigurations(self, numConfigs):
-        raise NotImplementedError('Subclass responsibility')
-    
-    def startConfiguration(self, runId):
-        raise NotImplementedError('Subclass responsibility')
-    
 class Reporters(Reporter):
     """Distributes the information to all registered reporters."""
     
     def __init__(self, reporters):
+        super(Reporters, self).__init__()
         if type(reporters) is list:
             self._reporters = reporters
         else:
             self._reporters = [reporters]
 
-    def runFailed(self, runId, cmdline, returncode, output):
+    def run_failed(self, run_id, cmdline, return_code, output):
         for reporter in self._reporters:
-            reporter.runFailed(runId, cmdline, returncode, output)
+            reporter.run_failed(run_id, cmdline, return_code, output)
             
-    def configurationCompleted(self, runId, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline):
         for reporter in self._reporters:
-            reporter.configurationCompleted(runId, statistics, cmdline)
+            reporter.run_completed(run_id, statistics, cmdline)
     
-    def jobCompleted(self, configurations, dataAggregator):
+    def job_completed(self, run_ids):
         for reporter in self._reporters:
-            reporter.jobCompleted(configurations, dataAggregator)
+            reporter.job_completed(run_ids)
     
-    def setTotalNumberOfConfigurations(self, numConfigs):
+    def set_total_number_of_runs(self, num_runs):
         for reporter in self._reporters:
-            reporter.setTotalNumberOfConfigurations(numConfigs)
+            reporter.set_total_number_of_runs(num_runs)
     
-    def startConfiguration(self, runId):
+    def start_run(self, run_id):
         for reporter in self._reporters:
-            reporter.startConfiguration(runId)
+            reporter.start_run(run_id)
+
 
 class TextReporter(Reporter):
     
     def __init__(self, configurator):
+        super(TextReporter, self).__init__()
         self._configurator = configurator
     
-    def _configuration_details(self, runId, statistics = None):
-        result = []
-        
-        criteria = (runId.cfg, ) + runId.variables + (runId.criterion, )
-        
-        for criterion in criteria:
-            result.append(" %s" % criterion)
-            
-        result.append(" = ")
-        
-        self._output_stats(result, statistics)
-            
+    def _configuration_details(self, run_id, statistics = None):
+        result = ["\t".join(run_id.as_str_list()), " = "]
+        self._output_stats(result, run_id, statistics)
         return result
     
-    def _output_stats(self, outputList, statistics):
+    def _output_stats(self, output_list, run_id, statistics):
         if not statistics:
             return
         
         for field, value in statistics.__dict__.iteritems():
             if not field.startswith('_'):
-                outputList.append("%s: %s " % (field, value))
-    
-    def _path_to_string(self, path):
-        out = []
-        out.append(path[0].as_simple_string())
+                output_list.append("%s: %s " % (field, value))
+
+    @staticmethod
+    def _path_to_string(path):
+        out = [path[0].as_simple_string()]
         for item in path[1:]:
             if item:
                 out.append(str(item))
         return " ".join(out) + " "
     
-    def _generate_all_output(self, data, path):
-        assert type(data) is dict or type(data) is list
-        
+    def _generate_all_output(self, run_id, path):
+        data = run_id.get_data_points()
+
         if type(data) is dict:
             for key, val in data.iteritems():
-                for result in self._generate_all_output(val, path + (key,)):
+                for result in self._generate_all_output(run_id, val, path + (key,)):
                     yield result
         else:
             stats = StatisticProperties(data, 
                                         self._configurator.reporting['confidence_level'])
                 
-            out = [ self._path_to_string(path) ]
-            
-            self._output_stats(out, stats)
-            
+            out = [self._path_to_string(path)]
+            self._output_stats(out, run_id, stats)
             result = "".join(out)
             yield result
+
 
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
     
     def __init__(self, configurator):
         TextReporter.__init__(self, configurator)
-        self._numConfigs    = None
-        self._runsCompleted = 0
-        self._startTime     = None
-        self._runsRemaining = 0
+        self._num_runs       = None
+        self._runs_completed = 0
+        self._startTime      = None
+        self._runs_remaining = 0
         
-        # TODO: readd support, think, we need that based on the proper config, i.e., the run id
+        # TODO: re-add support, think, we need that based on the proper config, i.e., the run id
 #         self._min_runtime = configurator.statistics.min_runtime
 
-    def runFailed(self, runId, cmdline, returncode, output):
+    def run_failed(self, run_id, cmdline, return_code, output):
         # Additional information in debug mode
-        result = []
-        result.append("[%s] Run failed: " % datetime.now())
-        result += self._configuration_details(runId) 
-        result.append("\n")
-        result = "".join(result)
+        result = "[%s] Run failed: %s\n" % (
+            datetime.now(),
+            " ".join(self._configuration_details(run_id)))
         logging.debug(result)
         
         # Standard error output
-        if returncode == -9:
-            log_msg = "Run timed out. returncode: %s"
+        if return_code == -9:
+            log_msg = "Run timed out. return_code: %s"
         else:
-            log_msg = "Run failed returncode: %s"
+            log_msg = "Run failed return_code: %s"
         
-        print(log_msg % returncode)
+        print(log_msg % return_code)
         
         print("Cmd: %s\n" % cmdline)
         
-        if 'max_runtime' in runId.cfg.suite:
-            logging.debug("max_runtime: %s" % (runId.cfg.suite['max_runtime']))
-        logging.debug("cwd: %s" % (runId.cfg.suite['location']))
+        if run_id.bench_cfg.suite.has_max_runtime():
+            logging.debug("max_runtime: %s" % run_id.bench_cfg.suite.max_runtime)
+        logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
         
         if len(output.strip()) > 0:
             print("Output:\n%s\n" % output)    
 
-    def configurationCompleted(self, runId, statistics, cmdline):
-        result = []
-        result.append("[%s] Configuration completed: " % datetime.now())
-        
-        result += self._configuration_details(runId, statistics) 
-            
-        result.append("\n")
-        
-        result = "".join(result)
+    def run_completed(self, run_id, statistics, cmdline):
+        result = "[%s] Run completed: %s\n" % (
+            datetime.now(),
+            " ".join(self._configuration_details(run_id, statistics)))
         
         logging.debug(result)
         
-        self._runsCompleted += 1
-        self._runsRemaining -= 1
+        self._runs_completed += 1
+        self._runs_remaining -= 1
 
-        # TODO: readd warning for min_runtime        
+        # TODO: re-add warning for min_runtime
 #         if self._min_runtime:
 #             if statistics.mean < self._min_runtime:
 #                 print("WARNING: measured mean is smaller than min_runtime (%s) \t mean: %.1f [%.1f, %.1f]\trun id: %s"
 #                       % (self._min_runtime,
 #                          statistics.mean, statistics.confIntervalLow,
-#                          statistics.confIntervalHigh, runId.as_simple_string())) 
+#                          statistics.confIntervalHigh, run_id.as_simple_string()))
 #                 print("Cmd: %s" % cmdline)
 #         
 #         self._configurator.statistics.min_runtime
 
-    def jobCompleted(self, configurations, dataAggregator):
+    def job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())
-        for line in self._generate_all_output(dataAggregator.getData(), ()):
+        for line in self._generate_all_output(data_aggregator.getData(), ()):
             print(line)
     
-    def setTotalNumberOfConfigurations(self, numConfigs):
-        self._numConfigs = numConfigs
-        self._runsRemaining = numConfigs
+    def set_total_number_of_runs(self, num_runs):
+        self._num_runs = num_runs
+        self._runs_remaining = num_runs
     
-    def startConfiguration(self, runId):
-        
-        
-        if self._runsCompleted > 0:
+    def start_run(self, run_id):
+        if self._runs_completed > 0:
             current = time.time()
             
-            etl = (current - self._startTime) / self._runsCompleted * self._runsRemaining
+            etl = ((current - self._startTime) / self._runs_completed *
+                   self._runs_remaining)
             sec = etl % 60
             m   = (etl - sec) / 60 % 60
             h   = (etl - sec - m) / 60 / 60
-            print("Run %s \t configurations left: %00d \t estimated time left: %02d:%02d:%02d"%(runId.cfg.name, self._runsRemaining, round(h), round(m), round(sec)))
+            print(("Run %s \t runs left: %00d \t " +
+                   "time left: %02d:%02d:%02d") % (run_id.bench_cfg.name,
+                                                   self._runs_remaining,
+                                                   round(h), round(m),
+                                                   round(sec)))
         else:
             self._startTime = time.time()
-            print("Run %s \t configurations left: %d" % (runId.cfg.name, self._runsRemaining))
+            print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
+                                               self._runs_remaining))
             
-    def _output_stats(self, outputList, statistics):
+    def _output_stats(self, output_list, run_id, statistics):
         if not statistics:
             return
         
-        if statistics.failedRun:
-            outputList.append("run failed.")
+        if run_id.run_failed():
+            output_list.append("run failed.")
         else:
-            outputList.append("\tmean: %.1f [%.1f, %.1f]" % (statistics.mean,
-                                                             statistics.confIntervalLow,
-                                                             statistics.confIntervalHigh))
+            output_list.append("\t mean: %.1f [%.1f, %.1f]" % (statistics.mean,
+                                                               statistics.conf_interval_low,
+                                                               statistics.conf_interval_high))
     
 
 class FileReporter(TextReporter):
     """ should be mainly a log file
-        data is the responsibility of the DataAggregator
+        data is the responsibility of the data_aggregator
     """
     
-    def __init__(self, fileName, configurator):
+    def __init__(self, filename, configurator):
         TextReporter.__init__(self, configurator)
-        self._file = open(fileName, 'a+')
+        self._file = open(filename, 'a+')
 
-    def runFailed(self, runId, cmdline, returncode, output):
-        result = []
-        result.append("[%s] Run failed: " % datetime.now())
-
-        result += self._configuration_details(runId) 
-
-        result.append("\n")
-
+    def run_failed(self, run_id, cmdline, return_code, output):
+        result = "[%s] Run failed: %s\n" % (
+            datetime.now(),
+            " ".join(self._configuration_details(run_id)))
         self._file.writelines(result)
         
-    def configurationCompleted(self, runId, statistics, cmdline):
-        result = []
-        result.append("[%s] Configuration completed: " % datetime.now())
-        
-        result += self._configuration_details(runId, statistics) 
-            
-        result.append("\n")
-        
+    def run_completed(self, run_id, statistics, cmdline):
+        result = "[%s] Run completed: %s\n" % (
+            datetime.now(),
+            " ".join(self._configuration_details(run_id, statistics)))
         self._file.writelines(result)
     
-    def jobCompleted(self, configurations, dataAggregator):
+    def job_completed(self, run_ids):
         self._file.write("[%s] Job completed\n" % datetime.now())
-        for line in self._generate_all_output(dataAggregator.getData(), ()):
+        for line in self._generate_all_output(data_aggregator.getData(), ()):
             self._file.write(line + "\n")
             
         self._file.close()
     
-    def setTotalNumberOfConfigurations(self, numConfigs):
+    def set_total_number_of_runs(self, num_runs):
         pass
     
-    def startConfiguration(self, runId):
+    def start_run(self, run_id):
         pass
 
             
 class CSVFileReporter(Reporter):
-    """ Will generate a CSV file for processing in another program as for instance Excel or Numbers """
+    """ Will generate a CSV file for processing in another program
+        as for instance R, Excel, or Numbers """
     
     def __init__(self, configurator):
         self._file = open(configurator.reporting['csv_file'], 'a+')
         self._configurator = configurator
     
-    def runFailed(self, runId, cmdline, returncode, output):
+    def run_failed(self, run_id, cmdline, return_code, output):
         pass
     
-    def configurationCompleted(self, runId, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline):
         pass
     
-    def _prepareHeaderRow(self, data, dataAggregator, parameterMappings):
-        # since the data might be irregular find the item with the most parameters first
+    def _prepareHeaderRow(self, data, data_aggregator, parameterMappings):
+        # since the data might be irregular find the item with the most
+        # parameters first
         longestTuple = max(data.keys(), key=lambda tpl: len(tpl))
         # and determine table width
         table_width = len(longestTuple)
@@ -315,18 +301,18 @@ class CSVFileReporter(Reporter):
         
         return header_row, table_width
     
-    def jobCompleted(self, configurations, dataAggregator):
+    def job_completed(self, run_ids):
         old_locale = locale.getlocale(locale.LC_ALL)
         if 'csv_locale' in self._configurator.reporting:
             locale.setlocale(locale.LC_ALL, self._configurator.reporting['csv_locale'])
         
         
         # get the data to be processed
-        data = dataAggregator.getDataFlattend()
-        parameterMappings = dataAggregator.data_mapping()
+        data = data_aggregator.getDataFlattend()
+        parameterMappings = data_aggregator.data_mapping()
         num_common_parameters = len(parameterMappings)
         
-        header_row, max_num_parameters = self._prepareHeaderRow(data, dataAggregator, parameterMappings)
+        header_row, max_num_parameters = self._prepareHeaderRow(data, data_aggregator, parameterMappings)
         
         table = []
         
@@ -349,10 +335,10 @@ class CSVFileReporter(Reporter):
         self._file.close()
         locale.setlocale(locale.LC_ALL, old_locale)
     
-    def setTotalNumberOfConfigurations(self, numConfigs):
+    def set_total_number_of_runs(self, num_runs):
         pass
     
-    def startConfiguration(self, runId):
+    def start_run(self, run_id):
         pass
         
 
@@ -384,16 +370,16 @@ class CodespeedReporter(Reporter):
         # the parameters
         self._indexMap = DataPointPersistence.data_mapping()
         
-    def runFailed(self, runId, cmdline, returncode, output):
+    def run_failed(self, run_id, cmdline, return_code, output):
         pass
 
 
-    def configurationCompleted(self, runId, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
             return
         
         # if self._incremental_report is true we are going to talk to codespeed immediately
-        results = [self._formatForCodespeed(runId, statistics)]
+        results = [self._formatForCodespeed(run_id, statistics)]
         
         # now, send them of to codespeed
         self._sendToCodespeed(results)
@@ -427,8 +413,8 @@ class CodespeedReporter(Reporter):
         replace = re.compile('bench(mark)?', re.IGNORECASE)
         return replace.sub('', name)
 
-    def _formatForCodespeed(self, runId, stats = None):
-        run = runId.as_tuple()
+    def _formatForCodespeed(self, run_id, stats = None):
+        run = run_id.as_tuple()
         result = self._result_data_template()
         
         if stats and not stats.failedRun:
@@ -444,8 +430,8 @@ class CodespeedReporter(Reporter):
         else:
             result['executable']   = self._configurator.options.executable
         
-        if 'codespeed_name' in runId.cfg.additional_config:
-            name = runId.cfg.additional_config['codespeed_name']
+        if 'codespeed_name' in run_id.bench_cfg.additional_config:
+            name = run_id.bench_cfg.additional_config['codespeed_name']
         else:
             name = self._beautifyBenchmarkName(run[self._indexMap['bench']]) + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)"
 
@@ -481,13 +467,13 @@ class CodespeedReporter(Reporter):
                    self._codespeed_cfg['url'])
         
 
-    def jobCompleted(self, configurations, dataAggregator):
+    def job_completed(self, run_ids):
         if self._incremental_report:
             # in this case all duties are already completed
             return
         
         # get the data to be processed
-        data = dataAggregator.getDataFlattend()
+        data = data_aggregator.getDataFlattend()
         
         # create a list of results to be submitted
         results = []
@@ -497,8 +483,8 @@ class CodespeedReporter(Reporter):
         # now, send them of to codespeed
         self._sendToCodespeed(results)
     
-    def setTotalNumberOfConfigurations(self, numConfigs):
+    def set_total_number_of_runs(self, num_runs):
         pass
     
-    def startConfiguration(self, run_id):
+    def start_run(self, run_id):
         pass
