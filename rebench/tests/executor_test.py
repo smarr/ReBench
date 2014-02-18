@@ -20,13 +20,13 @@ class ExecutorTest(unittest.TestCase):
         RunId.reset()
         DataPointPersistence.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
-        self._tmpFile = tempfile.mkstemp()[1] # just use the file name
+        self._tmp_file = tempfile.mkstemp()[1] # just use the file name
         os.chdir(self._path + '/../')
         
         self._sys_exit = sys.exit  # make sure that we restore sys.exit   
     
     def tearDown(self):
-        os.remove(self._tmpFile)
+        os.remove(self._tmp_file)
         sys.exit = self._sys_exit
         
         
@@ -36,10 +36,10 @@ class ExecutorTest(unittest.TestCase):
         subprocess.Popen =  Popen_override
         options = ReBench().shell_options().parse_args([])[0]
         
-        cnf  = Configurator(self._path + '/test.conf', options, 'Test')
-        data = DataPointPersistence(self._tmpFile)
+        cnf  = Configurator(self._path + '/test.conf', options, 'Test',
+                            standard_data_file = self._tmp_file)
         
-        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
         ex.execute()
         
 ### should test more details
@@ -62,9 +62,10 @@ class ExecutorTest(unittest.TestCase):
         sys.exit = test_exit
         
         options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat')
-        data = DataPointPersistence(self._tmpFile)
-        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        cnf = Configurator(self._path + '/test.conf', options,
+                           'TestBrokenCommandFormat',
+                           standard_data_file = self._tmp_file)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
 
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
@@ -76,22 +77,19 @@ class ExecutorTest(unittest.TestCase):
         sys.exit = test_exit
         
         options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', options, 'TestBrokenCommandFormat2')
-        data = DataPointPersistence(self._tmpFile)
-        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        cnf = Configurator(self._path + '/test.conf', options,
+                           'TestBrokenCommandFormat2',
+                           standard_data_file = self._tmp_file)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
-    
-    def test_basic_execution(self):
-        cnf = Configurator(self._path + '/small.conf', None)
+
+    def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEquals(8, len(runs))
-
-        data = DataPointPersistence(self._tmpFile)
-        ex = Executor(cnf.get_runs(), cnf.use_nice, data, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
         ex.execute()
-
         for run in runs:
             data_points = run.get_data_points()
             self.assertEquals(10, len(data_points))
@@ -100,7 +98,18 @@ class ExecutorTest(unittest.TestCase):
                 self.assertEquals(4, len(measurements))
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
-                self.assertEquals(data_point.get_total_value(), measurements[3].value)
+                self.assertEquals(data_point.get_total_value(),
+                                  measurements[3].value)
+
+    def test_basic_execution(self):
+        cnf = Configurator(self._path + '/small.conf', None,
+                           standard_data_file = self._tmp_file)
+        self._basic_execution(cnf)
+
+    def test_basic_execution_with_magic_all(self):
+        cnf = Configurator(self._path + '/small.conf', None, 'all',
+                           standard_data_file = self._tmp_file)
+        self._basic_execution(cnf)
         
 
 def Popen_override(cmdline, stdout, shell):
