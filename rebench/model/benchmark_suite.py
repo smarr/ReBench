@@ -67,3 +67,6 @@ class BenchmarkSuite(object):
     @property
     def max_runtime(self):
         return self._max_runtime
+
+    def has_max_runtime(self):
+        return self._max_runtime != -1
