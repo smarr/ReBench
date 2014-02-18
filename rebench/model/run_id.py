@@ -40,7 +40,17 @@ class RunId(object):
         self._requested_confidence_level = 0
         self._run_config  = None
         self._data_points = []
-    
+        self._failed_execution_count = 0
+
+    def indicate_failed_execution(self):
+        self._failed_execution_count =+ 1
+
+    def run_failed(self):
+        return ((self._failed_execution_count > 6) or
+                (len(self._data_points) > 1 and (
+                    self._failed_execution_count > len(self._data_points) / 2)))
+
+
     def add_reporting(self, reporting):
         self._reporting.add(reporting)
         self._requested_confidence_level = max(reporting.confidence_level, self._requested_confidence_level)
