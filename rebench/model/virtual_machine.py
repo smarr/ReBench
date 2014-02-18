@@ -22,14 +22,18 @@ from rebench.model import value_or_list_as_list
 
 class VirtualMachine(object):
     
-    def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes, experiment_name):
+    def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes,
+                 experiment_name):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
         if vm_details:
-            benchmarks  = value_or_list_as_list(vm_details.get('benchmark',   _benchmarks)) 
-            input_sizes = value_or_list_as_list(vm_details.get('input_sizes', _input_sizes))  
-            cores       = value_or_list_as_list(vm_details.get('cores',       None))  
+            benchmarks  = value_or_list_as_list(vm_details.get('benchmark',
+                                                               _benchmarks))
+            input_sizes = value_or_list_as_list(vm_details.get('input_sizes',
+                                                               _input_sizes))
+            cores       = value_or_list_as_list(vm_details.get('cores',
+                                                               None))
         else:
             benchmarks  = _benchmarks
             input_sizes = _input_sizes
