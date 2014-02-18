@@ -111,20 +111,13 @@ class TextReporter(Reporter):
                 out.append(str(item))
         return " ".join(out) + " "
     
-    def _generate_all_output(self, run_id, path):
-        data = run_id.get_data_points()
-
-        if type(data) is dict:
-            for key, val in data.iteritems():
-                for result in self._generate_all_output(run_id, val, path + (key,)):
-                    yield result
-        else:
-            stats = StatisticProperties(data, 
-                                        self._configurator.reporting['confidence_level'])
-                
-            out = [self._path_to_string(path)]
+    def _generate_all_output(self, run_ids):
+        for run_id in run_ids:
+            stats = StatisticProperties(run_id.get_total_values(),
+                                        run_id.requested_confidence_level)
+            out = run_id.as_str_list()
             self._output_stats(out, run_id, stats)
-            result = "".join(out)
+            result = "\t".join(out)
             yield result
 
 
@@ -188,7 +181,7 @@ class CliReporter(TextReporter):
 
     def job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())
-        for line in self._generate_all_output(data_aggregator.getData(), ()):
+        for line in self._generate_all_output(run_ids):
             print(line)
     
     def set_total_number_of_runs(self, num_runs):
@@ -249,7 +242,7 @@ class FileReporter(TextReporter):
     
     def job_completed(self, run_ids):
         self._file.write("[%s] Job completed\n" % datetime.now())
-        for line in self._generate_all_output(data_aggregator.getData(), ()):
+        for line in self._generate_all_output(run_ids):
             self._file.write(line + "\n")
             
         self._file.close()
