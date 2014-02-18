@@ -34,8 +34,7 @@ setup(name='ReBench',
       packages=['rebench'],
       install_requires=[
           'PyYAML>=3.08',
-          'scipy>=0.8.0',
-          #'matplotlib>=1.0.0' #disabled currently, install did not work, will rely on other means to install it
+          'scipy>=0.8.0'
       ],
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']
