@@ -36,7 +36,8 @@ try:
     stats.norm_ppf = dist.norm.ppf
     stats.t_ppf    = dist.t.ppf
 except ImportError:
-    logging.error("Loading scipy.stats failed. A replacement is not yet completely implemented.")
+    logging.error("Loading scipy.stats failed. " +
+                  "A replacement is not yet completely implemented.")
     import stats
 
 
@@ -128,5 +129,6 @@ class StatisticProperties:
         self.conf_interval_low  = self.mean - (distribution * self.std_dev / math.sqrt(self.num_samples))
         self.conf_interval_high = self.mean + (distribution * self.std_dev / math.sqrt(self.num_samples))
         
-        self.conf_interval_size_abs = self.conf_interval_high - self.conf_interval_low
+        self.conf_interval_size_abs = (self.conf_interval_high
+                                       - self.conf_interval_low)
         self.conf_interval_size     = self.conf_interval_size_abs / self.mean

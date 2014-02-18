@@ -32,7 +32,6 @@ from rebench.executor import Executor
 from rebench.reporter import Reporters
 
 
-
 class CaliperIntegrationTest(unittest.TestCase):
     """CaliperTest verifies the proper support for the
        ReBenchConsoleResultProcessor output produced by
@@ -52,11 +51,9 @@ class CaliperIntegrationTest(unittest.TestCase):
         self._cwd  = os.getcwd()
         os.chdir(self._path + '/../')
 
-
     def tearDown(self):
         os.remove(self._tmpFile)
         os.chdir(self._cwd)
-
 
     # Integration Test
     def testFullExecution(self):

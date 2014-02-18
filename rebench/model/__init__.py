@@ -38,6 +38,7 @@ Glossary:
 
 """
 
+
 def value_or_list_as_list(value):
     if type(value) is list:
         return value
