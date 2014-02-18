@@ -176,3 +176,8 @@ class RunId(object):
         bench_cfg = BenchmarkConfig.from_str_list(str_list[:-3])
         return cls.create(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
 
+    def __str__(self):
+        return "RunId(%s, %s, %s, %s, %s)" % (self._bench_cfg.name, self._cores,
+                                              self._bench_cfg.extra_args,
+                                              self._input_size or '',
+                                              self._var_value  or '')
