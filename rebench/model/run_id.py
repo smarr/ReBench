@@ -29,7 +29,7 @@ class RunId(object):
         else:
             RunId._registry[run] = run
             return run
-    
+
     def __init__(self, bench_cfg, cores, input_size, var_value):
         self._bench_cfg   = bench_cfg
         self._cores       = cores
@@ -37,6 +37,7 @@ class RunId(object):
         self._var_value   = var_value
 
         self._reporting   = set()
+        self._persistence = set()
         self._requested_confidence_level = 0
         self._run_config  = None
         self._data_points = []
@@ -54,9 +55,17 @@ class RunId(object):
     def add_reporting(self, reporting):
         self._reporting.add(reporting)
         self._requested_confidence_level = max(reporting.confidence_level, self._requested_confidence_level)
-    
+
+    def add_persistence(self, persistence):
+        self._persistence.add(persistence)
+
+    def loaded_data_point(self, data_point):
+        self._data_points.append(data_point)
+
     def add_data_point(self, data_point):
         self._data_points.append(data_point)
+        for persistence in self._persistence:
+            persistence.persist_data_point(data_point)
     
     def get_number_of_data_points(self):
         return len(self._data_points)
