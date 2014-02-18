@@ -1,3 +1,5 @@
+from rebench.persistence            import DataPointPersistence
+
 from rebench.model.virtual_machine  import VirtualMachine
 from rebench.model.benchmark_suite  import BenchmarkSuite
 from rebench.model.benchmark_config import BenchmarkConfig
@@ -5,14 +7,21 @@ from rebench.model.reporting        import Reporting
 from rebench.model.run_id           import RunId
 from rebench.model import value_or_list_as_list, value_with_optional_details
 
+
 class Experiment:
     
-    def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg, global_suite_cfg, global_reporting_cfg):
+    def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
+                 global_suite_cfg, global_reporting_cfg, standard_data_file,
+                 discard_old_data):
         self._name           = name
         self._raw_definition = exp_def
         self._runs_cfg       = global_runs_cfg.combined(exp_def)
-        self._reporting      = Reporting(global_reporting_cfg).combined(exp_def.get('reporting', {}))
-        
+        self._reporting      = Reporting(global_reporting_cfg).combined(
+                                                exp_def.get('reporting', {}))
+        self._persistence    = DataPointPersistence.get(exp_def.get('data_file',
+                                                            standard_data_file),
+                                                            discard_old_data)
+
         self._vms            = self._compile_virtual_machines(global_vms_cfg)
         self._suites         = self._compile_benchmark_suites(global_suite_cfg)
         self._benchmarks     = self._compile_benchmarks()
@@ -36,6 +45,7 @@ class Experiment:
                         bench.add_run(run)
                         runs.add(run)
                         run.add_reporting(self._reporting)
+                        run.add_persistence(self._persistence)
                         run.set_run_config(self._runs_cfg)
         return runs
     
@@ -69,4 +79,3 @@ class Experiment:
             for bench in value_or_list_as_list(suite.benchmarks):
                 bench_cfgs.append(BenchmarkConfig.compile(bench, suite))
         return bench_cfgs
-    
