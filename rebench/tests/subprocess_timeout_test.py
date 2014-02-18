@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ from rebench import subprocess_with_timeout as sub
 
 import os
 import subprocess
+
 
 class SubprocessTimeoutTest(unittest.TestCase):
     """Test the support for execution of programs with timeouts"""

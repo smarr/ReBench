@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2014 Stefan Marr
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
 from __future__ import with_statement
 from __future__ import print_function
 from datetime import datetime

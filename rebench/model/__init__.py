@@ -1,5 +1,24 @@
-"""
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
+"""
 Glossary:
 
 
@@ -14,9 +33,9 @@ Glossary:
   virtual machine:
       A named set of settings for the executor of a benchmark suite.
       
-      Typically, this is one specific virtual machine with a specific set of startup
-      parameters. It refers to an executable that will execute benchmarks from suite.
-      Thus, the virtual machine is the executor.
+      Typically, this is one specific virtual machine with a specific set of
+      startup parameters. It refers to an executable that will execute
+      benchmarks from suite. Thus, the virtual machine is the executor.
 
   benchmark suite:
       A set of benchmarks with a variety of parameters, i.e., dimension to be
@@ -35,7 +54,6 @@ Glossary:
   experiment:
       Brings together benchmark suites, virtual machines, and their
       various parameters.
-
 """
 
 
@@ -47,6 +65,7 @@ def value_or_list_as_list(value):
     else:
         return [value]
 
+
 def value_with_optional_details(value, default_details = None):
     if type(value) is dict:
         assert len(value) == 1
@@ -55,4 +74,3 @@ def value_with_optional_details(value, default_details = None):
         details = default_details
     
     return value, details
-

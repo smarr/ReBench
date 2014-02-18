@@ -1,6 +1,6 @@
 # ReBench: Execute and document benchmarks reproducibly.
 #
-# Copyright (c) 2009-2011 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to

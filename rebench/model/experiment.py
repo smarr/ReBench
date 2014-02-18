@@ -1,3 +1,22 @@
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 from rebench.persistence            import DataPointPersistence
 
 from rebench.model.virtual_machine  import VirtualMachine
@@ -50,8 +69,10 @@ class Experiment:
         return runs
     
     def _compile_virtual_machines(self, global_vms_cfg):
-        benchmarks  = value_or_list_as_list(self._raw_definition.get(  'benchmark', None))
-        input_sizes = value_or_list_as_list(self._raw_definition.get('input_sizes', None))
+        benchmarks  = value_or_list_as_list(self._raw_definition.
+                                            get( 'benchmark', None))
+        input_sizes = value_or_list_as_list(self._raw_definition.
+                                            get('input_sizes', None))
         executions  = value_or_list_as_list(self._raw_definition['executions'])
         
         vms = []
@@ -59,7 +80,8 @@ class Experiment:
         for vm in executions:
             vm, vm_details = value_with_optional_details(vm)
             if vm not in global_vms_cfg:
-                raise ValueError("The VM '%s' requested in %s was not found." % (vm, self.name))
+                raise ValueError("The VM '%s' requested in %s was not found."
+                                 % (vm, self.name))
             
             global_cfg = global_vms_cfg[vm]
             vms.append(VirtualMachine(vm, vm_details, global_cfg, benchmarks,
@@ -70,7 +92,8 @@ class Experiment:
         suites = []
         for vm in self._vms:
             for suite_name in vm.benchmark_suite_names:
-                suites.append(BenchmarkSuite(suite_name, vm, global_suite_cfg[suite_name]))
+                suites.append(BenchmarkSuite(suite_name, vm,
+                                             global_suite_cfg[suite_name]))
         return suites
     
     def _compile_benchmarks(self):

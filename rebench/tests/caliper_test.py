@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2013 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,15 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-
 import unittest
-import types
 import tempfile
 import os
 
 from rebench.performance import CaliperPerformance
 from rebench.persistence import DataPointPersistence
-from rebench.model.measurement import Measurement
 from rebench import ReBench
 from rebench.configurator import Configurator
 from rebench.executor import Executor
