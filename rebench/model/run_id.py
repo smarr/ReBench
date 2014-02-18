@@ -16,6 +16,13 @@ class RunId(object):
     
     @classmethod
     def create(cls, bench_cfg, cores, input_size, var_value):
+        if isinstance(cores, str) and cores.isdigit():
+            cores = int(cores)
+        if input_size == '':
+            input_size = None
+        if var_value == '':
+            var_value = None
+
         run = RunId(bench_cfg, cores, input_size, var_value)
         if run in RunId._registry:
             return RunId._registry[run]
