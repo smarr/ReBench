@@ -28,9 +28,10 @@ class BenchmarkConfig(object):
         cls._registry = {}
     
     @classmethod
-    def get_config(cls, name, vm_name, suite_name, extra_args):
+    def get_config(cls, name, vm_name, suite_name, extra_args, warmup):
         key = (name, vm_name, suite_name,
-               '' if extra_args is None else str(extra_args))
+               '' if extra_args is None else str(extra_args),
+               str(warmup))
 
         if key not in BenchmarkConfig._registry:
             raise ValueError("Requested configuration is not available: " +
@@ -48,8 +49,9 @@ class BenchmarkConfig(object):
         performance_reader = details.get('performance_reader',
                                          suite.performance_reader)
         extra_args         = details.get('extra_args', None)
+        warmup             = int(details.get('warmup',        0))
         return BenchmarkConfig(name, performance_reader, suite, suite.vm,
-                               extra_args)
+                               extra_args, warmup)
 
     @classmethod
     def _register(cls, cfg):
@@ -61,9 +63,10 @@ class BenchmarkConfig(object):
             BenchmarkConfig._registry[key] = cfg
         return cfg
     
-    def __init__(self, name, performance_reader, suite, vm, extra_args = None):
+    def __init__(self, name, performance_reader, suite, vm, extra_args, warmup):
         self._name               = name
         self._extra_args         = extra_args
+        self._warmup             = warmup
         self._performance_reader = performance_reader
         self._suite = suite
         self._vm = vm
@@ -81,6 +84,10 @@ class BenchmarkConfig(object):
     @property
     def extra_args(self):
         return self._extra_args
+
+    @property
+    def warmup_iterations(self):
+        return self._warmup
     
     @property
     def performance_reader(self):
@@ -95,25 +102,26 @@ class BenchmarkConfig(object):
         return self._vm
     
     def __str__(self):
-        return "%s, vm:%s, suite:%s, args:'%s'" % (self._name,
-                                                   self._vm.name,
-                                                   self._suite.name,
-                                                   self._extra_args or '')
+        return "%s, vm:%s, suite:%s, args:'%s', warmup: %d" % (
+            self._name, self._vm.name, self._suite.name, self._extra_args or '',
+            self._warmup)
     
     def as_simple_string(self):
         if self._extra_args:
-            return "%s (%s, %s, %s)"  % (self._name,
-                                         self._vm.name,
-                                         self._suite.name,
-                                         self._extra_args)
+            return "%s (%s, %s, %s, %d)"  % (self._name, self._vm.name,
+                                             self._suite.name, self._extra_args,
+                                             self._warmup)
         else:
-            return "%s (%s, %s)" % (self._name, self._vm.name, self._suite.name)
+            return "%s (%s, %s, %d)" % (self._name, self._vm.name,
+                                        self._suite.name, self._warmup)
         
     def as_str_list(self):
         return [self._name, self._vm.name, self._suite.name,
-                '' if self._extra_args is None else str(self._extra_args)]
+                '' if self._extra_args is None else str(self._extra_args),
+                str(self._warmup)]
 
     @classmethod
     def from_str_list(cls, str_list):
         return cls.get_config(str_list[0], str_list[1], str_list[2],
-                              None if str_list[3] == '' else str_list[3])
+                              None if str_list[3] == '' else str_list[3],
+                              int(str_list[4]))

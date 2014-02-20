@@ -109,12 +109,17 @@ class Executor:
                      consecutive_erroneous_runs, cmdline):
         try:
             data_points = perf_reader.parse_data(output, run_id)
-            
+
+            warmup = run_id.warmup_iterations
+
             for data_point in data_points:
-                run_id.add_data_point(data_point)
-                logging.debug("Run %s:%s result=%s" % (run_id.bench_cfg.vm.name,
-                                                       run_id.bench_cfg.name,
-                                                       data_point.get_total_value()))
+                if warmup > 0:
+                    warmup -= 1
+                else:
+                    run_id.add_data_point(data_point)
+                    logging.debug("Run %s:%s result=%s" % (
+                        run_id.bench_cfg.vm.name, run_id.bench_cfg.name,
+                        data_point.get_total_value()))
             consecutive_erroneous_runs = 0
         except OutputNotParseable:
             consecutive_erroneous_runs += 1

@@ -37,7 +37,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite     = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'performance_reader': '',
             'command': '%(benchmark)s %(cores)s %(input)s'})
-        bench_cfg = BenchmarkConfig("TestBench", None, suite, vm, '3')
+        bench_cfg = BenchmarkConfig("TestBench", None, suite, vm, '3', 0)
         return RunId(bench_cfg, 1, 2, None)
 
     def _create_hardcoded_run_id(self):
@@ -47,7 +47,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite     = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'performance_reader': '',
             'command': '%(benchmark)s %(cores)s 2 3'})
-        bench_cfg = BenchmarkConfig("TestBench", None, suite, vm)
+        bench_cfg = BenchmarkConfig("TestBench", None, suite, vm, None, 0)
         return RunId(bench_cfg, 1, None, None)
 
     def test_hardcoded_equals_template_constructed(self):

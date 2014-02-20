@@ -61,6 +61,13 @@ class RunId(object):
         self._data_points = []
         self._failed_execution_count = 0
 
+    def requires_warmup(self):
+        return self._bench_cfg.warmup_iterations > 0
+
+    @property
+    def warmup_iterations(self):
+        return self._bench_cfg.warmup_iterations
+
     def indicate_failed_execution(self):
         self._failed_execution_count =+ 1
 
@@ -153,7 +160,9 @@ class RunId(object):
             cmdline = cmdline % {'benchmark' : self._bench_cfg.name,
                                  'input'     : self._input_size,
                                  'variable'  : self._var_value,
-                                 'cores'     : self._cores}
+                                 'cores'     : self._cores,
+                                 'warmup'    : self._bench_cfg.warmup_iterations
+                                }
         except ValueError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         except TypeError:
@@ -196,7 +205,9 @@ class RunId(object):
         return cls.create(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
 
     def __str__(self):
-        return "RunId(%s, %s, %s, %s, %s)" % (self._bench_cfg.name, self._cores,
-                                              self._bench_cfg.extra_args,
-                                              self._input_size or '',
-                                              self._var_value  or '')
+        return "RunId(%s, %s, %s, %s, %s, %d)" % (self._bench_cfg.name,
+                                                  self._cores,
+                                                  self._bench_cfg.extra_args,
+                                                  self._input_size or '',
+                                                  self._var_value  or '',
+                                                  self._bench_cfg.warmup_iterations)
