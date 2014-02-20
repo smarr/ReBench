@@ -27,7 +27,7 @@ from .model.experiment  import Experiment
 
 class Configurator:
 
-    def __init__(self, file_name, cli_options, exp_name = None,
+    def __init__(self, file_name, cli_options = None, exp_name = None,
                  standard_data_file = None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
