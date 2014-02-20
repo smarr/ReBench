@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 ## simple script emulating a VM generating benchmark results
 import sys
-import time
 import random
 
 print sys.argv

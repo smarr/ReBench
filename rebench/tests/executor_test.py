@@ -40,7 +40,7 @@ class ExecutorTest(unittest.TestCase):
         RunId.reset()
         DataPointPersistence.reset()
         self._path = os.path.dirname(os.path.realpath(__file__))
-        self._tmp_file = tempfile.mkstemp()[1] # just use the file name
+        self._tmp_file = tempfile.mkstemp()[1]  # just use the file name
         os.chdir(self._path + '/../')
         
         self._sys_exit = sys.exit  # make sure that we restore sys.exit   
