@@ -33,7 +33,7 @@ from rebench.model.run_id           import RunId
 from rebench.persistence            import DataPointPersistence
 
 
-class Issue16MultipleDataPoints(TestCase):
+class Issue16MultipleDataPointsTest(TestCase):
     """
     Add support to record multiple data points for same benchmark in one run.
       - multiple measurements
@@ -75,11 +75,10 @@ class Issue16MultipleDataPoints(TestCase):
 
     def test_associates_measurements_and_data_points_correctly(self):
         data_points = self._records_data_points('Test1', 10)
-        for dp in data_points:
+        for dp, i in zip(data_points, range(0, 10)):
             self.assertEquals(4, dp.number_of_measurements())
 
-            for criterion, measurement, i in zip(["bar", "baz", "foo", "total"],
-                                                 dp.get_measurements(),
-                                                 range(0, 10)):
+            for criterion, measurement in zip(["bar", "baz", "foo", "total"],
+                                              dp.get_measurements()):
                 self.assertEquals(criterion, measurement.criterion)
-                self.assertEquals(i,         measurement.value)
+                self.assertEquals(i,         int(measurement.value))
