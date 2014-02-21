@@ -297,8 +297,7 @@ class CaliperPerformance(Performance):
     
     def parse_data(self, data, run_id):
         data_points = []
-        current = DataPoint(run_id)
-        
+
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise RuntimeError("Output of bench program indicates errors.")
@@ -306,11 +305,12 @@ class CaliperPerformance(Performance):
             m = self.re_log_line.match(line)
             if m:
                 time = float(m.group(3)) / 1000000
+                current = DataPoint(run_id)
                 current.add_measurement(Measurement(time, 'ms', run_id,
                                                     criterion = m.group(1)))
+                current.add_measurement(Measurement(time, 'ms', run_id,
+                                                    criterion = 'total'))
                 data_points.append(current)
-                current = DataPoint(run_id)
-        
         if len(data_points) == 0:
             raise OutputNotParseable(data)
             

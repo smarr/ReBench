@@ -60,9 +60,9 @@ class CaliperIntegrationTest(unittest.TestCase):
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
-        data = DataPointPersistence.get(self._tmpFile)
+        data = DataPointPersistence.get(self._tmpFile, True)
         
-        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
+        ex = Executor(cnf.get_runs(), False, Reporters([]))
         ex.execute()
     
     def test_correct_number_of_results_from_run(self):
