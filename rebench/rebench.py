@@ -66,7 +66,7 @@ Argument:
                            dest="verbose", default=False,
                            help="Out more details in the report.")
 
-        options.add_option("-n", "--without-nice", action="store_false",
+        options.add_option("-N", "--without-nice", action="store_false",
                            dest="use_nice",
                            help="Used for debugging and environments without "
                                  " the tool nice.",
@@ -103,10 +103,10 @@ Argument:
                              default=None,
                              help="The project name given to codespeed. Default: "
                                   "Value given in the config file.")
-        codespeed.add_option("-f", "--disable-inc-report",
+        codespeed.add_option("-I", "--disable-inc-report",
                              action="store_false", dest="report_incrementally",
                              default=True, help="Does a final report at the end instead of reporting incrementally.")
-        codespeed.add_option("-s", "--disable-codespeed",
+        codespeed.add_option("-S", "--disable-codespeed",
                              action="store_false", dest="use_codespeed",
                              default=True, help="Override configuration and "
                              "disable reporting to codespeed.")
