@@ -111,12 +111,23 @@ class TextReporter(Reporter):
         return " ".join(out) + " "
     
     def _generate_all_output(self, run_ids):
+        rows = []
+        col_width = None
+
         for run_id in run_ids:
             stats = StatisticProperties(run_id.get_total_values(),
                                         run_id.requested_confidence_level)
             out = run_id.as_str_list()
             self._output_stats(out, run_id, stats)
-            result = "\t".join(out)
+            if col_width is None:
+                col_width = [0] * len(out)
+            rows.append(out)
+            col_width = [max(len(col_content), col)
+                         for col_content, col in zip(out, col_width)]
+
+        for row in rows:
+            result = "  ".join([col.ljust(width)
+                                for col, width in zip(row, col_width)])
             yield result
 
 
@@ -212,11 +223,15 @@ class CliReporter(TextReporter):
         
         if run_id.run_failed():
             output_list.append("run failed.")
+            output_list.append("")
+            output_list.append("")
+            output_list.append("")
         else:
-            output_list.append("\t mean: %.1f [%.1f, %.1f]" % (statistics.mean,
-                                                               statistics.conf_interval_low,
-                                                               statistics.conf_interval_high))
-    
+            output_list.append("mean:")
+            output_list.append(("%.1f" % statistics.mean).rjust(8))
+            output_list.append("[" + ("%.1f" % statistics.conf_interval_low).rjust(8) + ",")
+            output_list.append(("%.1f" % statistics.conf_interval_high).rjust(8) + "]")
+
 
 class FileReporter(TextReporter):
     """ should be mainly a log file
