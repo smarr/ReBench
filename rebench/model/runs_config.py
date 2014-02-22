@@ -80,10 +80,39 @@ class TerminationCheck(object):
     def __init__(self, run_cfg, bench_cfg):
         self._run_cfg   = run_cfg
         self._bench_cfg = bench_cfg
-    
+        self._consecutive_erroneous_executions = 0
+        self._failed_execution_count = 0
+
+    def indicate_failed_execution(self):
+        self._consecutive_erroneous_executions += 1
+        self._failed_execution_count           += 1
+
+    def indicate_successful_execution(self):
+        self._consecutive_erroneous_executions = 0
+
+    def has_sufficient_number_of_data_points(self, number_of_data_points):
+        return number_of_data_points >= self._run_cfg.number_of_data_points
+
+    def fails_consecutively(self):
+        return self._consecutive_erroneous_executions >= 3
+
+    def has_too_many_failures(self, number_of_data_points):
+        return ((self._failed_execution_count > 6) or (
+                number_of_data_points > 10 and (
+                    self._failed_execution_count > number_of_data_points / 2)))
+
     def should_terminate(self, number_of_data_points):
-        if number_of_data_points >= self._run_cfg.number_of_data_points:
-            logging.debug("Reached number_of_data_points for %s" % self._bench_cfg.name)
+        if self.has_sufficient_number_of_data_points(number_of_data_points):
+            logging.debug("Reached number_of_data_points for %s"
+                          % self._bench_cfg.name)
+            return True
+        elif self.fails_consecutively():
+            logging.error(("Three executions of %s have failed in a row, " +
+                          "benchmark is aborted") % self._bench_cfg.name)
+            return True
+        elif self.has_too_many_failures(number_of_data_points):
+            logging.error("Many runs of %s are failing, benchmark is aborted."
+                          % self._bench_cfg.name)
             return True
         else:
             return False

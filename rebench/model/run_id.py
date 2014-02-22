@@ -59,7 +59,8 @@ class RunId(object):
         self._requested_confidence_level = 0
         self._run_config  = None
         self._data_points = []
-        self._failed_execution_count = 0
+
+        self._termination_check = None
 
     def requires_warmup(self):
         return self._bench_cfg.warmup_iterations > 0
@@ -69,13 +70,10 @@ class RunId(object):
         return self._bench_cfg.warmup_iterations
 
     def indicate_failed_execution(self):
-        self._failed_execution_count =+ 1
+        self._termination_check.indicate_failed_execution()
 
-    def run_failed(self):
-        return ((self._failed_execution_count > 6) or
-                (len(self._data_points) > 1 and (
-                    self._failed_execution_count > len(self._data_points) / 2)))
-
+    def indicate_successful_execution(self):
+        self._termination_check.indicate_successful_execution()
 
     def add_reporting(self, reporting):
         self._reporting.add(reporting)
@@ -104,12 +102,21 @@ class RunId(object):
     
     def set_run_config(self, run_cfg):
         if self._run_config and self._run_config != run_cfg:
-            raise ValueError("Run config has already been set and is not the same.")
+            raise ValueError("Run config has already been set "
+                             "and is not the same.")
         self._run_config = run_cfg
     
-    def create_termination_check(self):
-        return self._run_config.create_termination_check(self._bench_cfg)
-    
+    def get_termination_check(self):
+        if self._termination_check is None:
+            self._termination_check = self._run_config.create_termination_check(
+                self._bench_cfg)
+        return self._termination_check
+
+    def run_failed(self):
+        return (self._termination_check.fails_consecutively() or
+                self._termination_check.has_too_many_failures(
+                    len(self._data_points)))
+
     @property
     def run_config(self):
         return self._run_config

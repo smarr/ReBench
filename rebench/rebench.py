@@ -33,7 +33,8 @@ import sys
 
 from optparse import OptionParser, OptionGroup
 
-from .executor       import Executor
+from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
+                            RandomScheduler
 from .persistence    import DataPointPersistence
 from .reporter       import FileReporter, Reporters, CliReporter,\
                             CodespeedReporter, CSVFileReporter
@@ -71,6 +72,10 @@ Argument:
                            help="Used for debugging and environments without "
                                  " the tool nice.",
                            default=True)
+        options.add_option("-s", "--scheduler", action="store", type="string",
+                           dest="scheduler", default="batch", help="execution "
+                           "order of benchmarks: batch, round-robin, random "
+                           "[default: %default]")
         options.add_option("-o", "--out", dest="output_file", default=None,
                            help="Report is saved to the given file. "
                                 "The report is always verbose.")
@@ -151,8 +156,12 @@ Argument:
         if self._config.options.clean:
             pass
 
+        scheduler_class = {'batch':       BatchScheduler,
+                           'round-robin': RoundRobinScheduler,
+                           'random':      RandomScheduler}.get(
+                                                self._config.options.scheduler)
         executor = Executor(self._config.get_runs(), self._config.use_nice,
-                            Reporters(reporters))
+                            Reporters(reporters), scheduler_class)
         executor.execute()
 
 
