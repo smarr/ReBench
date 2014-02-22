@@ -36,12 +36,12 @@ class RunsConfig(object):
     def min_runtime(self):
         return self._min_runtime
         
-    def combined(self, runDef):
+    def combined(self, run_def):
         config = RunsConfig(self._number_of_data_points, self._min_runtime)
-        val = runDef.get('number_of_data_points', None)
+        val = run_def.get('number_of_data_points', None)
         if val:
             config._number_of_data_points = val
-        val = runDef.get('min_runtime', None)
+        val = run_def.get('min_runtime', None)
         if val:
             config._min_runtime = val
         return config
@@ -64,7 +64,7 @@ class QuickRunsConfig(RunsConfig):
                                               min_runtime)
         self._max_time = max_time
     
-    def combined(self, runDef):
+    def combined(self, run_def):
         """For Quick runs, only the global config is taken into account.""" 
         return self
     
@@ -74,6 +74,7 @@ class QuickRunsConfig(RunsConfig):
     
     def create_termination_check(self, bench_cfg):
         return QuickTerminationCheck(self, bench_cfg)
+
 
 class TerminationCheck(object):
     def __init__(self, run_cfg, bench_cfg):
@@ -87,6 +88,7 @@ class TerminationCheck(object):
         else:
             return False
 
+
 class QuickTerminationCheck(TerminationCheck):
     def __init__(self, run_cfg, bench_cfg):
         super(QuickTerminationCheck, self).__init__(run_cfg, bench_cfg)
@@ -96,4 +98,5 @@ class QuickTerminationCheck(TerminationCheck):
         if time() - self._start_time > self._run_cfg.max_time:
             logging.debug("Maximum runtime is reached for %s" % self._run_cfg.name)
             return True
-        return super(QuickTerminationCheck, self).should_terminate(number_of_data_points)
+        return super(QuickTerminationCheck, self).should_terminate(
+            number_of_data_points)
