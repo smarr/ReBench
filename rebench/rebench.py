@@ -127,7 +127,11 @@ Argument:
             logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
             sys.exit(-1)
 
-        self._config = Configurator(args[0], cli_options, *args[1:])
+        try:
+            self._config = Configurator(args[0], cli_options, *args[1:])
+        except ConfigurationError as e:
+            logging.error(e.message)
+            sys.exit(-1)
         DataPointPersistence.load_data()
         self.execute_experiment()
         
