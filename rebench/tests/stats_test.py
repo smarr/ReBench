@@ -22,7 +22,7 @@
 ## This code is inspired by https://code.google.com/p/python-statlib
 
 import unittest
-from rebench import stats
+from .. import stats
 
 are_numpy_and_scipy_available = False
 try:

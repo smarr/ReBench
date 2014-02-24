@@ -24,13 +24,13 @@ from os.path  import dirname, realpath
 from unittest import TestCase
 from tempfile import mkstemp
 
-from rebench.configurator           import Configurator
-from rebench.executor               import Executor, RoundRobinScheduler
-from rebench.reporter               import Reporter, Reporters
+from ...configurator           import Configurator
+from ...executor               import Executor, RoundRobinScheduler
+from ...reporter               import Reporter
 
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.run_id           import RunId
-from rebench.persistence            import DataPointPersistence
+from ...model.benchmark_config import BenchmarkConfig
+from ...model.run_id           import RunId
+from ...persistence            import DataPointPersistence
 
 
 class TestReporter(Reporter):

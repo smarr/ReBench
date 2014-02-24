@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 from datetime import datetime
 
-from rebench.model.run_id import RunId
+from .run_id import RunId
 
 
 class Measurement(object):

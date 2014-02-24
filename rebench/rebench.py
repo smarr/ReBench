@@ -36,9 +36,8 @@ from optparse import OptionParser, OptionGroup
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
 from .persistence    import DataPointPersistence
-from .reporter       import FileReporter, Reporters, CliReporter,\
-                            CodespeedReporter, CSVFileReporter
 from .configurator   import Configurator
+from .configuration_error import ConfigurationError
 
 
 class ReBench:

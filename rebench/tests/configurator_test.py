@@ -21,10 +21,10 @@ import unittest
 import os
 import logging
 
-from rebench.configurator           import Configurator
-from rebench.persistence            import DataPointPersistence
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.run_id           import RunId
+from ..configurator           import Configurator
+from ..persistence            import DataPointPersistence
+from ..model.benchmark_config import BenchmarkConfig
+from ..model.run_id           import RunId
 
 
 class ConfiguratorTest(unittest.TestCase):

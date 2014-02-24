@@ -21,11 +21,11 @@ import unittest
 
 from datetime import datetime
 
-from rebench.model.run_id           import RunId
-from rebench.model.measurement      import Measurement
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.benchmark_suite  import BenchmarkSuite
-from rebench.model.virtual_machine  import VirtualMachine
+from ..model.run_id           import RunId
+from ..model.measurement      import Measurement
+from ..model.benchmark_config import BenchmarkConfig
+from ..model.benchmark_suite  import BenchmarkSuite
+from ..model.virtual_machine  import VirtualMachine
 
 
 class PersistencyTest(unittest.TestCase):

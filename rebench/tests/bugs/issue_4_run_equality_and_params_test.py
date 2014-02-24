@@ -19,10 +19,10 @@
 # THE SOFTWARE.
 import os
 import unittest
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.benchmark_suite  import BenchmarkSuite
-from rebench.model.run_id           import RunId
-from rebench.model.virtual_machine  import VirtualMachine
+from ...model.benchmark_config import BenchmarkConfig
+from ...model.benchmark_suite  import BenchmarkSuite
+from ...model.run_id           import RunId
+from ...model.virtual_machine  import VirtualMachine
 
 
 class Issue4RunEquality(unittest.TestCase):

@@ -24,13 +24,12 @@ from os.path  import dirname, realpath
 from unittest import TestCase
 from tempfile import mkstemp
 
-from rebench.configurator           import Configurator
-from rebench.executor               import Executor
-from rebench.reporter               import Reporters
+from ...configurator           import Configurator
+from ...executor               import Executor
 
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.run_id           import RunId
-from rebench.persistence            import DataPointPersistence
+from ...model.benchmark_config import BenchmarkConfig
+from ...model.run_id           import RunId
+from ...persistence            import DataPointPersistence
 
 
 class Issue16MultipleDataPointsTest(TestCase):

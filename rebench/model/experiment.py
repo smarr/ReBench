@@ -17,14 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from rebench.persistence            import DataPointPersistence
+from ..persistence            import DataPointPersistence
 
-from rebench.model.virtual_machine  import VirtualMachine
-from rebench.model.benchmark_suite  import BenchmarkSuite
-from rebench.model.benchmark_config import BenchmarkConfig
-from rebench.model.reporting        import Reporting
-from rebench.model.run_id           import RunId
-from rebench.model import value_or_list_as_list, value_with_optional_details
+from .virtual_machine  import VirtualMachine
+from .benchmark_suite  import BenchmarkSuite
+from .benchmark_config import BenchmarkConfig
+from .reporting        import Reporting
+from .run_id           import RunId
+from . import value_or_list_as_list, value_with_optional_details
 
 
 class Experiment:

@@ -21,12 +21,11 @@ import unittest
 import tempfile
 import os
 
-from rebench.performance import CaliperPerformance
-from rebench.persistence import DataPointPersistence
-from rebench import ReBench
-from rebench.configurator import Configurator
-from rebench.executor import Executor
-from rebench.reporter import Reporters
+from ..performance import CaliperPerformance
+from ..persistence import DataPointPersistence
+from .. import ReBench
+from ..configurator import Configurator
+from ..executor import Executor
 
 
 class CaliperIntegrationTest(unittest.TestCase):

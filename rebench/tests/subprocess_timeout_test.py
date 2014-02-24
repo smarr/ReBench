@@ -21,7 +21,7 @@ import os
 import subprocess
 import unittest
 
-from rebench import subprocess_with_timeout as sub
+from .. import subprocess_with_timeout as sub
 
 
 class SubprocessTimeoutTest(unittest.TestCase):
