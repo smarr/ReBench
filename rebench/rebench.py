@@ -98,18 +98,22 @@ Argument:
         codespeed.add_option("--branch", dest="branch",
                              default="HEAD",
                              help="The branch for which the results have to be "
-                                  "recorded, i.e., to which the commit belongs. Default: HEAD")
+                                  "recorded, i.e., to which the commit belongs."
+                                  " Default: HEAD")
         codespeed.add_option("--executable", dest="executable",
                              default=None,
-                             help="The executable name given to codespeed. Default: "
-                                  "The name used for the virtual machine.")
+                             help="The executable name given to codespeed. "
+                                  "Default: The name used for the virtual "
+                                  "machine.")
         codespeed.add_option("--project", dest="project",
                              default=None,
-                             help="The project name given to codespeed. Default: "
-                                  "Value given in the config file.")
+                             help="The project name given to codespeed. "
+                                  "Default: Value given in the config file.")
         codespeed.add_option("-I", "--disable-inc-report",
                              action="store_false", dest="report_incrementally",
-                             default=True, help="Does a final report at the end instead of reporting incrementally.")
+                             default=True, help="Does a final report at the "
+                                                "end instead of reporting "
+                                                "incrementally.")
         codespeed.add_option("-S", "--disable-codespeed",
                              action="store_false", dest="use_codespeed",
                              default=True, help="Override configuration and "
@@ -124,7 +128,8 @@ Argument:
                     
         cli_options, args = self.shell_options().parse_args(argv[1:])
         if len(args) < 1:
-            logging.error("<config> is a mandatory parameter and was not given. See --help for more information.")
+            logging.error("<config> is a mandatory parameter and was not given."
+                          "See --help for more information.")
             sys.exit(-1)
 
         try:
