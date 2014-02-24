@@ -61,7 +61,7 @@ class CaliperIntegrationTest(unittest.TestCase):
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
         data = DataPointPersistence.get(self._tmpFile, True)
         
-        ex = Executor(cnf.get_runs(), False, Reporters([]))
+        ex = Executor(cnf.get_runs(), False)
         ex.execute()
     
     def test_correct_number_of_results_from_run(self):

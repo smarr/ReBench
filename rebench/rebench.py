@@ -143,23 +143,6 @@ Argument:
     def execute_experiment(self):
         logging.debug("execute experiment: %s"%(self._config.experiment_name()))
         
-        reporters = []
-        if self._config.options.output_file:
-            reporters.append(FileReporter(self._config.options.output_file,
-                                          self._config))
-            
-        reporters.append(CliReporter(self._config))
-
-        ## TODO: re-add support for reporting
-        # if self._config.reporting:
-        #     if ('codespeed' in self._config.reporting and
-        #         self._config.options.use_codespeed):
-        #         reporters.append(CodespeedReporter(self._config))
-        #     if 'csv_file' in self._config.reporting:
-        #         reporters.append(CSVFileReporter(self._config))
-        #     if 'csv_raw' in self._config.reporting:
-        #         data.setCsvRawFile(self._config.reporting['csv_raw'])
-        
         # first load old data if available
         if self._config.options.clean:
             pass
@@ -169,7 +152,7 @@ Argument:
                            'random':      RandomScheduler}.get(
                                                 self._config.options.scheduler)
         executor = Executor(self._config.get_runs(), self._config.use_nice,
-                            Reporters(reporters), scheduler_class)
+                            scheduler_class)
         executor.execute()
 
 

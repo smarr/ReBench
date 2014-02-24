@@ -57,7 +57,7 @@ class ExecutorTest(unittest.TestCase):
         cnf  = Configurator(self._path + '/test.conf', options, 'Test',
                             standard_data_file = self._tmp_file)
         
-        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
         
 ### should test more details
@@ -83,7 +83,7 @@ class ExecutorTest(unittest.TestCase):
         cnf = Configurator(self._path + '/test.conf', options,
                            'TestBrokenCommandFormat',
                            standard_data_file = self._tmp_file)
-        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice)
 
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
@@ -98,7 +98,7 @@ class ExecutorTest(unittest.TestCase):
         cnf = Configurator(self._path + '/test.conf', options,
                            'TestBrokenCommandFormat2',
                            standard_data_file = self._tmp_file)
-        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice)
         
         with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
             ex.execute()
@@ -106,7 +106,7 @@ class ExecutorTest(unittest.TestCase):
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEquals(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, Reporters([]))
+        ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()

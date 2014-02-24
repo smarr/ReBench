@@ -130,4 +130,5 @@ class Configurator:
                           self._raw_config['benchmark_suites'],
                           self._raw_config.get('reporting', {}),
                           self._raw_config.get('standard_data_file', None),
-                          self._options.clean if self._options else False)
+                          self._options.clean if self._options else False,
+                          self._options)

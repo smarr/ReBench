@@ -54,7 +54,7 @@ class RunId(object):
         self._input_size  = input_size
         self._var_value   = var_value
 
-        self._reporting   = set()
+        self._reporters   = set()
         self._persistence = set()
         self._requested_confidence_level = 0
         self._run_config  = None
@@ -75,10 +75,33 @@ class RunId(object):
     def indicate_successful_execution(self):
         self._termination_check.indicate_successful_execution()
 
+    def add_reporter(self, reporter):
+        self._reporters.add(reporter)
+
     def add_reporting(self, reporting):
-        self._reporting.add(reporting)
+        self._reporters.update(reporting.get_reporters())
         self._requested_confidence_level = max(reporting.confidence_level,
                                                self._requested_confidence_level)
+
+    def report_run_failed(self, cmdline, return_code, output):
+        for reporter in self._reporters:
+            reporter.run_failed(self, cmdline, return_code, output)
+
+    def report_run_completed(self, statistics, cmdline):
+        for reporter in self._reporters:
+            reporter.run_completed(self, statistics, cmdline)
+
+    def report_job_completed(self, run_ids):
+        for reporter in self._reporters:
+            reporter.job_completed(run_ids)
+
+    def set_total_number_of_runs(self, num_runs):
+        for reporter in self._reporters:
+            reporter.set_total_number_of_runs(num_runs)
+
+    def report_start_run(self):
+        for reporter in self._reporters:
+            reporter.start_run(self)
 
     def add_persistence(self, persistence):
         self._persistence.add(persistence)
@@ -185,7 +208,8 @@ class RunId(object):
         return not self.__eq__(other)
     
     def _report_cmdline_format_issue_and_exit(self, cmdline):
-        logging.critical("The configuration of %s contains improper Python format strings.", self._bench_cfg.name)
+        logging.critical("The configuration of %s contains improper "
+                         "Python format strings.", self._bench_cfg.name)
          
         # figure out which format misses a conversion type
         without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)

@@ -59,7 +59,7 @@ class Issue16MultipleDataPointsTest(TestCase):
         cnf = Configurator(self._path + '/issue_16.conf',
                            exp_name=exp_name,
                            standard_data_file=self._tmp_file)
-        ex = Executor(cnf.get_runs(), False, Reporters([]))
+        ex = Executor(cnf.get_runs(), False)
         ex.execute()
         self.assertEquals(1, len(cnf.get_runs()))
         run = iter(cnf.get_runs()).next()

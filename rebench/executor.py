@@ -74,13 +74,14 @@ class RandomScheduler(RunScheduler):
 
 class Executor:
     
-    def __init__(self, runs, use_nice, reporter = None,
-                 scheduler = BatchScheduler):
+    def __init__(self, runs, use_nice, scheduler = BatchScheduler):
         self._runs     = runs
         self._use_nice = use_nice
-        self._reporter = reporter
-        self._reporter.set_total_number_of_runs(len(self._runs))
         self._scheduler = scheduler(self)
+
+        num_runs = len(runs)
+        for run in runs:
+            run.set_total_number_of_runs(num_runs)
     
     def _construct_cmdline(self, run_id, perf_reader):
         cmdline  = ""
@@ -96,7 +97,7 @@ class Executor:
         termination_check = run_id.get_termination_check()
         
         run_id.run_config.log()
-        self._reporter.start_run(run_id)
+        run_id.report_start_run()
         
         perf_reader = self._get_performance_reader_instance(
             run_id.bench_cfg.performance_reader)
@@ -117,7 +118,7 @@ class Executor:
             logging.debug("Run: #%d" % stats.num_samples)
 
         if terminate:
-            self._reporter.run_completed(run_id, stats, cmdline)
+            run_id.report_run_completed(stats, cmdline)
 
         return terminate
 
@@ -174,7 +175,8 @@ class Executor:
 
     def execute(self):
         self._scheduler.execute()
-        self._reporter.job_completed(self._runs)
+        for run in self._runs:
+            run.report_job_completed(self._runs)
 
     @property
     def runs(self):

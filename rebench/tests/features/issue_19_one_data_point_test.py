@@ -100,8 +100,10 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         cnf = Configurator(self._path + '/issue_19.conf',
                            standard_data_file=self._tmp_file)
         reporter = TestReporter(self)
-        ex = Executor(cnf.get_runs(), False, Reporters([reporter]),
-                      RoundRobinScheduler)
+        for run in cnf.get_runs():
+            run.add_reporter(reporter)
+
+        ex = Executor(cnf.get_runs(), False, RoundRobinScheduler)
         ex.execute()
 
         for run in cnf.get_runs():

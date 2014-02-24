@@ -38,58 +38,26 @@ class Reporter(object):
         pass
 
     def run_failed(self, run_id, cmdline, return_code, output):
-        raise NotImplementedError('Subclass responsibility')
+        pass
     
     def run_completed(self, run_id, statistics, cmdline):
-        raise NotImplementedError('Subclass responsibility')
+        pass
     
     def job_completed(self, run_ids):
-        raise NotImplementedError('Subclass responsibility')
+        pass
     
     def set_total_number_of_runs(self, num_runs):
-        raise NotImplementedError('Subclass responsibility')
+        pass
     
     def start_run(self, run_id):
-        raise NotImplementedError('Subclass responsibility')
+        pass
     
-
-class Reporters(Reporter):
-    """Distributes the information to all registered reporters."""
-    
-    def __init__(self, reporters):
-        super(Reporters, self).__init__()
-        if type(reporters) is list:
-            self._reporters = reporters
-        else:
-            self._reporters = [reporters]
-
-    def run_failed(self, run_id, cmdline, return_code, output):
-        for reporter in self._reporters:
-            reporter.run_failed(run_id, cmdline, return_code, output)
-            
-    def run_completed(self, run_id, statistics, cmdline):
-        for reporter in self._reporters:
-            reporter.run_completed(run_id, statistics, cmdline)
-    
-    def job_completed(self, run_ids):
-        for reporter in self._reporters:
-            reporter.job_completed(run_ids)
-    
-    def set_total_number_of_runs(self, num_runs):
-        for reporter in self._reporters:
-            reporter.set_total_number_of_runs(num_runs)
-    
-    def start_run(self, run_id):
-        for reporter in self._reporters:
-            reporter.start_run(run_id)
-
 
 class TextReporter(Reporter):
     
-    def __init__(self, configurator):
+    def __init__(self):
         super(TextReporter, self).__init__()
-        self._configurator = configurator
-    
+
     def _configuration_details(self, run_id, statistics = None):
         result = ["\t".join(run_id.as_str_list()), " = "]
         self._output_stats(result, run_id, statistics)
@@ -135,8 +103,8 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
     
-    def __init__(self, configurator):
-        TextReporter.__init__(self, configurator)
+    def __init__(self, cfg):
+        TextReporter.__init__(self)
         self._num_runs       = None
         self._runs_completed = 0
         self._startTime      = None
@@ -179,16 +147,15 @@ class CliReporter(TextReporter):
         self._runs_completed += 1
         self._runs_remaining -= 1
 
-        # TODO: re-add warning for min_runtime
-#         if self._min_runtime:
-#             if statistics.mean < self._min_runtime:
-#                 print("WARNING: measured mean is smaller than min_runtime (%s) \t mean: %.1f [%.1f, %.1f]\trun id: %s"
-#                       % (self._min_runtime,
-#                          statistics.mean, statistics.confIntervalLow,
-#                          statistics.confIntervalHigh, run_id.as_simple_string()))
-#                 print("Cmd: %s" % cmdline)
-#         
-#         self._configurator.statistics.min_runtime
+        if run_id.run_config.min_runtime:
+            if statistics.mean < run_id.run_config.min_runtime:
+                print(("WARNING: measured mean is lower than min_runtime (%s) "
+                      "\t mean: %.1f [%.1f, %.1f]\trun id: %s")
+                      % (run_id.run_config.min_runtime,
+                         statistics.mean, statistics.conf_interval_low,
+                         statistics.conf_interval_high,
+                         run_id.as_simple_string()))
+                print("Cmd: %s" % cmdline)
 
     def job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())
@@ -239,8 +206,8 @@ class FileReporter(TextReporter):
         data is the responsibility of the data_aggregator
     """
     
-    def __init__(self, filename, configurator):
-        TextReporter.__init__(self, configurator)
+    def __init__(self, filename, cfg):
+        TextReporter.__init__(self, cfg)
         self._file = open(filename, 'a+')
 
     def run_failed(self, run_id, cmdline, return_code, output):
@@ -261,27 +228,15 @@ class FileReporter(TextReporter):
             self._file.write(line + "\n")
             
         self._file.close()
-    
-    def set_total_number_of_runs(self, num_runs):
-        pass
-    
-    def start_run(self, run_id):
-        pass
 
-            
+
 class CSVFileReporter(Reporter):
     """ Will generate a CSV file for processing in another program
         as for instance R, Excel, or Numbers """
     
-    def __init__(self, configurator):
-        self._file = open(configurator.reporting['csv_file'], 'a+')
-        self._configurator = configurator
-    
-    def run_failed(self, run_id, cmdline, return_code, output):
-        pass
-    
-    def run_completed(self, run_id, statistics, cmdline):
-        pass
+    def __init__(self, cfg):
+        self._file = open(cfg.csv_file, 'a+')
+        self._cfg = cfg
     
     def _prepareHeaderRow(self, data, data_aggregator, parameterMappings):
         # since the data might be irregular find the item with the most
@@ -311,8 +266,8 @@ class CSVFileReporter(Reporter):
     
     def job_completed(self, run_ids):
         old_locale = locale.getlocale(locale.LC_ALL)
-        if 'csv_locale' in self._configurator.reporting:
-            locale.setlocale(locale.LC_ALL, self._configurator.reporting['csv_locale'])
+        if self._cfg.csv_locale:
+            locale.setlocale(locale.LC_ALL, self._cfg.csv_locale)
         
         
         # get the data to be processed
@@ -330,11 +285,11 @@ class CSVFileReporter(Reporter):
         # add the actual results to the table
         for run, measures in data.iteritems():
             row = []
-            row += run[0 : num_common_parameters]                 # add the common ones
-            row += [''] * (max_num_parameters - len(run))         # add fill for unused parameters
-            row += run[num_common_parameters : ]                  # add all remaining
+            row += run[0:num_common_parameters]            # add the common ones
+            row += [''] * (max_num_parameters - len(run))  # add fill for unused parameters
+            row += run[num_common_parameters:]             # add all remaining
             row += list(StatisticProperties(measures, 
-                            self._configurator.reporting['confidence_level']).as_tuple()) # now add the actual result data
+                                            self._cfg.confidence_level).as_tuple()) # now add the actual result data
             table.append(row)
         
         for row in table:
@@ -343,12 +298,6 @@ class CSVFileReporter(Reporter):
         self._file.close()
         locale.setlocale(locale.LC_ALL, old_locale)
     
-    def set_total_number_of_runs(self, num_runs):
-        pass
-    
-    def start_run(self, run_id):
-        pass
-        
 
 class CodespeedReporter(Reporter):
     """
@@ -356,31 +305,13 @@ class CodespeedReporter(Reporter):
     to the configured Codespeed instance.
     """
     
-    def __init__(self, configurator):
-        self._configurator = configurator
-        self._incremental_report = self._configurator.options.report_incrementally
-        
-        # ensure that all necessary configurations have been set
-        if self._configurator.options.commit_id is None:
-            raise ValueError("--commit-id has to be set on the command line for codespeed reporting.")
-        if self._configurator.options.environment is None:
-            raise ValueError("--environment has to be set on the command line for codespeed reporting.")
-        self._codespeed_cfg = self._configurator.reporting['codespeed']
-        
-        if "project" not in self._codespeed_cfg and self._configurator.options.project is None:
-            raise ValueError("The config file needs to configure a 'project' in the reporting.codespeed section, or --project has to be given on the command line.")
-        
-        if "url" not in self._codespeed_cfg:
-            raise ValueError("The config file needs to configure a URL to codespeed in the reporting.codespeed section")
+    def __init__(self, cfg):
+        self._cfg = cfg
+        self._incremental_report = self._cfg.report_incrementally
 
-        
         # contains the indexes into the data tuples for
         # the parameters
         self._indexMap = DataPointPersistence.data_mapping()
-        
-    def run_failed(self, run_id, cmdline, return_code, output):
-        pass
-
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
@@ -393,26 +324,21 @@ class CodespeedReporter(Reporter):
         self._sendToCodespeed(results)
     
     def _result_data_template(self):
-        if self._configurator.options.project:
-            project = self._configurator.options.project
-        else:
-            project = self._codespeed_cfg['project']
-        
         # all None values have to be filled in
         return {
-            'commitid':     self._configurator.options.commit_id,
-            'project':      project,
+            'commitid':     self._cfg.commit_id,
+            'project':      self._cfg.project,
             #'revision_date': '', # Optional. Default is taken
                                   # either from VCS integration or from current date
             'executable':   None,
             'benchmark':    None,
-            'environment':  self._configurator.options.environment,
-            'branch':       self._configurator.options.branch,
+            'environment':  self._cfg.environment,
+            'branch':       self._cfg.branch,
             'result_value': None,
             # 'result_date': datetime.today(), # Optional
             'std_dev':      None,
             'max':          None,
-            'min':          None }
+            'min':          None}
 
     def _beautifyBenchmarkName(self, name):
         """
@@ -433,11 +359,8 @@ class CodespeedReporter(Reporter):
         else:
             result['result_value'] = -1
         
-        if self._configurator.options.executable is None:
-            result['executable']   = run[self._indexMap['vm']]
-        else:
-            result['executable']   = self._configurator.options.executable
-        
+        result['executable'] = self._cfg.executable or run[self._indexMap['vm']]
+
         if 'codespeed_name' in run_id.bench_cfg.additional_config:
             name = run_id.bench_cfg.additional_config['codespeed_name']
         else:
@@ -454,7 +377,7 @@ class CodespeedReporter(Reporter):
     def _prepareResult(self, run, measures):
         if measures:
             # get the statistics
-            stats = StatisticProperties(measures, self._configurator.reporting['confidence_level'])
+            stats = StatisticProperties(measures, self._cfg.confidence_level)
         else:
             stats = None
             
@@ -490,9 +413,3 @@ class CodespeedReporter(Reporter):
         
         # now, send them of to codespeed
         self._sendToCodespeed(results)
-    
-    def set_total_number_of_runs(self, num_runs):
-        pass
-    
-    def start_run(self, run_id):
-        pass

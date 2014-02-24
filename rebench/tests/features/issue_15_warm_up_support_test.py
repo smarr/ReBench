@@ -72,7 +72,7 @@ class Issue15WarmUpSupportTest(TestCase):
         self.assertEquals(runs[0].get_number_of_data_points(), 0)
         self.assertEquals(runs[0].warmup_iterations, 13)
 
-        ex = Executor([runs[0]], False, Reporters([]))
+        ex = Executor([runs[0]], False)
         ex.execute()
 
         self.assertEquals(runs[0].get_number_of_data_points(),

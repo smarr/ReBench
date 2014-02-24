@@ -23,12 +23,22 @@ from ..reporter import CliReporter, CodespeedReporter
 
 class Reporting(object):
     
-    def __init__(self, raw_config):
+    def __init__(self, raw_config, options):
         self._csv_file   = raw_config.get('csv_file',   None)
         self._csv_locale = raw_config.get('csv_locale', None)
         self._csv_raw    = raw_config.get('csv_raw',    None)
         
         self._confidence_level = raw_config.get('confidence_level', 0.95)
+
+        if "codespeed" in raw_config and options.use_codespeed:
+            self._codespeed = CodespeedReporting(raw_config, options)
+        else:
+            self._codespeed = None
+
+        # if self._config.reporting:
+        #     if ('codespeed' in self._config.reporting and
+        #         self._config.options.use_codespeed):
+        #         reporters.append(CodespeedReporter(self._config))
     
     @property
     def csv_file(self):
@@ -47,12 +57,86 @@ class Reporting(object):
         return self._confidence_level
 
     def combined(self, raw_config):
-        rep = Reporting({})
+        rep = Reporting({}, None)
         rep._csv_file   = raw_config.get('csv_file',   self._csv_file)
         rep._csv_locale = raw_config.get('csv_locale', self._csv_locale)
         rep._csv_raw    = raw_config.get('csv_raw',    self._csv_raw)
         
         rep._confidence_level = raw_config.get('confidence_level',
                                                self._confidence_level)
-
+        rep._codespeed = self._codespeed
         return rep
+
+    def get_reporters(self):
+        result = [CliReporter(self)]
+        if self._codespeed:
+            result.append(self._codespeed.get_reporter())
+        return result
+
+
+class CodespeedReporting(object):
+
+    def __init__(self, raw_config, options):
+        codespeed = raw_config.get("codespeed", {})
+
+        if options.commit_id is None:
+            raise ConfigurationError("--commit-id has to be set on the command "
+                                     "line for codespeed reporting.")
+        self._commit_id = options.commit_id
+
+        if options.environment is None:
+            raise ConfigurationError("--environment has to be set on the "
+                                     "command line for codespeed reporting.")
+        self._environment = options.environment
+
+        if "project" not in codespeed and options.project is None:
+            raise ConfigurationError("The config file needs to configure a "
+                                     "'project' in the reporting.codespeed "
+                                     "section, or --project has to be given on "
+                                     "the command line.")
+        if options.project is not None:
+            self._project = options.project
+        else:
+            self._project = codespeed["project"]
+
+        if "url" not in codespeed:
+            raise ConfigurationError("The config file needs to define a URL to "
+                                     "codespeed in the reporting.codespeed "
+                                     "section")
+        self._url = codespeed["url"]
+
+        self._report_incrementally = options.report_incrementally
+        self._branch               = options.branch
+        self._executable           = options.executable
+
+    @property
+    def report_incrementally(self):
+        return self._report_incrementally
+
+    @property
+    def branch(self):
+        return self._branch
+
+    @property
+    def executable(self):
+        return self._executable
+
+    @property
+    def project(self):
+        return self._project
+
+    @property
+    def commit_id(self):
+        return self._commit_id
+
+    @property
+    def environment(self):
+        return self._environment
+
+    @property
+    def url(self):
+        return self._url
+
+    def get_reporter(self):
+        return CodespeedReporter(self)
+
