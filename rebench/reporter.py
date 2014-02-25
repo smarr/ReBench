@@ -105,8 +105,8 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
     
-    def __init__(self, cfg):
-        TextReporter.__init__(self)
+    def __init__(self, _cfg):
+        super(CliReporter, self).__init__()
         self._num_runs       = None
         self._runs_completed = 0
         self._startTime      = None
@@ -208,8 +208,8 @@ class FileReporter(TextReporter):
         data is the responsibility of the data_aggregator
     """
     
-    def __init__(self, filename, cfg):
-        TextReporter.__init__(self, cfg)
+    def __init__(self, filename):
+        super(FileReporter, self).__init__()
         self._file = open(filename, 'a+')
 
     def run_failed(self, run_id, cmdline, return_code, output):
@@ -309,6 +309,7 @@ class CodespeedReporter(Reporter):
     """
     
     def __init__(self, cfg):
+        super(CodespeedReporter, self).__init__()
         self._cfg = cfg
         self._incremental_report = self._cfg.report_incrementally
 
