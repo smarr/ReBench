@@ -26,10 +26,8 @@ import json
 import urllib2
 import urllib
 import re
-import locale
 
 from .statistics import StatisticProperties
-from .persistence import DataPointPersistence
 
 
 class Reporter(object):
@@ -316,19 +314,13 @@ class CodespeedReporter(Reporter):
         self._cfg = cfg
         self._incremental_report = self._cfg.report_incrementally
 
-        # contains the indexes into the data tuples for
-        # the parameters
-        self._indexMap = DataPointPersistence.data_mapping()
-
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
             return
         
-        # if self._incremental_report is true we are going to talk to codespeed immediately
-        results = [self._formatForCodespeed(run_id, statistics)]
-        
-        # now, send them of to codespeed
-        self._sendToCodespeed(results)
+        # ok, talk to codespeed immediately
+        results = [self._format_for_codespeed(run_id, statistics)]
+        self._send_to_codespeed(results)
     
     def _result_data_template(self):
         # all None values have to be filled in
@@ -347,76 +339,67 @@ class CodespeedReporter(Reporter):
             'max':          None,
             'min':          None}
 
-    def _beautifyBenchmarkName(self, name):
+    @staticmethod
+    def _beautify_benchmark_name(name):
         """
         Currently just remove all bench, or benchmark strings.
         """
         replace = re.compile('bench(mark)?', re.IGNORECASE)
         return replace.sub('', name)
 
-    def _formatForCodespeed(self, run_id, stats = None):
-        run = run_id.as_tuple()
+    def _format_for_codespeed(self, run_id, stats = None):
         result = self._result_data_template()
         
-        if stats and not stats.failedRun:
+        if stats and not run_id.run_failed():
             result['min']          = stats.min
             result['max']          = stats.max
-            result['std_dev']      = stats.stdDev
+            result['std_dev']      = stats.std_dev
             result['result_value'] = stats.mean
         else:
             result['result_value'] = -1
         
-        result['executable'] = self._cfg.executable or run[self._indexMap['vm']]
+        result['executable'] = self._cfg.executable or run_id.bench_cfg.vm.name
 
-        if 'codespeed_name' in run_id.bench_cfg.additional_config:
-            name = run_id.bench_cfg.additional_config['codespeed_name']
+        if run_id.bench_cfg.codespeed_name:
+            name = run_id.bench_cfg.codespeed_name
         else:
-            name = self._beautifyBenchmarkName(run[self._indexMap['bench']]) + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)"
+            name = (self._beautify_benchmark_name(run_id.bench_cfg.name)
+                    + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)")
 
-        name = name % {'cores' : run[self._indexMap['cores']]             or "",
-                       'input_sizes' : run[self._indexMap['input_sizes']] or "",
-                       'extra_args'  : run[self._indexMap['extra_args']]  or ""}
+        # TODO: this is incomplete:
+        name = name % {'cores'       : run_id.cores_as_str,
+                       'input_sizes' : run_id.input_size_as_str,
+                       'extra_args'  : run_id.bench_cfg.extra_args}
         
         result['benchmark'] = name
         
         return result
 
-    def _prepareResult(self, run, measures):
-        if measures:
-            # get the statistics
-            stats = StatisticProperties(measures, self._cfg.confidence_level)
-        else:
-            stats = None
-            
-        return self._formatForCodespeed(run, stats)
-    
-    def _sendToCodespeed(self, results):
-        payload = urllib.urlencode({'json' : json.dumps(results) })
+    def _send_to_codespeed(self, results):
+        payload = urllib.urlencode({'json': json.dumps(results)})
         
         try:
-            fh = urllib2.urlopen(self._codespeed_cfg['url'], payload)
+            fh = urllib2.urlopen(self._cfg.url, payload)
             response = fh.read()
             fh.close()
-            logging.info("Results were sent to codespeed, response was: " + response)
+            logging.info("Results were sent to codespeed, response was: "
+                         + response)
         except urllib2.HTTPError as error:
-            logging.error(str(error) + " This is most likely caused by either " +
-                   "a wrong URL in the config file, or an environment not " +
-                   "configured in codespeed. URL: " +
-                   self._codespeed_cfg['url'])
-        
+            logging.error(str(error) + " This is most likely caused by either "
+                          "a wrong URL in the config file, or an environment "
+                          "not configured in codespeed. URL: " + self._cfg.url)
 
-    def job_completed(self, run_ids):
+    def _prepare_result(self, run_id):
+        stats = StatisticProperties(run_id.get_total_values(),
+                                    run_id.requested_confidence_level)
+        return self._format_for_codespeed(run_id, stats)
+
+    def report_job_completed(self, run_ids):
         if self._incremental_report:
             # in this case all duties are already completed
             return
-        
-        # get the data to be processed
-        data = data_aggregator.getDataFlattend()
-        
-        # create a list of results to be submitted
-        results = []
-        for run, measures in data.iteritems():
-            results.append(self._prepareResult(run, measures))
-        
+
+        results = [self._prepare_result(run_id) for run_id in run_ids]
+
         # now, send them of to codespeed
-        self._sendToCodespeed(results)
+        self._send_to_codespeed(results)
