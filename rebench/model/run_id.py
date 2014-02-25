@@ -161,6 +161,18 @@ class RunId(object):
         return self._input_size
 
     @property
+    def cores_as_str(self):
+        return '' if self._cores is None else str(self._cores)
+
+    @property
+    def input_size_as_str(self):
+        return '' if self._input_size is None else str(self._input_size)
+
+    @property
+    def var_value_as_str(self):
+        return '' if self._var_value is None else str(self._var_value)
+
+    @property
     def var_value(self):
         return self._var_value
     
@@ -224,9 +236,9 @@ class RunId(object):
     def as_str_list(self):
         result = self._bench_cfg.as_str_list()
 
-        result.append('' if self._cores      is None else str(self._cores))
-        result.append('' if self._input_size is None else str(self._input_size))
-        result.append('' if self._var_value  is None else str(self._var_value))
+        result.append(self.cores_as_str)
+        result.append(self.input_size_as_str)
+        result.append(self.var_value_as_str)
 
         return result
 
