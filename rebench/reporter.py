@@ -35,7 +35,7 @@ from .persistence import DataPointPersistence
 class Reporter(object):
 
     def __init__(self):
-        pass
+        self._job_completion_reported = False
 
     def run_failed(self, run_id, cmdline, return_code, output):
         pass
@@ -44,7 +44,9 @@ class Reporter(object):
         pass
     
     def job_completed(self, run_ids):
-        pass
+        if not self._job_completion_reported:
+            self.report_job_completed(run_ids)
+            self._job_completion_reported = True
     
     def set_total_number_of_runs(self, num_runs):
         pass
@@ -157,7 +159,7 @@ class CliReporter(TextReporter):
                          run_id.as_simple_string()))
                 print("Cmd: %s" % cmdline)
 
-    def job_completed(self, run_ids):
+    def report_job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())
         for line in self._generate_all_output(run_ids):
             print(line)
@@ -222,7 +224,7 @@ class FileReporter(TextReporter):
             " ".join(self._configuration_details(run_id, statistics)))
         self._file.writelines(result)
     
-    def job_completed(self, run_ids):
+    def report_job_completed(self, run_ids):
         self._file.write("[%s] Job completed\n" % datetime.now())
         for line in self._generate_all_output(run_ids):
             self._file.write(line + "\n")
