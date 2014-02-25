@@ -143,7 +143,7 @@ class Executor:
                                                           timeout=run_id.bench_cfg.suite.max_runtime)
         if return_code != 0:
             run_id.indicate_failed_execution()
-            self._reporter.run_failed(run_id, cmdline, return_code, output)
+            run_id.report_run_failed(cmdline, return_code, output)
         else:
             self._eval_output(output, run_id, perf_reader, cmdline)
         
@@ -166,7 +166,7 @@ class Executor:
             run_id.indicate_successful_execution()
         except OutputNotParseable:
             run_id.indicate_failed_execution()
-            self._reporter.run_failed(run_id, cmdline, 0, output)
+            run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
     def _check_termination_condition(run_id, termination_check):
