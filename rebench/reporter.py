@@ -199,8 +199,11 @@ class CliReporter(TextReporter):
         else:
             output_list.append("mean:")
             output_list.append(("%.1f" % statistics.mean).rjust(8))
-            output_list.append("[" + ("%.1f" % statistics.conf_interval_low).rjust(8) + ",")
-            output_list.append(("%.1f" % statistics.conf_interval_high).rjust(8) + "]")
+            output_list.append("[" +
+                               ("%.1f" % statistics.conf_interval_low).rjust(8)
+                               + ",")
+            output_list.append(("%.1f" % statistics.conf_interval_high).rjust(8)
+                               + "]")
 
 
 class FileReporter(TextReporter):
@@ -332,8 +335,8 @@ class CodespeedReporter(Reporter):
         return {
             'commitid':     self._cfg.commit_id,
             'project':      self._cfg.project,
-            #'revision_date': '', # Optional. Default is taken
-                                  # either from VCS integration or from current date
+            #'revision_date': '', # Optional. Default is taken either
+                                  # from VCS integration or from current date
             'executable':   None,
             'benchmark':    None,
             'environment':  self._cfg.environment,
