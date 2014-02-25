@@ -35,6 +35,8 @@ class Reporting(object):
         else:
             self._codespeed = None
 
+        self._cli_reporter = CliReporter(self)
+
         # if self._config.reporting:
         #     if ('codespeed' in self._config.reporting and
         #         self._config.options.use_codespeed):
@@ -65,10 +67,11 @@ class Reporting(object):
         rep._confidence_level = raw_config.get('confidence_level',
                                                self._confidence_level)
         rep._codespeed = self._codespeed
+        rep._cli_reporter = CliReporter(rep)
         return rep
 
     def get_reporters(self):
-        result = [CliReporter(self)]
+        result = [self._cli_reporter]
         if self._codespeed:
             result.append(self._codespeed.get_reporter())
         return result
@@ -109,6 +112,8 @@ class CodespeedReporting(object):
         self._branch               = options.branch
         self._executable           = options.executable
 
+        self._reporter = CodespeedReporter(self)
+
     @property
     def report_incrementally(self):
         return self._report_incrementally
@@ -138,5 +143,4 @@ class CodespeedReporting(object):
         return self._url
 
     def get_reporter(self):
-        return CodespeedReporter(self)
-
+        return self._reporter
