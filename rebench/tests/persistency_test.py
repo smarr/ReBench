@@ -36,7 +36,8 @@ class PersistencyTest(unittest.TestCase):
         suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
                                                    'performance_reader': '',
                                                    'command': ''})
-        bench_cfg = BenchmarkConfig("Test Bench [>", None, suite, vm, None, 0)
+        bench_cfg = BenchmarkConfig("Test Bench [>", None, suite, vm, None, 0,
+                                    None)
 
         run_id = RunId(bench_cfg, 1000, 44, 'sdf sdf sdf sdfsf')
         timestamp = datetime.now().replace(microsecond=0)
