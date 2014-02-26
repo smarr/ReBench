@@ -313,14 +313,23 @@ class CodespeedReporter(Reporter):
         super(CodespeedReporter, self).__init__()
         self._cfg = cfg
         self._incremental_report = self._cfg.report_incrementally
+        self._cache_for_seconds = 30
+        self._cache = {}
+        self._last_send = time.time()
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
             return
         
         # ok, talk to codespeed immediately
-        results = [self._format_for_codespeed(run_id, statistics)]
-        self._send_to_codespeed(results)
+        self._cache[run_id] = self._format_for_codespeed(run_id, statistics)
+
+        if time.time() - self._last_send >= self._cache_for_seconds:
+            self._send_and_empty_cache()
+
+    def _send_and_empty_cache(self):
+        self._send_to_codespeed(self._cache.values())
+        self._cache = {}
     
     def _result_data_template(self):
         # all None values have to be filled in
@@ -388,6 +397,7 @@ class CodespeedReporter(Reporter):
             logging.error(str(error) + " This is most likely caused by either "
                           "a wrong URL in the config file, or an environment "
                           "not configured in codespeed. URL: " + self._cfg.url)
+        logging.info("Sent %d results to codespeed." % len(results))
 
     def _prepare_result(self, run_id):
         stats = StatisticProperties(run_id.get_total_values(),
@@ -396,7 +406,8 @@ class CodespeedReporter(Reporter):
 
     def report_job_completed(self, run_ids):
         if self._incremental_report:
-            # in this case all duties are already completed
+            # send remaining items from cache
+            self._send_and_empty_cache()
             return
 
         results = [self._prepare_result(run_id) for run_id in run_ids]
