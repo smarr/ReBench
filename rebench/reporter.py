@@ -384,19 +384,29 @@ class CodespeedReporter(Reporter):
         
         return result
 
+    def _send_payload(self, payload):
+        fh = urllib2.urlopen(self._cfg.url, payload)
+        response = fh.read()
+        fh.close()
+        logging.info("Results were sent to codespeed, response was: "
+                     + response)
+
     def _send_to_codespeed(self, results):
         payload = urllib.urlencode({'json': json.dumps(results)})
-        
+
         try:
-            fh = urllib2.urlopen(self._cfg.url, payload)
-            response = fh.read()
-            fh.close()
-            logging.info("Results were sent to codespeed, response was: "
-                         + response)
-        except urllib2.HTTPError as error:
-            logging.error(str(error) + " This is most likely caused by either "
-                          "a wrong URL in the config file, or an environment "
-                          "not configured in codespeed. URL: " + self._cfg.url)
+            self._send_payload(payload)
+        except urllib2.HTTPError:
+            # sometimes codespeed fails to accept a request because something
+            # is not yet properly initialized, let's try again for those cases
+            try:
+                self._send_payload(payload)
+            except urllib2.HTTPError as error:
+                logging.error(str(error) + " This is most likely caused by "
+                              "either a wrong URL in the config file, or an "
+                              "environment not configured in codespeed. URL: "
+                              + self._cfg.url)
+
         logging.info("Sent %d results to codespeed." % len(results))
 
     def _prepare_result(self, run_id):
