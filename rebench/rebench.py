@@ -157,7 +157,10 @@ Argument:
 
 
 def main_func():
-    return ReBench().run()
+    try:
+        return ReBench().run()
+    except KeyboardInterrupt:
+        logging.info("Aborted by user request")
 
 if __name__ == "__main__":
     sys.exit(main_func())
