@@ -31,7 +31,7 @@ setup(name='ReBench',
       author='Stefan Marr',
       author_email='rebench@stefan-marr.de',
       url='https://github.com/smarr/ReBench',
-      packages=['rebench'],
+      packages=['rebench', 'rebench.model'],
       install_requires=[
           'PyYAML>=3.08',
           'scipy>=0.8.0'
@@ -39,6 +39,6 @@ setup(name='ReBench',
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']
       },
-      test_suite = 'rebench.test',
+      test_suite = 'rebench.tests',
       license = 'MIT'
 )
