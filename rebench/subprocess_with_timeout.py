@@ -45,7 +45,6 @@ def get_process_children(pid):
     p = Popen('ps --no-headers -o pid --ppid %d' % pid, shell = True,
               stdout = PIPE, stderr = PIPE)
     stdout, _stderr = p.communicate()
-    print "SUB: ps --no-headers -o pid --ppid %d ---\n%s\n----" % (pid, stdout)
     result = [int(p) for p in stdout.split()]
     for child in result[:]:
         result.extend(get_process_children(child))
