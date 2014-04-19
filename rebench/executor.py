@@ -27,7 +27,7 @@ import subprocess
 import subprocess_with_timeout as subprocess_timeout
 
 from .statistics  import StatisticProperties
-from .performance import OutputNotParseable
+from .performance import ExecutionDeliveredNoResults
 
 
 class RunScheduler(object):
@@ -164,7 +164,7 @@ class Executor:
                         run_id.bench_cfg.vm.name, run_id.bench_cfg.name,
                         data_point.get_total_value()))
             run_id.indicate_successful_execution()
-        except OutputNotParseable:
+        except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)
 

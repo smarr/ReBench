@@ -61,11 +61,19 @@ class Performance:
         return False
 
 
-class OutputNotParseable(Exception):
+class ExecutionDeliveredNoResults(Exception):
     """The exception to be raised when no results were obtained from the given
        data string."""
     def __init__(self, unparsable_data):
         self._unparseable_data = unparsable_data
+
+
+class OutputNotParseable(ExecutionDeliveredNoResults):
+    pass
+
+
+class ResultsIndicatedAsInvalid(ExecutionDeliveredNoResults):
+    pass
 
 
 class LogPerformance(Performance):
@@ -90,7 +98,8 @@ class LogPerformance(Performance):
          
         for line in data.split("\n"):
             if self.check_for_error(line):
-                raise RuntimeError("Output of bench program indicated error.")
+                raise ResultsIndicatedAsInvalid(
+                    "Output of bench program indicated error.")
             
             m = self.re_log_line.match(line)
             if m:
@@ -129,7 +138,7 @@ class LogPerformance(Performance):
 #     
 #         for line in data.split("\n"):
 #             if self.check_for_error(line):
-#                 raise RuntimeError("Output of bench program indicated error.")
+#                 raise ResultsIndicatedAsInvalid("Output of bench program indicated error.")
 #     
 #             m = self.re_barrierSec1.match(line)
 #             if not m:
@@ -163,7 +172,7 @@ class LogPerformance(Performance):
 #     
 #         for line in data.split("\n"):
 #             if self.check_for_error(line):
-#                 raise RuntimeError("Output of bench program indicated error.")
+#                 raise ResultsIndicatedAsInvalid("Output of bench program indicated error.")
 #             #import pdb; pdb.set_trace() 
 #             m = self.barrier_time.match(line)
 #             if not m:
@@ -248,7 +257,8 @@ class TestVMPerformance(Performance):
         
         for line in data.split("\n"):
             if self.check_for_error(line):
-                raise RuntimeError("Output of bench program indicated error.")
+                raise ResultsIndicatedAsInvalid(
+                    "Output of bench program indicated error.")
             
             m = TestVMPerformance.re_time.match(line)
             if m:
@@ -301,7 +311,8 @@ class CaliperPerformance(Performance):
 
         for line in data.split("\n"):
             if self.check_for_error(line):
-                raise RuntimeError("Output of bench program indicates errors.")
+                raise ResultsIndicatedAsInvalid(
+                    "Output of bench program indicates errors.")
             
             m = self.re_log_line.match(line)
             if m:
