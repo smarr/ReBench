@@ -144,6 +144,10 @@ class Executor:
         if return_code != 0:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
+            if return_code == 126:
+                logging.error(("Could not execute %s. A likely cause is that "
+                               "the file is not marked as executable.")
+                              % run_id.bench_cfg.vm.name)
         else:
             self._eval_output(output, run_id, perf_reader, cmdline)
         
