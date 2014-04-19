@@ -78,10 +78,11 @@ class LogPerformance(Performance):
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
+    re_incorrect   = re.compile(r".*incorrect.*")
     
     def __init__(self):
         self._otherErrorDefinitions = [self.re_NPB_partial_invalid, 
-                                       self.re_NPB_invalid]
+                                       self.re_NPB_invalid, self.re_incorrect]
 
     def parse_data(self, data, run_id):
         data_points = []
