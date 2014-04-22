@@ -45,14 +45,15 @@ class BenchmarkConfig(object):
            suite definitions.
         """
         name, details = value_with_optional_details(bench, {})
-        
+
+        command            = details.get('command', name)
         performance_reader = details.get('performance_reader',
                                          suite.performance_reader)
         extra_args         = details.get('extra_args', None)
         codespeed_name     = details.get('codespeed_name', None)
         warmup             = int(details.get('warmup',        0))
-        return BenchmarkConfig(name, performance_reader, suite, suite.vm,
-                               extra_args, warmup, codespeed_name)
+        return BenchmarkConfig(name, command, performance_reader, suite,
+                               suite.vm, extra_args, warmup, codespeed_name)
 
     @classmethod
     def _register(cls, cfg):
@@ -64,14 +65,16 @@ class BenchmarkConfig(object):
             BenchmarkConfig._registry[key] = cfg
         return cfg
     
-    def __init__(self, name, performance_reader, suite, vm, extra_args, warmup,
-                 codespeed_name):
+    def __init__(self, name, command, performance_reader, suite, vm, extra_args,
+                 warmup, codespeed_name):
         self._name               = name
+        self._command            = command
         self._extra_args         = extra_args
         self._codespeed_name     = codespeed_name
         self._warmup             = warmup
         self._performance_reader = performance_reader
         self._suite = suite
+
         self._vm = vm
         self._runs = set()      # the compiled runs, these might be shared
                                 # with other benchmarks/suites
@@ -83,6 +86,18 @@ class BenchmarkConfig(object):
     @property
     def name(self):
         return self._name
+
+    @property
+    def command(self):
+        """
+        We distinguish between the benchmark name, used for reporting, and the
+        command that is passed to the benchmark executor.
+        If no command was specified in the config, the name is used instead.
+        See the compile(.) method for details.
+
+        :return: the command to be passed to the benchmark invocation
+        """
+        return self._command
 
     @property
     def codespeed_name(self):

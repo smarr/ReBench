@@ -199,7 +199,7 @@ class RunId(object):
             cmdline += " %s" % self._bench_cfg.extra_args
             
         try:
-            cmdline = cmdline % {'benchmark' : self._bench_cfg.name,
+            cmdline = cmdline % {'benchmark' : self._bench_cfg.command,
                                  'input'     : self._input_size,
                                  'variable'  : self._var_value,
                                  'cores'     : self._cores,
