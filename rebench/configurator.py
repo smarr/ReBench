@@ -20,6 +20,7 @@
 import sys
 import yaml
 import logging
+import subprocess
 import traceback
 from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
@@ -59,8 +60,7 @@ class Configurator:
             logging.error(traceback.format_exc(0))
             sys.exit(-1)
 
-    @staticmethod
-    def _process_cli_options(options):
+    def _process_cli_options(self, options):
         if options is None:
             return
         
@@ -71,8 +71,25 @@ class Configurator:
         else:
             logging.basicConfig(level=logging.ERROR)
             logging.getLogger().setLevel(logging.ERROR)
+
+        if options.use_nice:
+            if not self._can_set_niceness():
+                logging.error("Process niceness cannot be set currently. "
+                              "To execute benchmarks with highest priority, "
+                              "you might need root/admin rights.")
+                logging.error("Deactivated usage of nice command.")
+                options.use_nice = False
                     
         return options
+
+    @staticmethod
+    def _can_set_niceness():
+        output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
+                                         stderr=subprocess.STDOUT)
+        if "cannot set niceness" in output or "Permission denied" in output:
+            return False
+        else:
+            return True
 
     @property
     def options(self):
