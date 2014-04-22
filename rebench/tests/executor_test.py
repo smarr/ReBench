@@ -130,11 +130,13 @@ class ExecutorTest(unittest.TestCase):
         self._basic_execution(cnf)
         
 
-def Popen_override(cmdline, stdout, shell):
+def Popen_override(cmdline, stdout, stderr=None, shell=None):
     class Popen:
         returncode = 0
         def communicate(self):
-            return (None, None)
+            return "", ""
+        def poll(self):
+            return self.returncode
     
     return Popen()
 
