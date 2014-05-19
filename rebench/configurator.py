@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import sys
-import yaml
 import logging
 import subprocess
 import traceback
@@ -47,6 +46,7 @@ class Configurator:
             
     @staticmethod
     def _load_config(file_name):
+        import yaml
         try:
             f = file(file_name, 'r')
             return yaml.load(f)
