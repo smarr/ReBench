@@ -1,0 +1,218 @@
+# Run progress: 0.00% complete, ETA 01:00:00
+# Warmup: 20 iterations, 1 s each
+# Measurement: 20 iterations, 1 s each
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: benchmarks.DynamicProxy.directAdd
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Fork: 1 of 10
+# Warmup Iteration   1: 847885.303 ops/ms
+# Warmup Iteration   2: 869209.997 ops/ms
+# Warmup Iteration   3: 787127.216 ops/ms
+# Warmup Iteration   4: 849333.002 ops/ms
+# Warmup Iteration   5: 862511.213 ops/ms
+# Warmup Iteration   6: 786574.891 ops/ms
+# Warmup Iteration   7: 867692.766 ops/ms
+# Warmup Iteration   8: 791901.852 ops/ms
+# Warmup Iteration   9: 868440.246 ops/ms
+# Warmup Iteration  10: 873144.727 ops/ms
+# Warmup Iteration  11: 858841.746 ops/ms
+# Warmup Iteration  12: 864258.483 ops/ms
+# Warmup Iteration  13: 867792.566 ops/ms
+# Warmup Iteration  14: 873802.641 ops/ms
+# Warmup Iteration  15: 789308.386 ops/ms
+# Warmup Iteration  16: 872348.119 ops/ms
+# Warmup Iteration  17: 876049.520 ops/ms
+# Warmup Iteration  18: 855590.678 ops/ms
+# Warmup Iteration  19: 790754.207 ops/ms
+# Warmup Iteration  20: 844763.982 ops/ms
+Iteration   1: 851585.492 ops/ms
+Iteration   2: 855210.272 ops/ms
+Iteration   3: 863139.120 ops/ms
+Iteration   4: 854572.548 ops/ms
+Iteration   5: 848365.018 ops/ms
+Iteration   6: 868452.069 ops/ms
+Iteration   7: 874102.630 ops/ms
+Iteration   8: 871221.945 ops/ms
+Iteration   9: 872087.960 ops/ms
+Iteration  10: 871954.737 ops/ms
+Iteration  11: 866641.653 ops/ms
+Iteration  12: 871745.541 ops/ms
+Iteration  13: 873303.464 ops/ms
+Iteration  14: 871289.619 ops/ms
+Iteration  15: 871734.355 ops/ms
+Iteration  16: 879997.366 ops/ms
+Iteration  17: 871969.580 ops/ms
+Iteration  18: 804149.821 ops/ms
+Iteration  19: 874024.426 ops/ms
+Iteration  20: 875282.521 ops/ms
+
+Result: 864541.507 ±(99.9%) 14445.542 ops/ms [Average]
+  Statistics: (min, avg, max) = (804149.821, 864541.507, 879997.366), stdev = 16635.508
+  Confidence interval (99.9%): [850095.965, 878987.049]
+
+
+# Run progress: 1.11% complete, ETA 01:11:46
+# Warmup: 20 iterations, 1 s each
+# Measurement: 20 iterations, 1 s each
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: benchmarks.DynamicProxy.directAdd
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Fork: 2 of 10
+# Warmup Iteration   1: 857739.490 ops/ms
+# Warmup Iteration   2: 869167.053 ops/ms
+# Warmup Iteration   3: 866989.763 ops/ms
+# Warmup Iteration   4: 867616.777 ops/ms
+# Warmup Iteration   5: 855941.061 ops/ms
+# Warmup Iteration   6: 863636.436 ops/ms
+# Warmup Iteration   7: 869266.711 ops/ms
+# Warmup Iteration   8: 864455.908 ops/ms
+# Warmup Iteration   9: 865891.557 ops/ms
+# Warmup Iteration  10: 864545.288 ops/ms
+# Warmup Iteration  11: 785449.100 ops/ms
+# Warmup Iteration  12: 871062.463 ops/ms
+# Warmup Iteration  13: 865995.950 ops/ms
+# Warmup Iteration  14: 869501.998 ops/ms
+# Warmup Iteration  15: 880105.688 ops/ms
+# Warmup Iteration  16: 870951.292 ops/ms
+# Warmup Iteration  17: 869497.593 ops/ms
+# Warmup Iteration  18: 789584.957 ops/ms
+# Warmup Iteration  19: 865307.329 ops/ms
+# Warmup Iteration  20: 864320.819 ops/ms
+Iteration   1: 846892.297 ops/ms
+Iteration   2: 858812.483 ops/ms
+Iteration   3: 779040.228 ops/ms
+Iteration   4: 866954.433 ops/ms
+Iteration   5: 874218.456 ops/ms
+Iteration   6: 871035.856 ops/ms
+Iteration   7: 878649.265 ops/ms
+Iteration   8: 791281.176 ops/ms
+Iteration   9: 863840.816 ops/ms
+Iteration  10: 870654.903 ops/ms
+Iteration  11: 858951.775 ops/ms
+Iteration  12: 781786.693 ops/ms
+Iteration  13: 857076.130 ops/ms
+Iteration  14: 869513.038 ops/ms
+Iteration  15: 872952.031 ops/ms
+Iteration  16: 871831.447 ops/ms
+Iteration  17: 787480.350 ops/ms
+Iteration  18: 870333.741 ops/ms
+Iteration  19: 878597.978 ops/ms
+Iteration  20: 868287.689 ops/ms
+
+Result: 850909.539 ±(99.9%) 30180.380 ops/ms [Average]
+  Statistics: (min, avg, max) = (779040.228, 850909.539, 878649.265), stdev = 34755.771
+  Confidence interval (99.9%): [820729.159, 881089.919]
+
+
+# Run progress: 10.00% complete, ETA 01:05:16
+# Warmup: 20 iterations, 1 s each
+# Measurement: 20 iterations, 1 s each
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: benchmarks.DynamicProxy.directAdd
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Fork: 10 of 10
+# Warmup Iteration   1: 850773.837 ops/ms
+# Warmup Iteration   2: 859996.736 ops/ms
+# Warmup Iteration   3: 842337.855 ops/ms
+# Warmup Iteration   4: 834024.179 ops/ms
+# Warmup Iteration   5: 848325.927 ops/ms
+# Warmup Iteration   6: 851807.203 ops/ms
+# Warmup Iteration   7: 865749.630 ops/ms
+# Warmup Iteration   8: 841759.249 ops/ms
+# Warmup Iteration   9: 843872.638 ops/ms
+# Warmup Iteration  10: 852743.625 ops/ms
+# Warmup Iteration  11: 870366.746 ops/ms
+# Warmup Iteration  12: 860670.067 ops/ms
+# Warmup Iteration  13: 855269.930 ops/ms
+# Warmup Iteration  14: 860215.809 ops/ms
+# Warmup Iteration  15: 862334.297 ops/ms
+# Warmup Iteration  16: 861751.244 ops/ms
+# Warmup Iteration  17: 855697.310 ops/ms
+# Warmup Iteration  18: 773933.681 ops/ms
+# Warmup Iteration  19: 855363.310 ops/ms
+# Warmup Iteration  20: 860512.882 ops/ms
+Iteration   1: 784181.953 ops/ms
+Iteration   2: 861926.105 ops/ms
+Iteration   3: 854354.042 ops/ms
+Iteration   4: 863663.976 ops/ms
+Iteration   5: 869966.533 ops/ms
+Iteration   6: 821378.328 ops/ms
+Iteration   7: 866908.171 ops/ms
+Iteration   8: 787129.306 ops/ms
+Iteration   9: 780665.906 ops/ms
+Iteration  10: 783710.954 ops/ms
+Iteration  11: 869766.607 ops/ms
+Iteration  12: 874771.924 ops/ms
+Iteration  13: 874007.935 ops/ms
+Iteration  14: 786184.900 ops/ms
+Iteration  15: 867349.710 ops/ms
+Iteration  16: 818710.228 ops/ms
+Iteration  17: 786727.556 ops/ms
+Iteration  18: 853130.618 ops/ms
+Iteration  19: 869214.341 ops/ms
+Iteration  20: 867435.571 ops/ms
+
+Result: 837059.233 ±(99.9%) 33100.880 ops/ms [Average]
+  Statistics: (min, avg, max) = (780665.906, 837059.233, 874771.924), stdev = 38119.022
+  Confidence interval (99.9%): [803958.353, 870160.113]
+
+
+# Run progress: 11.11% complete, ETA 01:04:28
+# Warmup: 20 iterations, 1 s each
+# Measurement: 20 iterations, 1 s each
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: benchmarks.DynamicProxy.proxiedAdd
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Fork: 1 of 10
+# Warmup Iteration   1: 99681.741 ops/ms
+# Warmup Iteration   2: 111011.439 ops/ms
+# Warmup Iteration   3: 83221.079 ops/ms
+# Warmup Iteration   4: 86550.458 ops/ms
+# Warmup Iteration   5: 87100.410 ops/ms
+# Warmup Iteration   6: 86719.841 ops/ms
+# Warmup Iteration   7: 87628.795 ops/ms
+# Warmup Iteration   8: 86472.207 ops/ms
+# Warmup Iteration   9: 86111.395 ops/ms
+# Warmup Iteration  10: 86871.991 ops/ms
+# Warmup Iteration  11: 87797.001 ops/ms
+# Warmup Iteration  12: 86590.364 ops/ms
+# Warmup Iteration  13: 87005.565 ops/ms
+# Warmup Iteration  14: 88105.287 ops/ms
+# Warmup Iteration  15: 88517.748 ops/ms
+# Warmup Iteration  16: 86863.272 ops/ms
+# Warmup Iteration  17: 87413.754 ops/ms
+# Warmup Iteration  18: 85960.142 ops/ms
+# Warmup Iteration  19: 87216.054 ops/ms
+# Warmup Iteration  20: 86368.302 ops/ms
+Iteration   1: 85897.591 ops/ms
+Iteration   2: 85818.520 ops/ms
+Iteration   3: 86150.077 ops/ms
+Iteration   4: 86313.090 ops/ms
+Iteration   5: 86278.108 ops/ms
+Iteration   6: 86504.070 ops/ms
+Iteration   7: 85584.778 ops/ms
+Iteration   8: 86987.707 ops/ms
+Iteration   9: 85158.246 ops/ms
+Iteration  10: 87069.476 ops/ms
+Iteration  11: 88860.713 ops/ms
+Iteration  12: 87230.651 ops/ms
+Iteration  13: 88672.239 ops/ms
+Iteration  14: 87435.816 ops/ms
+Iteration  15: 83644.226 ops/ms
+Iteration  16: 86858.133 ops/ms
+Iteration  17: 86321.756 ops/ms
+Iteration  18: 87300.606 ops/ms
+Iteration  19: 85362.787 ops/ms
+Iteration  20: 86763.998 ops/ms
+
+Result: 86510.629 ±(99.9%) 1020.717 ops/ms [Average]
+  Statistics: (min, avg, max) = (83644.226, 86510.629, 88860.713), stdev = 1175.459
+  Confidence interval (99.9%): [85489.913, 87531.346]
