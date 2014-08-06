@@ -20,14 +20,15 @@
 from __future__ import with_statement
 
 from collections import deque
-
 import logging
+import pkgutil
 import random
 import subprocess
-import subprocess_with_timeout as subprocess_timeout
+import sys
 
+import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
-from .performance import ExecutionDeliveredNoResults
+from .interop.adapter import ExecutionDeliveredNoResults
 
 
 class RunScheduler(object):
@@ -83,13 +84,13 @@ class Executor:
         for run in runs:
             run.set_total_number_of_runs(num_runs)
     
-    def _construct_cmdline(self, run_id, perf_reader):
+    def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline  = ""
                 
         if self._use_nice:
             cmdline += "nice -n-20 "
         
-        cmdline += perf_reader.acquire_command(run_id.cmdline())
+        cmdline += gauge_adapter.acquire_command(run_id.cmdline())
                 
         return cmdline
     
@@ -99,10 +100,10 @@ class Executor:
         run_id.run_config.log()
         run_id.report_start_run()
         
-        perf_reader = self._get_performance_reader_instance(
-            run_id.bench_cfg.performance_reader)
+        gauge_adapter = self._get_gauge_adapter_instance(
+            run_id.bench_cfg.gauge_adapter)
         
-        cmdline = self._construct_cmdline(run_id, perf_reader)
+        cmdline = self._construct_cmdline(run_id, gauge_adapter)
         
         terminate = self._check_termination_condition(run_id, termination_check)
         stats = StatisticProperties(run_id.get_total_values(),
@@ -110,8 +111,8 @@ class Executor:
         
         # now start the actual execution
         if not terminate:
-            terminate = self._generate_data_point(cmdline, perf_reader, run_id,
-                                                  termination_check)
+            terminate = self._generate_data_point(cmdline, gauge_adapter,
+                                                  run_id, termination_check)
             
             stats = StatisticProperties(run_id.get_total_values(),
                                         run_id.requested_confidence_level)
@@ -123,16 +124,25 @@ class Executor:
         return terminate
 
     @staticmethod
-    def _get_performance_reader_instance(reader):
-        # depending on how ReBench was executed, the name might one of the two 
-        try:
-            p = __import__("rebench.performance", fromlist=reader)
-        except ImportError:
-            p = __import__("performance", fromlist=reader)
+    def _get_gauge_adapter_instance(adapter_name):
+        adapter_name += "Adapter"
+
+        root = sys.modules['rebench.interop'].__path__
+
+        for _, name, _ in pkgutil.walk_packages(root):
+            # depending on how ReBench was executed, the name might one of the two
+            try:
+                p = __import__("rebench.interop." + name, fromlist=adapter_name)
+            except ImportError as e1:
+                try:
+                    p = __import__("interop." + name, fromlist=adapter_name)
+                except ImportError as e2:
+                    p = None
+            if p is not None and hasattr(p, adapter_name):
+                return getattr(p, adapter_name)()
+
         
-        return getattr(p, reader)()
-        
-    def _generate_data_point(self, cmdline, perf_reader, run_id,
+    def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(cmdline,
@@ -149,13 +159,13 @@ class Executor:
                                "the file is not marked as executable.")
                               % run_id.bench_cfg.vm.name)
         else:
-            self._eval_output(output, run_id, perf_reader, cmdline)
+            self._eval_output(output, run_id, gauge_adapter, cmdline)
         
         return self._check_termination_condition(run_id, termination_check)
     
-    def _eval_output(self, output, run_id, perf_reader, cmdline):
+    def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
-            data_points = perf_reader.parse_data(output, run_id)
+            data_points = gauge_adapter.parse_data(output, run_id)
 
             warmup = run_id.warmup_iterations
 

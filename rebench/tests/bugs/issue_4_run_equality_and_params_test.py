@@ -35,7 +35,7 @@ class Issue4RunEquality(unittest.TestCase):
                                                   'binary': 'foo_bar_bin'},
                                    None, [1], None)
         suite     = BenchmarkSuite("MySuite", vm, {
-            'benchmarks': [], 'performance_reader': '',
+            'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s %(input)s'})
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
                                     '3', 0, None)
@@ -46,7 +46,7 @@ class Issue4RunEquality(unittest.TestCase):
                                                   'binary': 'foo_bar_bin'},
                                    None, [1], None)
         suite     = BenchmarkSuite("MySuite", vm, {
-            'benchmarks': [], 'performance_reader': '',
+            'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s 2 3'})
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
                                     None, 0, None)

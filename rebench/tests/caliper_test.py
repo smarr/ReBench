@@ -21,7 +21,7 @@ import unittest
 import tempfile
 import os
 
-from ..performance import CaliperPerformance
+from ..interop.caliper_adapter import CaliperAdapter
 from ..persistence import DataPointPersistence
 from .. import ReBench
 from ..configurator import Configurator
@@ -81,7 +81,7 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
     def setUp(self):
         self._result1 = "Measurement (runtime) for SimpleExecution in AliasMOP.ExampleBench: 52.316778ns"
         self._result2 = "Measurement (runtime) for SimpleAdditionAmbientTalk in AliasMOP.ExampleBench: 17365.513556ns"
-        self._c       = CaliperPerformance()
+        self._c       = CaliperAdapter()
         self._path    = os.path.dirname(os.path.realpath(__file__))
     
     def test_unmodified_command(self):

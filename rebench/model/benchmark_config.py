@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from . import value_with_optional_details
+import logging
 
 
 class BenchmarkConfig(object):
@@ -47,12 +48,20 @@ class BenchmarkConfig(object):
         name, details = value_with_optional_details(bench, {})
 
         command            = details.get('command', name)
-        performance_reader = details.get('performance_reader',
-                                         suite.performance_reader)
+
+        # TODO: remove in ReBench 1.0
+        if 'performance_reader' in details:
+            logging.warning("Found deprecated 'performance_reader' key in"
+                            " configuration, please replace by 'gauge_adapter'"
+                            " key.")
+            details['gauge_adapter'] = details['performance_reader']
+
+        gauge_adapter      = details.get('gauge_adapter',
+                                         suite.gauge_adapter)
         extra_args         = details.get('extra_args', None)
         codespeed_name     = details.get('codespeed_name', None)
         warmup             = int(details.get('warmup',        0))
-        return BenchmarkConfig(name, command, performance_reader, suite,
+        return BenchmarkConfig(name, command, gauge_adapter, suite,
                                suite.vm, extra_args, warmup, codespeed_name)
 
     @classmethod
@@ -65,14 +74,14 @@ class BenchmarkConfig(object):
             BenchmarkConfig._registry[key] = cfg
         return cfg
     
-    def __init__(self, name, command, performance_reader, suite, vm, extra_args,
+    def __init__(self, name, command, gauge_adapter, suite, vm, extra_args,
                  warmup, codespeed_name):
         self._name               = name
         self._command            = command
         self._extra_args         = extra_args
         self._codespeed_name     = codespeed_name
         self._warmup             = warmup
-        self._performance_reader = performance_reader
+        self._gauge_adapter      = gauge_adapter
         self._suite = suite
 
         self._vm = vm
@@ -112,8 +121,8 @@ class BenchmarkConfig(object):
         return self._warmup
     
     @property
-    def performance_reader(self):
-        return self._performance_reader
+    def gauge_adapter(self):
+        return self._gauge_adapter
     
     @property
     def suite(self):

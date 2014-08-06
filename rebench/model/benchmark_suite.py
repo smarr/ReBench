@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from . import value_or_list_as_list
+import logging
 
 
 class BenchmarkSuite(object):
@@ -43,9 +44,17 @@ class BenchmarkSuite(object):
         self._vm                 = vm
         self._benchmarks         = value_or_list_as_list(
                                                 global_suite_cfg['benchmarks'])
-        self._performance_reader = global_suite_cfg['performance_reader']
+        self._gauge_adapter      = global_suite_cfg['gauge_adapter']
+
         self._command            = global_suite_cfg['command']
         self._max_runtime        = global_suite_cfg.get('max_runtime', -1)
+
+        # TODO: remove in ReBench 1.0
+        if 'performance_reader' in global_suite_cfg:
+            logging.warning("Found deprecated 'performance_reader' key in"
+                            " configuration, please replace by 'gauge_adapter'"
+                            " key.")
+            self._gauge_adapter = global_suite_cfg['performance_reader']
 
     @property
     def input_sizes(self):
@@ -72,8 +81,8 @@ class BenchmarkSuite(object):
         return self._benchmarks
     
     @property
-    def performance_reader(self):
-        return self._performance_reader
+    def gauge_adapter(self):
+        return self._gauge_adapter
 
     @property
     def name(self):

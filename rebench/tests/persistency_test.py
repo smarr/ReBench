@@ -34,7 +34,7 @@ class PersistencyTest(unittest.TestCase):
         vm        = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
                                    None, [1], None)
         suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
-                                                   'performance_reader': '',
+                                                   'gauge_adapter': '',
                                                    'command': ''})
         bench_cfg = BenchmarkConfig("Test Bench [>", "Test Bench [>", None,
                                     suite, vm, None, 0, None)
