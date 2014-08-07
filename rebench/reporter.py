@@ -20,6 +20,7 @@
 from __future__ import with_statement, print_function
 
 from datetime import datetime
+from httplib import HTTPException
 import time
 import logging
 import json
@@ -396,12 +397,12 @@ class CodespeedReporter(Reporter):
 
         try:
             self._send_payload(payload)
-        except urllib2.HTTPError:
+        except (IOError, HTTPException):
             # sometimes codespeed fails to accept a request because something
             # is not yet properly initialized, let's try again for those cases
             try:
                 self._send_payload(payload)
-            except urllib2.HTTPError as error:
+            except (IOError, HTTPException) as error:
                 logging.error(str(error) + " This is most likely caused by "
                               "either a wrong URL in the config file, or an "
                               "environment not configured in codespeed. URL: "
