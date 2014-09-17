@@ -75,9 +75,11 @@ class RandomScheduler(RunScheduler):
 
 class Executor:
     
-    def __init__(self, runs, use_nice, scheduler = BatchScheduler):
+    def __init__(self, runs, use_nice, include_faulty = False,
+                 scheduler = BatchScheduler):
         self._runs     = runs
         self._use_nice = use_nice
+        self._include_faulty = include_faulty
         self._scheduler = scheduler(self)
 
         num_runs = len(runs)
@@ -91,7 +93,7 @@ class Executor:
             cmdline += "nice -n-20 "
         
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
-                
+
         return cmdline
     
     def execute_run(self, run_id):
@@ -123,8 +125,7 @@ class Executor:
 
         return terminate
 
-    @staticmethod
-    def _get_gauge_adapter_instance(adapter_name):
+    def _get_gauge_adapter_instance(self, adapter_name):
         adapter_name += "Adapter"
 
         root = sys.modules['rebench.interop'].__path__
@@ -139,11 +140,11 @@ class Executor:
                 except ImportError as e2:
                     p = None
             if p is not None and hasattr(p, adapter_name):
-                return getattr(p, adapter_name)()
+                return getattr(p, adapter_name)(self._include_faulty)
 
-        
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
+        print cmdline
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(cmdline,
                                                           cwd=run_id.bench_cfg.suite.location,
@@ -151,7 +152,7 @@ class Executor:
                                                           stderr=subprocess.STDOUT,
                                                           shell=True,
                                                           timeout=run_id.bench_cfg.suite.max_runtime)
-        if return_code != 0:
+        if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:

@@ -20,7 +20,7 @@
 import re
 
 
-class GaugeAdapter:
+class GaugeAdapter(object):
     """A GaugeAdapter implements a common interface to evaluate the output of
        benchmarks and to determine measured performance values.
        The GaugeAdapter class also provides some basic helper functionality.
@@ -31,7 +31,8 @@ class GaugeAdapter:
     re_segfault  = re.compile("Segmentation fault")
     re_bus_error = re.compile("Bus error")
 
-    def __init__(self):
+    def __init__(self, include_faulty):
+        self._include_faulty = include_faulty
         self._otherErrorDefinitions = None
 
     def acquire_command(self, command):
@@ -44,6 +45,9 @@ class GaugeAdapter:
         """Check whether the output line contains one of the common error
            messages. If its an erroneous run, the result has to be discarded.
         """
+        if self._include_faulty:
+            return False
+
         if self.re_error.search(line):
             return True
         if self.re_segfault.search(line):

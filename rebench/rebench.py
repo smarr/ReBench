@@ -27,7 +27,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-
 import logging
 import sys
 
@@ -62,6 +61,9 @@ Argument:
                            default=False)
         options.add_option("-d", "--debug", action="store_true", dest="debug",
                            default=False, help="Enable debug output.")
+        options.add_option("-f", "--faulty", action="store_true",
+                           dest="include_faulty", default=False,
+                           help="Include results of faulty or failing runs")
         options.add_option("-v", "--verbose", action="store_true",
                            dest="verbose", default=False,
                            help="Out more details in the report.")
@@ -152,6 +154,7 @@ Argument:
                            'random':      RandomScheduler}.get(
                                                 self._config.options.scheduler)
         executor = Executor(self._config.get_runs(), self._config.use_nice,
+                            self._config.include_faulty,
                             scheduler_class)
         executor.execute()
 

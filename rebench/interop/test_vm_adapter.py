@@ -31,7 +31,8 @@ class TestVMAdapter(GaugeAdapter):
 
     re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
 
-    def __init__(self):
+    def __init__(self, include_faulty):
+        super(TestVMAdapter, self).__init__(include_faulty)
         self._otherErrorDefinitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id):

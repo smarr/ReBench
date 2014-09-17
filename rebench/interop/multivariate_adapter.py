@@ -33,7 +33,8 @@ class MultivariateAdapter(GaugeAdapter):
     variable_re = re.compile(r"(?:(\d+):)?RESULT-(\w+):(?:(\w+):)?\s*(\d+(\.\d+)?)")
     # optional datapoint counter, mandantory variable, optional unit, mandantory int-or-float
 
-    def __init__(self):
+    def __init__(self, include_faulty):
+        super(MultivariateAdapter, self).__init__(include_faulty)
         self._otherErrorDefinitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id):
