@@ -34,7 +34,7 @@ from ...persistence            import DataPointPersistence
 
 class Issue31MultivariateDataPointsTest(TestCase):
     """
-    Add support to record mutivatriate data points for same benchmark in one run.
+    Add support to record multivariate data points for same benchmark in one run.
     """
 
     def setUp(self):
