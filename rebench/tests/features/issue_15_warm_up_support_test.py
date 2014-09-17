@@ -17,22 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import os
-import sys
-
-from os.path  import dirname, realpath
-from unittest import TestCase
-from tempfile import mkstemp
-
 from ...configurator           import Configurator
 from ...executor               import Executor
 
-from ...model.benchmark_config import BenchmarkConfig
-from ...model.run_id           import RunId
-from ...persistence            import DataPointPersistence
+from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue15WarmUpSupportTest(TestCase):
+class Issue15WarmUpSupportTest(ReBenchTestCase):
     """
       - a configuration to define the number of warm-up runs
       - a template parameter for the command
@@ -41,20 +32,7 @@ class Issue15WarmUpSupportTest(TestCase):
     """
 
     def setUp(self):
-        self._path     = dirname(realpath(__file__))
-        self._tmp_file = mkstemp()[1]  # just use the file name
-
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-
-        self._sys_exit = sys.exit  # make sure that we restore sys.exit
-
-        os.chdir(self._path)
-
-    def tearDown(self):
-        os.remove(self._tmp_file)
-        sys.exit = self._sys_exit
+        super(Issue15WarmUpSupportTest, self).setUp(__file__)
 
     def test_run_id_indicates_warm_up_iterations_required(self):
         cnf = Configurator(self._path + '/issue_15.conf',

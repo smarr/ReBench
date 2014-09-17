@@ -17,22 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import os
-import sys
-
-from os.path  import dirname, realpath
-from unittest import TestCase
-from tempfile import mkstemp
-
 from ...configurator           import Configurator
 from ...executor               import Executor
-
-from ...model.benchmark_config import BenchmarkConfig
-from ...model.run_id           import RunId
-from ...persistence            import DataPointPersistence
+from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue16MultipleDataPointsTest(TestCase):
+class Issue16MultipleDataPointsTest(ReBenchTestCase):
     """
     Add support to record multiple data points for same benchmark in one run.
       - multiple measurements
@@ -40,20 +30,7 @@ class Issue16MultipleDataPointsTest(TestCase):
     """
 
     def setUp(self):
-        self._path     = dirname(realpath(__file__))
-        self._tmp_file = mkstemp()[1]  # just use the file name
-
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-
-        self._sys_exit = sys.exit  # make sure that we restore sys.exit
-
-        os.chdir(self._path)
-
-    def tearDown(self):
-        os.remove(self._tmp_file)
-        sys.exit = self._sys_exit
+        super(Issue16MultipleDataPointsTest, self).setUp(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
         cnf = Configurator(self._path + '/issue_16.conf',

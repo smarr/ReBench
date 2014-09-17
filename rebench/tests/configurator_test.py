@@ -18,25 +18,20 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import unittest
-import os
 import logging
 
 from ..configurator           import Configurator
-from ..persistence            import DataPointPersistence
-from ..model.benchmark_config import BenchmarkConfig
-from ..model.run_id           import RunId
+from .rebench_test_case import ReBenchTestCase
 
 
-class ConfiguratorTest(unittest.TestCase):
+class ConfiguratorTest(ReBenchTestCase):
     
     def setUp(self):
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-        self._path = os.path.dirname(os.path.realpath(__file__))
+        super(ConfiguratorTest, self).setUp(__file__)
         self._logging_error = logging.error
     
     def tearDown(self):
+        super(ConfiguratorTest, self).tearDown()
         logging.error = self._logging_error  # restore normal logging
         
     def test_experiment_name_from_cli(self):

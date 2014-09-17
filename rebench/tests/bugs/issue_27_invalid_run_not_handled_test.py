@@ -17,34 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import os
-import unittest
-import sys
-
-from os.path import dirname, realpath
-from tempfile import mkstemp
-
 from ...configurator           import Configurator
 from ...executor               import Executor
 
-from ...model.benchmark_config import BenchmarkConfig
-from ...model.run_id           import RunId
-from ...persistence            import DataPointPersistence
+from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue27InvalidRunNotHandled(unittest.TestCase):
+class Issue27InvalidRunNotHandled(ReBenchTestCase):
 
     def setUp(self):
-        self._path     = dirname(realpath(__file__))
-        self._tmp_file = mkstemp()[1]  # just use the file name
-
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-
-        self._sys_exit = sys.exit  # make sure that we restore sys.exit
-
-        os.chdir(self._path)
+        super(Issue27InvalidRunNotHandled, self).setUp(__file__)
 
     def test_execution_should_recognize_invalid_run_and_continue_normally(self):
         cnf = Configurator(self._path + '/issue_27.conf',

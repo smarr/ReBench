@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import unittest
-import tempfile
 import os
 
 from ..interop.caliper_adapter import CaliperAdapter
@@ -26,9 +25,10 @@ from ..persistence import DataPointPersistence
 from .. import ReBench
 from ..configurator import Configurator
 from ..executor import Executor
+from .rebench_test_case import ReBenchTestCase
 
 
-class CaliperIntegrationTest(unittest.TestCase):
+class CaliperIntegrationTest(ReBenchTestCase):
     """CaliperTest verifies the proper support for the
        ReBenchConsoleResultProcessor output produced by
        the Caliper version hosted at:
@@ -41,14 +41,12 @@ class CaliperIntegrationTest(unittest.TestCase):
     """ 
 
     def setUp(self):
-        self._tmpFile = tempfile.mkstemp()[1] # just use the file name
-        
-        self._path = os.path.dirname(os.path.realpath(__file__))
+        super(CaliperIntegrationTest, self).setUp(__file__)
         self._cwd  = os.getcwd()
         os.chdir(self._path + '/../')
 
     def tearDown(self):
-        os.remove(self._tmpFile)
+        super(CaliperIntegrationTest, self).tearDown()
         os.chdir(self._cwd)
 
     # Integration Test
@@ -59,7 +57,7 @@ class CaliperIntegrationTest(unittest.TestCase):
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
-        data = DataPointPersistence.get(self._tmpFile, True)
+        data = DataPointPersistence.get(self._tmp_file, True)
         
         ex = Executor(cnf.get_runs(), False)
         ex.execute()
@@ -150,4 +148,3 @@ class CaliperPerformanceReaderTest(unittest.TestCase):
         parsed = self._c.parse_data(data, None)
         self.assertEquals(1, len(parsed))
         self.assertAlmostEqual(4.507679245283001, parsed[0].get_total_value())
-    

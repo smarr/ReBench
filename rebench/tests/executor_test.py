@@ -22,33 +22,19 @@ import subprocess
 
 from ..executor          import Executor
 from ..configurator      import Configurator
-from ..persistence       import DataPointPersistence
-from ..model.benchmark_config import BenchmarkConfig
-from ..model.run_id      import RunId
 from ..model.measurement import Measurement
 from ..                  import ReBench
-import tempfile
 import os
 import sys
+from .rebench_test_case import ReBenchTestCase
 
 
-class ExecutorTest(unittest.TestCase):
+class ExecutorTest(ReBenchTestCase):
     
     def setUp(self):
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-        self._path = os.path.dirname(os.path.realpath(__file__))
-        self._tmp_file = tempfile.mkstemp()[1]  # just use the file name
+        super(ExecutorTest, self).setUp(__file__)
         os.chdir(self._path + '/../')
-        
-        self._sys_exit = sys.exit  # make sure that we restore sys.exit   
-    
-    def tearDown(self):
-        os.remove(self._tmp_file)
-        sys.exit = self._sys_exit
-        
-        
+
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark, we override stuff in subprocess for testing
         subprocess.Popen =  Popen_override

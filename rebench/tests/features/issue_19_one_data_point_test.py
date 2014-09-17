@@ -17,20 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import os
-import sys
-
-from os.path  import dirname, realpath
-from unittest import TestCase
-from tempfile import mkstemp
-
-from ...configurator           import Configurator
-from ...executor               import Executor, RoundRobinScheduler
-from ...reporter               import Reporter
-
-from ...model.benchmark_config import BenchmarkConfig
-from ...model.run_id           import RunId
-from ...persistence            import DataPointPersistence
+from ...configurator     import Configurator
+from ...executor         import Executor, RoundRobinScheduler
+from ...reporter         import Reporter
+from ..rebench_test_case import ReBenchTestCase
 
 
 class TestReporter(Reporter):
@@ -54,7 +44,7 @@ class TestReporter(Reporter):
         self._test_case.start_run(run_id)
 
 
-class Issue19OneDataPointAtATime(TestCase):
+class Issue19OneDataPointAtATime(ReBenchTestCase):
     """
     With large benchmark suites it can take hours to go through all runs,
     and it would be nice to get early feedback and allow the results to get
@@ -62,20 +52,7 @@ class Issue19OneDataPointAtATime(TestCase):
     """
 
     def setUp(self):
-        self._path     = dirname(realpath(__file__))
-        self._tmp_file = mkstemp()[1]  # just use the file name
-
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
-
-        self._sys_exit = sys.exit  # make sure that we restore sys.exit
-
-        os.chdir(self._path)
-
-    def tearDown(self):
-        os.remove(self._tmp_file)
-        sys.exit = self._sys_exit
+        super(Issue19OneDataPointAtATime, self).setUp(__file__)
 
 
 class OneMeasurementAtATime(Issue19OneDataPointAtATime):
