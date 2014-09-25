@@ -308,7 +308,7 @@ class IrcReporter(TextReporter):
         if not self._cfg.report_run_completed:
             return
 
-        msg = "Run completed: %s\n" % (
+        msg = "Run completed: %s" % (
             " ".join(self._configuration_details(run_id, statistics)))
         msg = self._format_msg(msg)
         self._client.send(msg)
