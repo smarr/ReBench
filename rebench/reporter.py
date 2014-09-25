@@ -27,6 +27,7 @@ import json
 import urllib2
 import urllib
 import re
+from libs.irc_client import IrcClient
 
 from .statistics import StatisticProperties
 
@@ -232,6 +233,73 @@ class FileReporter(TextReporter):
             self._file.write(line + "\n")
             
         self._file.close()
+
+
+class IrcReporter(TextReporter):
+    """ Reports to IRC """
+
+    from irc.bot import SingleServerIRCBot
+    from threading import Thread
+
+    class _Bot(SingleServerIRCBot):
+        def __init__(self, cfg):
+            IrcReporter.SingleServerIRCBot.__init__(self,
+                                                    [(cfg.server, cfg.port)],
+                                                    cfg.nick, cfg.nick)
+            self._cfg = cfg
+
+        def on_nicknameinuse(self, c, e):
+            c.nick(c.get_nickname() + "_")
+
+        def on_welcome(self, c, e):
+            c.join(self._cfg.channel)
+
+        def send(self, msg):
+            self.connection.privmsg(self._cfg.channel, msg)
+
+        def disconnect(self):
+            self.connection.disconnect()
+
+    def __init__(self, cfg):
+        super(IrcReporter, self).__init__()
+        self._cfg = cfg
+        self._client = IrcReporter._Bot(cfg)
+
+        def thread_main():
+            self._client.start()
+
+        t = IrcReporter.Thread(target=thread_main)
+        t.start()
+
+    def run_failed(self, run_id, cmdline, return_code, output):
+        if not self._cfg.report_run_failed:
+            return
+
+        # Standard error output
+        if return_code == -9:
+            return_detail = "timed out. return_code: %s" % return_code
+        else:
+            return_detail = "exited normally. return_code: %s" % return_code
+
+        # Additional information in debug mode
+        msg = "Run failed: %s; %s" % (
+            " ".join(self._configuration_details(run_id)),
+            return_detail)
+        self._client.send(msg)
+
+    def run_completed(self, run_id, statistics, cmdline):
+        if not self._cfg.report_run_completed:
+            return
+
+        msg = "Run completed: %s\n" % (
+            " ".join(self._configuration_details(run_id, statistics)))
+        self._client.send(msg)
+
+    def report_job_completed(self, run_ids):
+        if not self._cfg.report_job_completed:
+            return
+        self._client.send("ReBench Job completed")
+        self._client.disconnect()
 
 # TODO: re-add support for CSV file generation for overview statistics
 # class CSVFileReporter(Reporter):

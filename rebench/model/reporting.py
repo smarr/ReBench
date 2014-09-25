@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from ..configuration_error import ConfigurationError
-from ..reporter import CliReporter, CodespeedReporter
+import rebench.reporter as reporter
 
 
 class Reporting(object):
@@ -35,7 +35,12 @@ class Reporting(object):
         else:
             self._codespeed = None
 
-        self._cli_reporter = CliReporter(self)
+        if "irc" in raw_config:
+            self._irc = IrcReporting(raw_config, options)
+        else:
+            self._irc = None
+
+        self._cli_reporter = reporter.CliReporter(self)
 
         # if self._config.reporting:
         #     if ('codespeed' in self._config.reporting and
@@ -67,13 +72,16 @@ class Reporting(object):
         rep._confidence_level = raw_config.get('confidence_level',
                                                self._confidence_level)
         rep._codespeed = self._codespeed
-        rep._cli_reporter = CliReporter(rep)
+        rep._irc       = self._irc
+        rep._cli_reporter = reporter.CliReporter(rep)
         return rep
 
     def get_reporters(self):
         result = [self._cli_reporter]
         if self._codespeed:
             result.append(self._codespeed.get_reporter())
+        if self._irc:
+            result.append(self._irc.get_reporter())
         return result
 
 
@@ -112,7 +120,7 @@ class CodespeedReporting(object):
         self._branch               = options.branch
         self._executable           = options.executable
 
-        self._reporter = CodespeedReporter(self)
+        self._reporter = reporter.CodespeedReporter(self)
 
     @property
     def report_incrementally(self):
@@ -144,3 +152,63 @@ class CodespeedReporting(object):
 
     def get_reporter(self):
         return self._reporter
+
+
+class IrcReporting(object):
+
+    @staticmethod
+    def _ensure_setting_is_present(key, config):
+        if key not in config:
+            raise ConfigurationError("IRC reporting needs '%s' to be set." % key)
+
+    def __init__(self, raw_config, options):
+        irc = raw_config.get("irc", {})
+
+        self._ensure_setting_is_present('server',  irc)
+        self._ensure_setting_is_present('port',    irc)
+        self._ensure_setting_is_present('channel', irc)
+        self._ensure_setting_is_present('nick',    irc)
+
+        self._server  = irc['server']
+        self._port    = irc['port']
+        self._channel = irc['channel']
+        self._nick    = irc['nick']
+
+        log_events = irc.get("log_events", {})
+
+        self._report_run_failed    = "run_failed"    in log_events
+        self._report_run_completed = "run_completed" in log_events
+        self._report_job_completed = "job_completed" in log_events
+
+        self._reporter = reporter.IrcReporter(self)
+
+    def get_reporter(self):
+        return self._reporter
+
+    @property
+    def server(self):
+        return self._server
+
+    @property
+    def port(self):
+        return self._port
+
+    @property
+    def channel(self):
+        return self._channel
+
+    @property
+    def nick(self):
+        return self._nick
+
+    @property
+    def report_run_failed(self):
+        return self._report_run_failed
+
+    @property
+    def report_run_completed(self):
+        return self._report_run_completed
+
+    @property
+    def report_job_completed(self):
+        return self._report_job_completed
