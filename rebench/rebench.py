@@ -154,7 +154,7 @@ Argument:
                            'random':      RandomScheduler}.get(
                                                 self._config.options.scheduler)
         executor = Executor(self._config.get_runs(), self._config.use_nice,
-                            self._config.include_faulty,
+                            self._config.options.include_faulty,
                             scheduler_class)
         executor.execute()
 
