@@ -27,7 +27,6 @@ import json
 import urllib2
 import urllib
 import re
-from libs.irc_client import IrcClient
 
 from .statistics import StatisticProperties
 
