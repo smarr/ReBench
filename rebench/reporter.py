@@ -238,30 +238,41 @@ class FileReporter(TextReporter):
 class IrcReporter(TextReporter):
     """ Reports to IRC """
 
-    from irc.bot import SingleServerIRCBot
-    from threading import Thread
+    try:
+        from irc.bot import SingleServerIRCBot
+        from threading import Thread
 
-    class _Bot(SingleServerIRCBot):
-        def __init__(self, cfg):
-            IrcReporter.SingleServerIRCBot.__init__(self,
-                                                    [(cfg.server, cfg.port)],
-                                                    cfg.nick, cfg.nick)
-            self._cfg = cfg
+        IRC_SUPPORT = True
 
-        def on_nicknameinuse(self, c, e):
-            c.nick(c.get_nickname() + "_")
+        class _Bot(SingleServerIRCBot):
+            def __init__(self, cfg):
+                IrcReporter.SingleServerIRCBot.__init__(self,
+                                                        [(cfg.server, cfg.port)],
+                                                        cfg.nick, cfg.nick)
+                self._cfg = cfg
 
-        def on_welcome(self, c, e):
-            c.join(self._cfg.channel)
+            def on_nicknameinuse(self, c, e):
+                c.nick(c.get_nickname() + "_")
 
-        def send(self, msg):
-            self.connection.privmsg(self._cfg.channel, msg)
+            def on_welcome(self, c, e):
+                c.join(self._cfg.channel)
 
-        def disconnect(self):
-            self.connection.disconnect()
+            def send(self, msg):
+                self.connection.privmsg(self._cfg.channel, msg)
+
+            def disconnect(self):
+                self.connection.disconnect()
+    except ImportError:
+        IRC_SUPPORT = False
 
     def __init__(self, cfg):
         super(IrcReporter, self).__init__()
+        if not IrcReporter.IRC_SUPPORT:
+            logging.error("IRC support not available. "
+                          "Please install irc>=8.9.1 from PyPI, "
+                          "or remove IRC reporting in configuration")
+            import sys
+            sys.exit(1)
         self._cfg = cfg
         self._client = IrcReporter._Bot(cfg)
 
