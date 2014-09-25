@@ -39,6 +39,9 @@ setup(name='ReBench',
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']
       },
+      extras_require = {
+          'IRC' :  ['irc>=8.9.1']
+      },
       test_suite = 'rebench.tests',
       license = 'MIT'
 )
