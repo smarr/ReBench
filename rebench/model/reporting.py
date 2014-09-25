@@ -173,6 +173,7 @@ class IrcReporting(object):
         self._port    = irc['port']
         self._channel = irc['channel']
         self._nick    = irc['nick']
+        self._notify  = irc.get('notify', None)
 
         log_events = irc.get("log_events", {})
 
@@ -200,6 +201,10 @@ class IrcReporting(object):
     @property
     def nick(self):
         return self._nick
+
+    @property
+    def notify(self):
+        return self._notify
 
     @property
     def report_run_failed(self):

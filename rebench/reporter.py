@@ -271,6 +271,12 @@ class IrcReporter(TextReporter):
         t = IrcReporter.Thread(target=thread_main)
         t.start()
 
+    def _format_msg(self, msg):
+        if self._cfg.notify:
+            return "%s: %s" % (self._cfg.notify, msg)
+        else:
+            return msg
+
     def run_failed(self, run_id, cmdline, return_code, output):
         if not self._cfg.report_run_failed:
             return
@@ -285,6 +291,7 @@ class IrcReporter(TextReporter):
         msg = "Run failed: %s; %s" % (
             " ".join(self._configuration_details(run_id)),
             return_detail)
+        msg = self._format_msg(msg)
         self._client.send(msg)
 
     def run_completed(self, run_id, statistics, cmdline):
@@ -293,12 +300,13 @@ class IrcReporter(TextReporter):
 
         msg = "Run completed: %s\n" % (
             " ".join(self._configuration_details(run_id, statistics)))
+        msg = self._format_msg(msg)
         self._client.send(msg)
 
     def report_job_completed(self, run_ids):
         if not self._cfg.report_job_completed:
             return
-        self._client.send("ReBench Job completed")
+        self._client.send(self._format_msg("ReBench Job completed"))
         self._client.disconnect()
 
 # TODO: re-add support for CSV file generation for overview statistics
