@@ -275,8 +275,9 @@ class IrcReporter(TextReporter):
                         self._last_send = time()
 
             def start(self, timeout = 0.2):
+                self._connect()
                 while not self._terminate:
-                    self.process_once(timeout)
+                    self.manifold.process_once(timeout)
                     self._send_msg()
                 self.disconnect()
 
