@@ -21,7 +21,7 @@ from __future__ import with_statement, print_function
 
 from datetime import datetime
 from httplib import HTTPException
-import time
+from time import time
 import logging
 import json
 import urllib2
@@ -169,7 +169,7 @@ class CliReporter(TextReporter):
     
     def start_run(self, run_id):
         if self._runs_completed > 0:
-            current = time.time()
+            current = time()
             
             etl = ((current - self._startTime) / self._runs_completed *
                    self._runs_remaining)
@@ -182,7 +182,7 @@ class CliReporter(TextReporter):
                                                    round(h), round(m),
                                                    round(sec)))
         else:
-            self._startTime = time.time()
+            self._startTime = time()
             print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
                                                self._runs_remaining))
             
@@ -402,7 +402,7 @@ class CodespeedReporter(Reporter):
         self._incremental_report = self._cfg.report_incrementally
         self._cache_for_seconds = 30
         self._cache = {}
-        self._last_send = time.time()
+        self._last_send = time()
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
@@ -411,7 +411,7 @@ class CodespeedReporter(Reporter):
         # ok, talk to codespeed immediately
         self._cache[run_id] = self._format_for_codespeed(run_id, statistics)
 
-        if time.time() - self._last_send >= self._cache_for_seconds:
+        if time() - self._last_send >= self._cache_for_seconds:
             self._send_and_empty_cache()
 
     def _send_and_empty_cache(self):
