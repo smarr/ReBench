@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from __future__ import with_statement, print_function
+from collections import deque
 
 from datetime import datetime
 from httplib import HTTPException
@@ -249,6 +250,10 @@ class IrcReporter(TextReporter):
                                                         [(cfg.server, cfg.port)],
                                                         cfg.nick, cfg.nick)
                 self._cfg = cfg
+                self._terminate = False
+                self._msg_queue = deque()
+                self._last_send = time()
+                self._pause_between_msgs = 1.0  # second
 
             def on_nicknameinuse(self, c, e):
                 c.nick(c.get_nickname() + "_")
@@ -257,10 +262,24 @@ class IrcReporter(TextReporter):
                 c.join(self._cfg.channel)
 
             def send(self, msg):
-                self.connection.privmsg(self._cfg.channel, msg)
+                self._msg_queue.appendleft(msg)
 
-            def disconnect(self):
-                self.connection.disconnect()
+            def terminate(self):
+                self._terminate = True
+
+            def _send_msg(self):
+                if self._msg_queue:
+                    if time() - self._last_send >= self._pause_between_msgs:
+                        msg = self._msg_queue.pop()
+                        self.connection.privmsg(self._cfg.channel, msg)
+                        self._last_send = time()
+
+            def start(self, timeout = 0.2):
+                while not self._terminate:
+                    self.process_once(timeout)
+                    self._send_msg()
+                self.disconnect()
+
     except ImportError:
         IRC_SUPPORT = False
 
@@ -317,7 +336,7 @@ class IrcReporter(TextReporter):
         if not self._cfg.report_job_completed:
             return
         self._client.send(self._format_msg("ReBench Job completed"))
-        self._client.disconnect()
+        self._client.terminate()
 
 # TODO: re-add support for CSV file generation for overview statistics
 # class CSVFileReporter(Reporter):
