@@ -20,7 +20,7 @@
 import unittest
 import subprocess
 
-from ..executor          import Executor
+from ..executor          import Executor, BenchmarkThreadExceptions
 from ..configurator      import Configurator
 from ..model.measurement import Measurement
 from ..                  import ReBench
@@ -71,8 +71,12 @@ class ExecutorTest(ReBenchTestCase):
                            standard_data_file = self._tmp_file)
         ex = Executor(cnf.get_runs(), cnf.use_nice)
 
-        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
+        try:
             ex.execute()
+        except RuntimeError as e:
+            self.assertEqual("TEST-PASSED", e.message)
+        except BenchmarkThreadExceptions as e:
+            self.assertEqual("TEST-PASSED", e.exceptions[0].message)
     
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
@@ -86,8 +90,12 @@ class ExecutorTest(ReBenchTestCase):
                            standard_data_file = self._tmp_file)
         ex = Executor(cnf.get_runs(), cnf.use_nice)
         
-        with self.assertRaisesRegexp(RuntimeError, "TEST-PASSED"):
+        try:
             ex.execute()
+        except RuntimeError as e:
+            self.assertEqual("TEST-PASSED", e.message)
+        except BenchmarkThreadExceptions as e:
+            self.assertEqual("TEST-PASSED", e.exceptions[0].message)
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()

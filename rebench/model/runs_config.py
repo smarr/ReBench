@@ -25,9 +25,11 @@ class RunsConfig(object):
     """ General configuration parameters for runs """
     def __init__(self,
                  number_of_data_points = None,
-                 min_runtime           = None):
+                 min_runtime           = None,
+                 parallel_interference_factor = 2.5):
         self._number_of_data_points = number_of_data_points
         self._min_runtime           = min_runtime
+        self._parallel_interference_factor = parallel_interference_factor
     
     @property
     def number_of_data_points(self):
@@ -36,15 +38,22 @@ class RunsConfig(object):
     @property
     def min_runtime(self):
         return self._min_runtime
+
+    @property
+    def parallel_interference_factor(self):
+        return self._parallel_interference_factor
         
     def combined(self, run_def):
-        config = RunsConfig(self._number_of_data_points, self._min_runtime)
+        config = RunsConfig(self._number_of_data_points, self._min_runtime,
+                            self._parallel_interference_factor)
         val = run_def.get('number_of_data_points', None)
         if val:
             config._number_of_data_points = val
         val = run_def.get('min_runtime', None)
         if val:
             config._min_runtime = val
+        # parallel_interference_factor is a global setting, so it is not
+        # merged from other run definitions
         return config
     
     def log(self):

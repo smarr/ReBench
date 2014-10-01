@@ -69,6 +69,10 @@ class RunId(object):
     def warmup_iterations(self):
         return self._bench_cfg.warmup_iterations
 
+    @property
+    def execute_exclusively(self):
+        return self._bench_cfg.execute_exclusively
+
     def indicate_failed_execution(self):
         self._termination_check.indicate_failed_execution()
 

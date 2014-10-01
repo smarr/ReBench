@@ -20,11 +20,14 @@
 from __future__ import with_statement
 
 from collections import deque
+from math import floor
 import logging
+from multiprocessing import cpu_count
 import pkgutil
 import random
 import subprocess
 import sys
+from threading import Thread, RLock
 
 import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
@@ -78,6 +81,111 @@ class RandomScheduler(RunScheduler):
                 task_list.remove(run)
 
 
+class BenchmarkThread(Thread):
+
+    def __init__(self, par_scheduler, num):
+        Thread.__init__(self, name = "BenchmarkThread %d" % num)
+        self._par_scheduler = par_scheduler
+        self._id = num
+        self.exception = None
+
+    def run(self):
+        try:
+            scheduler = self._par_scheduler.get_local_scheduler()
+
+            while True:
+                work = self._par_scheduler.acquire_work()
+                if work is None:
+                    return
+                scheduler._process_remaining_runs(work)
+        except BaseException as e:
+            self.exception = e
+
+
+class BenchmarkThreadExceptions(Exception):
+
+    def __init__(self, exceptions):
+        self.exceptions = exceptions
+
+
+class ParallelScheduler(RunScheduler):
+
+    def __init__(self, executor, seq_scheduler_class):
+        RunScheduler.__init__(self, executor)
+        self._seq_scheduler_class = seq_scheduler_class
+        self._lock = RLock()
+        self._num_worker_threads = self._number_of_threads()
+        self._remaining_work = None
+
+    def _number_of_threads(self):
+        non_interference_factor = float(2.5)
+        return int(floor(cpu_count() / non_interference_factor))
+
+    @staticmethod
+    def _split_runs(runs):
+        seq_runs = []
+        par_runs = []
+        for run in runs:
+            if run.execute_exclusively:
+                seq_runs.append(run)
+            else:
+                par_runs.append(run)
+        return seq_runs, par_runs
+
+    def _process_sequential_runs(self, runs):
+        seq_runs, par_runs = self._split_runs(runs)
+
+        scheduler = self._seq_scheduler_class(self._executor)
+        scheduler._process_remaining_runs(seq_runs)
+
+        return par_runs
+
+    def _process_remaining_runs(self, runs):
+        self._remaining_work = self._process_sequential_runs(runs)
+
+        self._worker_threads = [BenchmarkThread(self, i)
+                                for i in range(self._num_worker_threads)]
+
+        for thread in self._worker_threads:
+            thread.start()
+
+        exceptions = []
+        for thread in self._worker_threads:
+            thread.join()
+            if thread.exception is not None:
+                exceptions.append(thread.exception)
+
+        if len(exceptions) > 0:
+            print exceptions
+            if len(exceptions) == 1:
+                raise exceptions[0]
+            else:
+                raise BenchmarkThreadExceptions(exceptions)
+
+    def _determine_num_work_items_to_take(self):
+        # use a simple and naive scheduling strategy that still allows for
+        # different running times, without causing too much scheduling overhead
+        k = len(self._remaining_work)
+        per_thread = int(floor(float(k) / float(self._num_worker_threads)))
+        per_thread = max(1, per_thread)  # take at least 1 run
+        return per_thread
+
+    def get_local_scheduler(self):
+        return self._seq_scheduler_class(self._executor)
+
+    def acquire_work(self):
+        with self._lock:
+            if len(self._remaining_work) == 0:
+                return None
+
+            n = self._determine_num_work_items_to_take()
+            assert n <= len(self._remaining_work)
+            work = []
+            for i in range(n):
+                work.append(self._remaining_work.pop())
+            return work
+
+
 class Executor:
     
     def __init__(self, runs, use_nice, include_faulty = False,
@@ -85,12 +193,24 @@ class Executor:
         self._runs     = runs
         self._use_nice = use_nice
         self._include_faulty = include_faulty
-        self._scheduler = scheduler(self)
+        self._scheduler = self._create_scheduler(scheduler)
 
         num_runs = len(runs)
         for run in runs:
             run.set_total_number_of_runs(num_runs)
-    
+
+    def _create_scheduler(self, scheduler):
+        # figure out whether to use parallel scheduler
+        if cpu_count() > 1:
+            i = 0
+            for run in self._runs:
+                if not run.execute_exclusively:
+                    i += 1
+            if i > 1:
+                return ParallelScheduler(self, scheduler)
+
+        return scheduler(self)
+
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline  = ""
                 

@@ -131,6 +131,10 @@ class BenchmarkConfig(object):
     @property
     def vm(self):
         return self._vm
+
+    @property
+    def execute_exclusively(self):
+        return self._vm.execute_exclusively
     
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s', warmup: %d" % (

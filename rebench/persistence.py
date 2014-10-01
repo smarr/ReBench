@@ -22,6 +22,7 @@ import sys
 import logging
 import subprocess
 import shutil
+from threading import Lock
 import time
 
 from .model.data_point  import DataPoint
@@ -57,6 +58,7 @@ class DataPointPersistence(object):
         if discard_old_data:
             self._discard_old_data()
         self._insert_shebang_line()
+        self._lock = Lock()
     
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -150,13 +152,14 @@ class DataPointPersistence(object):
         Serialize all measurements of the data point and persist them
         in the data file.
         """
-        self._open_file_to_add_new_data()
+        with self._lock:
+            self._open_file_to_add_new_data()
 
-        for measurement in data_point.get_measurements():
-            line = self._SEP.join(measurement.as_str_list())
-            self._file.write(line + "\n")
+            for measurement in data_point.get_measurements():
+                line = self._SEP.join(measurement.as_str_list())
+                self._file.write(line + "\n")
 
-        self._file.flush()
+            self._file.flush()
 
     def _open_file_to_add_new_data(self):
         if not self._file:
