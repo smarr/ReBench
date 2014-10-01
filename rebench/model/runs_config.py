@@ -20,6 +20,7 @@
 from time import time
 import logging
 
+
 class RunsConfig(object):
     """ General configuration parameters for runs """
     def __init__(self,
@@ -54,6 +55,7 @@ class RunsConfig(object):
     
     def create_termination_check(self, bench_cfg):
         return TerminationCheck(self, bench_cfg)
+
 
 class QuickRunsConfig(RunsConfig):
     

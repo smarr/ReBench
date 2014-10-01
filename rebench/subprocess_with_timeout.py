@@ -41,6 +41,7 @@ def kill_process(pid, recursively):
 
     return -9, '', ''
 
+
 def get_process_children(pid):
     p = Popen('ps --no-headers -o pid --ppid %d' % pid, shell = True,
               stdout = PIPE, stderr = PIPE)
