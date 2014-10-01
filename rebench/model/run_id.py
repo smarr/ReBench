@@ -135,6 +135,11 @@ class RunId(object):
                 self._bench_cfg)
         return self._termination_check
 
+    def is_completed(self):
+        """ Check whether the termination condition is satisfied. """
+        return self.get_termination_check().should_terminate(
+            self.get_number_of_data_points())
+
     def run_failed(self):
         return (self._termination_check.fails_consecutively() or
                 self._termination_check.has_too_many_failures(

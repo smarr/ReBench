@@ -36,14 +36,19 @@ class RunScheduler(object):
     def __init__(self, executor):
         self._executor = executor
 
+    @staticmethod
+    def _filter_out_completed_runs(runs):
+        return [run for run in runs if not run.is_completed()]
+
     def execute(self):
-        raise NotImplementedError('Subclass responsibility')
+        runs = self._filter_out_completed_runs(self._executor.runs)
+        self._process_remaining_runs(runs)
 
 
 class BatchScheduler(RunScheduler):
 
-    def execute(self):
-        for run_id in self._executor.runs:
+    def _process_remaining_runs(self, runs):
+        for run_id in runs:
             completed = False
             while not completed:
                 completed = self._executor.execute_run(run_id)
@@ -51,8 +56,8 @@ class BatchScheduler(RunScheduler):
 
 class RoundRobinScheduler(RunScheduler):
 
-    def execute(self):
-        task_list = deque(self._executor.runs)
+    def _process_remaining_runs(self, runs):
+        task_list = deque(runs)
 
         while task_list:
             run = task_list.popleft()
@@ -63,8 +68,8 @@ class RoundRobinScheduler(RunScheduler):
 
 class RandomScheduler(RunScheduler):
 
-    def execute(self):
-        task_list = list(self._executor.runs)
+    def _process_remaining_runs(self, runs):
+        task_list = list(runs)
 
         while task_list:
             run = random.choice(task_list)
