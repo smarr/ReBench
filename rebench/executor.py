@@ -118,6 +118,7 @@ class ParallelScheduler(RunScheduler):
         self._remaining_work = None
 
     def _number_of_threads(self):
+        ## TODO: read the configuration elements!
         non_interference_factor = float(2.5)
         return int(floor(cpu_count() / non_interference_factor))
 
