@@ -272,7 +272,7 @@ class Executor:
         print cmdline
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(cmdline,
-                                                          cwd=run_id.bench_cfg.suite.location,
+                                                          cwd=run_id.location,
                                                           stdout=subprocess.PIPE,
                                                           stderr=subprocess.STDOUT,
                                                           shell=True,

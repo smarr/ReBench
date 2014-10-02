@@ -194,7 +194,15 @@ class RunId(object):
     def as_simple_string(self):
         return "%s %s %s %s" % (self._bench_cfg.as_simple_string(),
                                 self._cores, self._input_size, self._var_value)
-    
+
+    def _expand_vars(self, string):
+        return string % {'benchmark' : self._bench_cfg.command,
+                         'input'     : self._input_size,
+                         'variable'  : self._var_value,
+                         'cores'     : self._cores,
+                         'warmup'    : self._bench_cfg.warmup_iterations
+                        }
+
     def cmdline(self):
         cmdline = ""
         vm_cmd  = "%s/%s %s" % (os.path.abspath(self._bench_cfg.vm.path),
@@ -208,19 +216,18 @@ class RunId(object):
             cmdline += " %s" % self._bench_cfg.extra_args
             
         try:
-            cmdline = cmdline % {'benchmark' : self._bench_cfg.command,
-                                 'input'     : self._input_size,
-                                 'variable'  : self._var_value,
-                                 'cores'     : self._cores,
-                                 'warmup'    : self._bench_cfg.warmup_iterations
-                                }
+            cmdline = self._expand_vars(cmdline)
         except ValueError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         except TypeError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         
         return cmdline.strip()
-    
+
+    @property
+    def location(self):
+        return self._expand_vars(self._bench_cfg.suite.location)
+
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
             and self.cmdline() == other.cmdline())
