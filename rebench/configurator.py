@@ -65,9 +65,14 @@ class Configurator:
             return
         
         if options.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.getLogger().setLevel(logging.DEBUG)
-            logging.debug("Enabled debug output.")
+            if options.verbose:
+                logging.basicConfig(level=logging.NOTSET)
+                logging.getLogger().setLevel(logging.NOTSET)
+                logging.debug("Enabled verbose debug output.")
+            else:
+                logging.basicConfig(level=logging.DEBUG)
+                logging.getLogger().setLevel(logging.DEBUG)
+                logging.debug("Enabled debug output.")
         else:
             logging.basicConfig(level=logging.ERROR)
             logging.getLogger().setLevel(logging.ERROR)

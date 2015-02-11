@@ -109,7 +109,7 @@ class DataPointPersistence(object):
                 msg = str(e)
                 if msg not in errors:
                     # Configuration is not available, skip data point
-                    logging.debug(msg)
+                    logging.log(logging.DEBUG - 1, msg)
                     errors.add(msg)
     
     def _insert_shebang_line(self):
