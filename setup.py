@@ -33,13 +33,13 @@ setup(name='ReBench',
       url='https://github.com/smarr/ReBench',
       packages=['rebench', 'rebench.model', 'rebench.interop', 'rebench.libs'],
       install_requires=[
-          'PyYAML>=3.08',
-          'scipy>=0.8.0'
+          'PyYAML>=3.08'
       ],
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']
       },
       extras_require = {
+          'scipy>=0.8.0',
           'IRC' :  ['irc>=8.9.1']
       },
       test_suite = 'rebench.tests',
