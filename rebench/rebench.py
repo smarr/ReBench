@@ -42,7 +42,7 @@ from .configuration_error import ConfigurationError
 class ReBench:
     
     def __init__(self):
-        self.version = "0.7.1"
+        self.version = "0.7.2"
         self.options = None
         self._config = None
     
