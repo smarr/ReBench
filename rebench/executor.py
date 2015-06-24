@@ -43,6 +43,10 @@ class RunScheduler(object):
     def _filter_out_completed_runs(runs):
         return [run for run in runs if not run.is_completed()]
 
+    @staticmethod
+    def number_of_uncompleted_runs(runs):
+        return len(RunScheduler._filter_out_completed_runs(runs))
+
     def execute(self):
         runs = self._filter_out_completed_runs(self._executor.runs)
         self._process_remaining_runs(runs)
@@ -196,7 +200,7 @@ class Executor:
         self._include_faulty = include_faulty
         self._scheduler = self._create_scheduler(scheduler)
 
-        num_runs = len(runs)
+        num_runs = RunScheduler.number_of_uncompleted_runs(runs)
         for run in runs:
             run.set_total_number_of_runs(num_runs)
 
