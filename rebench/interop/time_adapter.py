@@ -34,7 +34,7 @@ class TimeAdapter(GaugeAdapter):
 
     # To be sure about how to parse the output, give custom format
     # This avoids issues with perhaps none-standard /bin/usr/time
-    time_format = 'max rss (kb): %M\nwall-time (secounds): %e\n'
+    time_format = '"max rss (kb): %M\nwall-time (secounds): %e\n"'
     re_formatted_time = re.compile(r"^wall-time \(secounds\): (\d+\.\d+)")
     re_formatted_rss  = re.compile(r"^max rss \(kb\): (\d+)")
 
@@ -48,7 +48,7 @@ class TimeAdapter(GaugeAdapter):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if formatted_output == 0:
             self._use_formatted_time = True
-            return "/usr/bin/time -t %s %s" % (TimeAdapter.time_format, command)
+            return "/usr/bin/time -f %s %s" % (TimeAdapter.time_format, command)
         else:
             # use standard, but without info on memory
             # TODO: add support for reading out memory info on OS X
@@ -66,13 +66,14 @@ class TimeAdapter(GaugeAdapter):
                 m1 = self.re_formatted_rss.match(line)
                 m2 = self.re_formatted_time.match(line)
                 if m1:
-                    mem_kb = m1.group(1)
+                    mem_kb = float(m1.group(1))
                     measure = Measurement(mem_kb, 'kb', run_id, 'MaxRSS')
                     current.add_measurement(measure)
                 elif m2:
                     time = float(m2.group(1)) * 1000
                     measure = Measurement(time, 'ms', run_id, 'total')
                     current.add_measurement(measure)
+                    data_points.append(current)
                     current = DataPoint(run_id)
             else:
                 m1 = self.re_time.match(line)
