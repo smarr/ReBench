@@ -69,7 +69,7 @@ class BenchmarkConfig(object):
         key = tuple(cfg.as_str_list())
         if key in BenchmarkConfig._registry:
             raise ValueError("Two identical BenchmarkConfig tried to register. "
-                             + "This seems to be wrong.")
+                             + "This seems to be wrong: " + str(key))
         else:
             BenchmarkConfig._registry[key] = cfg
         return cfg
