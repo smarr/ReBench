@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import os
+
 from . import value_or_list_as_list
 
 
@@ -45,7 +47,7 @@ class VirtualMachine(object):
             
         self._cores = cores or global_cfg.get('cores', [1])
         
-        self._path             = global_cfg['path']
+        self._path             = os.path.abspath(global_cfg['path'])
         self._binary           = global_cfg['binary']
         self._args             = global_cfg.get('args', '')
         self._experiment_name  = experiment_name

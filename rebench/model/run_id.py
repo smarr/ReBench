@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import logging
-import os
 import re
 import sys
 
@@ -205,7 +204,7 @@ class RunId(object):
 
     def cmdline(self):
         cmdline = ""
-        vm_cmd  = "%s/%s %s" % (os.path.abspath(self._bench_cfg.vm.path),
+        vm_cmd  = "%s/%s %s" % (self._bench_cfg.vm.path,
                                 self._bench_cfg.vm.binary,
                                 self._bench_cfg.vm.args)
 
