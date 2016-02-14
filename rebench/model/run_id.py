@@ -60,6 +60,7 @@ class RunId(object):
         self._data_points = []
 
         self._termination_check = None
+        self._cmdline = None
 
     def requires_warmup(self):
         return self._bench_cfg.warmup_iterations > 0
@@ -203,6 +204,9 @@ class RunId(object):
                         }
 
     def cmdline(self):
+        if self._cmdline:
+            return self._cmdline
+
         cmdline = ""
         vm_cmd  = "%s/%s %s" % (self._bench_cfg.vm.path,
                                 self._bench_cfg.vm.binary,
@@ -221,7 +225,8 @@ class RunId(object):
         except TypeError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         
-        return cmdline.strip()
+        self._cmdline = cmdline.strip()
+        return self._cmdline
 
     @property
     def location(self):
