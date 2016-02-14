@@ -9,6 +9,7 @@ addons:
   apt:
     packages:
     - python-scipy
+    - python-yaml
 
 # install dependencies
 before_install:
@@ -17,8 +18,8 @@ before_install:
   - cp -R /usr/lib/python2.7/dist-packages/numpy* /home/travis/virtualenv/python2.7/lib/python2.7/site-packages/
   # - cp -R /usr/lib/python2.7/dist-packages/PIL* /home/travis/virtualenv/python2.7/lib/python2.7/site-packages/
 
-install:
-  - pip -q install PyYAML
+# install:
+#   - pip -q install PyYAML
   #- pip install numpy
   #- pip install scipy
 # TODO: check whether we can do something like the proposed:
