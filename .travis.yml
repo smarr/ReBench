@@ -18,8 +18,12 @@ before_install:
 
 install:
   - pip -q install PyYAML
+  - pip install coveralls
 # TODO: check whether we can do something like the proposed:
 #   "pip install -r requirements.txt --use-mirrors"
 
 # command to run tests
-script: nosetests
+script: nosetests --with-coverage --cover-package=rebench
+
+after_success:
+  coveralls
