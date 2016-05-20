@@ -38,9 +38,9 @@ class ConfiguratorTest(ReBenchTestCase):
     def test_experiment_name_from_cli(self):
         cnf = Configurator(
             self._path + '/test.conf', DataStore(), None,
-            'TestBrokenCommandFormat')
+            'Test')
         
-        self.assertEqual('TestBrokenCommandFormat', cnf.experiment_name())
+        self.assertEqual('Test', cnf.experiment_name())
     
     def test_experiment_name_from_config_file(self):
         cnf = Configurator(self._path + '/test.conf', DataStore(), None)
