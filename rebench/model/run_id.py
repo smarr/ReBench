@@ -165,10 +165,7 @@ class RunId(object):
         return self._var_value
     
     def __hash__(self):
-        return (hash(self._bench_cfg)  ^
-                hash(self._cores)      ^
-                hash(self._input_size) ^
-                hash(self._var_value))
+        return hash(self.cmdline())
 
     def as_simple_string(self):
         return "%s %s %s %s" % (self._bench_cfg.as_simple_string(),
