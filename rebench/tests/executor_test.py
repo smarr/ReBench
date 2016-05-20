@@ -65,14 +65,13 @@ class ExecutorTest(ReBenchTestCase):
             self.assertEquals(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
-        
-        options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
-                           'TestBrokenCommandFormat',
-                           standard_data_file = self._tmp_file)
-        ex = Executor(cnf.get_runs(), cnf.use_nice)
 
         try:
+            options = ReBench().shell_options().parse_args([])[0]
+            cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+                               'TestBrokenCommandFormat',
+                               standard_data_file=self._tmp_file)
+            ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
         except RuntimeError as e:
             self.assertEqual("TEST-PASSED", e.message)
@@ -85,13 +84,12 @@ class ExecutorTest(ReBenchTestCase):
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
         
-        options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
-                           'TestBrokenCommandFormat2',
-                           standard_data_file = self._tmp_file)
-        ex = Executor(cnf.get_runs(), cnf.use_nice)
-        
         try:
+            options = ReBench().shell_options().parse_args([])[0]
+            cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+                               'TestBrokenCommandFormat2',
+                               standard_data_file=self._tmp_file)
+            ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
         except RuntimeError as e:
             self.assertEqual("TEST-PASSED", e.message)
