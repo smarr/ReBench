@@ -21,7 +21,6 @@ from .virtual_machine  import VirtualMachine
 from .benchmark_suite  import BenchmarkSuite
 from .benchmark_config import BenchmarkConfig
 from .reporting        import Reporting
-from .run_id           import RunId
 from . import value_or_list_as_list, value_with_optional_details
 
 
