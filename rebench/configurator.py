@@ -27,8 +27,8 @@ from .model.experiment  import Experiment
 
 class Configurator:
 
-    def __init__(self, file_name, cli_options = None, exp_name = None,
-                 standard_data_file = None):
+    def __init__(self, file_name, data_store, cli_options = None,
+                 exp_name = None, standard_data_file = None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
             self._raw_config['standard_data_file'] = standard_data_file
@@ -38,9 +38,10 @@ class Configurator:
         
         self.runs        = RunsConfig(     **self._raw_config.get(      'runs', {}))
         self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
-        
+
+        self._data_store = data_store
         self._experiments = self._compile_experiments()
-        
+
         # TODO: does visualization work?
         # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
             
@@ -151,6 +152,7 @@ class Configurator:
                           self._raw_config['virtual_machines'],
                           self._raw_config['benchmark_suites'],
                           self._raw_config.get('reporting', {}),
+                          self._data_store,
                           self._raw_config.get('standard_data_file', None),
                           self._options.clean if self._options else False,
                           self._options)

@@ -34,7 +34,7 @@ from optparse import OptionParser, OptionGroup
 
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
-from .persistence    import DataPointPersistence
+from .persistence    import DataStore
 from .configurator   import Configurator
 from .configuration_error import ConfigurationError
 
@@ -127,7 +127,8 @@ Argument:
     def run(self, argv = None):
         if argv is None:
             argv = sys.argv
-                    
+
+        data_store = DataStore()
         cli_options, args = self.shell_options().parse_args(argv[1:])
         if len(args) < 1:
             logging.error("<config> is a mandatory parameter and was not given."
@@ -135,11 +136,11 @@ Argument:
             sys.exit(-1)
 
         try:
-            self._config = Configurator(args[0], cli_options, *args[1:])
+            self._config = Configurator(args[0], data_store, cli_options, *args[1:])
         except ConfigurationError as e:
             logging.error(e.message)
             sys.exit(-1)
-        DataPointPersistence.load_data()
+        data_store.load_data()
         self.execute_experiment()
         
     def execute_experiment(self):

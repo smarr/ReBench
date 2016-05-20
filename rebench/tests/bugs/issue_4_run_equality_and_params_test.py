@@ -23,7 +23,7 @@ from ...model.benchmark_config import BenchmarkConfig
 from ...model.benchmark_suite  import BenchmarkSuite
 from ...model.run_id           import RunId
 from ...model.virtual_machine  import VirtualMachine
-
+from ...persistence            import DataStore
 
 class Issue4RunEquality(unittest.TestCase):
 
@@ -38,7 +38,7 @@ class Issue4RunEquality(unittest.TestCase):
             'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s %(input)s'})
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
-                                    '3', 0, None)
+                                    '3', 0, None, DataStore())
         return RunId(bench_cfg, 1, 2, None)
 
     def _create_hardcoded_run_id(self):
@@ -49,7 +49,7 @@ class Issue4RunEquality(unittest.TestCase):
             'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s 2 3'})
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
-                                    None, 0, None)
+                                    None, 0, None, DataStore())
         return RunId(bench_cfg, 1, None, None)
 
     def test_hardcoded_equals_template_constructed(self):

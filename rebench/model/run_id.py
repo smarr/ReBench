@@ -25,27 +25,6 @@ from .benchmark_config import BenchmarkConfig
 
 
 class RunId(object):
-    _registry = {}
-    
-    @classmethod
-    def reset(cls):
-        cls._registry = {}
-    
-    @classmethod
-    def create(cls, bench_cfg, cores, input_size, var_value):
-        if isinstance(cores, str) and cores.isdigit():
-            cores = int(cores)
-        if input_size == '':
-            input_size = None
-        if var_value == '':
-            var_value = None
-
-        run = RunId(bench_cfg, cores, input_size, var_value)
-        if run in RunId._registry:
-            return RunId._registry[run]
-        else:
-            RunId._registry[run] = run
-            return run
 
     def __init__(self, bench_cfg, cores, input_size, var_value):
         self._bench_cfg   = bench_cfg
@@ -263,9 +242,10 @@ class RunId(object):
         return result
 
     @classmethod
-    def from_str_list(cls, str_list):
-        bench_cfg = BenchmarkConfig.from_str_list(str_list[:-3])
-        return cls.create(bench_cfg, str_list[-3], str_list[-2], str_list[-1])
+    def from_str_list(cls, data_store, str_list):
+        bench_cfg = BenchmarkConfig.from_str_list(data_store, str_list[:-3])
+        return data_store.create_run_id(
+            bench_cfg, str_list[-3], str_list[-2], str_list[-1])
 
     def __str__(self):
         return "RunId(%s, %s, %s, %s, %s, %d)" % (self._bench_cfg.name,

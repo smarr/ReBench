@@ -27,28 +27,65 @@ import time
 
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
+from .model.run_id      import RunId
 
 
-class DataPointPersistence(object):
-    _registry = {}
+class DataStore:
 
-    @classmethod
-    def reset(cls):
-        cls._registry = {}
+    def __init__(self):
+        self._files = {}
+        self._run_ids = {}
+        self._bench_cfgs = {}
 
-    @classmethod
-    def load_data(cls):
-        for persistence in cls._registry.values():
+    def load_data(self):
+        for persistence in self._files.values():
             persistence._load_data()
 
-    @classmethod
-    def get(cls, filename, discard_old_data):
-        if filename not in cls._registry:
-            cls._registry[filename] = DataPointPersistence(filename,
-                                                           discard_old_data)
-        return cls._registry[filename]
+    def get(self, filename, discard_old_data):
+        if filename not in self._files:
+            self._files[filename] = _DataPointPersistence(filename, self,
+                                                          discard_old_data)
+        return self._files[filename]
 
-    def __init__(self, data_filename, discard_old_data):
+    def create_run_id(self, bench_cfg, cores, input_size, var_value):
+        if isinstance(cores, str) and cores.isdigit():
+            cores = int(cores)
+        if input_size == '':
+            input_size = None
+        if var_value == '':
+            var_value = None
+
+        run = RunId(bench_cfg, cores, input_size, var_value)
+        if run in self._run_ids:
+            return self._run_ids[run]
+        else:
+            self._run_ids[run] = run
+            return run
+
+    def get_config(self, name, vm_name, suite_name, extra_args, warmup):
+        key = (name, vm_name, suite_name,
+               '' if extra_args is None else str(extra_args),
+               str(warmup))
+
+        if key not in self._bench_cfgs:
+            raise ValueError("Requested configuration is not available: " +
+                             key.__str__())
+
+        return self._bench_cfgs[key]
+
+    def register_config(self, cfg):
+        key = tuple(cfg.as_str_list())
+        if key in self._bench_cfgs:
+            raise ValueError("Two identical BenchmarkConfig tried to register. "
+                             + "This seems to be wrong: " + str(key))
+        else:
+            self._bench_cfgs[key] = cfg
+        return cfg
+
+class _DataPointPersistence(object):
+
+    def __init__(self, data_filename, data_store, discard_old_data):
+        self._data_store = data_store
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
                              "for data_filename, but got: %s" % data_filename)
@@ -92,8 +129,8 @@ class DataPointPersistence(object):
                 continue
             
             try:
-                measurement = Measurement.from_str_list(line.rstrip('\n').
-                                                        split(self._SEP))
+                measurement = Measurement.from_str_list(
+                    self._data_store, line.rstrip('\n').split(self._SEP))
                 run_id = measurement.run_id
                 if previous_run_id is not run_id:
                     data_point      = DataPoint(run_id)

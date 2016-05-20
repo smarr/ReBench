@@ -23,6 +23,7 @@ import subprocess
 from ..executor          import Executor, BenchmarkThreadExceptions
 from ..configurator      import Configurator
 from ..model.measurement import Measurement
+from ..persistence       import DataStore
 from ..                  import ReBench
 import os
 import sys
@@ -40,8 +41,8 @@ class ExecutorTest(ReBenchTestCase):
         subprocess.Popen =  Popen_override
         options = ReBench().shell_options().parse_args([])[0]
         
-        cnf  = Configurator(self._path + '/test.conf', options, 'Test',
-                            standard_data_file = self._tmp_file)
+        cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
+                            'Test', standard_data_file = self._tmp_file)
         
         ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
@@ -66,7 +67,7 @@ class ExecutorTest(ReBenchTestCase):
         sys.exit = test_exit
         
         options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', options,
+        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                            'TestBrokenCommandFormat',
                            standard_data_file = self._tmp_file)
         ex = Executor(cnf.get_runs(), cnf.use_nice)
@@ -85,7 +86,7 @@ class ExecutorTest(ReBenchTestCase):
         sys.exit = test_exit
         
         options = ReBench().shell_options().parse_args([])[0]
-        cnf = Configurator(self._path + '/test.conf', options,
+        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                            'TestBrokenCommandFormat2',
                            standard_data_file = self._tmp_file)
         ex = Executor(cnf.get_runs(), cnf.use_nice)
@@ -114,12 +115,12 @@ class ExecutorTest(ReBenchTestCase):
                                   measurements[3].value)
 
     def test_basic_execution(self):
-        cnf = Configurator(self._path + '/small.conf', None,
+        cnf = Configurator(self._path + '/small.conf', DataStore(), None,
                            standard_data_file = self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
-        cnf = Configurator(self._path + '/small.conf', None, 'all',
+        cnf = Configurator(self._path + '/small.conf', DataStore(), None, 'all',
                            standard_data_file = self._tmp_file)
         self._basic_execution(cnf)
         

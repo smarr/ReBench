@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ..persistence            import DataPointPersistence
-
 from .virtual_machine  import VirtualMachine
 from .benchmark_suite  import BenchmarkSuite
 from .benchmark_config import BenchmarkConfig
@@ -30,17 +28,18 @@ from . import value_or_list_as_list, value_with_optional_details
 class Experiment:
     
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
-                 global_suite_cfg, global_reporting_cfg, standard_data_file,
-                 discard_old_data, options = None):
+                 global_suite_cfg, global_reporting_cfg, data_store,
+                 standard_data_file, discard_old_data, options = None):
         self._name           = name
         self._raw_definition = exp_def
         self._runs_cfg       = global_runs_cfg.combined(exp_def)
-        self._reporting      = Reporting(global_reporting_cfg,
-                                         options).combined(
-                                            exp_def.get('reporting', {}))
-        self._persistence    = DataPointPersistence.get(exp_def.get('data_file',
-                                                            standard_data_file),
-                                                            discard_old_data)
+        self._reporting      = Reporting(
+            global_reporting_cfg,
+            options).combined(exp_def.get('reporting', {}))
+        self._data_store     = data_store
+        self._persistence    = data_store.get(exp_def.get('data_file',
+                                                          standard_data_file),
+                                              discard_old_data)
 
         self._vms            = self._compile_virtual_machines(global_vms_cfg)
         self._suites         = self._compile_benchmark_suites(global_suite_cfg)
@@ -61,7 +60,8 @@ class Experiment:
             for cores in bench.suite.cores:
                 for input_size in bench.suite.input_sizes:
                     for var_val in bench.suite.variable_values:
-                        run = RunId.create(bench, cores, input_size, var_val)
+                        run = self._data_store.create_run_id(
+                            bench, cores, input_size, var_val)
                         bench.add_run(run)
                         runs.add(run)
                         run.add_reporting(self._reporting)
@@ -101,5 +101,6 @@ class Experiment:
         bench_cfgs = []
         for suite in self._suites:
             for bench in value_or_list_as_list(suite.benchmarks):
-                bench_cfgs.append(BenchmarkConfig.compile(bench, suite))
+                bench_cfgs.append(BenchmarkConfig.compile(
+                    bench, suite, self._data_store))
         return bench_cfgs

@@ -21,6 +21,7 @@ import unittest
 import logging
 
 from ..configurator           import Configurator
+from ..persistence            import DataStore
 from .rebench_test_case import ReBenchTestCase
 
 
@@ -35,25 +36,27 @@ class ConfiguratorTest(ReBenchTestCase):
         logging.error = self._logging_error  # restore normal logging
         
     def test_experiment_name_from_cli(self):
-        cnf = Configurator(self._path + '/test.conf', None, 'TestBrokenCommandFormat')
+        cnf = Configurator(
+            self._path + '/test.conf', DataStore(), None,
+            'TestBrokenCommandFormat')
         
         self.assertEqual('TestBrokenCommandFormat', cnf.experiment_name())
     
     def test_experiment_name_from_config_file(self):
-        cnf = Configurator(self._path + '/test.conf', None)
+        cnf = Configurator(self._path + '/test.conf', DataStore(), None)
         self.assertEqual('Test', cnf.experiment_name())
         
     def test_number_of_experiments_smallconf(self):
-        cnf = Configurator(self._path + '/small.conf', None)
+        cnf = Configurator(self._path + '/small.conf', DataStore(), None)
         self.assertEqual(1, len(cnf.get_experiments()))
 
     @unittest.skip
     def test_number_of_experiments_testconf(self):
-        cnf = Configurator(self._path + '/test.conf', None, 'all')
+        cnf = Configurator(self._path + '/test.conf', DataStore(), None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
         
     def test_get_experiment(self):
-        cnf = Configurator(self._path + '/small.conf', None)
+        cnf = Configurator(self._path + '/small.conf', DataStore(), None)
         exp = cnf.get_experiment('Test')
         self.assertIsNotNone(exp)
         return exp
@@ -62,6 +65,7 @@ class ConfiguratorTest(ReBenchTestCase):
         exp = self.test_get_experiment()
         runs = exp.get_runs()
         self.assertEqual(2 * 2 * 2, len(runs))
+
 
 # allow command-line execution 
 def test_suite():

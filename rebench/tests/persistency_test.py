@@ -17,9 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import unittest
+import os
 
 from datetime import datetime
+
+from .rebench_test_case import ReBenchTestCase
+
+from ..configurator import Configurator
+from ..executor     import Executor
+from ..persistence  import DataStore
 
 from ..model.run_id           import RunId
 from ..model.measurement      import Measurement
@@ -28,16 +34,17 @@ from ..model.benchmark_suite  import BenchmarkSuite
 from ..model.virtual_machine  import VirtualMachine
 
 
-class PersistencyTest(unittest.TestCase):
+class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
+        data_store = DataStore()
         vm        = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
                                    None, [1], None)
         suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
                                                    'gauge_adapter': '',
                                                    'command': ''})
         bench_cfg = BenchmarkConfig("Test Bench [>", "Test Bench [>", None,
-                                    suite, vm, None, 0, None)
+                                    suite, vm, None, 0, None, data_store)
 
         run_id = RunId(bench_cfg, 1000, 44, 'sdf sdf sdf sdfsf')
         timestamp = datetime.now().replace(microsecond=0)
@@ -45,7 +52,7 @@ class PersistencyTest(unittest.TestCase):
                                   timestamp)
 
         serialized = measurement.as_str_list()
-        deserialized = Measurement.from_str_list(serialized)
+        deserialized = Measurement.from_str_list(data_store, serialized)
 
         self.assertEquals(deserialized.criterion, measurement.criterion)
         self.assertEquals(deserialized.value,     measurement.value)

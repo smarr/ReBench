@@ -19,6 +19,7 @@
 # IN THE SOFTWARE.
 from ...configurator           import Configurator
 from ...executor               import Executor
+from ...persistence            import DataStore
 
 from ..rebench_test_case import ReBenchTestCase
 
@@ -35,7 +36,7 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         super(Issue15WarmUpSupportTest, self).setUp(__file__)
 
     def test_run_id_indicates_warm_up_iterations_required(self):
-        cnf = Configurator(self._path + '/issue_15.conf',
+        cnf = Configurator(self._path + '/issue_15.conf', DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
         self.assertGreaterEqual(len(runs), 1)
@@ -44,7 +45,7 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         self.assertGreater(runs[0].warmup_iterations, 0)
 
     def test_warm_up_results_should_be_ignored(self):
-        cnf = Configurator(self._path + '/issue_15.conf',
+        cnf = Configurator(self._path + '/issue_15.conf', DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
         self.assertEquals(runs[0].get_number_of_data_points(), 0)

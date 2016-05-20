@@ -22,26 +22,9 @@ import logging
 
 
 class BenchmarkConfig(object):
-    _registry = {}
-    
-    @classmethod
-    def reset(cls):
-        cls._registry = {}
-    
-    @classmethod
-    def get_config(cls, name, vm_name, suite_name, extra_args, warmup):
-        key = (name, vm_name, suite_name,
-               '' if extra_args is None else str(extra_args),
-               str(warmup))
 
-        if key not in BenchmarkConfig._registry:
-            raise ValueError("Requested configuration is not available: " +
-                             key.__str__())
-
-        return BenchmarkConfig._registry[key]
-    
     @classmethod
-    def compile(cls, bench, suite):
+    def compile(cls, bench, suite, data_store):
         """Specialization of the configurations which get executed by using the
            suite definitions.
         """
@@ -62,20 +45,11 @@ class BenchmarkConfig(object):
         codespeed_name     = details.get('codespeed_name', None)
         warmup             = int(details.get('warmup',        0))
         return BenchmarkConfig(name, command, gauge_adapter, suite,
-                               suite.vm, extra_args, warmup, codespeed_name)
+                               suite.vm, extra_args, warmup, codespeed_name,
+                               data_store)
 
-    @classmethod
-    def _register(cls, cfg):
-        key = tuple(cfg.as_str_list())
-        if key in BenchmarkConfig._registry:
-            raise ValueError("Two identical BenchmarkConfig tried to register. "
-                             + "This seems to be wrong: " + str(key))
-        else:
-            BenchmarkConfig._registry[key] = cfg
-        return cfg
-    
     def __init__(self, name, command, gauge_adapter, suite, vm, extra_args,
-                 warmup, codespeed_name):
+                 warmup, codespeed_name, data_store):
         self._name               = name
         self._command            = command
         self._extra_args         = extra_args
@@ -87,7 +61,7 @@ class BenchmarkConfig(object):
         self._vm = vm
         self._runs = set()      # the compiled runs, these might be shared
                                 # with other benchmarks/suites
-        self._register(self)
+        data_store.register_config(self)
     
     def add_run(self, run):
         self._runs.add(run)
@@ -156,7 +130,7 @@ class BenchmarkConfig(object):
                 str(self._warmup)]
 
     @classmethod
-    def from_str_list(cls, str_list):
-        return cls.get_config(str_list[0], str_list[1], str_list[2],
+    def from_str_list(cls, data_store, str_list):
+        return data_store.get_config(str_list[0], str_list[1], str_list[2],
                               None if str_list[3] == '' else str_list[3],
                               int(str_list[4]))

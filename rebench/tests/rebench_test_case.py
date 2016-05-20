@@ -26,17 +26,12 @@ from tempfile import mkstemp
 
 from ..model.benchmark_config import BenchmarkConfig
 from ..model.run_id           import RunId
-from ..persistence            import DataPointPersistence
 
 
 class ReBenchTestCase(TestCase):
     def setUp(self, script_file = __file__):
         self._path     = dirname(realpath(script_file))
         self._tmp_file = mkstemp()[1]  # just use the file name
-
-        BenchmarkConfig.reset()
-        RunId.reset()
-        DataPointPersistence.reset()
 
         self._sys_exit = sys.exit  # make sure that we restore sys.exit
 

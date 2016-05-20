@@ -21,7 +21,7 @@ import unittest
 import os
 
 from ..interop.caliper_adapter import CaliperAdapter
-from ..persistence import DataPointPersistence
+from ..persistence import DataStore
 from .. import ReBench
 from ..configurator import Configurator
 from ..executor import Executor
@@ -55,9 +55,10 @@ class CaliperIntegrationTest(ReBenchTestCase):
         ## test for the expected number of executions of the
         ## caliper runner
         options = ReBench().shell_options().parse_args([])[0]
-        
-        cnf  = Configurator(self._path + '/test.conf', options, 'TestCaliper')
-        data = DataPointPersistence.get(self._tmp_file, True)
+
+        data_store = DataStore()
+        cnf  = Configurator(self._path + '/test.conf', data_store, options, 'TestCaliper')
+        data = data_store.get(self._tmp_file, True)
         
         ex = Executor(cnf.get_runs(), False)
         ex.execute()
