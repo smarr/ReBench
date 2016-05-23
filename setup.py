@@ -31,7 +31,7 @@ setup(name='ReBench',
       author='Stefan Marr',
       author_email='rebench@stefan-marr.de',
       url='https://github.com/smarr/ReBench',
-      packages=['rebench', 'rebench.model', 'rebench.interop', 'rebench.libs'],
+      packages=['rebench', 'rebench.model', 'rebench.interop'],
       install_requires=[
           'PyYAML>=3.08'
       ],
