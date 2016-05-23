@@ -303,7 +303,7 @@ class Executor:
             num_points_to_show = 20
             num_points = len(data_points)
             if num_points > num_points_to_show:
-                logging.debug("Skipped %d results..." % num_points - num_points_to_show)
+                logging.debug("Skipped %d results..." % (num_points - num_points_to_show))
             i = 0
             for data_point in data_points:
                 if warmup > 0:
