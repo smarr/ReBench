@@ -300,14 +300,22 @@ class Executor:
 
             warmup = run_id.warmup_iterations
 
+            num_points_to_show = 20
+            num_points = len(data_points)
+            if num_points > num_points_to_show:
+                logging.debug("Skipped %d results..." % num_points - num_points_to_show)
+            i = 0
             for data_point in data_points:
                 if warmup > 0:
                     warmup -= 1
                 else:
                     run_id.add_data_point(data_point)
-                    logging.debug("Run %s:%s result=%s" % (
-                        run_id.bench_cfg.vm.name, run_id.bench_cfg.name,
-                        data_point.get_total_value()))
+                    # only log the last num_points_to_show results
+                    if i >= num_points - num_points_to_show:
+                        logging.debug("Run %s:%s result=%s" % (
+                            run_id.bench_cfg.vm.name, run_id.bench_cfg.name,
+                            data_point.get_total_value()))
+                i += 1
             run_id.indicate_successful_execution()
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
