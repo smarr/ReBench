@@ -2,6 +2,7 @@ from os         import kill
 from signal     import SIGKILL
 from subprocess import PIPE, Popen
 from threading  import Thread
+from time       import time
 
 
 class SubprocessThread(Thread):
@@ -42,7 +43,21 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
     if timeout == -1:
         thread.join()
     else:
-        thread.join(timeout)
+        t10min = 10 * 60
+        if timeout < t10min:
+            thread.join(timeout)
+        else:
+            start = time()
+            diff = 0
+            while diff < timeout:
+                if t10min < timeout - diff:
+                    t = t10min
+                else:
+                    t = timeout - diff
+                thread.join(t)
+                diff = time() - start
+                if diff < timeout:
+                    print "Keep alive, current job runs for %ds" % diff
 
     if timeout != -1 and thread.is_alive():
         assert thread.pid is not None
