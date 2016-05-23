@@ -55,6 +55,8 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
                 else:
                     t = timeout - diff
                 thread.join(t)
+                if not thread.is_alive():
+                    break
                 diff = time() - start
                 if diff < timeout:
                     print "Keep alive, current job runs for %ds" % diff
