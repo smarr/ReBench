@@ -40,6 +40,7 @@ class RunId(object):
 
         self._termination_check = None
         self._cmdline = None
+        self._failed = True
 
     def requires_warmup(self):
         return self._bench_cfg.warmup_iterations > 0
@@ -56,7 +57,11 @@ class RunId(object):
         self._termination_check.indicate_failed_execution()
 
     def indicate_successful_execution(self):
+        self._failed = False
         self._termination_check.indicate_successful_execution()
+
+    def is_failed(self):
+        return self._failed
 
     def add_reporter(self, reporter):
         self._reporters.add(reporter)

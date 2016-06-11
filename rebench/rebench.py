@@ -141,7 +141,7 @@ Argument:
             logging.error(e.message)
             sys.exit(-1)
         data_store.load_data()
-        self.execute_experiment()
+        return self.execute_experiment()
         
     def execute_experiment(self):
         logging.debug("execute experiment: %s"%(self._config.experiment_name()))
@@ -157,14 +157,15 @@ Argument:
         executor = Executor(self._config.get_runs(), self._config.use_nice,
                             self._config.options.include_faulty,
                             scheduler_class)
-        executor.execute()
+        return executor.execute()
 
 
 def main_func():
     try:
-        return ReBench().run()
+        return 0 if ReBench().run() else -1
     except KeyboardInterrupt:
         logging.info("Aborted by user request")
+        return -1
 
 if __name__ == "__main__":
     sys.exit(main_func())

@@ -328,8 +328,12 @@ class Executor:
 
     def execute(self):
         self._scheduler.execute()
+        successful = True
         for run in self._runs:
             run.report_job_completed(self._runs)
+            if run.is_failed():
+                successful = False
+        return successful
 
     @property
     def runs(self):
