@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
- - 
+ - removed old support for Caliper output
 
 ## [0.7.5] - 2016-06-11
 
