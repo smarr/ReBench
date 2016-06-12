@@ -259,7 +259,7 @@ class Executor:
         root = sys.modules['rebench.interop'].__path__
 
         for _, name, _ in pkgutil.walk_packages(root):
-            # depending on how ReBench was executed, the name might one of the two
+            # depending on how ReBench was executed, name might one of the two
             try:
                 p = __import__("rebench.interop." + name, fromlist=adapter_name)
             except ImportError as e1:
