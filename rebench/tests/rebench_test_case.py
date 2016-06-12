@@ -24,9 +24,6 @@ from os.path  import dirname, realpath
 from unittest import TestCase
 from tempfile import mkstemp
 
-from ..model.benchmark_config import BenchmarkConfig
-from ..model.run_id           import RunId
-
 
 class ReBenchTestCase(TestCase):
     def setUp(self, script_file = __file__):
