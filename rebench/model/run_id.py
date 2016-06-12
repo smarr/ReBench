@@ -207,8 +207,8 @@ class RunId(object):
         return self._expand_vars(self._bench_cfg.suite.location)
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-            and self.cmdline() == other.cmdline())
+        return (isinstance(other, self.__class__) and
+                self.cmdline() == other.cmdline())
 
     def __ne__(self, other):
         return not self.__eq__(other)
