@@ -52,7 +52,8 @@ class ConfiguratorTest(ReBenchTestCase):
 
     @unittest.skip
     def test_number_of_experiments_testconf(self):
-        cnf = Configurator(self._path + '/test.conf', DataStore(), None, 'all')
+        cnf = Configurator(self._path + '/test.conf', DataStore(),
+                           None, None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
         
     def test_get_experiment(self):

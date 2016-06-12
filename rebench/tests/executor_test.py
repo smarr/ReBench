@@ -42,7 +42,7 @@ class ExecutorTest(ReBenchTestCase):
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
-                            'Test', standard_data_file = self._tmp_file)
+                            None, 'Test', standard_data_file = self._tmp_file)
         
         ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
@@ -69,7 +69,7 @@ class ExecutorTest(ReBenchTestCase):
         try:
             options = ReBench().shell_options().parse_args([])[0]
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
-                               'TestBrokenCommandFormat',
+                               None, 'TestBrokenCommandFormat',
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
@@ -87,7 +87,7 @@ class ExecutorTest(ReBenchTestCase):
         try:
             options = ReBench().shell_options().parse_args([])[0]
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
-                               'TestBrokenCommandFormat2',
+                               None, 'TestBrokenCommandFormat2',
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
@@ -118,8 +118,8 @@ class ExecutorTest(ReBenchTestCase):
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
-        cnf = Configurator(self._path + '/small.conf', DataStore(), None, 'all',
-                           standard_data_file = self._tmp_file)
+        cnf = Configurator(self._path + '/small.conf', DataStore(), None, None,
+                           'all', standard_data_file = self._tmp_file)
         self._basic_execution(cnf)
         
 

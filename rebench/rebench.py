@@ -35,6 +35,7 @@ from optparse import OptionParser, OptionGroup
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
 from .persistence    import DataStore
+from .reporter       import CliReporter
 from .configurator   import Configurator
 from .configuration_error import ConfigurationError
 
@@ -135,8 +136,11 @@ Argument:
                           "See --help for more information.")
             sys.exit(-1)
 
+        cli_reporter = CliReporter()
+
         try:
-            self._config = Configurator(args[0], data_store, cli_options, *args[1:])
+            self._config = Configurator(args[0], data_store, cli_options,
+                                        cli_reporter, *args[1:])
         except ConfigurationError as e:
             logging.error(e.message)
             sys.exit(-1)

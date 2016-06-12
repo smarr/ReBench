@@ -104,7 +104,7 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
     
-    def __init__(self, _cfg):
+    def __init__(self):
         super(CliReporter, self).__init__()
         self._num_runs       = None
         self._runs_completed = 0

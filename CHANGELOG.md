@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+ - fixed CLI reporting showing multiple summaries (#30)
  - removed support for displaying confidence interval
    proper statistical evaluation needs to be done externally to ReBench
  - removed old support for Caliper output

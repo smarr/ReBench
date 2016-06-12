@@ -23,7 +23,7 @@ import rebench.reporter as reporter
 
 class Reporting(object):
     
-    def __init__(self, raw_config, options):
+    def __init__(self, raw_config, cli_reporter, options):
         self._csv_file   = raw_config.get('csv_file',   None)
         self._csv_locale = raw_config.get('csv_locale', None)
         self._csv_raw    = raw_config.get('csv_raw',    None)
@@ -38,7 +38,7 @@ class Reporting(object):
         else:
             self._irc = None
 
-        self._cli_reporter = reporter.CliReporter(self)
+        self._cli_reporter = cli_reporter
 
         # if self._config.reporting:
         #     if ('codespeed' in self._config.reporting and
@@ -58,18 +58,19 @@ class Reporting(object):
         return self._csv_raw
     
     def combined(self, raw_config):
-        rep = Reporting({}, None)
+        rep = Reporting({}, self._cli_reporter, None)
         rep._csv_file   = raw_config.get('csv_file',   self._csv_file)
         rep._csv_locale = raw_config.get('csv_locale', self._csv_locale)
         rep._csv_raw    = raw_config.get('csv_raw',    self._csv_raw)
         
         rep._codespeed = self._codespeed
         rep._irc       = self._irc
-        rep._cli_reporter = reporter.CliReporter(rep)
         return rep
 
     def get_reporters(self):
-        result = [self._cli_reporter]
+        result = []
+        if self._cli_reporter:
+            result.append(self._cli_reporter)
         if self._codespeed:
             result.append(self._codespeed.get_reporter())
         if self._irc:

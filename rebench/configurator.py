@@ -28,7 +28,8 @@ from .model.experiment  import Experiment
 class Configurator:
 
     def __init__(self, file_name, data_store, cli_options = None,
-                 exp_name = None, standard_data_file = None):
+                 cli_reporter = None, exp_name = None,
+                 standard_data_file = None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
             self._raw_config['standard_data_file'] = standard_data_file
@@ -40,7 +41,7 @@ class Configurator:
         self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
-        self._experiments = self._compile_experiments()
+        self._experiments = self._compile_experiments(cli_reporter)
 
         # TODO: does visualization work?
         # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
@@ -125,7 +126,7 @@ class Configurator:
             runs |= exp.get_runs()
         return runs
     
-    def _compile_experiments(self):
+    def _compile_experiments(self, cli_reporter):
         if not self.experiment_name():
             raise ValueError("No experiment chosen.")
         
@@ -133,17 +134,18 @@ class Configurator:
         
         if self.experiment_name() == "all":
             for exp_name in self._raw_config['experiments']:
-                conf_defs[exp_name] = self._compile_experiment(exp_name)
+                conf_defs[exp_name] = self._compile_experiment(exp_name,
+                                                               cli_reporter)
         else:
             if self.experiment_name() not in self._raw_config['experiments']:
                 raise ValueError("Requested experiment '%s' not available." %
                                  self.experiment_name())
             conf_defs[self.experiment_name()] = self._compile_experiment(
-                                                        self.experiment_name())
+                self.experiment_name(), cli_reporter)
         
         return conf_defs
 
-    def _compile_experiment(self, exp_name):
+    def _compile_experiment(self, exp_name, cli_reporter):
         exp_def = self._raw_config['experiments'][exp_name]
         run_cfg = (self.quick_runs if (self.options and self.options.quick)
                                    else self.runs)
@@ -155,4 +157,5 @@ class Configurator:
                           self._data_store,
                           self._raw_config.get('standard_data_file', None),
                           self._options.clean if self._options else False,
+                          cli_reporter,
                           self._options)

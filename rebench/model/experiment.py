@@ -28,12 +28,13 @@ class Experiment:
     
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
                  global_suite_cfg, global_reporting_cfg, data_store,
-                 standard_data_file, discard_old_data, options = None):
+                 standard_data_file, discard_old_data, cli_reporter,
+                 options = None):
         self._name           = name
         self._raw_definition = exp_def
         self._runs_cfg       = global_runs_cfg.combined(exp_def)
         self._reporting      = Reporting(
-            global_reporting_cfg,
+            global_reporting_cfg, cli_reporter,
             options).combined(exp_def.get('reporting', {}))
         self._data_store     = data_store
         self._persistence    = data_store.get(exp_def.get('data_file',
