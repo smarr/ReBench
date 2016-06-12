@@ -24,7 +24,7 @@ class DataPoint(object):
         self._run_id = run_id
         self._measurements = []
         self._total = None
-    
+
     def number_of_measurements(self):
         return len(self._measurements)
     
@@ -32,7 +32,8 @@ class DataPoint(object):
         self._measurements.append(measurement)
         if measurement.is_total():
             if self._total is not None:
-                raise ValueError("A data point should only include one 'total' measurement.")
+                raise ValueError("A data point should only include one " +
+                                 "'total' measurement.")
             self._total = measurement
     
     def get_measurements(self):

@@ -76,8 +76,8 @@ class DataStore:
     def register_config(self, cfg):
         key = tuple(cfg.as_str_list())
         if key in self._bench_cfgs:
-            raise ValueError("Two identical BenchmarkConfig tried to register. "
-                             + "This seems to be wrong: " + str(key))
+            raise ValueError("Two identical BenchmarkConfig tried to " +
+                             "register. This seems to be wrong: " + str(key))
         else:
             self._bench_cfgs[key] = cfg
         return cfg
