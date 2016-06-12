@@ -17,27 +17,40 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import copy
 import math
-import logging
+import operator
 
-try:
-    import numpy
-    import scipy.stats
-    import scipy.stats.distributions as dist
-    
-    # provide a common interface for the relevant functions
-    import imp
-    stats = imp.new_module("stats")
-    stats.mean     = numpy.mean
-    stats.median   = numpy.median
-    stats.geomean  = scipy.stats.gmean
-    stats.stddev   = numpy.std
-    stats.norm_ppf = dist.norm.ppf
-    stats.t_ppf    = dist.t.ppf
-except ImportError:
-    logging.error("Loading scipy.stats failed. " +
-                  "A replacement is not yet completely implemented.")
-    import stats
+
+def mean(values):
+    return sum(values) / float(len(values))
+
+
+def median(values):
+    values_ = copy.deepcopy(values)
+    values_.sort()
+
+    if len(values_) % 2 == 0:
+        index = len(values_) / 2
+        return float(values_[index] + values_[index - 1]) / 2
+    else:
+        index = len(values_) / 2
+        return values_[index]
+
+
+def geo_mean(values):
+    product = reduce(operator.mul, values, 1)
+    return product ** (1.0 / len(values))
+
+
+def variance(values):
+    avg = mean(values)
+    var = [(x - avg) ** 2 for x in values]
+    return mean(var)
+
+
+def stddev(values):
+    return math.sqrt(variance(values))
 
 
 class StatisticProperties:
@@ -47,9 +60,8 @@ class StatisticProperties:
     from a set of data points
     """
     
-    def __init__(self, data_samples, confidence_level):
+    def __init__(self, data_samples):
         self._data_samples     = data_samples
-        self._confidence_level = confidence_level
 
         self.mean                   = 0
         self.geom_mean              = 0
@@ -58,15 +70,10 @@ class StatisticProperties:
         self.num_samples            = 0
         self.min                    = 0
         self.max                    = 0
-        self.conf_interval_low      = 0
-        self.conf_interval_high     = 0
-        self.conf_interval_size_abs = 0
-        self.conf_interval_size     = 0
 
         if self._data_samples:
             self.num_samples = len(self._data_samples)
             self._calc_basic_statistics()
-            self._calc_confidence(confidence_level)
         else:
             self.num_samples = 0
 
@@ -75,10 +82,10 @@ class StatisticProperties:
            of the data sample.
            Furthermore, several other simple properties are determined.
         """
-        self.mean        = stats.mean(self._data_samples)
-        self.geom_mean   = stats.geomean(self._data_samples)
-        self.median      = stats.median(self._data_samples)
-        self.std_dev     = stats.stddev(self._data_samples)
+        self.mean        = mean(self._data_samples)
+        self.geom_mean   = geo_mean(self._data_samples)
+        self.median      = median(self._data_samples)
+        self.std_dev     = stddev(self._data_samples)
 
         self.min = min(self._data_samples)
         self.max = max(self._data_samples)
@@ -90,44 +97,9 @@ class StatisticProperties:
                 self.std_dev,
                 self.num_samples,
                 self.min,
-                self.max,
-                self.conf_interval_low,
-                self.conf_interval_high,
-                self.conf_interval_size_abs,
-                self.conf_interval_size)
+                self.max)
     
     @classmethod
     def tuple_mapping(cls):
         return ('arithmetic mean', 'geometric mean', 'median', 'stdDev',
-                '#samples', 'min', 'max', 'Conf. Interval Low',
-                'Conf. Interval High', 'Conf. Interval Size Abs.',
-                'Conf.IntervalSize/Mean')
-
-    def _calc_confidence(self, confidence_level):
-        """
-        Depending on the number of samples, different distributions
-        are more optimal.
-        
-        Uses normal distribution, for >30 values
-        javastats used students,
-        i.e., t distribution for fewer values (<=30 values)
-        """
-        if self.num_samples > 30:
-            distribution = stats.norm_ppf((1 + confidence_level) / 2.0)
-        else:
-            df   = self.num_samples - 1
-            distribution = stats.t_ppf((1 + confidence_level) / 2.0, df)
-            
-        self._confidence_for_samples(distribution)
-            
-    def _confidence_for_samples(self, distribution):
-        """This function determines the confidence interval for a given 
-           set of samples, as well as  and the size of the confidence 
-           interval and its percentage of the mean.
-        """
-        self.conf_interval_low  = self.mean - (distribution * self.std_dev / math.sqrt(self.num_samples))
-        self.conf_interval_high = self.mean + (distribution * self.std_dev / math.sqrt(self.num_samples))
-        
-        self.conf_interval_size_abs = (self.conf_interval_high
-                                       - self.conf_interval_low)
-        self.conf_interval_size     = self.conf_interval_size_abs / self.mean
+                '#samples', 'min', 'max')

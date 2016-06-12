@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+ - removed support for displaying confidence interval
+   proper statistical evaluation needs to be done externally to ReBench
  - removed old support for Caliper output
 
 ## [0.7.5] - 2016-06-11

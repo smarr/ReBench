@@ -28,8 +28,6 @@ class Reporting(object):
         self._csv_locale = raw_config.get('csv_locale', None)
         self._csv_raw    = raw_config.get('csv_raw',    None)
         
-        self._confidence_level = raw_config.get('confidence_level', 0.95)
-
         if "codespeed" in raw_config and options.use_codespeed:
             self._codespeed = CodespeedReporting(raw_config, options)
         else:
@@ -59,18 +57,12 @@ class Reporting(object):
     def csv_raw(self):
         return self._csv_raw
     
-    @property
-    def confidence_level(self):
-        return self._confidence_level
-
     def combined(self, raw_config):
         rep = Reporting({}, None)
         rep._csv_file   = raw_config.get('csv_file',   self._csv_file)
         rep._csv_locale = raw_config.get('csv_locale', self._csv_locale)
         rep._csv_raw    = raw_config.get('csv_raw',    self._csv_raw)
         
-        rep._confidence_level = raw_config.get('confidence_level',
-                                               self._confidence_level)
         rep._codespeed = self._codespeed
         rep._irc       = self._irc
         rep._cli_reporter = reporter.CliReporter(rep)

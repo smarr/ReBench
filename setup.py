@@ -39,8 +39,10 @@ setup(name='ReBench',
           'console_scripts' : ['rebench = rebench:main_func']
       },
       extras_require = {
-          'SciPy': ['scipy>=0.8.0'],
           'IRC' :  ['irc>=8.9.1']
+      },
+      tests_require = {
+          'SciPy': ['scipy>=0.8.0'],
       },
       test_suite = 'rebench.tests',
       license = 'MIT'

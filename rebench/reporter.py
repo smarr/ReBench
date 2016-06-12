@@ -86,8 +86,7 @@ class TextReporter(Reporter):
         col_width = None
 
         for run_id in run_ids:
-            stats = StatisticProperties(run_id.get_total_values(),
-                                        run_id.requested_confidence_level)
+            stats = StatisticProperties(run_id.get_total_values())
             out = run_id.as_str_list()
             self._output_stats(out, run_id, stats)
             if col_width is None:
@@ -152,10 +151,9 @@ class CliReporter(TextReporter):
         if run_id.run_config.min_runtime:
             if statistics.mean < run_id.run_config.min_runtime:
                 print(("WARNING: measured mean is lower than min_runtime (%s) "
-                      "\t mean: %.1f [%.1f, %.1f]\trun id: %s")
+                      "\t mean: %.1f\trun id: %s")
                       % (run_id.run_config.min_runtime,
-                         statistics.mean, statistics.conf_interval_low,
-                         statistics.conf_interval_high,
+                         statistics.mean,
                          run_id.as_simple_string()))
                 print("Cmd: %s" % cmdline)
 
@@ -199,11 +197,6 @@ class CliReporter(TextReporter):
         else:
             output_list.append("mean:")
             output_list.append(("%.1f" % statistics.mean).rjust(8))
-            output_list.append("[" +
-                               ("%.1f" % statistics.conf_interval_low).rjust(8)
-                               + ",")
-            output_list.append(("%.1f" % statistics.conf_interval_high).rjust(8)
-                               + "]")
 
 
 class FileReporter(TextReporter):
@@ -517,8 +510,7 @@ class CodespeedReporter(Reporter):
         logging.info("Sent %d results to codespeed." % len(results))
 
     def _prepare_result(self, run_id):
-        stats = StatisticProperties(run_id.get_total_values(),
-                                    run_id.requested_confidence_level)
+        stats = StatisticProperties(run_id.get_total_values())
         return self._format_for_codespeed(run_id, stats)
 
     def report_job_completed(self, run_ids):

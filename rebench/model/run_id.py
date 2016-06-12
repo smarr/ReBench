@@ -34,7 +34,6 @@ class RunId(object):
 
         self._reporters   = set()
         self._persistence = set()
-        self._requested_confidence_level = 0
         self._run_config  = None
         self._data_points = []
 
@@ -68,8 +67,6 @@ class RunId(object):
 
     def add_reporting(self, reporting):
         self._reporters.update(reporting.get_reporters())
-        self._requested_confidence_level = max(reporting.confidence_level,
-                                               self._requested_confidence_level)
 
     def report_run_failed(self, cmdline, return_code, output):
         for reporter in self._reporters:
@@ -136,10 +133,6 @@ class RunId(object):
     @property
     def run_config(self):
         return self._run_config
-    
-    @property
-    def requested_confidence_level(self):
-        return self._requested_confidence_level
     
     @property
     def bench_cfg(self):

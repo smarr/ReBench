@@ -22,7 +22,7 @@
 ## This code is inspired by https://code.google.com/p/python-statlib
 
 import unittest
-from .. import stats
+from .. import statistics as stats
 
 are_numpy_and_scipy_available = False
 try:
@@ -104,33 +104,33 @@ class StatsTest(unittest.TestCase):
                                stats.median(self._mixed))
     
     def test_geomean_simple(self):
-        self.assertAlmostEqual( 1.817120592, stats.geomean([  1,   2,   3]))
-        self.assertAlmostEqual( 1.817120592, stats.geomean([1.0, 2.0, 3.0]))
+        self.assertAlmostEqual( 1.817120592, stats.geo_mean([  1,   2,   3]))
+        self.assertAlmostEqual( 1.817120592, stats.geo_mean([1.0, 2.0, 3.0]))
         
-        self.assertAlmostEqual(19.112093553, stats.geomean(self._integers))
-        self.assertAlmostEqual(19.112093553, stats.geomean(self._floats))
-        self.assertAlmostEqual(22.533409416, stats.geomean(self._floats2))
-        self.assertAlmostEqual(22.245044799, stats.geomean(self._mixed))
+        self.assertAlmostEqual(19.112093553, stats.geo_mean(self._integers))
+        self.assertAlmostEqual(19.112093553, stats.geo_mean(self._floats))
+        self.assertAlmostEqual(22.533409416, stats.geo_mean(self._floats2))
+        self.assertAlmostEqual(22.245044799, stats.geo_mean(self._mixed))
     
     @unittest.skipUnless(are_numpy_and_scipy_available,
                          "NumPy or SciPy is not available")
     def test_geomean_vs_scipy(self):
         self.assertAlmostEqual(scipy.stats.gmean([1, 2, 3]),
-                                   stats.geomean([1, 2, 3]))
+                                   stats.geo_mean([1, 2, 3]))
         self.assertAlmostEqual(scipy.stats.gmean([1.0, 2.0, 3.0]),
-                                   stats.geomean([1.0, 2.0, 3.0]))
+                                   stats.geo_mean([1.0, 2.0, 3.0]))
         
         self.assertAlmostEqual(scipy.stats.gmean(self._integers),
-                                   stats.geomean(self._integers))
+                                   stats.geo_mean(self._integers))
         
         self.assertAlmostEqual(scipy.stats.gmean(self._floats),
-                                   stats.geomean(self._floats))
+                                   stats.geo_mean(self._floats))
         
         self.assertAlmostEqual(scipy.stats.gmean(self._floats2),
-                                   stats.geomean(self._floats2))
+                                   stats.geo_mean(self._floats2))
         
         self.assertAlmostEqual(scipy.stats.gmean(self._mixed),
-                                   stats.geomean(self._mixed))
+                                   stats.geo_mean(self._mixed))
     
     def test_stddev_simple(self):
         self.assertAlmostEqual(0.8164965809,

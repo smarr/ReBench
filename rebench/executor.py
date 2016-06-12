@@ -238,16 +238,14 @@ class Executor:
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
         
         terminate = self._check_termination_condition(run_id, termination_check)
-        stats = StatisticProperties(run_id.get_total_values(),
-                                    run_id.requested_confidence_level)
+        stats = StatisticProperties(run_id.get_total_values())
         
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
             
-            stats = StatisticProperties(run_id.get_total_values(),
-                                        run_id.requested_confidence_level)
+            stats = StatisticProperties(run_id.get_total_values())
             logging.debug("Run: #%d" % stats.num_samples)
 
         if terminate:
