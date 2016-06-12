@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+ - added support for filtering VM's and suites/benchmarks on CLI (#50)
  - fixed CLI reporting showing multiple summaries (#30)
  - removed support for displaying confidence interval
    proper statistical evaluation needs to be done externally to ReBench

@@ -67,6 +67,45 @@ class ConfiguratorTest(ReBenchTestCase):
         runs = exp.get_runs()
         self.assertEqual(2 * 2 * 2, len(runs))
 
+    # Support for running a selected experiment
+    def test_only_running_test_runner2(self):
+        filter_args = ['vm:TestRunner2']
+        cnf = Configurator(self._path + '/small.conf', DataStore(),
+                           run_filter = filter_args)
+        runs = cnf.get_runs()
+        self.assertEqual(2 * 2, len(runs))
+
+    def test_only_running_bench1(self):
+        filter_args = ['s:Suite:Bench1']
+        cnf = Configurator(self._path + '/small.conf', DataStore(),
+                           run_filter=filter_args)
+
+        runs = cnf.get_runs()
+        self.assertEqual(2 * 2, len(runs))
+
+    def test_only_running_non_existing_stuff(self):
+        filter_args = ['s:non-existing', 'vm:non-existing']
+        cnf = Configurator(self._path + '/small.conf', DataStore(),
+                           run_filter=filter_args)
+
+        runs = cnf.get_runs()
+        self.assertEqual(0, len(runs))
+
+    def test_only_running_bench1_and_test_runner2(self):
+        filter_args = ['s:Suite:Bench1', 'vm:TestRunner2']
+        cnf = Configurator(self._path + '/small.conf', DataStore(),
+                           run_filter=filter_args)
+
+        runs = cnf.get_runs()
+        self.assertEqual(2, len(runs))
+
+    def test_only_running_bench1_or_bench2_and_test_runner2(self):
+        filter_args = ['s:Suite:Bench1', 's:Suite:Bench2', 'vm:TestRunner2']
+        cnf = Configurator(self._path + '/small.conf', DataStore(),
+                           run_filter=filter_args)
+
+        runs = cnf.get_runs()
+        self.assertEqual(2 * 2, len(runs))
 
 # allow command-line execution 
 def test_suite():

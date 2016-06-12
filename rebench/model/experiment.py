@@ -29,7 +29,7 @@ class Experiment:
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
                  global_suite_cfg, global_reporting_cfg, data_store,
                  standard_data_file, discard_old_data, cli_reporter,
-                 options = None):
+                 run_filter, options):
         self._name           = name
         self._raw_definition = exp_def
         self._runs_cfg       = global_runs_cfg.combined(exp_def)
@@ -44,7 +44,7 @@ class Experiment:
         self._vms            = self._compile_virtual_machines(global_vms_cfg)
         self._suites         = self._compile_benchmark_suites(global_suite_cfg)
         self._benchmarks     = self._compile_benchmarks()
-        self._runs           = self._compile_runs()
+        self._runs           = self._compile_runs(run_filter)
 
     @property
     def name(self):
@@ -53,10 +53,12 @@ class Experiment:
     def get_runs(self):
         return self._runs
     
-    def _compile_runs(self):
+    def _compile_runs(self, run_filter):
         runs = set()
         
         for bench in self._benchmarks:
+            if not run_filter.applies(bench):
+                continue
             for cores in bench.suite.cores:
                 for input_size in bench.suite.input_sizes:
                     for var_val in bench.suite.variable_values:

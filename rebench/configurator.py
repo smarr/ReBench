@@ -25,11 +25,75 @@ from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
 
 
+class _VMFilter:
+
+    def __init__(self, name):
+        self._name = name
+
+    def matches(self, bench):
+        return bench.vm.name == self._name
+
+
+class _SuiteFilter(object):
+
+    def __init__(self, name):
+        self._name = name
+
+    def matches(self, bench):
+        return bench.suite.name == self._name
+
+
+class _BenchmarkFilter(_SuiteFilter):
+
+    def __init__(self, suite_name, benchmark_name):
+        super(_BenchmarkFilter, self).__init__(suite_name)
+        self._benchmark_name = benchmark_name
+
+    def matches(self, bench):
+        if not super(_BenchmarkFilter, self).matches(bench):
+            return False
+        return bench.name == self._benchmark_name
+
+
+class _RunFilter:
+
+    def __init__(self, run_filter):
+        self._vm_filters    = []
+        self._suite_filters = []
+
+        if not run_filter:
+            return
+
+        for f in run_filter:
+            parts = f.split(":")
+            if parts[0] == "vm":
+                self._vm_filters.append(_VMFilter(parts[1]))
+            elif parts[0] == "s" and len(parts) == 2:
+                self._suite_filters.append(_SuiteFilter(parts[1]))
+            elif parts[0] == "s" and len(parts) == 3:
+                self._suite_filters.append(_BenchmarkFilter(parts[1], parts[2]))
+            else:
+                raise Exception("Unknown filter expression: " + f)
+
+    def applies(self, bench):
+        return (self._match(self._vm_filters, bench) and
+                self._match(self._suite_filters, bench))
+
+    @staticmethod
+    def _match(filters, bench):
+        if not filters:
+            return True
+        for f in filters:
+            if f.matches(bench):
+                return True
+        return False
+
+
 class Configurator:
 
     def __init__(self, file_name, data_store, cli_options = None,
                  cli_reporter = None, exp_name = None,
-                 standard_data_file = None):
+                 standard_data_file = None, run_filter = None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
             self._raw_config['standard_data_file'] = standard_data_file
@@ -41,7 +105,8 @@ class Configurator:
         self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
-        self._experiments = self._compile_experiments(cli_reporter)
+        self._experiments = self._compile_experiments(cli_reporter,
+                                                      _RunFilter(run_filter))
 
         # TODO: does visualization work?
         # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
@@ -126,7 +191,7 @@ class Configurator:
             runs |= exp.get_runs()
         return runs
     
-    def _compile_experiments(self, cli_reporter):
+    def _compile_experiments(self, cli_reporter, run_filter):
         if not self.experiment_name():
             raise ValueError("No experiment chosen.")
         
@@ -135,17 +200,18 @@ class Configurator:
         if self.experiment_name() == "all":
             for exp_name in self._raw_config['experiments']:
                 conf_defs[exp_name] = self._compile_experiment(exp_name,
-                                                               cli_reporter)
+                                                               cli_reporter,
+                                                               run_filter)
         else:
             if self.experiment_name() not in self._raw_config['experiments']:
                 raise ValueError("Requested experiment '%s' not available." %
                                  self.experiment_name())
             conf_defs[self.experiment_name()] = self._compile_experiment(
-                self.experiment_name(), cli_reporter)
+                self.experiment_name(), cli_reporter, run_filter)
         
         return conf_defs
 
-    def _compile_experiment(self, exp_name, cli_reporter):
+    def _compile_experiment(self, exp_name, cli_reporter, run_filter):
         exp_def = self._raw_config['experiments'][exp_name]
         run_cfg = (self.quick_runs if (self.options and self.options.quick)
                                    else self.runs)
@@ -158,4 +224,5 @@ class Configurator:
                           self._raw_config.get('standard_data_file', None),
                           self._options.clean if self._options else False,
                           cli_reporter,
+                          run_filter,
                           self._options)

@@ -48,12 +48,20 @@ class ReBench:
         self._config = None
     
     def shell_options(self):
-        usage = """%prog [options] <config> [run_name]
+        usage = """%prog [options] <config> [run_name] [vm:$]* [s:$]*
         
 Argument:
   config    required argument, file containing the run definition to be executed
   run_name  optional argument, the name of a run definition
-            from the config file"""
+            from the config file
+  vm:$      filter runs to only include the named VM, example: vm:VM1 vm:VM3
+  s:$       filter runs to only include the named suite and possibly benchmark
+            example: s:Suite1 s:Suite2:Bench3
+
+            Note, filters are combined with `or` semantics in the same group,
+            i.e., vm or suite, and at least one filter needs to match per group.
+"""
+
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
         options.add_option("-q", "--quick", action="store_true", dest="quick",
@@ -138,9 +146,17 @@ Argument:
 
         cli_reporter = CliReporter()
 
+        # interpret remaining args
+        exp_name = args[1] if len(args) > 1 and (
+            not args[1].startswith("vm:") and
+            not args[1].startswith("s:")) else "all"
+        run_filter = [f for f in args if (f.startswith("vm:") or
+                                          f.startswith("s:"))]
+
         try:
             self._config = Configurator(args[0], data_store, cli_options,
-                                        cli_reporter, *args[1:])
+                                        cli_reporter, exp_name, None,
+                                        run_filter)
         except ConfigurationError as e:
             logging.error(e.message)
             sys.exit(-1)
