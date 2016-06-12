@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+ - added support for rerun experiments, see `-r` option (#50)
+   This option will drop existing data for the selected experiment from
+   the data file, and then execute them normally.
  - added support for filtering VM's and suites/benchmarks on CLI (#50)
  - fixed CLI reporting showing multiple summaries (#30)
  - removed support for displaying confidence interval

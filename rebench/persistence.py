@@ -82,6 +82,41 @@ class DataStore:
             self._bench_cfgs[key] = cfg
         return cfg
 
+    @classmethod
+    def get_by_file(cls, runs):
+        by_file = {}
+        for r in runs:
+            points = r.get_data_points()
+            r.discard_data_points()
+            for p in points:
+                ms = p.get_measurements()
+                for m in ms:
+                    if m.filename in by_file:
+                        by_file[m.filename].append(m)
+                    else:
+                        by_file[m.filename] = [m]
+        return by_file
+
+    @classmethod
+    def discard_data_of_runs(cls, runs):
+        by_file = cls.get_by_file(runs)
+        for filename, ms in by_file.iteritems():
+            try:
+                with open(filename, 'r') as f:
+                    lines = f.readlines()
+            except IOError:
+                logging.info("Failed to open data file: %s" % filename)
+                continue
+
+            for m in ms:
+                lines[m.line_number] = None
+
+            lines = filter(None, lines)
+
+            with open(filename, 'w') as f:
+                f.writelines(lines)
+
+
 class _DataPointPersistence(object):
 
     def __init__(self, data_filename, data_store, discard_old_data):
@@ -124,13 +159,18 @@ class _DataPointPersistence(object):
         errors = set()
         
         previous_run_id = None
+        line_number = 0
         for line in f:
             if line.startswith('#'):  # skip comments, and shebang lines
+                line_number += 1
                 continue
             
             try:
                 measurement = Measurement.from_str_list(
-                    self._data_store, line.rstrip('\n').split(self._SEP))
+                    self._data_store, line.rstrip('\n').split(self._SEP),
+                    line_number, self._data_filename)
+
+
                 run_id = measurement.run_id
                 if previous_run_id is not run_id:
                     data_point      = DataPoint(run_id)
@@ -148,6 +188,7 @@ class _DataPointPersistence(object):
                     # Configuration is not available, skip data point
                     logging.log(logging.DEBUG - 1, msg)
                     errors.add(msg)
+            line_number += 1
     
     def _insert_shebang_line(self):
         """

@@ -105,6 +105,9 @@ class RunId(object):
     def get_data_points(self):
         return self._data_points
 
+    def discard_data_points(self):
+        self._data_points = []
+
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]
     

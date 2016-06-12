@@ -93,6 +93,10 @@ Argument:
                            default=False,
                            help="Discard old data from the data file "
                                 "(configured in the run description).")
+        options.add_option("-r", "--rerun", action="store_true",
+                           dest="do_rerun", default=False,
+                           help="Rerun selected experiments, " +
+                                "and discard old data from data file.")
         
         # now here some thing which have to be passed in to make codespeed
         # reporting complete
@@ -172,9 +176,12 @@ Argument:
 
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
-                           'random':      RandomScheduler}.get(
-                                                self._config.options.scheduler)
-        executor = Executor(self._config.get_runs(), self._config.use_nice,
+                           'random':      RandomScheduler}.get(self._config.options.scheduler)
+        runs = self._config.get_runs()
+        if self._config.options.do_rerun:
+            DataStore.discard_data_of_runs(runs)
+
+        executor = Executor(runs, self._config.use_nice,
                             self._config.options.include_faulty,
                             scheduler_class)
         return executor.execute()

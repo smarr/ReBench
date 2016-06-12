@@ -24,12 +24,14 @@ from .run_id import RunId
 
 class Measurement(object):
     def __init__(self, value, unit, run_id, criterion = 'total',
-                 timestamp = None):
+                 timestamp = None, line_number = None, filename = None):
         self._run_id    = run_id
         self._criterion = criterion
         self._value     = value
         self._unit      = unit
         self._timestamp = timestamp or datetime.now()
+        self._line_number = line_number
+        self._filename  = filename
         
     def is_total(self):
         return self._criterion == 'total'
@@ -54,6 +56,14 @@ class Measurement(object):
     def run_id(self):
         return self._run_id
 
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def line_number(self):
+        return self._line_number
+
     TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def as_str_list(self):
@@ -63,7 +73,8 @@ class Measurement(object):
                 self._criterion] + self._run_id.as_str_list()
 
     @classmethod
-    def from_str_list(cls, data_store, str_list):
+    def from_str_list(cls, data_store, str_list, line_number = None,
+                      filename = None):
 
         timestamp = datetime.strptime(str_list[0][1:-1], cls.TIME_FORMAT)
         value     = float(str_list[1])
@@ -71,4 +82,5 @@ class Measurement(object):
         criterion = str_list[3]
         run_id    = RunId.from_str_list(data_store, str_list[4:])
 
-        return Measurement(value, unit, run_id, criterion, timestamp)
+        return Measurement(value, unit, run_id, criterion, timestamp,
+                           line_number, filename)
