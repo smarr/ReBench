@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+ - fixed problem with quick termination (#51)
  - added support for rerun experiments, see `-r` option (#50)
    This option will drop existing data for the selected experiment from
    the data file, and then execute them normally.
