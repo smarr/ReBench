@@ -136,7 +136,7 @@ class QuickTerminationCheck(TerminationCheck):
     
     def should_terminate(self, number_of_data_points):
         if time() - self._start_time > self._run_cfg.max_time:
-            logging.debug("Maximum runtime is reached for %s" % self._run_cfg.name)
+            logging.debug("Maximum runtime is reached for %s" % self._bench_cfg.name)
             return True
         return super(QuickTerminationCheck, self).should_terminate(
             number_of_data_points)
