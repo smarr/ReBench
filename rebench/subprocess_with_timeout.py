@@ -7,13 +7,14 @@ from time       import time
 
 class SubprocessThread(Thread):
 
-    def __init__(self, binary_name, args, shell, cwd, stdout, stderr):
+    def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr):
         Thread.__init__(self, name = "Subprocess %s" % binary_name)
-        self._args   = args
-        self._shell  = shell
-        self._cwd    = cwd
-        self._stdout = stdout
-        self._stderr = stderr
+        self._args    = args
+        self._shell   = shell
+        self._cwd     = cwd
+        self._verbose = verbose
+        self._stdout  = stdout
+        self._stderr  = stderr
 
         self.stdout_result = None
         self.stderr_result = None
@@ -25,19 +26,30 @@ class SubprocessThread(Thread):
                   stdout=self._stdout, stderr=self._stderr)
         self.pid = p.pid
 
-        self.stdout_result, self.stderr_result = p.communicate()
+        if self._verbose and self._stdout == PIPE:
+            self.stdout_result = ""
+            while True:
+                line = p.stdout.readline()
+                if not line:
+                    break
+                print line.rstrip()
+                self.stdout_result = self.stdout_result + line
+            _, self.stderr_result = p.communicate()
+        else:
+            self.stdout_result, self.stderr_result = p.communicate()
+
         self.returncode = p.returncode
 
 
 def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
-        stdout = PIPE, stderr = PIPE):
+        verbose = False, stdout = PIPE, stderr = PIPE):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
     """
     binary_name = args.split(' ')[0]
 
-    thread = SubprocessThread(binary_name, args, shell, cwd, stdout, stderr)
+    thread = SubprocessThread(binary_name, args, shell, cwd, verbose, stdout, stderr)
     thread.start()
 
     if timeout == -1:

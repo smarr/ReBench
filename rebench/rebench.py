@@ -183,6 +183,7 @@ Argument:
 
         executor = Executor(runs, self._config.use_nice,
                             self._config.options.include_faulty,
+                            self._config.options.verbose,
                             scheduler_class)
         return executor.execute()
 
