@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+ - directly output a programs stdout/stderr in verbose mode `-v` (#52)
  - fixed problem with quick termination (#51)
  - added support for rerun experiments, see `-r` option (#50)
    This option will drop existing data for the selected experiment from
