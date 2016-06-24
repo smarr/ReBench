@@ -104,12 +104,13 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
     
-    def __init__(self):
+    def __init__(self, executes_verbose):
         super(CliReporter, self).__init__()
         self._num_runs       = None
         self._runs_completed = 0
         self._startTime      = None
         self._runs_remaining = 0
+        self._executes_verbose = executes_verbose
         
         # TODO: re-add support, think, we need that based on the proper config, i.e., the run id
 #         self._min_runtime = configurator.statistics.min_runtime
@@ -135,7 +136,7 @@ class CliReporter(TextReporter):
             logging.debug("max_runtime: %s" % run_id.bench_cfg.suite.max_runtime)
         logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
         
-        if output and len(output.strip()) > 0:
+        if not self._executes_verbose and output and len(output.strip()) > 0:
             print("Output:\n%s\n" % output)    
 
     def run_completed(self, run_id, statistics, cmdline):

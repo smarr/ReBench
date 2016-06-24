@@ -49,7 +49,8 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
     """
     binary_name = args.split(' ')[0]
 
-    thread = SubprocessThread(binary_name, args, shell, cwd, verbose, stdout, stderr)
+    thread = SubprocessThread(binary_name, args, shell, cwd, verbose, stdout,
+                              stderr)
     thread.start()
 
     if timeout == -1:

@@ -193,12 +193,12 @@ class ParallelScheduler(RunScheduler):
 
 class Executor:
     
-    def __init__(self, runs, use_nice, include_faulty = False,
-                 verbose = False, scheduler = BatchScheduler):
+    def __init__(self, runs, use_nice, include_faulty = False, verbose = False,
+                 scheduler = BatchScheduler):
         self._runs     = runs
         self._use_nice = use_nice
         self._include_faulty = include_faulty
-        self._verbose = verbose
+        self._verbose   = verbose
         self._scheduler = self._create_scheduler(scheduler)
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs)
@@ -275,16 +275,14 @@ class Executor:
                              termination_check):
         print cmdline
         # execute the external program here
-        (return_code, output, _) = subprocess_timeout.run(cmdline,
-                                                          cwd=run_id.location,
-                                                          stdout=subprocess.PIPE,
-                                                          stderr=subprocess.STDOUT,
-                                                          shell=True,
-                                                          verbose=self._verbose,
-                                                          timeout=run_id.bench_cfg.suite.max_runtime)
+        (return_code, output, _) = subprocess_timeout.run(
+            cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
+            timeout=run_id.bench_cfg.suite.max_runtime)
+
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
-            run_id.report_run_failed(cmdline, return_code, ("", output)[self._verbose == False])
+            run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
                 logging.error(("Could not execute %s. A likely cause is that "
                                "the file is not marked as executable.")
@@ -319,7 +317,7 @@ class Executor:
             run_id.indicate_successful_execution()
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
-            run_id.report_run_failed(cmdline, 0, ("", output)[self._verbose == False])
+            run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
     def _check_termination_condition(run_id, termination_check):

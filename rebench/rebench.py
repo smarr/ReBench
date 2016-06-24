@@ -148,7 +148,7 @@ Argument:
                           "See --help for more information.")
             sys.exit(-1)
 
-        cli_reporter = CliReporter()
+        cli_reporter = CliReporter(cli_options.verbose)
 
         # interpret remaining args
         exp_name = args[1] if len(args) > 1 and (
