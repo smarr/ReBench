@@ -1,8 +1,11 @@
 from os         import kill
+from select     import select
 from signal     import SIGKILL
-from subprocess import PIPE, Popen
+from subprocess import PIPE, STDOUT, Popen
 from threading  import Thread
 from time       import time
+
+import sys
 
 
 class SubprocessThread(Thread):
@@ -26,19 +29,35 @@ class SubprocessThread(Thread):
                   stdout=self._stdout, stderr=self._stderr)
         self.pid = p.pid
 
-        if self._verbose and self._stdout == PIPE:
+        self.process_output(p)
+        self.returncode = p.returncode
+
+    def process_output(self, p):
+        if self._verbose and self._stdout == PIPE and (self._stderr == PIPE or
+                                                       self._stderr == STDOUT):
             self.stdout_result = ""
+            self.stderr_result = ""
+
             while True:
-                line = p.stdout.readline()
-                if not line:
+                reads = [p.stdout.fileno()]
+                if self._stderr == PIPE:
+                    reads.append(p.stderr.fileno())
+                ret = select(reads, [], [])
+
+                for fd in ret[0]:
+                    if fd == p.stdout.fileno():
+                        read = p.stdout.readline()
+                        sys.stdout.write(read)
+                        self.stdout_result += read
+                    if self._stderr == PIPE and fd == p.stderr.fileno():
+                        read = p.stderr.readline()
+                        sys.stderr.write(read)
+                        self.stderr_result += read
+
+                if p.poll() is not None:
                     break
-                print line.rstrip()
-                self.stdout_result = self.stdout_result + line
-            _, self.stderr_result = p.communicate()
         else:
             self.stdout_result, self.stderr_result = p.communicate()
-
-        self.returncode = p.returncode
 
 
 def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
