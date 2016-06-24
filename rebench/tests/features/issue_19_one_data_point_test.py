@@ -81,7 +81,7 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         for run in cnf.get_runs():
             run.add_reporter(reporter)
 
-        ex = Executor(cnf.get_runs(), False, False, RoundRobinScheduler)
+        ex = Executor(cnf.get_runs(), False, False, False, RoundRobinScheduler)
         ex.execute()
 
         for run in cnf.get_runs():
