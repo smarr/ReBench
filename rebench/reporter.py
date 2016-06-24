@@ -37,7 +37,7 @@ class Reporter(object):
     def __init__(self):
         self._job_completion_reported = False
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, _run_id, _cmdline, _return_code, _output):
         pass
     
     def run_completed(self, run_id, statistics, cmdline):
@@ -208,7 +208,7 @@ class FileReporter(TextReporter):
         super(FileReporter, self).__init__()
         self._file = open(filename, 'a+')
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, run_id, _cmdline, _return_code, _output):
         result = "[%s] Run failed: %s\n" % (
             datetime.now(),
             " ".join(self._configuration_details(run_id)))
@@ -300,7 +300,7 @@ class IrcReporter(TextReporter):
         else:
             return msg
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, run_id, _cmdline, return_code, _output):
         if not self._cfg.report_run_failed:
             return
 

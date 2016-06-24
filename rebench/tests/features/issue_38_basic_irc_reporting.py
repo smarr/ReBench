@@ -14,7 +14,7 @@ class TestReporter(Reporter):
         self._run_completed = []
         self._job_completed = []
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, run_id, _cmdline, _return_code, _output):
         self._run_failed.append(run_id)
 
     def run_completed(self, run_id, statistics, cmdline):
