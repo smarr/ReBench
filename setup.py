@@ -38,9 +38,6 @@ setup(name='ReBench',
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']
       },
-      extras_require = {
-          'IRC' :  ['irc>=8.9.1']
-      },
       tests_require = {
           'SciPy': ['scipy>=0.8.0'],
       },
