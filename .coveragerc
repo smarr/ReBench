@@ -1,0 +1,9 @@
+[run]
+omit =
+  rebench/tests/features/issue_15_vm.py
+  rebench/tests/bugs/issue_27_vm.py
+  rebench/tests/features/issue_31_vm.py
+  rebench/tests/features/issue_16_vm.py
+  rebench/tests/features/issue_19_vm.py
+  rebench/tests/features/issue_38_vm.py
+  rebench/tests/test-vm1.py
