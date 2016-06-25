@@ -33,11 +33,6 @@ class Reporting(object):
         else:
             self._codespeed = None
 
-        if "irc" in raw_config:
-            self._irc = IrcReporting(raw_config, options)
-        else:
-            self._irc = None
-
         self._cli_reporter = cli_reporter
 
         # if self._config.reporting:
@@ -64,7 +59,6 @@ class Reporting(object):
         rep._csv_raw    = raw_config.get('csv_raw',    self._csv_raw)
         
         rep._codespeed = self._codespeed
-        rep._irc       = self._irc
         return rep
 
     def get_reporters(self):
@@ -73,8 +67,6 @@ class Reporting(object):
             result.append(self._cli_reporter)
         if self._codespeed:
             result.append(self._codespeed.get_reporter())
-        if self._irc:
-            result.append(self._irc.get_reporter())
         return result
 
 
@@ -145,68 +137,3 @@ class CodespeedReporting(object):
 
     def get_reporter(self):
         return self._reporter
-
-
-class IrcReporting(object):
-
-    @staticmethod
-    def _ensure_setting_is_present(key, config):
-        if key not in config:
-            raise ConfigurationError("IRC reporting needs '%s' to be set." % key)
-
-    def __init__(self, raw_config, options):
-        irc = raw_config.get("irc", {})
-
-        self._ensure_setting_is_present('server',  irc)
-        self._ensure_setting_is_present('port',    irc)
-        self._ensure_setting_is_present('channel', irc)
-        self._ensure_setting_is_present('nick',    irc)
-
-        self._server  = irc['server']
-        self._port    = irc['port']
-        self._channel = irc['channel']
-        self._nick    = irc['nick']
-        self._notify  = irc.get('notify', None)
-
-        log_events = irc.get("log_events", {})
-
-        self._report_run_failed    = "run_failed"    in log_events
-        self._report_run_completed = "run_completed" in log_events
-        self._report_job_completed = "job_completed" in log_events
-
-        self._reporter = reporter.IrcReporter(self)
-
-    def get_reporter(self):
-        return self._reporter
-
-    @property
-    def server(self):
-        return self._server
-
-    @property
-    def port(self):
-        return self._port
-
-    @property
-    def channel(self):
-        return self._channel
-
-    @property
-    def nick(self):
-        return self._nick
-
-    @property
-    def notify(self):
-        return self._notify
-
-    @property
-    def report_run_failed(self):
-        return self._report_run_failed
-
-    @property
-    def report_run_completed(self):
-        return self._report_run_completed
-
-    @property
-    def report_job_completed(self):
-        return self._report_job_completed

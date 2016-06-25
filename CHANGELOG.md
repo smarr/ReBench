@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+ - removed reporting to IRC, was never made to work properly
  - directly output a programs stdout/stderr in verbose mode `-v` (#52)
  - fixed problem with quick termination (#51)
  - added support for rerun experiments, see `-r` option (#50)
