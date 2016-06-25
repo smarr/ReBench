@@ -85,8 +85,10 @@ class TimeAdapter(GaugeAdapter):
                             float(m.group(3))) * 1000
                     measure = Measurement(time, 'ms', run_id, criterion)
                     current.add_measurement(measure)
+                else:
+                    measure = None
 
-                if measure.is_total():
+                if measure and measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
 
