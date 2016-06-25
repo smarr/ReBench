@@ -44,7 +44,7 @@ class TimeAdapter(GaugeAdapter):
 
     def acquire_command(self, command):
         formatted_output = subprocess.call(
-            ['/usr/bin/time', '-f', TimeAdapter.time_format, 'sleep', '1'],
+            ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if formatted_output == 0:
             self._use_formatted_time = True
