@@ -20,6 +20,7 @@
 from ...configurator     import Configurator
 from ...executor         import Executor
 from ...rebench          import ReBench
+from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -29,7 +30,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         super(Issue34AcceptFaultyRuns, self).setUp(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
-        cnf = Configurator(self._path + '/issue_34.conf',
+        cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
@@ -54,7 +55,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self.assertFalse(options.include_faulty)
 
     def test_faulty_runs_accepted_with_switch(self):
-        cnf = Configurator(self._path + '/issue_34.conf',
+        cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
