@@ -7,3 +7,4 @@ omit =
   rebench/tests/features/issue_19_vm.py
   rebench/tests/features/issue_38_vm.py
   rebench/tests/test-vm1.py
+  rebench/tests/test-vm2.py
