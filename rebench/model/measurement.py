@@ -67,10 +67,15 @@ class Measurement(object):
     TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def as_str_list(self):
+        if isinstance(self._value, float):
+            val = "%f" % self.value
+        else:
+            val = "%s" % self.value
+
         return ["[" + self._timestamp.strftime(self.TIME_FORMAT) + "]",
-                "%f" % self._value,
-                self._unit,
-                self._criterion] + self._run_id.as_str_list()
+                  val,
+                  self._unit,
+                  self._criterion] + self._run_id.as_str_list()
 
     @classmethod
     def from_str_list(cls, data_store, str_list, line_number = None,
