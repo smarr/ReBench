@@ -53,7 +53,7 @@ this is definitely one of the important papers to read.
 Similar, `Caliper`_ is a framework for micro benchmarks and also discusses
 important pitfalls not only for `Microbenchmarks`_.
 
-.. _Statistically Rigorous Java Performance Evaluation: http://itkovian.net/base/files/papers/oopsla2007-georges-preprint.pdf
+.. _Statistically Rigorous Java Performance Evaluation: https://buytaert.net/files/oopsla07-georges.pdf
 .. _Caliper: http://code.google.com/p/caliper/
 .. _Microbenchmarks: http://code.google.com/p/caliper/wiki/JavaMicrobenchmarks
 
