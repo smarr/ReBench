@@ -61,7 +61,7 @@ class ValidationLogAdapter(GaugeAdapter):
                 if m.group(5) == "u":
                     time /= 1000
                 criterion = (m.group(2) or 'total').strip()
-                successMeasure = Measurement(bool(m.group(5)), 'bool', run_id, 'Success')
+                successMeasure = Measurement(m.group(6) == "true", 'bool', run_id, 'Success')
                 measure = Measurement(time, 'ms', run_id, criterion)
                 current.add_measurement(successMeasure)
                 current.add_measurement(measure)
