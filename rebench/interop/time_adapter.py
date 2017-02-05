@@ -91,7 +91,8 @@ class TimeAdapter(GaugeAdapter):
                 else:
                     measure = None
 
-                if measure and measure.is_total():
+                if current.number_of_measurements() == 3 and \
+                        current.get_total_value() is not None:
                     data_points.append(current)
                     current = DataPoint(run_id)
 

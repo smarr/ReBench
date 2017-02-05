@@ -39,7 +39,7 @@ sys          1.00"""
         self.assertEqual(1, len(d))
 
         m = d[0].get_measurements()
-        self.assertEqual(1, len(m))
+        self.assertEqual(3, len(m))
         self.assertEqual(11000, d[0].get_total_value())
 
     def test_parse_no_data(self):
