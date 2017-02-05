@@ -46,8 +46,11 @@ class VirtualMachine(object):
         self._input_sizes      = input_sizes
             
         self._cores = cores or global_cfg.get('cores', [1])
-        
-        self._path             = os.path.abspath(global_cfg['path'])
+
+        self._path = global_cfg.get('path', None)
+        if self._path:
+            self._path = os.path.abspath(self._path)
+
         self._binary           = global_cfg['binary']
         self._args             = global_cfg.get('args', '')
         self._experiment_name  = experiment_name

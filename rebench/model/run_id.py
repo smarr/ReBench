@@ -185,11 +185,12 @@ class RunId(object):
             return self._cmdline
 
         cmdline = ""
-        vm_cmd  = "%s/%s %s" % (self._bench_cfg.vm.path,
-                                self._bench_cfg.vm.binary,
-                                self._bench_cfg.vm.args)
+        if self._bench_cfg.vm.path:
+            cmdline = "%s/" % (self._bench_cfg.vm.path, )
 
-        cmdline += vm_cmd 
+        cmdline += "%s %s" % (self._bench_cfg.vm.binary,
+                              self._bench_cfg.vm.args)
+
         cmdline += self._bench_cfg.suite.command
         
         if self._bench_cfg.extra_args is not None:
@@ -207,6 +208,8 @@ class RunId(object):
 
     @property
     def location(self):
+        if not self._bench_cfg.suite.location:
+            return None
         return self._expand_vars(self._bench_cfg.suite.location)
 
     def __eq__(self, other):

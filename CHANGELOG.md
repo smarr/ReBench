@@ -1,7 +1,8 @@
 # Change Log
 
 ## [Unreleased]
-
+ - added support for using binaries on system's path, `path` does not need
+   to be provided for VM anymore (#57)
 
 ## [0.8.0] - 2016-06-25
 

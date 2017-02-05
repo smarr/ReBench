@@ -3,12 +3,14 @@ language: python
 python:
   - "2.7"
 
+dist: trusty
 sudo: false
 
 addons:
   apt:
     packages:
     - python-scipy
+    - time
 
 # install dependencies
 before_install:
