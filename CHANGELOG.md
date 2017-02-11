@@ -1,6 +1,7 @@
 # Change Log
 
 ## [Unreleased]
+ - added support for building VMs before execution (#58)
  - added support for using binaries on system's path, `path` does not need
    to be provided for VM anymore (#57)
 

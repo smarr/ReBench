@@ -44,6 +44,8 @@ class VirtualMachine(object):
         self._name             = name
         self._benchsuite_names = benchmarks
         self._input_sizes      = input_sizes
+        self._build            = global_cfg.get('build', None)
+        self._do_build         = self._build is not None
             
         self._cores = cores or global_cfg.get('cores', [1])
 
@@ -71,6 +73,17 @@ class VirtualMachine(object):
     @property
     def cores(self):
         return self._cores
+
+    @property
+    def build(self):
+        return self._build
+
+    @property
+    def is_built(self):
+        return not self._do_build
+
+    def mark_build(self):
+        self._do_build = False
     
     @property
     def path(self):

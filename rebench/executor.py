@@ -23,15 +23,24 @@ from collections import deque
 from math import floor
 import logging
 from multiprocessing import cpu_count
+import os
 import pkgutil
 import random
+from select import select
 import subprocess
 import sys
+from tempfile  import mkstemp
 from threading import Thread, RLock
 
 import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
+
+
+class FailedBuildingVM(Exception):
+    """The exception to be raised when building of the VM failed."""
+    def __init__(self, vm_name):
+        self._vm_name = vm_name
 
 
 class RunScheduler(object):
@@ -56,9 +65,12 @@ class BatchScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
         for run_id in runs:
-            completed = False
-            while not completed:
-                completed = self._executor.execute_run(run_id)
+            try:
+                completed = False
+                while not completed:
+                    completed = self._executor.execute_run(run_id)
+            except FailedBuildingVM:
+                pass
 
 
 class RoundRobinScheduler(RunScheduler):
@@ -67,10 +79,13 @@ class RoundRobinScheduler(RunScheduler):
         task_list = deque(runs)
 
         while task_list:
-            run = task_list.popleft()
-            completed = self._executor.execute_run(run)
-            if not completed:
-                task_list.append(run)
+            try:
+                run = task_list.popleft()
+                completed = self._executor.execute_run(run)
+                if not completed:
+                    task_list.append(run)
+            except FailedBuildingVM:
+                pass
 
 
 class RandomScheduler(RunScheduler):
@@ -79,9 +94,12 @@ class RandomScheduler(RunScheduler):
         task_list = list(runs)
 
         while task_list:
-            run = random.choice(task_list)
-            completed = self._executor.execute_run(run)
-            if completed:
+            try:
+                run = random.choice(task_list)
+                completed = self._executor.execute_run(run)
+                if completed:
+                    task_list.remove(run)
+            except FailedBuildingVM:
                 task_list.remove(run)
 
 
@@ -122,7 +140,7 @@ class ParallelScheduler(RunScheduler):
         self._remaining_work = None
 
     def _number_of_threads(self):
-        ## TODO: read the configuration elements!
+        # TODO: read the configuration elements!
         non_interference_factor = float(2.5)
         return int(floor(cpu_count() / non_interference_factor))
 
@@ -194,12 +212,13 @@ class ParallelScheduler(RunScheduler):
 class Executor:
     
     def __init__(self, runs, use_nice, include_faulty = False, verbose = False,
-                 scheduler = BatchScheduler):
+                 scheduler = BatchScheduler, build_log = None):
         self._runs     = runs
         self._use_nice = use_nice
         self._include_faulty = include_faulty
         self._verbose   = verbose
         self._scheduler = self._create_scheduler(scheduler)
+        self._build_log = build_log
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs)
         for run in runs:
@@ -226,7 +245,78 @@ class Executor:
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
 
         return cmdline
-    
+
+    @staticmethod
+    def _get_script(build):
+        """ build can be either a file name, or a list of things.
+            If it is a list of operations, we create a temporary file
+            to execute it as shell script. """
+        if not isinstance(build, list):
+            return build, False
+
+        fd, file_name = mkstemp('.sh')
+        os.close(fd)
+        with open(file_name, 'w') as tmp_file:
+            tmp_file.write("#!/bin/sh\n")
+            for line in build:
+                tmp_file.write(line)
+                tmp_file.write('\n')
+        os.chmod(file_name, 0700)
+        return file_name, True
+
+    def _build_vm(self, run_id):
+        vm_name = run_id.bench_cfg.vm.name
+        if run_id.bench_cfg.vm.is_built or not run_id.bench_cfg.vm.build:
+            return
+        path = run_id.bench_cfg.vm.path or os.getcwd()
+        script, is_temp = self._get_script(run_id.bench_cfg.vm.build)
+
+        p = subprocess.Popen(
+            script, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path)
+
+        if self._build_log:
+            with open(self._build_log, 'a') as log_file:
+                while True:
+                    reads = [p.stdout.fileno(), p.stderr.fileno()]
+                    ret = select(reads, [], [])
+
+                    for fd in ret[0]:
+                        if fd == p.stdout.fileno():
+                            read = p.stdout.readline()
+                            if len(read) > 0:
+                                log_file.write(vm_name + '|STD:')
+                                log_file.write(read)
+                        elif fd == p.stderr.fileno():
+                            read = p.stderr.readline()
+                            if len(read) > 0:
+                                log_file.write(vm_name + '|ERR:')
+                                log_file.write(read)
+
+                    if p.poll() is not None:
+                        break
+                # read rest of pipes
+                while True:
+                    read = p.stdout.readline()
+                    if read == "":
+                        break
+                    log_file.write(vm_name + '|STD:')
+                    log_file.write(read)
+                while True:
+                    read = p.stderr.readline()
+                    if len(read) == 0:
+                        break
+                    log_file.write(vm_name + '|ERR:')
+                    log_file.write(read)
+
+                log_file.write('\n')
+
+        if p.returncode != 0:
+            raise FailedBuildingVM(vm_name)
+
+        if is_temp:
+            os.remove(script)
+        run_id.bench_cfg.vm.mark_build()
+
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
         
@@ -239,6 +329,9 @@ class Executor:
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
         
         terminate = self._check_termination_condition(run_id, termination_check)
+        if not terminate:
+            self._build_vm(run_id)
+
         stats = StatisticProperties(run_id.get_total_values())
         
         # now start the actual execution

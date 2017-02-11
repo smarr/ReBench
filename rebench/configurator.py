@@ -110,7 +110,11 @@ class Configurator:
 
         # TODO: does visualization work?
         # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
-            
+
+    @property
+    def build_log(self):
+        return self._raw_config.get('build_log', 'build.log')
+
     @staticmethod
     def _load_config(file_name):
         import yaml
