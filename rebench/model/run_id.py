@@ -52,6 +52,9 @@ class RunId(object):
     def execute_exclusively(self):
         return self._bench_cfg.execute_exclusively
 
+    def fail_immediately(self):
+        self._termination_check.fail_immediately()
+
     def indicate_failed_execution(self):
         self._termination_check.indicate_failed_execution()
 

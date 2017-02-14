@@ -93,6 +93,10 @@ class TerminationCheck(object):
         self._bench_cfg = bench_cfg
         self._consecutive_erroneous_executions = 0
         self._failed_execution_count = 0
+        self._fail_immediately = False
+
+    def fail_immediately(self):
+        self._fail_immediately = True
 
     def indicate_failed_execution(self):
         self._consecutive_erroneous_executions += 1
@@ -105,14 +109,19 @@ class TerminationCheck(object):
         return number_of_data_points >= self._run_cfg.number_of_data_points
 
     def fails_consecutively(self):
-        return self._consecutive_erroneous_executions >= 3
+        return (self._fail_immediately or
+                self._consecutive_erroneous_executions >= 3)
 
     def has_too_many_failures(self, number_of_data_points):
-        return ((self._failed_execution_count > 6) or (
-                number_of_data_points > 10 and (
+        return (self._fail_immediately or
+                (self._failed_execution_count > 6) or (
+                 number_of_data_points > 10 and (
                     self._failed_execution_count > number_of_data_points / 2)))
 
     def should_terminate(self, number_of_data_points):
+        if self._fail_immediately:
+            logging.info(
+                "%s was marked to fail immediately" % self._bench_cfg.name)
         if self.has_sufficient_number_of_data_points(number_of_data_points):
             logging.debug("Reached number_of_data_points for %s"
                           % self._bench_cfg.name)
