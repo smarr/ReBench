@@ -269,6 +269,7 @@ class Executor:
         if run_id.bench_cfg.vm.is_built or not run_id.bench_cfg.vm.build:
             return
         if run_id.bench_cfg.vm.is_failed_build:
+            run_id.indicate_failed_execution()
             raise FailedBuildingVM(vm_name)
 
         path = run_id.bench_cfg.vm.path or os.getcwd()
@@ -315,6 +316,7 @@ class Executor:
 
         if p.returncode != 0:
             run_id.bench_cfg.vm.mark_build_failed()
+            run_id.indicate_failed_execution()
             raise FailedBuildingVM(vm_name)
 
         if is_temp:
