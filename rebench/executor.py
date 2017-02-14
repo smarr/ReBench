@@ -268,6 +268,9 @@ class Executor:
         vm_name = run_id.bench_cfg.vm.name
         if run_id.bench_cfg.vm.is_built or not run_id.bench_cfg.vm.build:
             return
+        if run_id.bench_cfg.vm.is_failed_build:
+            raise FailedBuildingVM(vm_name)
+
         path = run_id.bench_cfg.vm.path or os.getcwd()
         script, is_temp = self._get_script(run_id.bench_cfg.vm.build)
 
@@ -311,6 +314,7 @@ class Executor:
                 log_file.write('\n')
 
         if p.returncode != 0:
+            run_id.bench_cfg.vm.mark_build_failed()
             raise FailedBuildingVM(vm_name)
 
         if is_temp:
