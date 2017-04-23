@@ -1,6 +1,11 @@
 # Change Log
 
 ## [Unreleased]
+
+ -
+
+## [0.9.0] - 2017-04-23
+
  - added support for building VMs before execution (#58)
  - added support for using binaries on system's path, `path` does not need
    to be provided for VM anymore (#57)
@@ -37,7 +42,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/smarr/ReBench/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/smarr/ReBench/compare/v0.7.5...v0.8.0
 [0.7.5]: https://github.com/smarr/ReBench/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/smarr/ReBench/compare/v0.7.3...v0.7.4
