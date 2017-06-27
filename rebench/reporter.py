@@ -23,6 +23,7 @@ from collections import deque
 from datetime import datetime
 from httplib import HTTPException
 from time import time
+from math import floor
 import logging
 import json
 import urllib2
@@ -179,8 +180,8 @@ class CliReporter(TextReporter):
             print(("Run %s \t runs left: %00d \t " +
                    "time left: %02d:%02d:%02d") % (run_id.bench_cfg.name,
                                                    self._runs_remaining,
-                                                   round(h), round(m),
-                                                   round(sec)))
+                                                   floor(h), floor(m),
+                                                   floor(sec)))
         else:
             self._startTime = time()
             print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
