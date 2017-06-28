@@ -171,9 +171,14 @@ class CliReporter(TextReporter):
     def start_run(self, run_id):
         if self._runs_completed > 0:
             current = time()
-            
-            etl = ((current - self._startTime) / self._runs_completed *
-                   self._runs_remaining)
+            data_points_per_run = run_id.run_config.number_of_data_points
+            data_points_completed = (self._runs_completed *
+                    data_points_per_run + len(run_id.get_data_points()))
+            data_points_remaining = (self._runs_remaining *
+                    data_points_per_run - len(run_id.get_data_points()))
+            time_per_data_point = ((current - self._startTime) /
+                data_points_completed)
+            etl = time_per_data_point * data_points_remaining
             sec = etl % 60
             m   = (etl - sec) / 60 % 60
             h   = (etl - sec - m) / 60 / 60
