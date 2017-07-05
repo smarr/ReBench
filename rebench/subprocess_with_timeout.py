@@ -95,12 +95,12 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
 
     if timeout != -1 and thread.is_alive():
         assert thread.pid is not None
-        return kill_process(thread.pid, kill_tree)
+        return kill_process(thread.pid, kill_tree, thread)
 
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
 
-def kill_process(pid, recursively):
+def kill_process(pid, recursively, thread):
     pids = [pid]
     if recursively:
         pids.extend(get_process_children(pid))
@@ -108,7 +108,9 @@ def kill_process(pid, recursively):
     for p in pids:
         kill(p, SIGKILL)
 
-    return -9, '', ''
+    thread.join()
+
+    return -9, thread.stdout_result, thread.stderr_result
 
 
 def get_process_children(pid):

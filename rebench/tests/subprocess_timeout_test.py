@@ -50,7 +50,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
         
         self.assertEqual(-9,   return_code)
         self.assertEqual("",   output)
-        self.assertEqual("", err)
+        self.assertEqual(None, err)
     
     def test_exec_with_timeout_python_interpreter(self):
         cmdline = "python -c \"while True: pass\""
@@ -61,7 +61,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
         
         self.assertEqual(-9, return_code)
         self.assertEqual("", output)
-        self.assertEqual("", err)
+        self.assertEqual(None, err)
     
     
 def test_suite():
