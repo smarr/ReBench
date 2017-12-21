@@ -4,6 +4,13 @@
 
  -
 
+## [0.9.1] - 2017-12-21
+
+ - Fix time-left reporting of invalid times (#60)
+ - Take the number of data points per run into account for estimated time left (#62)
+ - Obtain process output on timeout to enable results of partial runs
+ - Fix incompatibility with latest setuptools
+
 ## [0.9.0] - 2017-04-23
 
  - added support for building VMs before execution (#58)
@@ -42,7 +49,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v0.9.1...HEAD
+[0.9.0]: https://github.com/smarr/ReBench/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/smarr/ReBench/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/smarr/ReBench/compare/v0.7.5...v0.8.0
 [0.7.5]: https://github.com/smarr/ReBench/compare/v0.7.4...v0.7.5
