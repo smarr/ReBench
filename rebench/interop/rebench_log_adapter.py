@@ -32,7 +32,7 @@ class RebenchLogAdapter(GaugeAdapter):
        a benchmark and its runtime in microseconds.
     """
     re_log_line = re.compile(
-        r"^(?:.*: )?([\w\.]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
