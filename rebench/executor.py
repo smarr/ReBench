@@ -32,7 +32,7 @@ import sys
 from tempfile  import mkstemp
 from threading import Thread, RLock
 
-import subprocess_with_timeout as subprocess_timeout
+from . import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
 
