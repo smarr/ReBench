@@ -20,7 +20,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from rebench import ReBench
 
 rebench = ReBench()
@@ -31,7 +31,7 @@ setup(name='ReBench',
       author='Stefan Marr',
       author_email='rebench@stefan-marr.de',
       url='https://github.com/smarr/ReBench',
-      packages=['rebench', 'rebench.model', 'rebench.interop'],
+      packages=find_packages(exclude=['*.tests']),
       install_requires=[
           'PyYAML>=3.08'
       ],
