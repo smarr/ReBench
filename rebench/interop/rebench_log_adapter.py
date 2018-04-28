@@ -33,6 +33,8 @@ class RebenchLogAdapter(GaugeAdapter):
     """
     re_log_line = re.compile(
         r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+    re_extra_criterion_log_line = re.compile(
+        r"^(?:.*: )?([^\s]+): ([^:]+):\s*([0-9]+)(\w+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
@@ -52,6 +54,7 @@ class RebenchLogAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
+            measure = None
             m = self.re_log_line.match(line)
             if m:
                 time = float(m.group(4))
@@ -60,6 +63,17 @@ class RebenchLogAdapter(GaugeAdapter):
                 criterion = (m.group(2) or 'total').strip()
 
                 measure = Measurement(time, 'ms', run_id, criterion)
+
+            else:
+                m = self.re_extra_criterion_log_line.match(line)
+                if m:
+                    value = float(m.group(3))
+                    criterion = m.group(2)
+                    unit = m.group(4)
+
+                    measure = Measurement(value, unit, run_id, criterion)
+
+            if measure:
                 current.add_measurement(measure)
 
                 if measure.is_total():
