@@ -261,7 +261,7 @@ class Executor:
             for line in build:
                 tmp_file.write(line)
                 tmp_file.write('\n')
-        os.chmod(file_name, 0700)
+        os.chmod(file_name, 0o700)
         return file_name, True
 
     def _build_vm(self, run_id):
