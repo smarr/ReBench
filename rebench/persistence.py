@@ -182,7 +182,7 @@ class _DataPointPersistence(object):
                     run_id.loaded_data_point(data_point)
                     data_point = DataPoint(run_id)
             
-            except ValueError, e:
+            except ValueError as e:
                 msg = str(e)
                 if msg not in errors:
                     # Configuration is not available, skip data point
