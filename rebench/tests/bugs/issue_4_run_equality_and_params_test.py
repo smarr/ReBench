@@ -56,8 +56,8 @@ class Issue4RunEquality(unittest.TestCase):
         hard_coded = self._create_hardcoded_run_id()
         template   = self._create_template_run_id()
 
-        self.assertEquals(hard_coded.cmdline(), template.cmdline())
-        self.assertEquals(hard_coded, template)
+        self.assertEqual(hard_coded.cmdline(), template.cmdline())
+        self.assertEqual(hard_coded, template)
         self.assertTrue(hard_coded == template)
         self.assertFalse(hard_coded is template)
 

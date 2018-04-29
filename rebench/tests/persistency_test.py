@@ -54,9 +54,9 @@ class PersistencyTest(ReBenchTestCase):
         serialized = measurement.as_str_list()
         deserialized = Measurement.from_str_list(data_store, serialized)
 
-        self.assertEquals(deserialized.criterion, measurement.criterion)
-        self.assertEquals(deserialized.value,     measurement.value)
-        self.assertEquals(deserialized.unit,      measurement.unit)
-        self.assertAlmostEquals(deserialized.timestamp, measurement.timestamp)
+        self.assertEqual(deserialized.criterion, measurement.criterion)
+        self.assertEqual(deserialized.value,     measurement.value)
+        self.assertEqual(deserialized.unit,      measurement.unit)
+        self.assertAlmostEqual(deserialized.timestamp, measurement.timestamp)
 
-        self.assertEquals(deserialized.run_id,    measurement.run_id)
+        self.assertEqual(deserialized.run_id,    measurement.run_id)

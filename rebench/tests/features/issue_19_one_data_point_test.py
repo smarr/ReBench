@@ -87,5 +87,5 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         ex.execute()
 
         for run in cnf.get_runs():
-            self.assertEquals(10, run.get_number_of_data_points())
-            self.assertEquals(10, self._run_count[run])
+            self.assertEqual(10, run.get_number_of_data_points())
+            self.assertEqual(10, self._run_count[run])

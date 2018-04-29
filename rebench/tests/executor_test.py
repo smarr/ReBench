@@ -62,7 +62,7 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_broken_command_format(self):
         def test_exit(val):
-            self.assertEquals(-1, val, "got the correct error code")
+            self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
 
@@ -80,7 +80,7 @@ class ExecutorTest(ReBenchTestCase):
     
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
-            self.assertEquals(-1, val, "got the correct error code")
+            self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
         
@@ -98,18 +98,18 @@ class ExecutorTest(ReBenchTestCase):
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
-        self.assertEquals(8, len(runs))
+        self.assertEqual(8, len(runs))
         ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()
-            self.assertEquals(10, len(data_points))
+            self.assertEqual(10, len(data_points))
             for data_point in data_points:
                 measurements = data_point.get_measurements()
-                self.assertEquals(4, len(measurements))
+                self.assertEqual(4, len(measurements))
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
-                self.assertEquals(data_point.get_total_value(),
+                self.assertEqual(data_point.get_total_value(),
                                   measurements[3].value)
 
     def test_basic_execution(self):

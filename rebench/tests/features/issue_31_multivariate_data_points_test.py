@@ -39,9 +39,9 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
                            standard_data_file=self._tmp_file)
         ex = Executor(cnf.get_runs(), False)
         ex.execute()
-        self.assertEquals(1, len(cnf.get_runs()))
+        self.assertEqual(1, len(cnf.get_runs()))
         run = iter(cnf.get_runs()).next()
-        self.assertEquals(num_data_points, len(run.get_data_points()))
+        self.assertEqual(num_data_points, len(run.get_data_points()))
         return run.get_data_points()
 
     def test_records_multiple_data_points_from_single_execution_10(self):
@@ -62,21 +62,21 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         """
         data_points = self._records_data_points('Test1', 10)
         for dp, i in zip(data_points, range(0, 10)):
-            self.assertEquals(4, dp.number_of_measurements())
+            self.assertEqual(4, dp.number_of_measurements())
 
             for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
                                                     ["ms", "ms", "kbyte", "kerf"],
                                                     dp.get_measurements()):
-                self.assertEquals(criterion, measurement.criterion)
-                self.assertEquals(i,         int(measurement.value))
-                self.assertEquals(unit,      measurement.unit)
+                self.assertEqual(criterion, measurement.criterion)
+                self.assertEqual(i,         int(measurement.value))
+                self.assertEqual(unit,      measurement.unit)
 
     def test_is_compatible_to_issue16_format(self):
         data_points = self._records_data_points('Test3', 10)
         for dp, i in zip(data_points, range(0, 10)):
-            self.assertEquals(4, dp.number_of_measurements())
+            self.assertEqual(4, dp.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],
                                               dp.get_measurements()):
-                self.assertEquals(criterion, measurement.criterion)
-                self.assertEquals(i,         int(measurement.value))
+                self.assertEqual(criterion, measurement.criterion)
+                self.assertEqual(i,         int(measurement.value))

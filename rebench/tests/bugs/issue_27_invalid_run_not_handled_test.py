@@ -34,9 +34,9 @@ class Issue27InvalidRunNotHandled(ReBenchTestCase):
                            DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
-        self.assertEquals(runs[0].get_number_of_data_points(), 0)
+        self.assertEqual(runs[0].get_number_of_data_points(), 0)
 
         ex = Executor([runs[0]], False)
         ex.execute()
 
-        self.assertEquals(runs[0].get_number_of_data_points(), 0)
+        self.assertEqual(runs[0].get_number_of_data_points(), 0)
