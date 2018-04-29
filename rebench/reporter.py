@@ -21,14 +21,20 @@ from __future__ import with_statement, print_function
 from collections import deque
 
 from datetime import datetime
-from httplib import HTTPException
 from time import time
 from math import floor
 import logging
 import json
-import urllib2
-import urllib
 import re
+
+try:
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+    from http.client import HTTPException
+except ImportError:
+    from httplib import HTTPException
+    from urllib import urlencode
+    from urllib2 import urlopen
 
 from .statistics import StatisticProperties
 
@@ -388,14 +394,14 @@ class CodespeedReporter(Reporter):
         return result
 
     def _send_payload(self, payload):
-        fh = urllib2.urlopen(self._cfg.url, payload)
+        fh = urlopen(self._cfg.url, payload)
         response = fh.read()
         fh.close()
         logging.info("Results were sent to codespeed, response was: "
                      + response)
 
     def _send_to_codespeed(self, results):
-        payload = urllib.urlencode({'json': json.dumps(results)})
+        payload = urlencode({'json': json.dumps(results)})
 
         try:
             self._send_payload(payload)
