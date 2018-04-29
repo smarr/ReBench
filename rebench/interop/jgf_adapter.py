@@ -28,7 +28,7 @@
 #                 time = float(m.group(2))
 #                 val = Measurement(time, None)
 #                 result.append(val)
-#                 #print "DEBUG OUT:" + time
+#                 #print("DEBUG OUT:" + time)
 #
 #         if time is None:
 #             raise OutputNotParseable(data)

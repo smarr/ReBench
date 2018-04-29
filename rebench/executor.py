@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 
 from collections import deque
 from math import floor
@@ -179,7 +179,7 @@ class ParallelScheduler(RunScheduler):
                 exceptions.append(thread.exception)
 
         if len(exceptions) > 0:
-            print exceptions
+            print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
             else:
@@ -373,7 +373,7 @@ class Executor:
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
-        print cmdline
+        print(cmdline)
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(
             cmdline, cwd=run_id.location, stdout=subprocess.PIPE,

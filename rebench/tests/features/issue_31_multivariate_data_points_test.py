@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from __future__ import print_function
+
 from ...configurator           import Configurator
 from ...executor               import Executor
 from ...persistence            import DataStore
@@ -53,10 +55,10 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
 
     def test_associates_measurements_and_data_points_correctly(self):
         """
-        print "%d:RESULT-bar:ms:   %d.%d" % (i, i, i)
-        print "%d:RESULT-total:    %d.%d" % (i, i, i)
-        print "%d:RESULT-baz:kbyte:   %d" % (i, i)
-        print "%d:RESULT-foo:kerf: %d.%d" % (i, i, i)
+        print("%d:RESULT-bar:ms:   %d.%d" % (i, i, i))
+        print("%d:RESULT-total:    %d.%d" % (i, i, i))
+        print("%d:RESULT-baz:kbyte:   %d" % (i, i))
+        print("%d:RESULT-foo:kerf: %d.%d" % (i, i, i))
         """
         data_points = self._records_data_points('Test1', 10)
         for dp, i in zip(data_points, range(0, 10)):

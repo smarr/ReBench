@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from __future__ import print_function
+
 from ...configurator     import Configurator
 from ...executor         import Executor
 from ...persistence      import DataStore
@@ -86,7 +88,7 @@ class Issue58BuildVM(ReBenchTestCase):
 
         self.assertEqual("Bench1", runs[0].bench_cfg.name)
         self.assertEqual(0, runs[0].get_number_of_data_points())
-        print self._path + '/vm_58a.sh'
+        print(self._path + '/vm_58a.sh')
         self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
         os.remove(self._path + '/vm_58a.sh')
 

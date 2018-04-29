@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from os         import kill
 from select     import select
 from signal     import SIGKILL
@@ -91,7 +93,7 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
                     break
                 diff = time() - start
                 if diff < timeout:
-                    print "Keep alive, current job runs for %dmin" % (diff / 60)
+                    print("Keep alive, current job runs for %dmin" % (diff / 60))
 
     if timeout != -1 and thread.is_alive():
         assert thread.pid is not None

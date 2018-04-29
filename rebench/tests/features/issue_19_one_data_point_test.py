@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from __future__ import print_function
+
 from ...configurator     import Configurator
 from ...executor         import Executor, RoundRobinScheduler
 from ...persistence      import DataStore
@@ -64,12 +66,12 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         self._run_count = {}
 
     def run_completed(self, run_id):
-        print "completed", run_id
+        print("completed", run_id)
         self.assertIs(self._run_id, run_id)
 
     def start_run(self, run_id):
         """ Make sure that we do not do the same run twice in a row. """
-        print "start", run_id
+        print("start", run_id)
         self.assertIsNot(self._run_id, run_id)
         self._run_id = run_id
         self._run_count[run_id] = self._run_count.get(run_id, 0) + 1
