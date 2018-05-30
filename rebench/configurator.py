@@ -193,7 +193,7 @@ class Configurator:
     
     def get_runs(self):
         runs = set()
-        for exp in self._experiments.values():
+        for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
         return runs
     

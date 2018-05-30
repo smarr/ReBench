@@ -337,7 +337,7 @@ class CodespeedReporter(Reporter):
             self._send_and_empty_cache()
 
     def _send_and_empty_cache(self):
-        self._send_to_codespeed(self._cache.values())
+        self._send_to_codespeed(list(self._cache.values()))
         self._cache = {}
     
     def _result_data_template(self):

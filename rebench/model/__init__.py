@@ -69,7 +69,7 @@ def value_or_list_as_list(value):
 def value_with_optional_details(value, default_details = None):
     if isinstance(value, dict):
         assert len(value) == 1
-        (value, details) = value.items()[0]
+        (value, details) = list(value.items())[0]
     else:
         details = default_details
     
