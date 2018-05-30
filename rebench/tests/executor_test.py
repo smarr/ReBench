@@ -38,7 +38,7 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark, we override stuff in subprocess for testing
-        subprocess.Popen =  Popen_override
+        subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
@@ -126,12 +126,29 @@ class ExecutorTest(ReBenchTestCase):
 def Popen_override(cmdline, stdout, stderr=None, shell=None):
     class Popen:
         returncode = 0
-        def communicate(self):
-            return "", ""
+
+        def __init__(self, args):
+            self.args = args
+
+        def communicate(self, *args, **kwargs):
+            return "", b""
+
         def poll(self):
             return self.returncode
+
+        def kill(self):
+            pass
+
+        def wait(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, _type, _value, _traceback):
+            pass
     
-    return Popen()
+    return Popen(cmdline)
 
 
 def test_suite():
