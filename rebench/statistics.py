@@ -27,14 +27,11 @@ def mean(values):
 
 
 def median(values):
-    values_ = copy.deepcopy(values)
-    values_.sort()
-
+    values_ = sorted(copy.deepcopy(values))
+    index = int(len(values_) / 2)
     if len(values_) % 2 == 0:
-        index = len(values_) / 2
         return float(values_[index] + values_[index - 1]) / 2
     else:
-        index = len(values_) / 2
         return values_[index]
 
 
