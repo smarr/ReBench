@@ -40,7 +40,7 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         ex = Executor(cnf.get_runs(), False)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
-        run = iter(cnf.get_runs()).next()
+        run = next(iter(cnf.get_runs()))
         self.assertEqual(num_data_points, len(run.get_data_points()))
         return run.get_data_points()
 
