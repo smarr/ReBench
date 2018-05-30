@@ -119,7 +119,7 @@ class Configurator:
     def _load_config(file_name):
         import yaml
         try:
-            f = file(file_name, 'r')
+            f = open(file_name, 'r')
             return yaml.load(f)
         except IOError:
             logging.error("An error occurred on opening the config file (%s)."
