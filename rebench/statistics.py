@@ -20,6 +20,7 @@
 import copy
 import math
 import operator
+from functools import reduce
 
 
 def mean(values):
