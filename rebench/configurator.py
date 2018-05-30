@@ -162,6 +162,8 @@ class Configurator:
     def _can_set_niceness():
         output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
                                          stderr=subprocess.STDOUT)
+        if type(output) != str:
+            output = output.decode('utf-8')
         if "cannot set niceness" in output or "Permission denied" in output:
             return False
         else:

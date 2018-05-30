@@ -264,6 +264,11 @@ class Executor:
         os.chmod(file_name, 0o700)
         return file_name, True
 
+    @staticmethod
+    def _read(stream):
+        data = stream.readline()
+        return data.decode('utf-8')
+
     def _build_vm(self, run_id):
         vm_name = run_id.bench_cfg.vm.name
         if run_id.bench_cfg.vm.is_built or not run_id.bench_cfg.vm.build:
@@ -286,12 +291,12 @@ class Executor:
 
                     for fd in ret[0]:
                         if fd == p.stdout.fileno():
-                            read = p.stdout.readline()
+                            read = self._read(p.stdout)
                             if len(read) > 0:
                                 log_file.write(vm_name + '|STD:')
                                 log_file.write(read)
                         elif fd == p.stderr.fileno():
-                            read = p.stderr.readline()
+                            read = self._read(p.stderr)
                             if len(read) > 0:
                                 log_file.write(vm_name + '|ERR:')
                                 log_file.write(read)
@@ -300,13 +305,13 @@ class Executor:
                         break
                 # read rest of pipes
                 while True:
-                    read = p.stdout.readline()
+                    read = self._read(p.stdout)
                     if read == "":
                         break
                     log_file.write(vm_name + '|STD:')
                     log_file.write(read)
                 while True:
-                    read = p.stderr.readline()
+                    read = self._read(p.stderr)
                     if len(read) == 0:
                         break
                     log_file.write(vm_name + '|ERR:')
@@ -379,6 +384,7 @@ class Executor:
             cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
             timeout=run_id.bench_cfg.suite.max_runtime)
+        output = output.decode('utf-8')
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
