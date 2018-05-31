@@ -16,7 +16,7 @@ print("FreeVar: ", sys.argv[5])
 if sys.argv[1] == 4 or sys.argv[1] == 13:
     print("FAILED")
 else:
-    print("RESULT-part1: ", random.triangular(100, 110))
-    print("RESULT-part2: ", random.triangular(400, 440))
-    print("RESULT-part3: ", random.triangular(200, 300))
-    print("RESULT-total: ", random.triangular(700, 850))
+    print("RESULT-part1: " + str(random.triangular(100, 110)))
+    print("RESULT-part2: " + str(random.triangular(400, 440)))
+    print("RESULT-part3: " + str(random.triangular(200, 300)))
+    print("RESULT-total: " + str(random.triangular(700, 850)))
