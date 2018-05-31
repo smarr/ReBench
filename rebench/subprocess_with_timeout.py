@@ -116,7 +116,7 @@ def kill_process(pid, recursively, thread):
 
 
 def get_process_children(pid):
-    p = Popen('ps --no-headers -o pid --ppid %d' % pid, shell = True,
+    p = Popen('pgrep -P %d' % pid, shell = True,
               stdout = PIPE, stderr = PIPE)
     stdout, _stderr = p.communicate()
     result = [int(p) for p in stdout.split()]
