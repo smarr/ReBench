@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 
 from collections import deque
 from math import floor
@@ -32,7 +32,7 @@ import sys
 from tempfile  import mkstemp
 from threading import Thread, RLock
 
-import subprocess_with_timeout as subprocess_timeout
+from . import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
 
@@ -179,7 +179,7 @@ class ParallelScheduler(RunScheduler):
                 exceptions.append(thread.exception)
 
         if len(exceptions) > 0:
-            print exceptions
+            print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
             else:
@@ -261,8 +261,13 @@ class Executor:
             for line in build:
                 tmp_file.write(line)
                 tmp_file.write('\n')
-        os.chmod(file_name, 0700)
+        os.chmod(file_name, 0o700)
         return file_name, True
+
+    @staticmethod
+    def _read(stream):
+        data = stream.readline()
+        return data.decode('utf-8')
 
     def _build_vm(self, run_id):
         vm_name = run_id.bench_cfg.vm.name
@@ -286,12 +291,12 @@ class Executor:
 
                     for fd in ret[0]:
                         if fd == p.stdout.fileno():
-                            read = p.stdout.readline()
+                            read = self._read(p.stdout)
                             if len(read) > 0:
                                 log_file.write(vm_name + '|STD:')
                                 log_file.write(read)
                         elif fd == p.stderr.fileno():
-                            read = p.stderr.readline()
+                            read = self._read(p.stderr)
                             if len(read) > 0:
                                 log_file.write(vm_name + '|ERR:')
                                 log_file.write(read)
@@ -300,13 +305,13 @@ class Executor:
                         break
                 # read rest of pipes
                 while True:
-                    read = p.stdout.readline()
+                    read = self._read(p.stdout)
                     if read == "":
                         break
                     log_file.write(vm_name + '|STD:')
                     log_file.write(read)
                 while True:
-                    read = p.stderr.readline()
+                    read = self._read(p.stderr)
                     if len(read) == 0:
                         break
                     log_file.write(vm_name + '|ERR:')
@@ -373,12 +378,13 @@ class Executor:
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
-        print cmdline
+        print(cmdline)
         # execute the external program here
         (return_code, output, _) = subprocess_timeout.run(
             cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
             timeout=run_id.bench_cfg.suite.max_runtime)
+        output = output.decode('utf-8')
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()

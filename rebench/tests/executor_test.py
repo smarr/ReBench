@@ -38,7 +38,7 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark, we override stuff in subprocess for testing
-        subprocess.Popen =  Popen_override
+        subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args([])[0]
         
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
@@ -62,7 +62,7 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_broken_command_format(self):
         def test_exit(val):
-            self.assertEquals(-1, val, "got the correct error code")
+            self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
 
@@ -74,13 +74,13 @@ class ExecutorTest(ReBenchTestCase):
             ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
         except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", e.message)
+            self.assertEqual("TEST-PASSED", str(e))
         except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", e.exceptions[0].message)
+            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
     
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
-            self.assertEquals(-1, val, "got the correct error code")
+            self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
         
@@ -92,24 +92,24 @@ class ExecutorTest(ReBenchTestCase):
             ex = Executor(cnf.get_runs(), cnf.use_nice)
             ex.execute()
         except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", e.message)
+            self.assertEqual("TEST-PASSED", str(e))
         except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", e.exceptions[0].message)
+            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
-        self.assertEquals(8, len(runs))
+        self.assertEqual(8, len(runs))
         ex = Executor(cnf.get_runs(), cnf.use_nice)
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()
-            self.assertEquals(10, len(data_points))
+            self.assertEqual(10, len(data_points))
             for data_point in data_points:
                 measurements = data_point.get_measurements()
-                self.assertEquals(4, len(measurements))
+                self.assertEqual(4, len(measurements))
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
-                self.assertEquals(data_point.get_total_value(),
+                self.assertEqual(data_point.get_total_value(),
                                   measurements[3].value)
 
     def test_basic_execution(self):
@@ -126,12 +126,29 @@ class ExecutorTest(ReBenchTestCase):
 def Popen_override(cmdline, stdout, stderr=None, shell=None):
     class Popen:
         returncode = 0
-        def communicate(self):
-            return "", ""
+
+        def __init__(self, args):
+            self.args = args
+
+        def communicate(self, *args, **kwargs):
+            return "", b""
+
         def poll(self):
             return self.returncode
+
+        def kill(self):
+            pass
+
+        def wait(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, _type, _value, _traceback):
+            pass
     
-    return Popen()
+    return Popen(cmdline)
 
 
 def test_suite():

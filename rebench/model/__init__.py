@@ -58,7 +58,7 @@ Glossary:
 
 
 def value_or_list_as_list(value):
-    if type(value) is list:
+    if isinstance(value, list):
         return value
     elif value is None:
         return []
@@ -67,9 +67,9 @@ def value_or_list_as_list(value):
 
 
 def value_with_optional_details(value, default_details = None):
-    if type(value) is dict:
+    if isinstance(value, dict):
         assert len(value) == 1
-        (value, details) = value.items()[0]
+        (value, details) = list(value.items())[0]
     else:
         details = default_details
     

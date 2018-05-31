@@ -48,12 +48,12 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         cnf = Configurator(self._path + '/issue_15.conf', DataStore(),
                            standard_data_file = self._tmp_file)
         runs = list(cnf.get_runs())
-        self.assertEquals(runs[0].get_number_of_data_points(), 0)
-        self.assertEquals(runs[0].warmup_iterations, 13)
+        self.assertEqual(runs[0].get_number_of_data_points(), 0)
+        self.assertEqual(runs[0].warmup_iterations, 13)
 
         ex = Executor([runs[0]], False)
         ex.execute()
 
-        self.assertEquals(runs[0].get_number_of_data_points(),
+        self.assertEqual(runs[0].get_number_of_data_points(),
                           runs[0].run_config.number_of_data_points)
         self.assertLessEqual(runs[0].get_total_values()[0], 850)

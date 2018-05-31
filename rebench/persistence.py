@@ -38,7 +38,7 @@ class DataStore:
         self._bench_cfgs = {}
 
     def load_data(self):
-        for persistence in self._files.values():
+        for persistence in list(self._files.values()):
             persistence._load_data()
 
     def get(self, filename, discard_old_data):
@@ -182,7 +182,7 @@ class _DataPointPersistence(object):
                     run_id.loaded_data_point(data_point)
                     data_point = DataPoint(run_id)
             
-            except ValueError, e:
+            except ValueError as e:
                 msg = str(e)
                 if msg not in errors:
                     # Configuration is not available, skip data point

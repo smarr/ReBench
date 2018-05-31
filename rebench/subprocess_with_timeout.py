@@ -1,8 +1,10 @@
+from __future__ import print_function
+
 from os         import kill
 from select     import select
 from signal     import SIGKILL
 from subprocess import PIPE, STDOUT, Popen
-from threading  import Thread
+from threading  import Thread, Condition
 from time       import time
 
 import sys
@@ -19,18 +21,30 @@ class SubprocessThread(Thread):
         self._stdout  = stdout
         self._stderr  = stderr
 
+        self._pid        = None
+        self._started_cv = Condition()
+
         self.stdout_result = None
         self.stderr_result = None
         self.returncode    = None
-        self.pid           = None
 
     def run(self):
+        self._started_cv.acquire()
         p = Popen(self._args, shell=self._shell, cwd=self._cwd,
                   stdout=self._stdout, stderr=self._stderr)
-        self.pid = p.pid
+        self._pid = p.pid
+        self._started_cv.notify()
+        self._started_cv.release()
 
         self.process_output(p)
         self.returncode = p.returncode
+
+    def get_pid(self):
+        self._started_cv.acquire()
+        while self._pid is None:
+            self._started_cv.wait()
+        self._started_cv.release()
+        return self._pid
 
     def process_output(self, p):
         if self._verbose and self._stdout == PIPE and (self._stderr == PIPE or
@@ -91,11 +105,11 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
                     break
                 diff = time() - start
                 if diff < timeout:
-                    print "Keep alive, current job runs for %dmin" % (diff / 60)
+                    print("Keep alive, current job runs for %dmin" % (diff / 60))
 
     if timeout != -1 and thread.is_alive():
-        assert thread.pid is not None
-        return kill_process(thread.pid, kill_tree, thread)
+        assert thread.get_pid() is not None
+        return kill_process(thread.get_pid(), kill_tree, thread)
 
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
@@ -106,7 +120,11 @@ def kill_process(pid, recursively, thread):
         pids.extend(get_process_children(pid))
 
     for p in pids:
-        kill(p, SIGKILL)
+        try:
+            kill(p, SIGKILL)
+        except ProcessLookupError:
+            # it's a race condition, so let's simply ignore it
+            pass
 
     thread.join()
 
@@ -114,7 +132,7 @@ def kill_process(pid, recursively, thread):
 
 
 def get_process_children(pid):
-    p = Popen('ps --no-headers -o pid --ppid %d' % pid, shell = True,
+    p = Popen('pgrep -P %d' % pid, shell = True,
               stdout = PIPE, stderr = PIPE)
     stdout, _stderr = p.communicate()
     result = [int(p) for p in stdout.split()]

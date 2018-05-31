@@ -119,7 +119,7 @@ class Configurator:
     def _load_config(file_name):
         import yaml
         try:
-            f = file(file_name, 'r')
+            f = open(file_name, 'r')
             return yaml.load(f)
         except IOError:
             logging.error("An error occurred on opening the config file (%s)."
@@ -162,6 +162,8 @@ class Configurator:
     def _can_set_niceness():
         output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
                                          stderr=subprocess.STDOUT)
+        if type(output) != str:
+            output = output.decode('utf-8')
         if "cannot set niceness" in output or "Permission denied" in output:
             return False
         else:
@@ -191,7 +193,7 @@ class Configurator:
     
     def get_runs(self):
         runs = set()
-        for exp in self._experiments.values():
+        for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
         return runs
     
