@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
- -
+ - Add support for Python 3 and PyPy (#65)
 
 ## [0.9.1] - 2017-12-21
 
