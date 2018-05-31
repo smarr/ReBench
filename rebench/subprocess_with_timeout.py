@@ -4,7 +4,7 @@ from os         import kill
 from select     import select
 from signal     import SIGKILL
 from subprocess import PIPE, STDOUT, Popen
-from threading  import Thread
+from threading  import Thread, Condition
 from time       import time
 
 import sys
@@ -21,18 +21,30 @@ class SubprocessThread(Thread):
         self._stdout  = stdout
         self._stderr  = stderr
 
+        self._pid        = None
+        self._started_cv = Condition()
+
         self.stdout_result = None
         self.stderr_result = None
         self.returncode    = None
-        self.pid           = None
 
     def run(self):
+        self._started_cv.acquire()
         p = Popen(self._args, shell=self._shell, cwd=self._cwd,
                   stdout=self._stdout, stderr=self._stderr)
-        self.pid = p.pid
+        self._pid = p.pid
+        self._started_cv.notify()
+        self._started_cv.release()
 
         self.process_output(p)
         self.returncode = p.returncode
+
+    def get_pid(self):
+        self._started_cv.acquire()
+        while self._pid is None:
+            self._started_cv.wait()
+        self._started_cv.release()
+        return self._pid
 
     def process_output(self, p):
         if self._verbose and self._stdout == PIPE and (self._stderr == PIPE or
@@ -96,8 +108,8 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
                     print("Keep alive, current job runs for %dmin" % (diff / 60))
 
     if timeout != -1 and thread.is_alive():
-        assert thread.pid is not None
-        return kill_process(thread.pid, kill_tree, thread)
+        assert thread.get_pid() is not None
+        return kill_process(thread.get_pid(), kill_tree, thread)
 
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
