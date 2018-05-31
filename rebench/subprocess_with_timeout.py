@@ -120,7 +120,11 @@ def kill_process(pid, recursively, thread):
         pids.extend(get_process_children(pid))
 
     for p in pids:
-        kill(p, SIGKILL)
+        try:
+            kill(p, SIGKILL)
+        except ProcessLookupError:
+            # it's a race condition, so let's simply ignore it
+            pass
 
     thread.join()
 
