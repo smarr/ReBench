@@ -61,7 +61,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         print("%d:RESULT-foo:kerf: %d.%d" % (i, i, i))
         """
         data_points = self._records_data_points('Test1', 10)
-        for dp, i in zip(data_points, range(0, 10)):
+        for dp, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, dp.number_of_measurements())
 
             for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
@@ -73,7 +73,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
 
     def test_is_compatible_to_issue16_format(self):
         data_points = self._records_data_points('Test3', 10)
-        for dp, i in zip(data_points, range(0, 10)):
+        for dp, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, dp.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],

@@ -37,7 +37,7 @@ except ImportError:
 class StatsTest(unittest.TestCase):
     
     def setUp(self):
-        self._integers = range(1, 50)
+        self._integers = list(range(1, 50))
         self._floats   = [float(x)        for x in self._integers]
         self._floats2  = [float(x) + 2.31 for x in self._integers]
         
