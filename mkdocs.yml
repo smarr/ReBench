@@ -4,6 +4,8 @@ site_author: ReBench contributors
 
 pages:
   - 'ReBench: Execute and Document Benchmarks Reproducibly': index.md
+  - Usage:         usage.md
+  - Configuration: configuration.md
   - Development:
      - Release Steps: release.md
   - License:    LICENSE.md
