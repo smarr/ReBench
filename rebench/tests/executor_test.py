@@ -39,7 +39,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark, we override stuff in subprocess for testing
         subprocess.Popen = Popen_override
-        options = ReBench().shell_options().parse_args([])[0]
+        options = ReBench().shell_options().parse_args(['dummy'])
         
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
                             None, 'Test', standard_data_file = self._tmp_file)
@@ -67,7 +67,7 @@ class ExecutorTest(ReBenchTestCase):
         sys.exit = test_exit
 
         try:
-            options = ReBench().shell_options().parse_args([])[0]
+            options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                                None, 'TestBrokenCommandFormat',
                                standard_data_file=self._tmp_file)
@@ -85,7 +85,7 @@ class ExecutorTest(ReBenchTestCase):
         sys.exit = test_exit
         
         try:
-            options = ReBench().shell_options().parse_args([])[0]
+            options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                                None, 'TestBrokenCommandFormat2',
                                standard_data_file=self._tmp_file)

@@ -48,10 +48,11 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self.assertEqual(0, runs[2].get_number_of_data_points())
 
     def test_parse_command_switch(self):
-        options = ReBench().shell_options().parse_args(["--faulty"])[0]
+        options = ReBench().shell_options().parse_args(
+            ["--faulty", "test.conf"])
         self.assertTrue(options.include_faulty)
 
-        options = ReBench().shell_options().parse_args([])[0]
+        options = ReBench().shell_options().parse_args(["test.conf"])
         self.assertFalse(options.include_faulty)
 
     def test_faulty_runs_accepted_with_switch(self):
