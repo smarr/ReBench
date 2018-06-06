@@ -33,7 +33,8 @@ setup(name='ReBench',
       url='https://github.com/smarr/ReBench',
       packages=find_packages(exclude=['*.tests']),
       install_requires=[
-          'PyYAML>=3.08'
+          'PyYAML>=3.12',
+          'pykwalify>=1.6.1'
       ],
       entry_points = {
           'console_scripts' : ['rebench = rebench:main_func']

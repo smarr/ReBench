@@ -1,0 +1,287 @@
+name: ReBench Configuration
+desc: Specifies the elements of the YAML-based configuration format.
+
+schema;runs_type:
+  type: map
+  mapping:
+    number_of_data_points:
+      type: int
+      desc: Benchmarks are executed until we have this number of data points
+    min_runtime:
+      type: int
+      desc: Give a warning if the average run time is below this value in milliseconds
+    parallel_interference_factor:
+      type: float
+      desc: |
+        A higher factor means a lower degree of parallelism.
+        TODO: should probably be removed
+        TODO: then again, we might want this for research on the impact
+
+schema;reporting_type:
+  type: map
+  mapping:
+    csv_file:
+      type: str
+      desc: Statistics are written to a CSV file
+    csv_locale:
+      type: str
+      desc: |
+        The local influences separators.
+        Setting it might make work with Excel easier.
+    csv_raw:
+      type: str
+      desc: |
+        Raw data file. TODO: what was this again? probable needs to be removed.
+    codespeed:
+      type: map
+      desc: Send results to Codespeed for continuous performance tracking.
+      mapping:
+        project:
+          type: str
+          desc: The Codespeed project corresponding to the results.
+        url:
+          type: str
+          desc: |
+            The URL to the /result/add/json/ rest endpoint for submitting
+            results (the full URL).
+
+schema;statistics_type:
+  type: map
+  desc: |
+    Configuration for statistical reporting.
+    TODO: also abort condition? if so, needs to be removed
+  mapping:
+    min_runs:
+      type: int
+      desc: "Minimum number of runs? TODO: remove? 'run' outdated terminology?"
+    max_runs:
+      type: int
+      desc: "Maximum number of runs? TODO: remove? 'run' outdated terminology?"
+    max_time:
+      type: int
+      desc: "Time in second after which an invocation is terminated. TODO: remove?"
+    confidence_level:
+      type: float
+      desc: |
+        The desired confidence interval.
+        TODO: remove, it's measuring until goal reached, which is problematic.
+    error_margin:
+      type: float
+      desc: |
+        Desired error margin.
+        TODO: remove, not proper definition of experiment.
+        Need to define it up front
+    stop_criterium:
+      type: str
+      enum:
+        - percentage
+    stop_threshold:
+      type: int
+      desc: "TODO: what was this???"
+
+
+schema;quick_runs_type:
+  type: map
+  desc: Settings for quick runs, useful for fast feedback.
+  mapping:
+    number_of_data_points:
+      type: int
+      desc: |
+        Benchmarks are executed until we have this number of data points
+        TODO: keep consistent with `runs_type`
+    min_runs:
+      type: int
+      desc: "Minimum number of runs? TODO: remove? 'run' outdated terminology?"
+    max_runs:
+      type: int
+      desc: "Maximum number of runs? TODO: remove? 'run' outdated terminology?"
+    max_time:
+      type: int
+      desc: "Time in second after which an invocation is terminated. TODO: remove?"
+
+schema;benchmark_type_str:
+  type: str
+  desc: The name of a benchmark, can be simply the name.
+schema;benchmark_type_map:
+  type: map
+  desc: |
+    The name of a benchmark and additional information.
+  matching-rule: 'any'
+  mapping:
+    regex;(.+):
+      type: map
+      mapping:
+        extra_args:
+          type: scalar
+          desc: This extra argument is appended to the benchmark's command line.
+        warmup:
+          type: int
+          desc: |
+            Consider the first N iterations as warmup.
+            This is used by reporters, for instance to discard these
+            N measurements before calculating statistics.
+        command:
+          type: str
+          desc: use this command instead of the name for the command line.
+        codespeed_name:
+          type: str
+          desc: |
+            A name used for this benchmark when sending data to Codespeed.
+            This is useful to have a name different from the one relevant
+            at the suite level.
+
+schema;benchmark_suite_type:
+  type: map
+  mapping:
+    gauge_adapter:
+      type: str
+      desc: |
+        Name of the parser that interpreters the output of the benchmark harness
+    command:
+      type: str
+      desc: |
+        The command for the benchmark harness. It's going to be combined with the
+        VM's command line. It supports various format variables, including:
+         - benchmark (the benchmark's name)
+         - input (the input variable's value)
+         - variable (another variable's value)
+         - cores (the number of cores to be used by the benchmark)
+    location:
+      type: str
+      desc: |
+        The path to the benchmark harness. Execution use this location as
+        working directory. It overrides the location/path of a VM.
+    build:
+      desc: TODO make more precise
+      type: str
+    input_sizes:
+      type: seq
+      desc: |
+        Many benchmark harnesses and benchmarks take an input size as a
+        configuration parameter. It might identify a data file, or some other
+        way to adjust the amount of computation performed.
+      sequence:
+        - type: scalar
+    cores:
+      type: seq
+      desc: The cores to be used by the benchmark.
+      sequence:
+        - type: scalar
+    benchmarks:
+      type: seq
+      matching: any
+      sequence:
+        - include: benchmark_type_str
+        - include: benchmark_type_map
+    max_runtime:
+      type: int
+      desc: "max runtime in seconds. TODO: all time values should use the same unit"
+    variable_values:
+      type: seq
+      desc: Another dimension by which the benchmark execution can be varied.
+      sequence:
+        - type: scalar
+    description:
+      type: str
+      desc: A description of the benchmark.
+    desc:
+      type: str
+      desc: A description of the benchmark.
+
+schema;vm_type:
+  type: map
+  mapping:
+    path:
+      type: str
+      required: no
+      desc: |
+        Path to the binary.
+        If not given, it's up to the shell to find the binary
+    binary:
+      type: str
+      required: yes
+      desc: the name of the binary to be used
+    args:
+      type: str
+      desc: |
+        The arguments when assembling the command line.
+        TODO: do we support format string parameters here?
+              if so, which?
+    cores:
+      type: seq
+      sequence:
+        - type: scalar
+    desc:
+      type: str
+    description:
+      type: str
+    build:
+      desc: TODO make more precise
+      type: str
+    execute_exclusively:
+      type: bool
+      desc: |
+        TODO: probably needs to be removed, not sure. parallel exec of
+        benchmarks introduced a lot of noise
+
+schema;experiment_type:
+  description:
+    type: str
+    desc: Description of the experiment
+  desc:
+    type: str
+    desc: Description of the experiment
+  actions:
+    type: str
+    enum: [benchmark]
+    desc: |
+      Different possible actions.
+      TODO: this should probably be removed.
+      Don't think this was ever really used.
+  benchmark:
+    type: str
+    desc: Benchmark Suite to be used
+  executions:
+    type: seq
+    desc: The VMs used for execution
+    sequence:
+      - str
+
+
+type: map
+mapping:
+  standard_experiment:
+    type:     str
+    required: no
+    default:  all
+  standard_data_file:
+    type:     str
+    required: no
+  runs:
+    include: runs_type
+  reporting:
+    include: reporting_type
+  quick_runs:
+    include: quick_runs_type
+  statistics:
+    include: statistics_type
+  benchmark_suites:
+    type: map
+    mapping:
+      regex;(.+):
+        include: benchmark_suite_type
+  virtual_machines:
+    type: map
+    mapping:
+      regex;(.+):
+        include: vm_type
+  experiments:
+    type: map
+    mapping:
+      regex;(.+):
+        include: experiment_type
+
+  ## Random Elements:
+  ## TODO: find a nice way to accomodate such use cases
+  are_we_fast_yet:
+    type: any
