@@ -3,7 +3,7 @@ desc: Specifies the elements of the YAML-based configuration format.
 
 schema;runs_type:
   type: map
-  mapping:
+  mapping: &EXP_RUN_DETAILS
     number_of_data_points:
       type: int
       desc: Benchmarks are executed until we have this number of data points
@@ -50,6 +50,7 @@ schema;statistics_type:
   desc: |
     Configuration for statistical reporting.
     TODO: also abort condition? if so, needs to be removed
+    TODO: unify with runs_type? or remove overlap!
   mapping:
     min_runs:
       type: int
@@ -130,9 +131,36 @@ schema;benchmark_type_map:
             This is useful to have a name different from the one relevant
             at the suite level.
 
+schema;variables:
+  desc: |
+    defining variables for an experiment. not, this is not a type used by the
+    schema. instead, we use YAML to reuse this definition
+  type: map
+  mapping: &EXP_VARIABLES
+    input_sizes:
+      type: seq
+      desc: |
+        Many benchmark harnesses and benchmarks take an input size as a
+        configuration parameter. It might identify a data file, or some other
+        way to adjust the amount of computation performed.
+      sequence:
+        - type: scalar
+    cores:
+      type: seq
+      desc: The cores to be used by the benchmark.
+      sequence:
+        - type: scalar
+    variable_values:
+      type: seq
+      desc: Another dimension by which the benchmark execution can be varied.
+      sequence:
+        - type: scalar
+
+
 schema;benchmark_suite_type:
   type: map
   mapping:
+    <<: *EXP_VARIABLES
     gauge_adapter:
       type: str
       desc: |
@@ -154,19 +182,6 @@ schema;benchmark_suite_type:
     build:
       desc: TODO make more precise
       type: str
-    input_sizes:
-      type: seq
-      desc: |
-        Many benchmark harnesses and benchmarks take an input size as a
-        configuration parameter. It might identify a data file, or some other
-        way to adjust the amount of computation performed.
-      sequence:
-        - type: scalar
-    cores:
-      type: seq
-      desc: The cores to be used by the benchmark.
-      sequence:
-        - type: scalar
     benchmarks:
       type: seq
       matching: any
@@ -176,11 +191,6 @@ schema;benchmark_suite_type:
     max_runtime:
       type: int
       desc: "max runtime in seconds. TODO: all time values should use the same unit"
-    variable_values:
-      type: seq
-      desc: Another dimension by which the benchmark execution can be varied.
-      sequence:
-        - type: scalar
     description:
       type: str
       desc: A description of the benchmark.
@@ -191,6 +201,7 @@ schema;benchmark_suite_type:
 schema;vm_type:
   type: map
   mapping:
+    <<: *EXP_VARIABLES
     path:
       type: str
       required: no
@@ -207,10 +218,6 @@ schema;vm_type:
         The arguments when assembling the command line.
         TODO: do we support format string parameters here?
               if so, which?
-    cores:
-      type: seq
-      sequence:
-        - type: scalar
     desc:
       type: str
     description:
@@ -224,39 +231,71 @@ schema;vm_type:
         TODO: probably needs to be removed, not sure. parallel exec of
         benchmarks introduced a lot of noise
 
-schema;experiment_type:
-  description:
-    type: str
-    desc: Description of the experiment
-  desc:
-    type: str
-    desc: Description of the experiment
-  actions:
-    type: str
-    enum: [benchmark]
-    desc: |
-      Different possible actions.
-      TODO: this should probably be removed.
-      Don't think this was ever really used.
-  benchmark:
-    type: str
-    desc: Benchmark Suite to be used
-  executions:
-    type: seq
-    desc: The VMs used for execution
-    sequence:
-      - str
+schema;exp_suite_type:
+  desc: A list of suites
+  type: seq
+  sequence:
+    - type: str
 
+schema;exp_exec_type:
+  desc: A VM and a set of benchmarks
+  type: map
+  mapping:
+    regex;(.+):
+      type: map
+      mapping:
+        <<: *EXP_VARIABLES
+        benchmark:
+          include: exp_suite_type
+
+schema;experiment_type:
+  desc: Defined an experiment for a specific VM
+  type: map
+  mapping:
+    <<: *EXP_RUN_DETAILS
+    <<: *EXP_VARIABLES
+    description:
+      type: str
+      desc: Description of the experiment
+    desc:
+      type: str
+      desc: Description of the experiment
+    actions:
+      type: str
+      enum: [benchmark, profile]
+      desc: |
+        Different possible actions.
+        TODO: this should probably be removed.
+        Don't think this was ever really used.
+    benchmark:
+      desc: |
+        Benchmark Suite to be used
+        TODO: should this be renamed into suites
+      include: exp_suite_type
+    data_file:
+      desc: The data for this experiment goes into a separate file
+      type: str
+    executions:
+      type: seq
+      desc: |
+        The VMs used for execution, possibly with specific suites assigned
+      sequence:
+        - type: str
+        - include: exp_exec_type
+    statistics:
+      include: statistics_type
+    reporting:
+      include: reporting_type
 
 type: map
 mapping:
   standard_experiment:
     type:     str
-    required: no
     default:  all
   standard_data_file:
     type:     str
-    required: no
+  build_log:
+    type:     str
   runs:
     include: runs_type
   reporting:
