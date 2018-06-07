@@ -247,24 +247,6 @@ class Executor:
         return cmdline
 
     @staticmethod
-    def _get_script(build):
-        """ build can be either a file name, or a list of things.
-            If it is a list of operations, we create a temporary file
-            to execute it as shell script. """
-        if not isinstance(build, list):
-            return build, False
-
-        fd, file_name = mkstemp('.sh')
-        os.close(fd)
-        with open(file_name, 'w') as tmp_file:
-            tmp_file.write("#!/bin/sh\n")
-            for line in build:
-                tmp_file.write(line)
-                tmp_file.write('\n')
-        os.chmod(file_name, 0o700)
-        return file_name, True
-
-    @staticmethod
     def _read(stream):
         data = stream.readline()
         return data.decode('utf-8')
@@ -278,10 +260,13 @@ class Executor:
             raise FailedBuildingVM(vm_name)
 
         path = run_id.bench_cfg.vm.path or os.getcwd()
-        script, is_temp = self._get_script(run_id.bench_cfg.vm.build)
+        script = run_id.bench_cfg.vm.build
 
-        p = subprocess.Popen(
-            script, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=path)
+        p = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             cwd=path)
+        p.stdin.write(str.encode(script))
+        p.stdin.close()
 
         if self._build_log:
             with open(self._build_log, 'a') as log_file:
@@ -325,8 +310,6 @@ class Executor:
             run_id.report_run_failed(script, p.returncode, "Build of VM " + vm_name + " failed.")
             raise FailedBuildingVM(vm_name)
 
-        if is_temp:
-            os.remove(script)
         run_id.bench_cfg.vm.mark_build()
 
     def execute_run(self, run_id):
