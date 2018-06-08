@@ -415,10 +415,10 @@ class CodespeedReporter(Reporter):
                               "either a wrong URL in the config file, or an "
                               "environment not configured in Codespeed. URL: "
                               + self._cfg.url)
-                envs = set([i['environment'] for i in payload])
-                projects = set([i['project'] for i in payload])
-                benchmarks = set([i['benchmark'] for i in payload])
-                executables = set([i['executable'] for i in payload])
+                envs        = list(set([i['environment'] for i in results]))
+                projects    = list(set([i['project']     for i in results]))
+                benchmarks  = list(set([i['benchmark']   for i in results]))
+                executables = list(set([i['executable']  for i in results]))
                 logging.error("Sent data included environments: %s "
                               "projects: %s benchmarks: %s executables: %s"
                               % (envs, projects, benchmarks, executables))
