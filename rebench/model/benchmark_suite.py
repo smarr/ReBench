@@ -98,3 +98,6 @@ class BenchmarkSuite(object):
 
     def has_max_runtime(self):
         return self._max_runtime != -1
+
+    def __str__(self):
+        return "Suite(%s, %s)" % (self._name, self._command)
