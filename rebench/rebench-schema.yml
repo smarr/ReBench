@@ -289,6 +289,9 @@ schema;experiment_type:
 
 type: map
 mapping:
+  regex;(\..+):
+    type: any
+    desc: dot properties, for example `.test` are going to be ignored
   standard_experiment:
     type:     str
     default:  all
@@ -319,8 +322,3 @@ mapping:
     mapping:
       regex;(.+):
         include: experiment_type
-
-  ## Random Elements:
-  ## TODO: find a nice way to accomodate such use cases
-  are_we_fast_yet:
-    type: any
