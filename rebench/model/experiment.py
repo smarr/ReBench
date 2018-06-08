@@ -21,7 +21,7 @@ from .virtual_machine  import VirtualMachine
 from .benchmark_suite  import BenchmarkSuite
 from .benchmark_config import BenchmarkConfig
 from .reporting        import Reporting
-from . import value_or_list_as_list, value_with_optional_details
+from . import value_with_optional_details
 
 
 class Experiment:
@@ -72,11 +72,9 @@ class Experiment:
         return runs
     
     def _compile_virtual_machines(self, global_vms_cfg):
-        benchmarks  = value_or_list_as_list(self._raw_definition.
-                                            get( 'benchmark', None))
-        input_sizes = value_or_list_as_list(self._raw_definition.
-                                            get('input_sizes', None))
-        executions  = value_or_list_as_list(self._raw_definition['executions'])
+        benchmarks  = self._raw_definition.get( 'benchmark', None)
+        input_sizes = self._raw_definition.get('input_sizes', None)
+        executions  = self._raw_definition['executions']
         
         vms = []
         
@@ -102,7 +100,7 @@ class Experiment:
     def _compile_benchmarks(self):
         bench_cfgs = []
         for suite in self._suites:
-            for bench in value_or_list_as_list(suite.benchmarks):
+            for bench in suite.benchmarks:
                 bench_cfgs.append(BenchmarkConfig.compile(
                     bench, suite, self._data_store))
         return bench_cfgs

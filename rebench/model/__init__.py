@@ -57,15 +57,6 @@ Glossary:
 """
 
 
-def value_or_list_as_list(value):
-    if isinstance(value, list):
-        return value
-    elif value is None:
-        return []
-    else:
-        return [value]
-
-
 def value_with_optional_details(value, default_details = None):
     if isinstance(value, dict):
         assert len(value) == 1

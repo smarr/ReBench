@@ -19,8 +19,6 @@
 # IN THE SOFTWARE.
 import os
 
-from . import value_or_list_as_list
-
 
 class VirtualMachine(object):
     
@@ -30,12 +28,9 @@ class VirtualMachine(object):
            the VM definitions
         """
         if vm_details:
-            benchmarks  = value_or_list_as_list(vm_details.get('benchmark',
-                                                               _benchmarks))
-            input_sizes = value_or_list_as_list(vm_details.get('input_sizes',
-                                                               _input_sizes))
-            cores       = value_or_list_as_list(vm_details.get('cores',
-                                                               None))
+            benchmarks  = vm_details.get('benchmark', _benchmarks)
+            input_sizes = vm_details.get('input_sizes', _input_sizes)
+            cores       = vm_details.get('cores', None)
         else:
             benchmarks  = _benchmarks
             input_sizes = _input_sizes
