@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from . import value_or_list_as_list
 import logging
 
 
@@ -38,12 +37,10 @@ class BenchmarkSuite(object):
         
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
-        self._variable_values = value_or_list_as_list(global_suite_cfg.get(
-                                                'variable_values', [None]))
+        self._variable_values = global_suite_cfg.get('variable_values', [None])
 
         self._vm                 = vm
-        self._benchmarks         = value_or_list_as_list(
-                                                global_suite_cfg['benchmarks'])
+        self._benchmarks         = global_suite_cfg['benchmarks']
         self._gauge_adapter      = global_suite_cfg['gauge_adapter']
 
         self._command            = global_suite_cfg['command']

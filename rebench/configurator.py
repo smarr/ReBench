@@ -21,6 +21,8 @@ import sys
 import logging
 import subprocess
 import traceback
+from os.path import dirname
+
 from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
 
@@ -118,9 +120,23 @@ class Configurator:
     @staticmethod
     def _load_config(file_name):
         import yaml
+        from pykwalify.core import Core
+
+        # Disable most logging for pykwalify
+        logging.getLogger('pykwalify').setLevel(logging.ERROR)
+
         try:
-            f = open(file_name, 'r')
-            return yaml.load(f)
+            with open(file_name, 'r') as f:
+                data = yaml.safe_load(f)
+                c = Core(source_data=data,
+                         schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+                c.validate(raise_exception=False)
+                if c.validation_errors and len(c.validation_errors) > 0:
+                    logging.error(
+                        "Validation of " + file_name + " failed. " +
+                        (" ".join(c.validation_errors)))
+                    sys.exit(-1)
+                return data
         except IOError:
             logging.error("An error occurred on opening the config file (%s)."
                           % file_name)

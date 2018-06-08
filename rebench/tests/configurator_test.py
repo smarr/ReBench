@@ -107,9 +107,11 @@ class ConfiguratorTest(ReBenchTestCase):
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
+
 # allow command-line execution 
 def test_suite():
     return unittest.makeSuite(ConfiguratorTest)
+
 
 if __name__ == "__main__":
     unittest.main(defaultTest='test_suite')
