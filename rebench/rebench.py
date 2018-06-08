@@ -42,7 +42,7 @@ from .configuration_error import ConfigurationError
 class ReBench:
     
     def __init__(self):
-        self.version = "0.10.0"
+        self.version = "0.10.1"
         self.options = None
         self._config = None
     
@@ -151,6 +151,15 @@ Argument:
         
         return parser
 
+    @staticmethod
+    def determine_exp_name_and_filters(filters):
+        exp_name = filters[0] if len(filters) > 0 and (
+                not filters[0].startswith("vm:") and
+                not filters[0].startswith("s:")) else "all"
+        exp_filter = [f for f in filters if (f.startswith("vm:") or
+                                             f.startswith("s:"))]
+        return exp_name, exp_filter
+
     def run(self, argv = None):
         if argv is None:
             argv = sys.argv
@@ -161,13 +170,7 @@ Argument:
 
         cli_reporter = CliReporter(args.verbose)
 
-        # interpret remaining args
-        exp_filter = args.exp_filter
-        exp_name = exp_filter[1] if len(exp_filter) > 1 and (
-            not exp_filter[1].startswith("vm:") and
-            not exp_filter[1].startswith("s:")) else "all"
-        exp_filter = [f for f in exp_filter if (f.startswith("vm:") or
-                                                f.startswith("s:"))]
+        exp_name, exp_filter = self.determine_exp_name_and_filters(args.exp_filter)
 
         try:
             config_filename = args.config[0]

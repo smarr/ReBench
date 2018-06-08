@@ -121,7 +121,52 @@ class ExecutorTest(ReBenchTestCase):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None, None,
                            'all', standard_data_file = self._tmp_file)
         self._basic_execution(cnf)
-        
+
+    def test_shell_options_without_filters(self):
+        option_parser = ReBench().shell_options()
+        args = option_parser.parse_args(['-d', '-v', 'some.conf'])
+        self.assertEqual(args.exp_filter, [])
+
+    def test_shell_options_with_filters(self):
+        option_parser = ReBench().shell_options()
+        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'exp_name'])
+        self.assertEqual(args.exp_filter, ['exp_name'])
+
+    def test_shell_options_with_vm_filter(self):
+        option_parser = ReBench().shell_options()
+        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'vm:foo'])
+        self.assertEqual(args.exp_filter, ['vm:foo'])
+
+    def test_determine_exp_name_and_filters_empty(self):
+        empty = []
+        exp_name, exp_filter = ReBench.determine_exp_name_and_filters(empty)
+        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_filter, [])
+
+    def test_determine_exp_name_and_filters_all(self):
+        filters = ['all']
+        exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
+        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_filter, [])
+
+    def test_determine_exp_name_and_filters_some_name(self):
+        filters = ['foo']
+        exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
+        self.assertEqual(exp_name, "foo")
+        self.assertEqual(exp_filter, [])
+
+    def test_determine_exp_name_and_filters_all_and_other(self):
+        filters = ['all', 'vm:bar', 's:b']
+        exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
+        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+
+    def test_determine_exp_name_and_filters_only_others(self):
+        filters = ['vm:bar', 's:b']
+        exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
+        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+
 
 def Popen_override(cmdline, stdout, stderr=None, shell=None):
     class Popen:
@@ -153,6 +198,7 @@ def Popen_override(cmdline, stdout, stderr=None, shell=None):
 
 def test_suite():
     return unittest.makeSuite(ExecutorTest)
+
 
 if __name__ == "__main__":
     unittest.main(defaultTest='test_suite')
