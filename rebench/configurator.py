@@ -130,7 +130,12 @@ class Configurator:
                 data = yaml.safe_load(f)
                 c = Core(source_data=data,
                          schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-                c.validate(raise_exception=True)
+                c.validate(raise_exception=False)
+                if c.validation_errors and len(c.validation_errors) > 0:
+                    logging.error(
+                        "Validation of " + file_name + " failed. " +
+                        (" ".join(c.validation_errors)))
+                    sys.exit(-1)
                 return data
         except IOError:
             logging.error("An error occurred on opening the config file (%s)."
