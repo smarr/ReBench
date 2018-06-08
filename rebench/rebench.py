@@ -163,9 +163,9 @@ Argument:
 
         # interpret remaining args
         exp_filter = args.exp_filter
-        exp_name = exp_filter[1] if len(exp_filter) > 1 and (
-            not exp_filter[1].startswith("vm:") and
-            not exp_filter[1].startswith("s:")) else "all"
+        exp_name = exp_filter[0] if len(exp_filter) > 0 and (
+            not exp_filter[0].startswith("vm:") and
+            not exp_filter[0].startswith("s:")) else "all"
         exp_filter = [f for f in exp_filter if (f.startswith("vm:") or
                                                 f.startswith("s:"))]
 
