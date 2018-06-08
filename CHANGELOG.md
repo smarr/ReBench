@@ -2,7 +2,14 @@
 
 ## [Unreleased]
 
+ - 
+
+## [0.10.0] - 2018-06-08
+
+ - Restructure command-line options in help, and use argparse (#73)
  - Add support for Python 3 and PyPy (#65)
+ - Add support for extra criteria (things beside run time) (#64)
+ - Add support for path names in ReBenchLog benchmark names
 
 ## [0.9.1] - 2017-12-21
 
@@ -49,8 +56,9 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v0.9.1...HEAD
-[0.9.0]: https://github.com/smarr/ReBench/compare/v0.9.0...v0.9.1
+[Unreleased]: https://github.com/smarr/ReBench/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/smarr/ReBench/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/smarr/ReBench/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/smarr/ReBench/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/smarr/ReBench/compare/v0.7.5...v0.8.0
 [0.7.5]: https://github.com/smarr/ReBench/compare/v0.7.4...v0.7.5

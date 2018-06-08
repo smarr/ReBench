@@ -397,7 +397,7 @@ class CodespeedReporter(Reporter):
         fh = urlopen(self._cfg.url, payload)
         response = fh.read()
         fh.close()
-        logging.info("Results were sent to codespeed, response was: "
+        logging.info("Results were sent to Codespeed, response was: "
                      + response)
 
     def _send_to_codespeed(self, results):
@@ -406,17 +406,24 @@ class CodespeedReporter(Reporter):
         try:
             self._send_payload(payload)
         except (IOError, HTTPException):
-            # sometimes codespeed fails to accept a request because something
+            # sometimes Codespeed fails to accept a request because something
             # is not yet properly initialized, let's try again for those cases
             try:
                 self._send_payload(payload)
             except (IOError, HTTPException) as error:
                 logging.error(str(error) + " This is most likely caused by "
                               "either a wrong URL in the config file, or an "
-                              "environment not configured in codespeed. URL: "
+                              "environment not configured in Codespeed. URL: "
                               + self._cfg.url)
+                envs = set([i['environment'] for i in payload])
+                projects = set([i['project'] for i in payload])
+                benchmarks = set([i['benchmark'] for i in payload])
+                executables = set([i['executable'] for i in payload])
+                logging.error("Sent data included environments: %s "
+                              "projects: %s benchmarks: %s executables: %s"
+                              % (envs, projects, benchmarks, executables))
 
-        logging.info("Sent %d results to codespeed." % len(results))
+        logging.info("Sent %d results to Codespeed." % len(results))
 
     def _prepare_result(self, run_id):
         stats = StatisticProperties(run_id.get_total_values())
