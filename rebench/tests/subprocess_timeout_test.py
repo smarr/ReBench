@@ -38,9 +38,9 @@ class SubprocessTimeoutTest(unittest.TestCase):
                                              shell=True, timeout=10)
 
         output = output.decode('utf-8')
-        self.assertEqual(       0, return_code)
-        self.assertEqual("Done\n",      output)
-        self.assertEqual(    None,         err)
+        self.assertEqual(0, return_code)
+        self.assertEqual("Done\n", output)
+        self.assertEqual(None, err)
 
     def test_exec_with_timeout(self):
         cmdline = "sleep 100; echo Done"
@@ -50,8 +50,8 @@ class SubprocessTimeoutTest(unittest.TestCase):
                                              shell=True, timeout=1)
 
         output = output.decode('utf-8')
-        self.assertEqual(-9,   return_code)
-        self.assertEqual("",   output)
+        self.assertEqual(-9, return_code)
+        self.assertEqual("", output)
         self.assertEqual(None, err)
 
     def test_exec_with_timeout_python_interpreter(self):

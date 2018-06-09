@@ -8,8 +8,8 @@ import random
 print(sys.argv)
 
 print("Harness Name: ", sys.argv[1])
-print("Bench Name:",    sys.argv[2])
-print("Warmup: ",       sys.argv[3])
+print("Bench Name:", sys.argv[2])
+print("Warmup: ", sys.argv[3])
 
 warmup = int(sys.argv[3])
 

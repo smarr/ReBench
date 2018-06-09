@@ -60,7 +60,7 @@ class _BenchmarkFilter(_SuiteFilter):
 class _RunFilter(object):
 
     def __init__(self, run_filter):
-        self._vm_filters    = []
+        self._vm_filters = []
         self._suite_filters = []
 
         if not run_filter:
@@ -93,18 +93,18 @@ class _RunFilter(object):
 
 class Configurator(object):
 
-    def __init__(self, file_name, data_store, cli_options = None,
-                 cli_reporter = None, exp_name = None,
-                 standard_data_file = None, run_filter = None):
+    def __init__(self, file_name, data_store, cli_options=None,
+                 cli_reporter=None, exp_name=None, standard_data_file=None,
+                 run_filter=None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
             self._raw_config['standard_data_file'] = standard_data_file
 
-        self._options    = self._process_cli_options(cli_options)
-        self._exp_name   = exp_name
+        self._options = self._process_cli_options(cli_options)
+        self._exp_name = exp_name
 
-        self.runs        = RunsConfig(     **self._raw_config.get(      'runs', {}))
-        self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
+        self.runs = RunsConfig(**self._raw_config.get('runs', {}))
+        self.quick_runs = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
         self._build_commands = dict()

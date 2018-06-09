@@ -13,10 +13,10 @@ class RebenchAdapterTest(TestCase):
         self.assertEqual(1, len(dp.get_measurements()))
         m = dp.get_measurements()[0]
 
-        self.assertEqual(total,     m.is_total())
-        self.assertEqual(val,       m.value)
+        self.assertEqual(total, m.is_total())
+        self.assertEqual(val, m.value)
         self.assertEqual(criterion, m.criterion)
-        self.assertEqual(unit,      m.unit)
+        self.assertEqual(unit, m.unit)
 
     def _assert_two_measures(self, data, val1, unit1, criterion1, val_t, unit_t):
         self.assertEqual(1, len(data))
@@ -27,9 +27,9 @@ class RebenchAdapterTest(TestCase):
         m1 = dp.get_measurements()[0]
 
         self.assertFalse(m1.is_total())
-        self.assertEqual(val1,       m1.value)
+        self.assertEqual(val1, m1.value)
         self.assertEqual(criterion1, m1.criterion)
-        self.assertEqual(unit1,      m1.unit)
+        self.assertEqual(unit1, m1.unit)
 
         m2 = dp.get_measurements()[1]
         self.assertTrue(m2.is_total())

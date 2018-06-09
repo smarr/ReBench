@@ -56,7 +56,7 @@ class JMHAdapter(GaugeAdapter):
             m = self.re_result_line.match(line)
             if m:
                 value = float(m.group(2))
-                unit  = m.group(3)
+                unit = m.group(3)
                 criterion = "total"
 
                 dp = DataPoint(run_id)

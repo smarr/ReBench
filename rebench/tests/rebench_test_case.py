@@ -26,8 +26,8 @@ from tempfile import mkstemp
 
 
 class ReBenchTestCase(TestCase):
-    def setUp(self, script_file = __file__):
-        self._path     = dirname(realpath(script_file))
+    def setUp(self, script_file=__file__):
+        self._path = dirname(realpath(script_file))
         self._tmp_file = mkstemp()[1]  # just use the file name
 
         self._sys_exit = sys.exit  # make sure that we restore sys.exit

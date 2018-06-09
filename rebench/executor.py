@@ -111,7 +111,7 @@ class RandomScheduler(RunScheduler):
 class BenchmarkThread(Thread):
 
     def __init__(self, par_scheduler, num):
-        Thread.__init__(self, name = "BenchmarkThread %d" % num)
+        Thread.__init__(self, name="BenchmarkThread %d" % num)
         self._par_scheduler = par_scheduler
         self._id = num
         self.exception = None
@@ -217,13 +217,13 @@ class ParallelScheduler(RunScheduler):
 
 class Executor(object):
 
-    def __init__(self, runs, use_nice, do_builds, include_faulty = False,
-                 verbose = False, scheduler = BatchScheduler, build_log = None):
-        self._runs     = runs
+    def __init__(self, runs, use_nice, do_builds, include_faulty=False,
+                 verbose=False, scheduler=BatchScheduler, build_log=None):
+        self._runs = runs
         self._use_nice = use_nice
         self._do_builds = do_builds
         self._include_faulty = include_faulty
-        self._verbose   = verbose
+        self._verbose = verbose
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
 
@@ -244,7 +244,7 @@ class Executor(object):
         return scheduler(self)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
-        cmdline  = ""
+        cmdline = ""
 
         if self._use_nice:
             cmdline += "nice -n-20 "

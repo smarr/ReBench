@@ -27,8 +27,8 @@ class GaugeAdapter(object):
     """
 
     # definition of some regular expression to identify erroneous runs
-    re_error     = re.compile("Error")
-    re_segfault  = re.compile("Segmentation fault")
+    re_error = re.compile("Error")
+    re_segfault = re.compile("Segmentation fault")
     re_bus_error = re.compile("Bus error")
 
     def __init__(self, include_faulty):

@@ -109,7 +109,7 @@ Argument:
                                '(configured in the experiment).')
         data.add_argument('-r', '--rerun', action='store_true',
                           dest='do_rerun', default=False,
-                          help='Rerun experiments, ' +
+                          help='Rerun experiments, '
                                'and discard old data from data file.')
         data.add_argument('-f', '--faulty', action='store_true',
                           dest='include_faulty', default=False,
@@ -158,13 +158,13 @@ Argument:
     @staticmethod
     def determine_exp_name_and_filters(filters):
         exp_name = filters[0] if filters and (
-                not filters[0].startswith("vm:") and
-                not filters[0].startswith("s:")) else "all"
+            not filters[0].startswith("vm:") and
+            not filters[0].startswith("s:")) else "all"
         exp_filter = [f for f in filters if (f.startswith("vm:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
 
-    def run(self, argv = None):
+    def run(self, argv=None):
         if argv is None:
             argv = sys.argv
 

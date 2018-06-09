@@ -61,13 +61,13 @@ class StatisticProperties(object):
     def __init__(self, data_samples):
         self._data_samples     = data_samples
 
-        self.mean                   = 0
-        self.geom_mean              = 0
-        self.median                 = 0
-        self.std_dev                = 0
-        self.num_samples            = 0
-        self.min                    = 0
-        self.max                    = 0
+        self.mean = 0
+        self.geom_mean = 0
+        self.median = 0
+        self.std_dev = 0
+        self.num_samples = 0
+        self.min = 0
+        self.max = 0
 
         if self._data_samples:
             self.num_samples = len(self._data_samples)
@@ -80,10 +80,10 @@ class StatisticProperties(object):
            of the data sample.
            Furthermore, several other simple properties are determined.
         """
-        self.mean        = mean(self._data_samples)
-        self.geom_mean   = geo_mean(self._data_samples)
-        self.median      = median(self._data_samples)
-        self.std_dev     = stddev(self._data_samples)
+        self.mean = mean(self._data_samples)
+        self.geom_mean = geo_mean(self._data_samples)
+        self.median = median(self._data_samples)
+        self.std_dev = stddev(self._data_samples)
 
         self.min = min(self._data_samples)
         self.max = max(self._data_samples)

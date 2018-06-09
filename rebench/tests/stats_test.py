@@ -38,20 +38,19 @@ class StatsTest(unittest.TestCase):
 
     def setUp(self):
         self._integers = list(range(1, 50))
-        self._floats   = [float(x)        for x in self._integers]
-        self._floats2  = [float(x) + 2.31 for x in self._integers]
+        self._floats = [float(x) for x in self._integers]
+        self._floats2 = [float(x) + 2.31 for x in self._integers]
 
-        self._mixed    = [x if x % 2 == 0 else float(x) + 4.5
-                                          for x in self._integers]
-
+        self._mixed = [x if x % 2 == 0 else float(x) + 4.5
+                       for x in self._integers]
 
     def test_mean_simple(self):
         self.assertEqual(2, stats.mean([1, 2, 3]))
         self.assertAlmostEqual(2, stats.mean([1.0, 2.0, 3.0]))
 
-        self.assertAlmostEqual(25,           stats.mean(self._integers))
-        self.assertAlmostEqual(25,           stats.mean(self._floats))
-        self.assertAlmostEqual(25 + 2.31,    stats.mean(self._floats2))
+        self.assertAlmostEqual(25, stats.mean(self._integers))
+        self.assertAlmostEqual(25, stats.mean(self._floats))
+        self.assertAlmostEqual(25 + 2.31, stats.mean(self._floats2))
         self.assertAlmostEqual(27.295918367, stats.mean(self._mixed))
 
     @unittest.skipUnless(are_numpy_and_scipy_available,
@@ -75,7 +74,7 @@ class StatsTest(unittest.TestCase):
                                stats.mean(self._mixed))
 
     def test_median_simple(self):
-        self.assertEqual(      2.5, stats.median([  1,   2,   3,   4]))
+        self.assertEqual(2.5, stats.median([1, 2, 3, 4]))
         self.assertAlmostEqual(2.5, stats.median([1.0, 2.0, 3.0, 4.0]))
 
         self.assertAlmostEqual(25, stats.median(self._integers))
@@ -104,8 +103,8 @@ class StatsTest(unittest.TestCase):
                                stats.median(self._mixed))
 
     def test_geomean_simple(self):
-        self.assertAlmostEqual( 1.817120592, stats.geo_mean([  1,   2,   3]))
-        self.assertAlmostEqual( 1.817120592, stats.geo_mean([1.0, 2.0, 3.0]))
+        self.assertAlmostEqual(1.817120592, stats.geo_mean([1, 2, 3]))
+        self.assertAlmostEqual(1.817120592, stats.geo_mean([1.0, 2.0, 3.0]))
 
         self.assertAlmostEqual(19.112093553, stats.geo_mean(self._integers))
         self.assertAlmostEqual(19.112093553, stats.geo_mean(self._floats))
@@ -116,21 +115,21 @@ class StatsTest(unittest.TestCase):
                          "NumPy or SciPy is not available")
     def test_geomean_vs_scipy(self):
         self.assertAlmostEqual(scipy.stats.gmean([1, 2, 3]),
-                                   stats.geo_mean([1, 2, 3]))
+                               stats.geo_mean([1, 2, 3]))
         self.assertAlmostEqual(scipy.stats.gmean([1.0, 2.0, 3.0]),
-                                   stats.geo_mean([1.0, 2.0, 3.0]))
+                               stats.geo_mean([1.0, 2.0, 3.0]))
 
         self.assertAlmostEqual(scipy.stats.gmean(self._integers),
-                                   stats.geo_mean(self._integers))
+                               stats.geo_mean(self._integers))
 
         self.assertAlmostEqual(scipy.stats.gmean(self._floats),
-                                   stats.geo_mean(self._floats))
+                               stats.geo_mean(self._floats))
 
         self.assertAlmostEqual(scipy.stats.gmean(self._floats2),
-                                   stats.geo_mean(self._floats2))
+                               stats.geo_mean(self._floats2))
 
         self.assertAlmostEqual(scipy.stats.gmean(self._mixed),
-                                   stats.geo_mean(self._mixed))
+                               stats.geo_mean(self._mixed))
 
     def test_stddev_simple(self):
         self.assertAlmostEqual(0.8164965809,

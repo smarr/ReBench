@@ -34,11 +34,11 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
         data_store = DataStore()
-        vm        = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
-                                   None, [1], None, None)
-        suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
-                                                   'gauge_adapter': '',
-                                                   'command': ''}, None)
+        vm = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
+                             None, [1], None, None)
+        suite = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
+                                               'gauge_adapter': '',
+                                               'command': ''}, None)
         bench_cfg = BenchmarkConfig("Test Bench [>", "Test Bench [>", None,
                                     suite, vm, None, 0, None, data_store)
 

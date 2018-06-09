@@ -14,19 +14,19 @@ class SubprocessThread(Thread):
 
     def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr):
         Thread.__init__(self, name = "Subprocess %s" % binary_name)
-        self._args    = args
-        self._shell   = shell
-        self._cwd     = cwd
+        self._args = args
+        self._shell = shell
+        self._cwd = cwd
         self._verbose = verbose
-        self._stdout  = stdout
-        self._stderr  = stderr
+        self._stdout = stdout
+        self._stderr = stderr
 
-        self._pid        = None
+        self._pid = None
         self._started_cv = Condition()
 
         self.stdout_result = None
         self.stderr_result = None
-        self.returncode    = None
+        self.returncode = None
 
     def run(self):
         self._started_cv.acquire()
@@ -74,8 +74,8 @@ class SubprocessThread(Thread):
             self.stdout_result, self.stderr_result = p.communicate()
 
 
-def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
-        verbose = False, stdout = PIPE, stderr = PIPE):
+def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
+        verbose=False, stdout=PIPE, stderr=PIPE):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
@@ -132,8 +132,7 @@ def kill_process(pid, recursively, thread):
 
 
 def get_process_children(pid):
-    p = Popen('pgrep -P %d' % pid, shell = True,
-              stdout = PIPE, stderr = PIPE)
+    p = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, _stderr = p.communicate()
     result = [int(p) for p in stdout.split()]
     for child in result[:]:

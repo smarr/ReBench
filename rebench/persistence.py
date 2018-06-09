@@ -172,7 +172,7 @@ class _DataPointPersistence(object):
 
                 run_id = measurement.run_id
                 if previous_run_id is not run_id:
-                    data_point      = DataPoint(run_id)
+                    data_point = DataPoint(run_id)
                     previous_run_id = run_id
 
                 data_point.add_measurement(measurement)

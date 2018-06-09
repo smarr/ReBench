@@ -66,7 +66,7 @@ class Reporter(object):
 
 class TextReporter(Reporter):
 
-    def _configuration_details(self, run_id, statistics = None):
+    def _configuration_details(self, run_id, statistics=None):
         result = ["\t".join(run_id.as_str_list()), " = "]
         self._output_stats(result, run_id, statistics)
         return result
@@ -112,9 +112,9 @@ class CliReporter(TextReporter):
 
     def __init__(self, executes_verbose):
         super(CliReporter, self).__init__()
-        self._num_runs       = None
+        self._num_runs = None
         self._runs_completed = 0
-        self._startTime      = None
+        self._startTime = None
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
 
@@ -158,7 +158,7 @@ class CliReporter(TextReporter):
         if run_id.run_config.min_runtime:
             if statistics.mean < run_id.run_config.min_runtime:
                 print(("WARNING: measured mean is lower than min_runtime (%s) "
-                      "\t mean: %.1f\trun id: %s")
+                       "\t mean: %.1f\trun id: %s")
                       % (run_id.run_config.min_runtime,
                          statistics.mean,
                          run_id.as_simple_string()))
@@ -178,15 +178,17 @@ class CliReporter(TextReporter):
             current = time()
             data_points_per_run = run_id.run_config.number_of_data_points
             data_points_completed = (self._runs_completed *
-                    data_points_per_run + len(run_id.get_data_points()))
+                                     data_points_per_run +
+                                     len(run_id.get_data_points()))
             data_points_remaining = (self._runs_remaining *
-                    data_points_per_run - len(run_id.get_data_points()))
+                                     data_points_per_run -
+                                     len(run_id.get_data_points()))
             time_per_data_point = ((current - self._startTime) /
-                data_points_completed)
+                                   data_points_completed)
             etl = time_per_data_point * data_points_remaining
             sec = etl % 60
-            m   = (etl - sec) / 60 % 60
-            h   = (etl - sec - m) / 60 / 60
+            m = (etl - sec) / 60 % 60
+            h = (etl - sec - m) / 60 / 60
             print(("Run %s \t runs left: %00d \t " +
                    "time left: %02d:%02d:%02d") % (run_id.bench_cfg.name,
                                                    self._runs_remaining,
@@ -271,8 +273,8 @@ class CodespeedReporter(Reporter):
     def _result_data_template(self):
         # all None values have to be filled in
         return {
-            'commitid':     self._cfg.commit_id,
-            'project':      self._cfg.project,
+            'commitid': self._cfg.commit_id,
+            'project': self._cfg.project,
             #'revision_date': '', # Optional. Default is taken either
                                   # from VCS integration or from current date
             'executable':   None,
@@ -297,9 +299,9 @@ class CodespeedReporter(Reporter):
         result = self._result_data_template()
 
         if stats and not run_id.run_failed():
-            result['min']          = stats.min
-            result['max']          = stats.max
-            result['std_dev']      = stats.std_dev
+            result['min'] = stats.min
+            result['max'] = stats.max
+            result['std_dev'] = stats.std_dev
             result['result_value'] = stats.mean
         else:
             result['result_value'] = -1
@@ -343,10 +345,14 @@ class CodespeedReporter(Reporter):
                               "either a wrong URL in the config file, or an "
                               "environment not configured in Codespeed. URL: "
                               + self._cfg.url)
-                envs        = list(set([i['environment'] for i in results]))
-                projects    = list(set([i['project']     for i in results]))
-                benchmarks  = list(set([i['benchmark']   for i in results]))
-                executables = list(set([i['executable']  for i in results]))
+                envs        = list(set([i['environment']
+                                        for i in results]))
+                projects    = list(set([i['project']
+                                        for i in results]))
+                benchmarks  = list(set([i['benchmark']
+                                        for i in results]))
+                executables = list(set([i['executable']
+                                        for i in results]))
                 logging.error("Sent data included environments: %s "
                               "projects: %s benchmarks: %s executables: %s"
                               % (envs, projects, benchmarks, executables))
