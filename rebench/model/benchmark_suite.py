@@ -58,13 +58,6 @@ class BenchmarkSuite(object):
         else:
             self._build = None
 
-        # TODO: remove in ReBench 1.0
-        if 'performance_reader' in global_suite_cfg:
-            logging.warning("Found deprecated 'performance_reader' key in"
-                            " configuration, please replace by 'gauge_adapter'"
-                            " key.")
-            self._gauge_adapter = global_suite_cfg['performance_reader']
-
     @property
     def input_sizes(self):
         return self._input_sizes

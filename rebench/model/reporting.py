@@ -35,11 +35,6 @@ class Reporting(object):
 
         self._cli_reporter = cli_reporter
 
-        # if self._config.reporting:
-        #     if ('codespeed' in self._config.reporting and
-        #         self._config.options.use_codespeed):
-        #         reporters.append(CodespeedReporter(self._config))
-
     @property
     def csv_file(self):
         return self._csv_file

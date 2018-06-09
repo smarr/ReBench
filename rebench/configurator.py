@@ -111,9 +111,6 @@ class Configurator:
         self._experiments = self._compile_experiments(cli_reporter,
                                                       _RunFilter(run_filter))
 
-        # TODO: does visualization work?
-        # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
-
     @property
     def build_log(self):
         return self._raw_config.get('build_log', 'build.log')
