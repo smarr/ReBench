@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from ..configuration_error import ConfigurationError
-import rebench.reporter as reporter
+from ..reporter import CodespeedReporter
 
 
 class Reporting(object):
@@ -100,7 +100,7 @@ class CodespeedReporting(object):
         self._branch               = options.branch
         self._executable           = options.executable
 
-        self._reporter = reporter.CodespeedReporter(self)
+        self._reporter = CodespeedReporter(self)
 
     @property
     def report_incrementally(self):

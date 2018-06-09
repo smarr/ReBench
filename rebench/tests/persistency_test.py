@@ -17,14 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import os
-
 from datetime import datetime
 
 from .rebench_test_case import ReBenchTestCase
 
-from ..configurator import Configurator
-from ..executor     import Executor
 from ..persistence  import DataStore
 
 from ..model.run_id           import RunId

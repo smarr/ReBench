@@ -18,13 +18,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from __future__ import print_function
+import os
 
 from ...configurator     import Configurator
 from ...executor         import Executor
 from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
-
-import os
 
 
 class Issue58BuildVM(ReBenchTestCase):

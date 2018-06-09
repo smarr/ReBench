@@ -29,7 +29,6 @@ import random
 from select import select
 import subprocess
 import sys
-from tempfile  import mkstemp
 from threading import Thread, RLock
 
 from . import subprocess_with_timeout as subprocess_timeout

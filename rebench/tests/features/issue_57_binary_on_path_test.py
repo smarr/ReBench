@@ -19,7 +19,6 @@
 # IN THE SOFTWARE.
 from ...configurator     import Configurator
 from ...executor         import Executor
-from ...rebench          import ReBench
 from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
 

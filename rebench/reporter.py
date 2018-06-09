@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from __future__ import with_statement, print_function
-from collections import deque
 
 from datetime import datetime
 from time import time
@@ -28,12 +27,12 @@ import json
 import re
 
 try:
+    from http.client import HTTPException
     from urllib.request import urlopen
     from urllib.parse import urlencode
-    from http.client import HTTPException
 except ImportError:
     from httplib import HTTPException
-    from urllib import urlencode
+    from urllib import urlencode # pylint: disable=ungrouped-imports
     from urllib2 import urlopen
 
 from .statistics import StatisticProperties

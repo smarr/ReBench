@@ -19,14 +19,14 @@
 # IN THE SOFTWARE.
 import unittest
 import subprocess
+import os
+import sys
 
 from ..executor          import Executor, BenchmarkThreadExceptions
 from ..configurator      import Configurator
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
 from ..                  import ReBench
-import os
-import sys
 from .rebench_test_case import ReBenchTestCase
 
 
