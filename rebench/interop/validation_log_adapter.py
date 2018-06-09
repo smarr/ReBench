@@ -72,9 +72,9 @@ class ValidationLogAdapter(GaugeAdapter):
             else:
                 p = self.re_actors.match(line)
                 if p:
-                    m1 = Measurement(long(p.group(1)), 'count', run_id, 'Actors')
-                    m2 = Measurement(long(p.group(2)), 'count', run_id, 'Messages')
-                    m3 = Measurement(long(p.group(3)), 'count', run_id, 'Promises')
+                    m1 = Measurement(int(p.group(1)), 'count', run_id, 'Actors')
+                    m2 = Measurement(int(p.group(2)), 'count', run_id, 'Messages')
+                    m3 = Measurement(int(p.group(3)), 'count', run_id, 'Promises')
                     m4 = Measurement(0, 'ms', run_id, 'total')
                     current.add_measurement(m1)
                     current.add_measurement(m2)
