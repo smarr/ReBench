@@ -33,7 +33,7 @@ class GaugeAdapter(object):
 
     def __init__(self, include_faulty):
         self._include_faulty = include_faulty
-        self._otherErrorDefinitions = None
+        self._other_error_definitions = None
 
     def acquire_command(self, command):
         return command
@@ -55,9 +55,9 @@ class GaugeAdapter(object):
         if self.re_bus_error.search(line):
             return True
 
-        if self._otherErrorDefinitions:
-            for regEx in self._otherErrorDefinitions:
-                if regEx.search(line):
+        if self._other_error_definitions:
+            for reg_ex in self._other_error_definitions:
+                if reg_ex.search(line):
                     return True
 
         return False

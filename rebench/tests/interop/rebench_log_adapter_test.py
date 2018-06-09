@@ -11,102 +11,102 @@ class RebenchAdapterTest(TestCase):
         self.assertEqual(val, point.get_total_value())
 
         self.assertEqual(1, len(point.get_measurements()))
-        m = point.get_measurements()[0]
+        measure = point.get_measurements()[0]
 
-        self.assertEqual(total, m.is_total())
-        self.assertEqual(val, m.value)
-        self.assertEqual(criterion, m.criterion)
-        self.assertEqual(unit, m.unit)
+        self.assertEqual(total, measure.is_total())
+        self.assertEqual(val, measure.value)
+        self.assertEqual(criterion, measure.criterion)
+        self.assertEqual(unit, measure.unit)
 
     def _assert_two_measures(self, data, val1, unit1, criterion1, val_t, unit_t):
         self.assertEqual(1, len(data))
-        dp = data[0]
-        self.assertEqual(val_t, dp.get_total_value())
+        point = data[0]
+        self.assertEqual(val_t, point.get_total_value())
 
-        self.assertEqual(2, len(dp.get_measurements()))
-        m1 = dp.get_measurements()[0]
+        self.assertEqual(2, len(point.get_measurements()))
+        measure = point.get_measurements()[0]
 
-        self.assertFalse(m1.is_total())
-        self.assertEqual(val1, m1.value)
-        self.assertEqual(criterion1, m1.criterion)
-        self.assertEqual(unit1, m1.unit)
+        self.assertFalse(measure.is_total())
+        self.assertEqual(val1, measure.value)
+        self.assertEqual(criterion1, measure.criterion)
+        self.assertEqual(unit1, measure.unit)
 
-        m2 = dp.get_measurements()[1]
-        self.assertTrue(m2.is_total())
-        self.assertEqual(val_t, m2.value)
-        self.assertEqual(unit_t, m2.unit)
+        measure = point.get_measurements()[1]
+        self.assertTrue(measure.is_total())
+        self.assertEqual(val_t, measure.value)
+        self.assertEqual(unit_t, measure.unit)
 
     def test_simple_name(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data("Dispatch: iterations=1 runtime: 557ms", None)
-        self._assert_basics(d, 557, 'ms', 'total', True)
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 557ms", None)
+        self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_doted_name(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=1 runtime: 309557us", None)
-        self._assert_basics(d, 309.557, 'ms', 'total', True)
+        self._assert_basics(data, 309.557, 'ms', 'total', True)
 
     def test_doted_and_ms(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=1 runtime: 557ms", None)
-        self._assert_basics(d, 557, 'ms', 'total', True)
+        self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_high_iter_count(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=2342 runtime: 557ms", None)
-        self._assert_basics(d, 557, 'ms', 'total', True)
+        self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_total_explicit(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms",
             None)
-        self._assert_basics(d, 557, 'ms', 'total', True)
+        self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_alloc_criterion(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             """LanguageFeatures.Dispatch alloc: iterations=2342 runtime: 222ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
             None)
-        self._assert_two_measures(d, 222, 'ms', 'alloc', 557, 'ms')
+        self._assert_two_measures(data, 222, 'ms', 'alloc', 557, 'ms')
 
     def test_foobar_criterion(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             """LanguageFeatures.Dispatch foobar: iterations=2342 runtime: 550ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
             None)
-        self._assert_two_measures(d, 550, 'ms', 'foobar', 557, 'ms')
+        self._assert_two_measures(data, 550, 'ms', 'foobar', 557, 'ms')
 
     def test_foobar_criterion_no_doted_name(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             """Dispatch foobar: iterations=2342 runtime: 550ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
             None)
-        self._assert_two_measures(d, 550, 'ms', 'foobar', 557, 'ms')
+        self._assert_two_measures(data, 550, 'ms', 'foobar', 557, 'ms')
 
     def test_some_prefix_before_data(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "some prefix: Dispatch: iterations=2342 runtime: 557ms",
             None)
-        self._assert_basics(d, 557, 'ms', 'total', True)
+        self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_path_as_name(self):
-        l = RebenchLogAdapter(True)
-        d = l.parse_data(
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data(
             "core-lib/Benchmarks/Join/FibSeq.ns: iterations=1 runtime: 129us",
             None)
-        self._assert_basics(d, 0.129, 'ms', 'total', True)
+        self._assert_basics(data, 0.129, 'ms', 'total', True)
 
     def test_other_data(self):
-        l = RebenchLogAdapter(True)
-        data = l.parse_data("""Savina.Chameneos: trace size:    3903398byte
+        adapter = RebenchLogAdapter(True)
+        data = adapter.parse_data("""Savina.Chameneos: trace size:    3903398byte
 Savina.Chameneos: external data: 40byte
 Savina.Chameneos: iterations=1 runtime: 64208us
 Savina.Chameneos: trace size:    3903414byte
@@ -114,19 +114,19 @@ Savina.Chameneos: external data: 40byte
 Savina.Chameneos: iterations=1 runtime: 48581us""", None)
 
         self.assertEqual(2, len(data))
-        dp = data[0]
-        self.assertEqual(64.208, dp.get_total_value())
+        point = data[0]
+        self.assertEqual(64.208, point.get_total_value())
 
-        self.assertEqual(3, len(dp.get_measurements()))
-        m1 = dp.get_measurements()[0]
+        self.assertEqual(3, len(point.get_measurements()))
+        measure = point.get_measurements()[0]
 
-        self.assertFalse(m1.is_total())
-        self.assertEqual(3903398, m1.value)
-        self.assertEqual('trace size', m1.criterion)
-        self.assertEqual('byte', m1.unit)
+        self.assertFalse(measure.is_total())
+        self.assertEqual(3903398, measure.value)
+        self.assertEqual('trace size', measure.criterion)
+        self.assertEqual('byte', measure.unit)
 
-        m2 = dp.get_measurements()[1]
-        self.assertFalse(m2.is_total())
-        self.assertEqual(40, m2.value)
-        self.assertEqual('external data', m2.criterion)
-        self.assertEqual('byte', m2.unit)
+        measure = point.get_measurements()[1]
+        self.assertFalse(measure.is_total())
+        self.assertEqual(40, measure.value)
+        self.assertEqual('external data', measure.criterion)
+        self.assertEqual('byte', measure.unit)

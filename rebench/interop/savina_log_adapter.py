@@ -34,9 +34,9 @@ class SavinaLogAdapter(GaugeAdapter):
         data_points = []
 
         for line in data.split("\n"):
-            m = self.re_log_line.match(line)
-            if m:
-                time = float(m.group(2))
+            match = self.re_log_line.match(line)
+            if match:
+                time = float(match.group(2))
                 measure = Measurement(time, 'ms', run_id, 'total')
                 current = DataPoint(run_id)
                 current.add_measurement(measure)

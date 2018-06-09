@@ -53,15 +53,15 @@ class JMHAdapter(GaugeAdapter):
             #     continue
 
             # now we are sure that we parse for a benchmark and can collect data
-            m = self.re_result_line.match(line)
-            if m:
-                value = float(m.group(2))
-                unit = m.group(3)
+            match = self.re_result_line.match(line)
+            if match:
+                value = float(match.group(2))
+                unit = match.group(3)
                 criterion = "total"
 
-                dp = DataPoint(run_id)
-                dp.add_measurement(Measurement(value, unit, run_id, criterion))
-                data_points.append(dp)
+                point = DataPoint(run_id)
+                point.add_measurement(Measurement(value, unit, run_id, criterion))
+                data_points.append(point)
 
         if not data_points:
             raise OutputNotParseable(data)

@@ -55,22 +55,22 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
 
     def test_associates_measurements_and_data_points_correctly(self):
         data_points = self._records_data_points('Test1', 10)
-        for dp, i in zip(data_points, list(range(0, 10))):
-            self.assertEqual(4, dp.number_of_measurements())
+        for point, i in zip(data_points, list(range(0, 10))):
+            self.assertEqual(4, point.number_of_measurements())
 
             for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
                                                     ["ms", "ms", "kbyte", "kerf"],
-                                                    dp.get_measurements()):
+                                                    point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i,         int(measurement.value))
                 self.assertEqual(unit,      measurement.unit)
 
     def test_is_compatible_to_issue16_format(self):
         data_points = self._records_data_points('Test3', 10)
-        for dp, i in zip(data_points, list(range(0, 10))):
-            self.assertEqual(4, dp.number_of_measurements())
+        for point, i in zip(data_points, list(range(0, 10))):
+            self.assertEqual(4, point.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],
-                                              dp.get_measurements()):
+                                              point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i,         int(measurement.value))

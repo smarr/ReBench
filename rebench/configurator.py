@@ -124,8 +124,8 @@ class Configurator(object):
         logging.getLogger('pykwalify').setLevel(logging.ERROR)
 
         try:
-            with open(file_name, 'r') as f:
-                data = yaml.safe_load(f)
+            with open(file_name, 'r') as conf_file:
+                data = yaml.safe_load(conf_file)
                 validator = Core(
                     source_data=data,
                     schema_files=[dirname(__file__) + "/rebench-schema.yml"])

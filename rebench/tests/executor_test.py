@@ -74,10 +74,10 @@ class ExecutorTest(ReBenchTestCase):
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", str(e))
-        except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
+        except RuntimeError as err:
+            self.assertEqual("TEST-PASSED", str(err))
+        except BenchmarkThreadExceptions as err:
+            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
 
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
@@ -92,10 +92,10 @@ class ExecutorTest(ReBenchTestCase):
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", str(e))
-        except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
+        except RuntimeError as err:
+            self.assertEqual("TEST-PASSED", str(err))
+        except BenchmarkThreadExceptions as err:
+            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()

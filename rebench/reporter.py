@@ -114,7 +114,7 @@ class CliReporter(TextReporter):
         super(CliReporter, self).__init__()
         self._num_runs = None
         self._runs_completed = 0
-        self._startTime = None
+        self._start_time = None
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
 
@@ -183,19 +183,19 @@ class CliReporter(TextReporter):
             data_points_remaining = (self._runs_remaining *
                                      data_points_per_run -
                                      len(run_id.get_data_points()))
-            time_per_data_point = ((current - self._startTime) /
+            time_per_data_point = ((current - self._start_time) /
                                    data_points_completed)
             etl = time_per_data_point * data_points_remaining
             sec = etl % 60
-            m = (etl - sec) / 60 % 60
-            h = (etl - sec - m) / 60 / 60
+            minute = (etl - sec) / 60 % 60
+            hour = (etl - sec - minute) / 60 / 60
             print(("Run %s \t runs left: %00d \t " +
                    "time left: %02d:%02d:%02d") % (run_id.bench_cfg.name,
                                                    self._runs_remaining,
-                                                   floor(h), floor(m),
+                                                   floor(hour), floor(minute),
                                                    floor(sec)))
         else:
-            self._startTime = time()
+            self._start_time = time()
             print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
                                                self._runs_remaining))
 
@@ -275,14 +275,11 @@ class CodespeedReporter(Reporter):
         return {
             'commitid': self._cfg.commit_id,
             'project': self._cfg.project,
-            #'revision_date': '', # Optional. Default is taken either
-                                  # from VCS integration or from current date
             'executable':   None,
             'benchmark':    None,
             'environment':  self._cfg.environment,
             'branch':       self._cfg.branch,
             'result_value': None,
-            # 'result_date': datetime.today(), # Optional
             'std_dev':      None,
             'max':          None,
             'min':          None}
@@ -324,9 +321,9 @@ class CodespeedReporter(Reporter):
         return result
 
     def _send_payload(self, payload):
-        fh = urlopen(self._cfg.url, payload)
-        response = fh.read()
-        fh.close()
+        socket = urlopen(self._cfg.url, payload)
+        response = socket.read()
+        socket.close()
         logging.info("Results were sent to Codespeed, response was: "
                      + response)
 

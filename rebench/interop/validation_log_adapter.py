@@ -44,7 +44,7 @@ class ValidationLogAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty):
         super(ValidationLogAdapter, self).__init__(include_faulty)
-        self._otherErrorDefinitions = [self.re_NPB_partial_invalid,
+        self._other_error_definitions = [self.re_NPB_partial_invalid,
                                        self.re_NPB_invalid, self.re_incorrect]
 
     def parse_data(self, data, run_id):
@@ -56,31 +56,31 @@ class ValidationLogAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
-            m = self.re_log_line.match(line)
-            if m:
-                time = float(m.group(4))
-                if m.group(5) == "u":
+            match = self.re_log_line.match(line)
+            if match:
+                time = float(match.group(4))
+                if match.group(5) == "u":
                     time /= 1000
-                criterion = (m.group(2) or 'total').strip()
-                successMeasure = Measurement(m.group(6) == "true", 'bool', run_id, 'Success')
+                criterion = (match.group(2) or 'total').strip()
+                success_measure = Measurement(match.group(6) == "true", 'bool', run_id, 'Success')
                 measure = Measurement(time, 'ms', run_id, criterion)
-                current.add_measurement(successMeasure)
+                current.add_measurement(success_measure)
                 current.add_measurement(measure)
 
                 if measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
             else:
-                p = self.re_actors.match(line)
-                if p:
-                    m1 = Measurement(int(p.group(1)), 'count', run_id, 'Actors')
-                    m2 = Measurement(int(p.group(2)), 'count', run_id, 'Messages')
-                    m3 = Measurement(int(p.group(3)), 'count', run_id, 'Promises')
-                    m4 = Measurement(0, 'ms', run_id, 'total')
-                    current.add_measurement(m1)
-                    current.add_measurement(m2)
-                    current.add_measurement(m3)
-                    current.add_measurement(m4)
+                match = self.re_actors.match(line)
+                if match:
+                    measure1 = Measurement(int(match.group(1)), 'count', run_id, 'Actors')
+                    measure2 = Measurement(int(match.group(2)), 'count', run_id, 'Messages')
+                    measure3 = Measurement(int(match.group(3)), 'count', run_id, 'Promises')
+                    measure4 = Measurement(0, 'ms', run_id, 'total')
+                    current.add_measurement(measure1)
+                    current.add_measurement(measure2)
+                    current.add_measurement(measure3)
+                    current.add_measurement(measure4)
                     data_points.append(current)
                     current = DataPoint(run_id)
 

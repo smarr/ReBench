@@ -66,26 +66,26 @@ class TimeAdapter(GaugeAdapter):
                 return None
 
             if self._use_formatted_time:
-                m1 = self.re_formatted_rss.match(line)
-                m2 = self.re_formatted_time.match(line)
-                if m1:
-                    mem_kb = float(m1.group(1))
+                match1 = self.re_formatted_rss.match(line)
+                match2 = self.re_formatted_time.match(line)
+                if match1:
+                    mem_kb = float(match1.group(1))
                     measure = Measurement(mem_kb, 'kb', run_id, 'MaxRSS')
                     current.add_measurement(measure)
-                elif m2:
-                    time = float(m2.group(1)) * 1000
+                elif match2:
+                    time = float(match2.group(1)) * 1000
                     measure = Measurement(time, 'ms', run_id, 'total')
                     current.add_measurement(measure)
                     data_points.append(current)
                     current = DataPoint(run_id)
             else:
-                m1 = self.re_time.match(line)
-                m2 = self.re_time2.match(line)
-                if m1 or m2:
-                    m = m1 or m2
-                    criterion = 'total' if m.group(1) == 'real' else m.group(1)
-                    time = (float(m.group(2).strip() or 0) * 60 +
-                            float(m.group(3))) * 1000
+                match1 = self.re_time.match(line)
+                match2 = self.re_time2.match(line)
+                if match1 or match2:
+                    match = match1 or match2
+                    criterion = 'total' if match.group(1) == 'real' else match.group(1)
+                    time = (float(match.group(2).strip() or 0) * 60 +
+                            float(match.group(3))) * 1000
                     measure = Measurement(time, 'ms', run_id, criterion)
                     current.add_measurement(measure)
                 else:

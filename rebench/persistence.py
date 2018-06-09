@@ -100,21 +100,21 @@ class DataStore(object):
     @classmethod
     def discard_data_of_runs(cls, runs):
         by_file = cls.get_by_file(runs)
-        for filename, ms in by_file.items():
+        for filename, measures in by_file.items():
             try:
-                with open(filename, 'r') as f:
-                    lines = f.readlines()
+                with open(filename, 'r') as data_file:
+                    lines = data_file.readlines()
             except IOError:
                 logging.info("Failed to open data file: %s" % filename)
                 continue
 
-            for m in ms:
-                lines[m.line_number] = None
+            for measure in measures:
+                lines[measure.line_number] = None
 
             lines = filter(None, lines)
 
-            with open(filename, 'w') as f:
-                f.writelines(lines)
+            with open(filename, 'w') as data_file:
+                data_file.writelines(lines)
 
 
 class _DataPointPersistence(object):
@@ -145,13 +145,13 @@ class _DataPointPersistence(object):
         Loads the data from the configured data file
         """
         try:
-            with open(self._data_filename, 'r') as f:
-                self._process_lines(f)
+            with open(self._data_filename, 'r') as data_file:
+                self._process_lines(data_file)
         except IOError:
             logging.info("No data loaded %s does not exist."
                          % self._data_filename)
 
-    def _process_lines(self, f):
+    def _process_lines(self, data_file):
         """
          The most important assumptions we make here is that the total
          measurement is always the last one serialized for a data point.
@@ -160,7 +160,7 @@ class _DataPointPersistence(object):
 
         previous_run_id = None
         line_number = 0
-        for line in f:
+        for line in data_file:
             if line.startswith('#'):  # skip comments, and shebang lines
                 line_number += 1
                 continue
@@ -181,8 +181,8 @@ class _DataPointPersistence(object):
                     run_id.loaded_data_point(data_point)
                     data_point = DataPoint(run_id)
 
-            except ValueError as e:
-                msg = str(e)
+            except ValueError as err:
+                msg = str(err)
                 if msg not in errors:
                     # Configuration is not available, skip data point
                     logging.log(logging.DEBUG - 1, msg)
@@ -199,28 +199,28 @@ class _DataPointPersistence(object):
         try:
             # if file doesn't exist, just create it
             if not os.path.exists(self._data_filename):
-                with open(self._data_filename, 'w') as f:
-                    f.write(shebang_line)
-                    f.flush()
-                    f.close()
+                with open(self._data_filename, 'w') as data_file:
+                    data_file.write(shebang_line)
+                    data_file.flush()
+                    data_file.close()
                 return
 
             # if file exists, the first line might already be the same line
-            with open(self._data_filename, 'r') as f:
-                if f.readline() == shebang_line:
+            with open(self._data_filename, 'r') as data_file:
+                if data_file.readline() == shebang_line:
                     return
 
             # otherwise, copy the file and insert line at the beginning
             renamed_file = "%s-%.0f.tmp" % (self._data_filename, time.time())
             os.rename(self._data_filename, renamed_file)
-            with open(self._data_filename, 'w') as f:
-                f.write(shebang_line)
-                f.flush()
-                shutil.copyfileobj(open(renamed_file, 'r'), f)
+            with open(self._data_filename, 'w') as data_file:
+                data_file.write(shebang_line)
+                data_file.flush()
+                shutil.copyfileobj(open(renamed_file, 'r'), data_file)
             os.remove(renamed_file)
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as err:  # pylint: disable=broad-except
             logging.error("An error occurred " +
-                          "while trying to insert a shebang line: %s", e)
+                          "while trying to insert a shebang line: %s", err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 
