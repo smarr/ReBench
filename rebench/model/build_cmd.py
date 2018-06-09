@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2018 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,27 +17,44 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator
-from ...executor         import Executor
-from ...rebench          import ReBench
-from ...persistence      import DataStore
-from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue57BinaryOnPath(ReBenchTestCase):
+class BuildCommand(object):
+    def __init__(self, cmd, location):
+        self._cmd = cmd
+        self._location = location
+        self._built = False
+        self._build_failed = False
 
-    def setUp(self):
-        super(Issue57BinaryOnPath, self).setUp(__file__)
+    @property
+    def command(self):
+        return self._cmd
 
-    def test_sleep_gives_results(self):
-        store = DataStore()
-        cnf = Configurator(self._path + '/issue_57.conf', store,
-                           standard_data_file = self._tmp_file)
-        runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+    @property
+    def location(self):
+        return self._location
 
-        ex = Executor(runs, False, False, False)
-        ex.execute()
+    @property
+    def is_built(self):
+        return self._built
 
-        self.assertEqual("Bench1", runs[0].bench_cfg.name)
-        self.assertEqual(10, runs[0].get_number_of_data_points())
+    @property
+    def is_failed_build(self):
+        return self._build_failed
+
+    def mark_succeeded(self):
+        self._built = True
+
+    def mark_failed(self):
+        self._build_failed = True
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                self._cmd == other._cmd and
+                self._location == other._location)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((self._cmd, self._location))

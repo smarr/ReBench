@@ -36,7 +36,7 @@ class Issue27InvalidRunNotHandled(ReBenchTestCase):
         runs = list(cnf.get_runs())
         self.assertEqual(runs[0].get_number_of_data_points(), 0)
 
-        ex = Executor([runs[0]], False)
+        ex = Executor([runs[0]], False, False)
         ex.execute()
 
         self.assertEqual(runs[0].get_number_of_data_points(), 0)

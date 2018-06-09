@@ -19,10 +19,12 @@
 # IN THE SOFTWARE.
 import logging
 
+from .build_cmd import BuildCommand
+
 
 class BenchmarkSuite(object):
 
-    def __init__(self, suite_name, vm, global_suite_cfg):
+    def __init__(self, suite_name, vm, global_suite_cfg, build_commands):
         """Specialize the benchmark suite for the given VM"""
         
         self._name = suite_name
@@ -35,6 +37,7 @@ class BenchmarkSuite(object):
         if self._input_sizes is None:
             self._input_sizes = [None]
         
+        # TODO: should the _location be made absolute as the vm._path??
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
         self._variable_values = global_suite_cfg.get('variable_values', [None])
@@ -45,6 +48,15 @@ class BenchmarkSuite(object):
 
         self._command            = global_suite_cfg['command']
         self._max_runtime        = global_suite_cfg.get('max_runtime', -1)
+
+        build = global_suite_cfg.get('build', None)
+        if build:
+            build_command = BuildCommand(build, self._location)
+            if build_command in build_commands:
+                build_command = build_commands[build_command]
+            self._build = build_command
+        else:
+            self._build = None
 
         # TODO: remove in ReBench 1.0
         if 'performance_reader' in global_suite_cfg:
@@ -64,6 +76,10 @@ class BenchmarkSuite(object):
     @property
     def cores(self):
         return self._cores
+
+    @property
+    def build(self):
+        return self._build
     
     @property
     def variable_values(self):

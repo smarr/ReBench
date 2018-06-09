@@ -180,7 +180,11 @@ schema;benchmark_suite_type:
         The path to the benchmark harness. Execution use this location as
         working directory. It overrides the location/path of a VM.
     build:
-      desc: TODO make more precise
+      desc: |
+        The given string is executed by the system's shell and can be used to
+        build a benchmark suite. It is executed once before any benchmarks are
+        executed. If `location` is set, it is used as working directory.
+        Otherwise, it is the current working directory of ReBench.
       type: str
     benchmarks:
       type: seq
@@ -223,7 +227,11 @@ schema;vm_type:
     description:
       type: str
     build:
-      desc: TODO make more precise
+      desc: |
+        The given string is executed by the system's shell and can be used to
+        build a VM. It is executed once before any benchmarks are executed with
+        the VM. If `path` is set, it is used as working directory. Otherwise,
+        it is the current working directory of ReBench.
       type: str
     execute_exclusively:
       type: bool

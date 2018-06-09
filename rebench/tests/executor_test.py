@@ -44,7 +44,7 @@ class ExecutorTest(ReBenchTestCase):
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
                             None, 'Test', standard_data_file = self._tmp_file)
         
-        ex = Executor(cnf.get_runs(), cnf.use_nice)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
         
 ### should test more details
@@ -71,7 +71,7 @@ class ExecutorTest(ReBenchTestCase):
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                                None, 'TestBrokenCommandFormat',
                                standard_data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
         except RuntimeError as e:
             self.assertEqual("TEST-PASSED", str(e))
@@ -89,7 +89,7 @@ class ExecutorTest(ReBenchTestCase):
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
                                None, 'TestBrokenCommandFormat2',
                                standard_data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
         except RuntimeError as e:
             self.assertEqual("TEST-PASSED", str(e))
@@ -99,7 +99,7 @@ class ExecutorTest(ReBenchTestCase):
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()
