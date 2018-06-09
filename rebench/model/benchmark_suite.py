@@ -37,6 +37,7 @@ class BenchmarkSuite(object):
         if self._input_sizes is None:
             self._input_sizes = [None]
         
+        # TODO: should the _location be made absolute as the vm._path??
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
         self._variable_values = global_suite_cfg.get('variable_values', [None])
