@@ -227,7 +227,8 @@ class RunId(object):
                          "Python format strings.", self._bench_cfg.name)
 
         # figure out which format misses a conversion type
-        without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
+        without_conversion_type = re.findall(
+            r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
         logging.error("The command line configured is: %s", cmdline)
         logging.error("The following elements do not have conversion types: \"%s\"",
                       '", "'.join(without_conversion_type))
