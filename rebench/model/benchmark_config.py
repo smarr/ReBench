@@ -132,5 +132,5 @@ class BenchmarkConfig(object):
     @classmethod
     def from_str_list(cls, data_store, str_list):
         return data_store.get_config(str_list[0], str_list[1], str_list[2],
-                              None if str_list[3] == '' else str_list[3],
-                              int(str_list[4]))
+                                     None if str_list[3] == '' else str_list[3],
+                                     int(str_list[4]))
