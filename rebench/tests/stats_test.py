@@ -170,7 +170,7 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(numpy.std(   self._mixed),
                                stats.stddev(self._mixed))
 
-# Not Yet Implemented
+# TODO: implement
 #    @unittest.skipUnless(are_numpy_and_scipy_available, "NumPy or SciPy is not available")
 #    def test_norm_distribution(self):
 #        self.fail("not yet implemented")

@@ -54,12 +54,6 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         self._records_data_points('Test3', 10)
 
     def test_associates_measurements_and_data_points_correctly(self):
-        """
-        print("%d:RESULT-bar:ms:   %d.%d" % (i, i, i))
-        print("%d:RESULT-total:    %d.%d" % (i, i, i))
-        print("%d:RESULT-baz:kbyte:   %d" % (i, i))
-        print("%d:RESULT-foo:kerf: %d.%d" % (i, i, i))
-        """
         data_points = self._records_data_points('Test1', 10)
         for dp, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, dp.number_of_measurements())

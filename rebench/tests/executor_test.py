@@ -37,7 +37,8 @@ class ExecutorTest(ReBenchTestCase):
         os.chdir(self._path + '/../')
 
     def test_setup_and_run_benchmark(self):
-        # before executing the benchmark, we override stuff in subprocess for testing
+        # before executing the benchmark,
+        # we override stuff in subprocess for testing
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
 
@@ -47,7 +48,7 @@ class ExecutorTest(ReBenchTestCase):
         ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
 
-### should test more details
+# TODO: should test more details
 #        (mean, sdev, (interval, interval_percentage),
 #                (interval_t, interval_percentage_t)) = ex.result['test-vm']['test-bench']
 #
