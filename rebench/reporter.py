@@ -49,6 +49,9 @@ class Reporter(object):
     def run_completed(self, run_id, statistics, cmdline):
         pass
 
+    def report_job_completed(self, run_ids):
+        pass
+
     def job_completed(self, run_ids):
         if not self._job_completion_reported:
             self.report_job_completed(run_ids)

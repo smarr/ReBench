@@ -57,6 +57,10 @@ class RunScheduler(object):
     def number_of_uncompleted_runs(runs):
         return len(RunScheduler._filter_out_completed_runs(runs))
 
+    def _process_remaining_runs(self, runs):
+        """Abstract, to be implemented"""
+        pass
+
     def execute(self):
         runs = self._filter_out_completed_runs(self._executor.runs)
         self._process_remaining_runs(runs)
