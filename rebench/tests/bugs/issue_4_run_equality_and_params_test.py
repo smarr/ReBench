@@ -31,7 +31,8 @@ class Issue4RunEquality(unittest.TestCase):
     def setUp(self):
         self._path = os.path.dirname(os.path.realpath(__file__))
 
-    def _create_template_run_id(self):
+    @staticmethod
+    def _create_template_run_id():
         vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
                                                   'binary': 'foo_bar_bin'},
                                    None, [1], None, None)
@@ -42,7 +43,8 @@ class Issue4RunEquality(unittest.TestCase):
                                     '3', 0, None, DataStore())
         return RunId(bench_cfg, 1, 2, None)
 
-    def _create_hardcoded_run_id(self):
+    @staticmethod
+    def _create_hardcoded_run_id():
         vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
                                                   'binary': 'foo_bar_bin'},
                                    None, [1], None, None)
