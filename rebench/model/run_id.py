@@ -101,10 +101,10 @@ class RunId(object):
         self._data_points.append(data_point)
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
-    
+
     def get_number_of_data_points(self):
         return len(self._data_points)
-    
+
     def get_data_points(self):
         return self._data_points
 
@@ -113,13 +113,13 @@ class RunId(object):
 
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]
-    
+
     def set_run_config(self, run_cfg):
         if self._run_config and self._run_config != run_cfg:
             raise ValueError("Run config has already been set "
                              "and is not the same.")
         self._run_config = run_cfg
-    
+
     def get_termination_check(self):
         if self._termination_check is None:
             self._termination_check = self._run_config.create_termination_check(
@@ -139,11 +139,11 @@ class RunId(object):
     @property
     def run_config(self):
         return self._run_config
-    
+
     @property
     def bench_cfg(self):
         return self._bench_cfg
-    
+
     @property
     def cores(self):
         return self._cores
@@ -167,7 +167,7 @@ class RunId(object):
     @property
     def var_value(self):
         return self._var_value
-    
+
     def __hash__(self):
         return hash(self.cmdline())
 
@@ -195,17 +195,17 @@ class RunId(object):
                               self._bench_cfg.vm.args)
 
         cmdline += self._bench_cfg.suite.command
-        
+
         if self._bench_cfg.extra_args is not None:
             cmdline += " %s" % self._bench_cfg.extra_args
-            
+
         try:
             cmdline = self._expand_vars(cmdline)
         except ValueError:
             self._report_cmdline_format_issue_and_exit(cmdline)
         except TypeError:
             self._report_cmdline_format_issue_and_exit(cmdline)
-        
+
         self._cmdline = cmdline.strip()
         return self._cmdline
 
@@ -221,11 +221,11 @@ class RunId(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+
     def _report_cmdline_format_issue_and_exit(self, cmdline):
         logging.critical("The configuration of %s contains improper "
                          "Python format strings.", self._bench_cfg.name)
-         
+
         # figure out which format misses a conversion type
         without_conversion_type = re.findall("\%\(.*?\)(?![diouxXeEfFgGcrs\%])", cmdline)
         logging.error("The command line configured is: %s", cmdline)

@@ -29,10 +29,10 @@ Glossary:
 
   measurement:
       one value for one specific criterion
-  
+
   virtual machine:
       A named set of settings for the executor of a benchmark suite.
-      
+
       Typically, this is one specific virtual machine with a specific set of
       startup parameters. It refers to an executable that will execute
       benchmarks from suite. Thus, the virtual machine is the executor.
@@ -40,7 +40,7 @@ Glossary:
   benchmark suite:
       A set of benchmarks with a variety of parameters, i.e., dimension to be
       explored by a benchmark.
-  
+
   benchmark:
       A set of experiments based on one program to be executed.
       The set is described by parameters, i.e., dimensions that are to be
@@ -50,7 +50,7 @@ Glossary:
       A run is one specific experiments based on the selected
       parameters, benchmark, benchmark suite, and virtual machine.
       One run can generate multiple data points.
-  
+
   experiment:
       Brings together benchmark suites, virtual machines, and their
       various parameters.
@@ -63,5 +63,5 @@ def value_with_optional_details(value, default_details = None):
         (value, details) = list(value.items())[0]
     else:
         details = default_details
-    
+
     return value, details

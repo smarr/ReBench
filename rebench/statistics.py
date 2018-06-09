@@ -6,10 +6,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -57,7 +57,7 @@ class StatisticProperties:
     properties of a given set of data samples, i.e., the chosen values
     from a set of data points
     """
-    
+
     def __init__(self, data_samples):
         self._data_samples     = data_samples
 
@@ -87,7 +87,7 @@ class StatisticProperties:
 
         self.min = min(self._data_samples)
         self.max = max(self._data_samples)
-        
+
     def as_tuple(self):
         return (self.mean,
                 self.geom_mean,
@@ -96,7 +96,7 @@ class StatisticProperties:
                 self.num_samples,
                 self.min,
                 self.max)
-    
+
     @classmethod
     def tuple_mapping(cls):
         return ('arithmetic mean', 'geometric mean', 'median', 'stdDev',

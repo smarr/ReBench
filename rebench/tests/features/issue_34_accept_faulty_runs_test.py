@@ -72,5 +72,3 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
 
         self.assertEqual("invalid", runs[2].bench_cfg.name)
         self.assertEqual(10, runs[2].get_number_of_data_points())
-
-

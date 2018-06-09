@@ -31,7 +31,7 @@ from .rebench_test_case import ReBenchTestCase
 
 
 class ExecutorTest(ReBenchTestCase):
-    
+
     def setUp(self):
         super(ExecutorTest, self).setUp(__file__)
         os.chdir(self._path + '/../')
@@ -40,21 +40,21 @@ class ExecutorTest(ReBenchTestCase):
         # before executing the benchmark, we override stuff in subprocess for testing
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
-        
+
         cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
                             None, 'Test', standard_data_file = self._tmp_file)
-        
+
         ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
-        
+
 ### should test more details
-#        (mean, sdev, (interval, interval_percentage), 
+#        (mean, sdev, (interval, interval_percentage),
 #                (interval_t, interval_percentage_t)) = ex.result['test-vm']['test-bench']
-#        
+#
 #        self.assertEqual(31, len(ex.benchmark_data['test-vm']['test-bench']))
 #        self.assertAlmostEqual(45870.4193548, mean)
 #        self.assertAlmostEqual(2.93778711485, sdev)
-#        
+#
 #        (i_low, i_high) = interval
 #        self.assertAlmostEqual(45869.385195243565, i_low)
 #        self.assertAlmostEqual(45871.453514433859, i_high)
@@ -77,13 +77,13 @@ class ExecutorTest(ReBenchTestCase):
             self.assertEqual("TEST-PASSED", str(e))
         except BenchmarkThreadExceptions as e:
             self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
-    
+
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
             self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
-        
+
         try:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
@@ -192,7 +192,7 @@ def Popen_override(cmdline, stdout, stderr=None, shell=None):
 
         def __exit__(self, _type, _value, _traceback):
             pass
-    
+
     return Popen(cmdline)
 
 

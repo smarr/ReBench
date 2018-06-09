@@ -32,18 +32,18 @@ class Measurement(object):
         self._timestamp = timestamp or datetime.now()
         self._line_number = line_number
         self._filename  = filename
-        
+
     def is_total(self):
         return self._criterion == 'total'
-    
+
     @property
     def criterion(self):
         return self._criterion
-    
+
     @property
     def value(self):
         return self._value
-    
+
     @property
     def unit(self):
         return self._unit

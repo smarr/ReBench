@@ -27,7 +27,7 @@ class DataPoint(object):
 
     def number_of_measurements(self):
         return len(self._measurements)
-    
+
     def add_measurement(self, measurement):
         self._measurements.append(measurement)
         if measurement.is_total():
@@ -35,7 +35,7 @@ class DataPoint(object):
                 raise ValueError("A data point should only include one " +
                                  "'total' measurement.")
             self._total = measurement
-    
+
     def get_measurements(self):
         return self._measurements
 

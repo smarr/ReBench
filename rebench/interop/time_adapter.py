@@ -109,4 +109,3 @@ class TimeManualAdapter(TimeAdapter):
     """
     def acquire_command(self, command):
         return command
-

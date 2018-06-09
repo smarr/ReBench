@@ -1,15 +1,15 @@
 # Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -46,24 +46,24 @@ class Reporter(object):
 
     def run_failed(self, _run_id, _cmdline, _return_code, _output):
         pass
-    
+
     def run_completed(self, run_id, statistics, cmdline):
         pass
-    
+
     def job_completed(self, run_ids):
         if not self._job_completion_reported:
             self.report_job_completed(run_ids)
             self._job_completion_reported = True
-    
+
     def set_total_number_of_runs(self, num_runs):
         pass
-    
+
     def start_run(self, run_id):
         pass
-    
+
 
 class TextReporter(Reporter):
-    
+
     def __init__(self):
         super(TextReporter, self).__init__()
 
@@ -71,11 +71,11 @@ class TextReporter(Reporter):
         result = ["\t".join(run_id.as_str_list()), " = "]
         self._output_stats(result, run_id, statistics)
         return result
-    
+
     def _output_stats(self, output_list, run_id, statistics):
         if not statistics:
             return
-        
+
         for field, value in statistics.__dict__.iteritems():
             if not field.startswith('_'):
                 output_list.append("%s: %s " % (field, value))
@@ -87,7 +87,7 @@ class TextReporter(Reporter):
             if item:
                 out.append(str(item))
         return " ".join(out) + " "
-    
+
     def _generate_all_output(self, run_ids):
         rows = []
         col_width = None
@@ -110,7 +110,7 @@ class TextReporter(Reporter):
 
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
-    
+
     def __init__(self, executes_verbose):
         super(CliReporter, self).__init__()
         self._num_runs       = None
@@ -118,7 +118,7 @@ class CliReporter(TextReporter):
         self._startTime      = None
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
-        
+
         # TODO: re-add support, think, we need that based on the proper config, i.e., the run id
 #         self._min_runtime = configurator.statistics.min_runtime
 
@@ -128,31 +128,31 @@ class CliReporter(TextReporter):
             datetime.now(),
             " ".join(self._configuration_details(run_id)))
         logging.debug(result)
-        
+
         # Standard error output
         if return_code == -9:
             log_msg = "Run timed out. return_code: %s"
         else:
             log_msg = "Run failed return_code: %s"
-        
+
         print(log_msg % return_code)
-        
+
         print("Cmd: %s\n" % cmdline)
-        
+
         if run_id.bench_cfg.suite.has_max_runtime():
             logging.debug("max_runtime: %s" % run_id.bench_cfg.suite.max_runtime)
         logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
-        
+
         if not self._executes_verbose and output and len(output.strip()) > 0:
-            print("Output:\n%s\n" % output)    
+            print("Output:\n%s\n" % output)
 
     def run_completed(self, run_id, statistics, cmdline):
         result = "[%s] Run completed: %s\n" % (
             datetime.now(),
             " ".join(self._configuration_details(run_id, statistics)))
-        
+
         logging.debug(result)
-        
+
         self._runs_completed += 1
         self._runs_remaining -= 1
 
@@ -169,11 +169,11 @@ class CliReporter(TextReporter):
         print("[%s] Job completed" % datetime.now())
         for line in self._generate_all_output(run_ids):
             print(line)
-    
+
     def set_total_number_of_runs(self, num_runs):
         self._num_runs = num_runs
         self._runs_remaining = num_runs
-    
+
     def start_run(self, run_id):
         if self._runs_completed > 0:
             current = time()
@@ -197,11 +197,11 @@ class CliReporter(TextReporter):
             self._startTime = time()
             print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
                                                self._runs_remaining))
-            
+
     def _output_stats(self, output_list, run_id, statistics):
         if not statistics:
             return
-        
+
         if run_id.run_failed():
             output_list.append("run failed.")
             output_list.append("")
@@ -216,7 +216,7 @@ class FileReporter(TextReporter):
     """ should be mainly a log file
         data is the responsibility of the data_aggregator
     """
-    
+
     def __init__(self, filename):
         super(FileReporter, self).__init__()
         self._file = open(filename, 'a+')
@@ -226,18 +226,18 @@ class FileReporter(TextReporter):
             datetime.now(),
             " ".join(self._configuration_details(run_id)))
         self._file.writelines(result)
-        
+
     def run_completed(self, run_id, statistics, cmdline):
         result = "[%s] Run completed: %s\n" % (
             datetime.now(),
             " ".join(self._configuration_details(run_id, statistics)))
         self._file.writelines(result)
-    
+
     def report_job_completed(self, run_ids):
         self._file.write("[%s] Job completed\n" % datetime.now())
         for line in self._generate_all_output(run_ids):
             self._file.write(line + "\n")
-            
+
         self._file.close()
 
 
@@ -310,14 +310,14 @@ class FileReporter(TextReporter):
 #
 #         self._file.close()
 #         locale.setlocale(locale.LC_ALL, old_locale)
-    
+
 
 class CodespeedReporter(Reporter):
     """
     This report will report the recorded data on the completion of the job
     to the configured Codespeed instance.
     """
-    
+
     def __init__(self, cfg):
         super(CodespeedReporter, self).__init__()
         self._cfg = cfg
@@ -329,7 +329,7 @@ class CodespeedReporter(Reporter):
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
             return
-        
+
         # ok, talk to codespeed immediately
         self._cache[run_id] = self._format_for_codespeed(run_id, statistics)
 
@@ -339,7 +339,7 @@ class CodespeedReporter(Reporter):
     def _send_and_empty_cache(self):
         self._send_to_codespeed(list(self._cache.values()))
         self._cache = {}
-    
+
     def _result_data_template(self):
         # all None values have to be filled in
         return {
@@ -367,7 +367,7 @@ class CodespeedReporter(Reporter):
 
     def _format_for_codespeed(self, run_id, stats = None):
         result = self._result_data_template()
-        
+
         if stats and not run_id.run_failed():
             result['min']          = stats.min
             result['max']          = stats.max
@@ -375,7 +375,7 @@ class CodespeedReporter(Reporter):
             result['result_value'] = stats.mean
         else:
             result['result_value'] = -1
-        
+
         result['executable'] = self._cfg.executable or run_id.bench_cfg.vm.name
 
         if run_id.bench_cfg.codespeed_name:
@@ -388,9 +388,9 @@ class CodespeedReporter(Reporter):
         name = name % {'cores'       : run_id.cores_as_str,
                        'input_sizes' : run_id.input_size_as_str,
                        'extra_args'  : run_id.bench_cfg.extra_args}
-        
+
         result['benchmark'] = name
-        
+
         return result
 
     def _send_payload(self, payload):

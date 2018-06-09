@@ -139,4 +139,3 @@ def get_process_children(pid):
     for child in result[:]:
         result.extend(get_process_children(child))
     return result
-

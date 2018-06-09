@@ -130,4 +130,3 @@ Savina.Chameneos: iterations=1 runtime: 48581us""", None)
         self.assertEqual(40, m2.value)
         self.assertEqual('external data', m2.criterion)
         self.assertEqual('byte', m2.unit)
-

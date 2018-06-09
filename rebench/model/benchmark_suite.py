@@ -26,9 +26,9 @@ class BenchmarkSuite(object):
 
     def __init__(self, suite_name, vm, global_suite_cfg, build_commands):
         """Specialize the benchmark suite for the given VM"""
-        
+
         self._name = suite_name
-        
+
         ## TODO: why do we do handle input_sizes the other way around?
         if vm.input_sizes:
             self._input_sizes = vm.input_sizes
@@ -36,7 +36,7 @@ class BenchmarkSuite(object):
             self._input_sizes = global_suite_cfg.get('input_sizes')
         if self._input_sizes is None:
             self._input_sizes = [None]
-        
+
         # TODO: should the _location be made absolute as the vm._path??
         self._location        = global_suite_cfg.get('location', vm.path)
         self._cores           = global_suite_cfg.get('cores',    vm.cores)
@@ -68,11 +68,11 @@ class BenchmarkSuite(object):
     @property
     def input_sizes(self):
         return self._input_sizes
-    
+
     @property
     def location(self):
         return self._location
-    
+
     @property
     def cores(self):
         return self._cores
@@ -80,19 +80,19 @@ class BenchmarkSuite(object):
     @property
     def build(self):
         return self._build
-    
+
     @property
     def variable_values(self):
         return self._variable_values
-    
+
     @property
     def vm(self):
         return self._vm
-    
+
     @property
     def benchmarks(self):
         return self._benchmarks
-    
+
     @property
     def gauge_adapter(self):
         return self._gauge_adapter
@@ -100,7 +100,7 @@ class BenchmarkSuite(object):
     @property
     def name(self):
         return self._name
-    
+
     @property
     def command(self):
         return self._command

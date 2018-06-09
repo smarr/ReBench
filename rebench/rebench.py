@@ -16,10 +16,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -40,12 +40,12 @@ from .configuration_error import ConfigurationError
 
 
 class ReBench:
-    
+
     def __init__(self):
         self.version = "0.10.1"
         self.options = None
         self._config = None
-    
+
     def shell_options(self):
         usage = """%(prog)s [options] <config> [exp_name] [vm:$]* [s:$]*
         
@@ -152,7 +152,7 @@ Argument:
                                default=True,
                                help='Override configuration and '
                                     'disable reporting to codespeed.')
-        
+
         return parser
 
     @staticmethod
@@ -186,10 +186,10 @@ Argument:
             sys.exit(-1)
         data_store.load_data()
         return self.execute_experiment()
-        
+
     def execute_experiment(self):
         logging.debug("execute experiment: %s" % self._config.experiment_name())
-        
+
         # first load old data if available
         if self._config.options.clean:
             pass

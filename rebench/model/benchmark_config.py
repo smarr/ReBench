@@ -62,10 +62,10 @@ class BenchmarkConfig(object):
         self._runs = set()      # the compiled runs, these might be shared
                                 # with other benchmarks/suites
         data_store.register_config(self)
-    
+
     def add_run(self, run):
         self._runs.add(run)
-    
+
     @property
     def name(self):
         return self._name
@@ -85,7 +85,7 @@ class BenchmarkConfig(object):
     @property
     def codespeed_name(self):
         return self._codespeed_name
-    
+
     @property
     def extra_args(self):
         return self._extra_args
@@ -93,15 +93,15 @@ class BenchmarkConfig(object):
     @property
     def warmup_iterations(self):
         return self._warmup
-    
+
     @property
     def gauge_adapter(self):
         return self._gauge_adapter
-    
+
     @property
     def suite(self):
         return self._suite
-    
+
     @property
     def vm(self):
         return self._vm
@@ -109,12 +109,12 @@ class BenchmarkConfig(object):
     @property
     def execute_exclusively(self):
         return self._vm.execute_exclusively
-    
+
     def __str__(self):
         return "%s, vm:%s, suite:%s, args:'%s', warmup: %d" % (
             self._name, self._vm.name, self._suite.name, self._extra_args or '',
             self._warmup)
-    
+
     def as_simple_string(self):
         if self._extra_args:
             return "%s (%s, %s, %s, %d)"  % (self._name, self._vm.name,
@@ -123,7 +123,7 @@ class BenchmarkConfig(object):
         else:
             return "%s (%s, %s, %d)" % (self._name, self._vm.name,
                                         self._suite.name, self._warmup)
-        
+
     def as_str_list(self):
         return [self._name, self._vm.name, self._suite.name,
                 '' if self._extra_args is None else str(self._extra_args),

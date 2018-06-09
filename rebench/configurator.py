@@ -6,10 +6,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -102,7 +102,7 @@ class Configurator:
 
         self._options    = self._process_cli_options(cli_options)
         self._exp_name   = exp_name
-        
+
         self.runs        = RunsConfig(     **self._raw_config.get(      'runs', {}))
         self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
@@ -151,7 +151,7 @@ class Configurator:
     def _process_cli_options(self, options):
         if options is None:
             return
-        
+
         if options.debug:
             if options.verbose:
                 logging.basicConfig(level=logging.NOTSET)
@@ -172,7 +172,7 @@ class Configurator:
                               "you might need root/admin rights.")
                 logging.error("Deactivated usage of nice command.")
                 options.use_nice = False
-                    
+
         return options
 
     @staticmethod
@@ -197,10 +197,10 @@ class Configurator:
     @property
     def do_builds(self):
         return self.options is not None and self.options.do_builds
-        
+
     def experiment_name(self):
         return self._exp_name or self._raw_config['standard_experiment']
-    
+
     def get_experiments(self):
         """The configuration has been compiled before it is handed out
            to the client class, since some configurations can override
@@ -208,22 +208,22 @@ class Configurator:
            system.
         """
         return self._experiments
-    
+
     def get_experiment(self, name):
         return self._experiments[name]
-    
+
     def get_runs(self):
         runs = set()
         for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
         return runs
-    
+
     def _compile_experiments(self, cli_reporter, run_filter):
         if not self.experiment_name():
             raise ValueError("No experiment chosen.")
-        
+
         conf_defs = {}
-        
+
         if self.experiment_name() == "all":
             for exp_name in self._raw_config['experiments']:
                 conf_defs[exp_name] = self._compile_experiment(exp_name,
@@ -235,7 +235,7 @@ class Configurator:
                                  self.experiment_name())
             conf_defs[self.experiment_name()] = self._compile_experiment(
                 self.experiment_name(), cli_reporter, run_filter)
-        
+
         return conf_defs
 
     def _compile_experiment(self, exp_name, cli_reporter, run_filter):
@@ -243,7 +243,7 @@ class Configurator:
         run_cfg = (self.quick_runs
                    if (self.options and self.options.quick)
                    else self.runs)
-        
+
         return Experiment(exp_name, exp_def, run_cfg,
                           self._raw_config['virtual_machines'],
                           self._raw_config['benchmark_suites'],

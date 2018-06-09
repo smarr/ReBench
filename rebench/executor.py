@@ -1,15 +1,15 @@
 # Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -211,7 +211,7 @@ class ParallelScheduler(RunScheduler):
 
 
 class Executor:
-    
+
     def __init__(self, runs, use_nice, do_builds, include_faulty = False,
                  verbose = False, scheduler = BatchScheduler, build_log = None):
         self._runs     = runs
@@ -240,10 +240,10 @@ class Executor:
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline  = ""
-                
+
         if self._use_nice:
             cmdline += "nice -n-20 "
-        
+
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
 
         return cmdline
@@ -330,26 +330,26 @@ class Executor:
 
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
-        
+
         run_id.run_config.log()
         run_id.report_start_run()
-        
+
         gauge_adapter = self._get_gauge_adapter_instance(
             run_id.bench_cfg.gauge_adapter)
-        
+
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
-        
+
         terminate = self._check_termination_condition(run_id, termination_check)
         if not terminate and self._do_builds:
             self._build_vm_and_suite(run_id)
 
         stats = StatisticProperties(run_id.get_total_values())
-        
+
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-            
+
             stats = StatisticProperties(run_id.get_total_values())
             logging.debug("Run: #%d" % stats.num_samples)
 
@@ -394,9 +394,9 @@ class Executor:
                               % run_id.bench_cfg.vm.name)
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
-        
+
         return self._check_termination_condition(run_id, termination_check)
-    
+
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
             data_points = gauge_adapter.parse_data(output, run_id)
