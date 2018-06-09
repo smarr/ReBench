@@ -27,7 +27,7 @@ from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
 
 
-class _VMFilter:
+class _VMFilter(object):
 
     def __init__(self, name):
         self._name = name
@@ -57,7 +57,7 @@ class _BenchmarkFilter(_SuiteFilter):
         return bench.name == self._benchmark_name
 
 
-class _RunFilter:
+class _RunFilter(object):
 
     def __init__(self, run_filter):
         self._vm_filters    = []

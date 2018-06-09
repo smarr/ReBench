@@ -22,6 +22,7 @@
 class ConfigurationError(Exception):
 
     def __init__(self, msg):
+        super(ConfigurationError, self).__init__()
         self._msg = msg
 
     @property

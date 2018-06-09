@@ -40,6 +40,7 @@ from .interop.adapter import ExecutionDeliveredNoResults
 class FailedBuilding(Exception):
     """The exception to be raised when building of the VM or suite failed."""
     def __init__(self, name, build_command):
+        super(FailedBuilding, self).__init__()
         self._name = name
         self._build_command = build_command
 
