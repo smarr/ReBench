@@ -32,7 +32,8 @@ class ValidationLogAdapter(GaugeAdapter):
        a benchmark, its runtime in microseconds and if it was successful.
     """
     re_log_line = re.compile(
-        r"^(?:.*: )?([\w\.]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s success: (true|false)")
+        r"^(?:.*: )?([\w\.]+)( [\w\.]+)?: iterations=([0-9]+)"
+        r" runtime: ([0-9]+)([mu])s success: (true|false)")
 
     re_actors = re.compile(
         r"^\[Total\]\s+A#([0-9]+)\s+M#([0-9]+)\s+P#([0-9]+)")
