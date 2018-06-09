@@ -125,8 +125,8 @@ class BenchmarkThread(Thread):
                 if work is None:
                     return
                 scheduler._process_remaining_runs(work)
-        except BaseException as e:
-            self.exception = e
+        except BaseException as exp:
+            self.exception = exp
 
 
 class BenchmarkThreadExceptions(Exception):
@@ -207,10 +207,10 @@ class ParallelScheduler(RunScheduler):
             if not self._remaining_work:
                 return None
 
-            n = self._determine_num_work_items_to_take()
-            assert n <= len(self._remaining_work)
+            num = self._determine_num_work_items_to_take()
+            assert num <= len(self._remaining_work)
             work = []
-            for _ in range(n):
+            for _ in range(num):
                 work.append(self._remaining_work.pop())
             return work
 
@@ -282,41 +282,41 @@ class Executor(object):
 
         script = build_command.command
 
-        p = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
+        proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              cwd=path)
-        p.stdin.write(str.encode(script))
-        p.stdin.close()
+        proc.stdin.write(str.encode(script))
+        proc.stdin.close()
 
         if self._build_log:
             with open(self._build_log, 'a') as log_file:
                 while True:
-                    reads = [p.stdout.fileno(), p.stderr.fileno()]
+                    reads = [proc.stdout.fileno(), proc.stderr.fileno()]
                     ret = select(reads, [], [])
 
-                    for fd in ret[0]:
-                        if fd == p.stdout.fileno():
-                            read = self._read(p.stdout)
+                    for file_no in ret[0]:
+                        if file_no == proc.stdout.fileno():
+                            read = self._read(proc.stdout)
                             if read:
                                 log_file.write(name + '|STD:')
                                 log_file.write(read)
-                        elif fd == p.stderr.fileno():
-                            read = self._read(p.stderr)
+                        elif file_no == proc.stderr.fileno():
+                            read = self._read(proc.stderr)
                             if read:
                                 log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
-                    if p.poll() is not None:
+                    if proc.poll() is not None:
                         break
                 # read rest of pipes
                 while True:
-                    read = self._read(p.stdout)
+                    read = self._read(proc.stdout)
                     if read == "":
                         break
                     log_file.write(name + '|STD:')
                     log_file.write(read)
                 while True:
-                    read = self._read(p.stderr)
+                    read = self._read(proc.stderr)
                     if not read:
                         break
                     log_file.write(name + '|ERR:')
@@ -324,11 +324,11 @@ class Executor(object):
 
                 log_file.write('\n')
 
-        if p.returncode != 0:
+        if proc.returncode != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, p.returncode, "Build of " + name + " failed.")
+                script, proc.returncode, "Build of " + name + " failed.")
             raise FailedBuilding(name, build_command)
         else:
             build_command.mark_succeeded()
@@ -371,14 +371,14 @@ class Executor(object):
         for _, name, _ in pkgutil.walk_packages(root):
             # depending on how ReBench was executed, name might one of the two
             try:
-                p = __import__("rebench.interop." + name, fromlist=adapter_name)
+                mod = __import__("rebench.interop." + name, fromlist=adapter_name)
             except ImportError:
                 try:
-                    p = __import__("interop." + name, fromlist=adapter_name)
+                    mod = __import__("interop." + name, fromlist=adapter_name)
                 except ImportError:
-                    p = None
-            if p is not None and hasattr(p, adapter_name):
-                return getattr(p, adapter_name)(self._include_faulty)
+                    mod = None
+            if mod is not None and hasattr(mod, adapter_name):
+                return getattr(mod, adapter_name)(self._include_faulty)
         return None
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,

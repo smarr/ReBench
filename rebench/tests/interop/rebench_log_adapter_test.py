@@ -7,11 +7,11 @@ class RebenchAdapterTest(TestCase):
 
     def _assert_basics(self, data, val, unit, criterion, total):
         self.assertEqual(1, len(data))
-        dp = data[0]
-        self.assertEqual(val, dp.get_total_value())
+        point = data[0]
+        self.assertEqual(val, point.get_total_value())
 
-        self.assertEqual(1, len(dp.get_measurements()))
-        m = dp.get_measurements()[0]
+        self.assertEqual(1, len(point.get_measurements()))
+        m = point.get_measurements()[0]
 
         self.assertEqual(total, m.is_total())
         self.assertEqual(val, m.value)

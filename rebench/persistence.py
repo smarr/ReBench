@@ -85,16 +85,16 @@ class DataStore(object):
     @classmethod
     def get_by_file(cls, runs):
         by_file = {}
-        for r in runs:
-            points = r.get_data_points()
-            r.discard_data_points()
-            for p in points:
-                ms = p.get_measurements()
-                for m in ms:
-                    if m.filename in by_file:
-                        by_file[m.filename].append(m)
+        for run in runs:
+            points = run.get_data_points()
+            run.discard_data_points()
+            for point in points:
+                measurements = point.get_measurements()
+                for measure in measurements:
+                    if measure.filename in by_file:
+                        by_file[measure.filename].append(measure)
                     else:
-                        by_file[m.filename] = [m]
+                        by_file[measure.filename] = [measure]
         return by_file
 
     @classmethod

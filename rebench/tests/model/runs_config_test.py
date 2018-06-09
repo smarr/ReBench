@@ -33,20 +33,20 @@ class RunsConfigTestCase(ReBenchTestCase):
         self._run = list(runs)[0]
 
     def test_termination_check_basic(self):
-        tc = TerminationCheck(self._run.run_config, self._run.bench_cfg)
-        self.assertFalse(tc.should_terminate(0))
-        self.assertTrue(tc.should_terminate(10))
+        check = TerminationCheck(self._run.run_config, self._run.bench_cfg)
+        self.assertFalse(check.should_terminate(0))
+        self.assertTrue(check.should_terminate(10))
 
     def test_consecutive_fails(self):
-        tc = TerminationCheck(self._run.run_config, self._run.bench_cfg)
-        self.assertFalse(tc.should_terminate(0))
+        check = TerminationCheck(self._run.run_config, self._run.bench_cfg)
+        self.assertFalse(check.should_terminate(0))
 
         for _ in range(0, 2):
-            tc.indicate_failed_execution()
-            self.assertFalse(tc.should_terminate(0))
+            check.indicate_failed_execution()
+            self.assertFalse(check.should_terminate(0))
 
-        tc.indicate_failed_execution()
-        self.assertTrue(tc.should_terminate(0))
+        check.indicate_failed_execution()
+        self.assertTrue(check.should_terminate(0))
 
     def test_too_many_fails(self):
         tc = TerminationCheck(self._run.run_config, self._run.bench_cfg)

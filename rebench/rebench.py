@@ -181,8 +181,8 @@ Argument:
             self._config = Configurator(config_filename, data_store, args,
                                         cli_reporter, exp_name, None,
                                         exp_filter)
-        except ConfigurationError as e:
-            logging.error(e.message)
+        except ConfigurationError as exc:
+            logging.error(exc.message)
             sys.exit(-1)
         data_store.load_data()
         return self.execute_experiment()

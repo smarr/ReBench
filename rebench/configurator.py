@@ -59,15 +59,15 @@ class _BenchmarkFilter(_SuiteFilter):
 
 class _RunFilter(object):
 
-    def __init__(self, run_filter):
+    def __init__(self, run_filters):
         self._vm_filters = []
         self._suite_filters = []
 
-        if not run_filter:
+        if not run_filters:
             return
 
-        for f in run_filter:
-            parts = f.split(":")
+        for run_filter in run_filters:
+            parts = run_filter.split(":")
             if parts[0] == "vm":
                 self._vm_filters.append(_VMFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 2:
@@ -75,7 +75,7 @@ class _RunFilter(object):
             elif parts[0] == "s" and len(parts) == 3:
                 self._suite_filters.append(_BenchmarkFilter(parts[1], parts[2]))
             else:
-                raise Exception("Unknown filter expression: " + f)
+                raise Exception("Unknown filter expression: " + run_filter)
 
     def applies(self, bench):
         return (self._match(self._vm_filters, bench) and
@@ -85,8 +85,8 @@ class _RunFilter(object):
     def _match(filters, bench):
         if not filters:
             return True
-        for f in filters:
-            if f.matches(bench):
+        for run_filter in filters:
+            if run_filter.matches(bench):
                 return True
         return False
 
@@ -126,13 +126,14 @@ class Configurator(object):
         try:
             with open(file_name, 'r') as f:
                 data = yaml.safe_load(f)
-                c = Core(source_data=data,
-                         schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-                c.validate(raise_exception=False)
-                if c.validation_errors and c.validation_errors:
+                validator = Core(
+                    source_data=data,
+                    schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+                validator.validate(raise_exception=False)
+                if validator.validation_errors and validator.validation_errors:
                     logging.error(
                         "Validation of " + file_name + " failed. " +
-                        (" ".join(c.validation_errors)))
+                        (" ".join(validator.validation_errors)))
                     sys.exit(-1)
                 return data
         except IOError:

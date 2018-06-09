@@ -34,17 +34,17 @@ class TimeAdapterTest(TestCase):
         data = """real        11.00
 user         5.00
 sys          1.00"""
-        ta = TimeAdapter(False)
-        d = ta.parse_data(data, None)
-        self.assertEqual(1, len(d))
+        adapter = TimeAdapter(False)
+        data = adapter.parse_data(data, None)
+        self.assertEqual(1, len(data))
 
-        m = d[0].get_measurements()
+        m = data[0].get_measurements()
         self.assertEqual(3, len(m))
-        self.assertEqual(11000, d[0].get_total_value())
+        self.assertEqual(11000, data[0].get_total_value())
 
     def test_parse_no_data(self):
-        ta = TimeAdapter(False)
-        self.assertRaises(OutputNotParseable, ta.parse_data, "", None)
+        adapter = TimeAdapter(False)
+        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None)
 
     def test_manual_adapter(self):
         ta = TimeManualAdapter(False)

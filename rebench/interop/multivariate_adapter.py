@@ -46,9 +46,9 @@ class MultivariateAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
-            m = self.variable_re.match(line)
-            if m:
-                (c, variable, unit, value_thing, floatpart) = m.groups()
+            match = self.variable_re.match(line)
+            if match:
+                (c, variable, unit, value_thing, floatpart) = match.groups()
 
                 # check for possible data point carry over
                 if c is not None:
