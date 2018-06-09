@@ -42,7 +42,7 @@ class SavinaLogAdapter(GaugeAdapter):
                 current.add_measurement(measure)
                 data_points.append(current)
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points

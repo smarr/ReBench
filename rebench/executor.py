@@ -180,7 +180,7 @@ class ParallelScheduler(RunScheduler):
             if thread.exception is not None:
                 exceptions.append(thread.exception)
 
-        if len(exceptions) > 0:
+        if exceptions:
             print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
@@ -200,7 +200,7 @@ class ParallelScheduler(RunScheduler):
 
     def acquire_work(self):
         with self._lock:
-            if len(self._remaining_work) == 0:
+            if not self._remaining_work:
                 return None
 
             n = self._determine_num_work_items_to_take()
@@ -293,12 +293,12 @@ class Executor(object):
                     for fd in ret[0]:
                         if fd == p.stdout.fileno():
                             read = self._read(p.stdout)
-                            if len(read) > 0:
+                            if read:
                                 log_file.write(name + '|STD:')
                                 log_file.write(read)
                         elif fd == p.stderr.fileno():
                             read = self._read(p.stderr)
-                            if len(read) > 0:
+                            if read:
                                 log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
@@ -313,7 +313,7 @@ class Executor(object):
                     log_file.write(read)
                 while True:
                     read = self._read(p.stderr)
-                    if len(read) == 0:
+                    if not read:
                         break
                     log_file.write(name + '|ERR:')
                     log_file.write(read)

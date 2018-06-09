@@ -139,7 +139,7 @@ class CliReporter(TextReporter):
             logging.debug("max_runtime: %s" % run_id.bench_cfg.suite.max_runtime)
         logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
 
-        if not self._executes_verbose and output and len(output.strip()) > 0:
+        if not self._executes_verbose and output and output.strip():
             print("Output:\n%s\n" % output)
 
     def run_completed(self, run_id, statistics, cmdline):

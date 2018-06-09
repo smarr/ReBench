@@ -157,7 +157,7 @@ Argument:
 
     @staticmethod
     def determine_exp_name_and_filters(filters):
-        exp_name = filters[0] if len(filters) > 0 and (
+        exp_name = filters[0] if filters and (
                 not filters[0].startswith("vm:") and
                 not filters[0].startswith("s:")) else "all"
         exp_filter = [f for f in filters if (f.startswith("vm:") or

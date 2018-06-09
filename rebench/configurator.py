@@ -129,7 +129,7 @@ class Configurator(object):
                 c = Core(source_data=data,
                          schema_files=[dirname(__file__) + "/rebench-schema.yml"])
                 c.validate(raise_exception=False)
-                if c.validation_errors and len(c.validation_errors) > 0:
+                if c.validation_errors and c.validation_errors:
                     logging.error(
                         "Validation of " + file_name + " failed. " +
                         (" ".join(c.validation_errors)))

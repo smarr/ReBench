@@ -63,6 +63,6 @@ class JMHAdapter(GaugeAdapter):
                 dp.add_measurement(Measurement(value, unit, run_id, criterion))
                 data_points.append(dp)
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
         return data_points

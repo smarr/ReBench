@@ -54,7 +54,7 @@ class TestVMAdapter(GaugeAdapter):
                     data_points.append(current)
                     current = DataPoint(run_id)
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points
