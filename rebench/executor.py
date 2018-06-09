@@ -211,7 +211,7 @@ class ParallelScheduler(RunScheduler):
             return work
 
 
-class Executor:
+class Executor(object):
 
     def __init__(self, runs, use_nice, do_builds, include_faulty = False,
                  verbose = False, scheduler = BatchScheduler, build_log = None):

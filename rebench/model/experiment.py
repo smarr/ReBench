@@ -24,7 +24,7 @@ from .reporting        import Reporting
 from . import value_with_optional_details
 
 
-class Experiment:
+class Experiment(object):
 
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
                  global_suite_cfg, global_reporting_cfg, data_store,

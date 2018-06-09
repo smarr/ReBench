@@ -39,7 +39,7 @@ from .configurator   import Configurator
 from .configuration_error import ConfigurationError
 
 
-class ReBench:
+class ReBench(object):
 
     def __init__(self):
         self.version = "0.10.1"

@@ -91,7 +91,7 @@ class _RunFilter(object):
         return False
 
 
-class Configurator:
+class Configurator(object):
 
     def __init__(self, file_name, data_store, cli_options = None,
                  cli_reporter = None, exp_name = None,

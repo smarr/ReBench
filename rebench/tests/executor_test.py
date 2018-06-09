@@ -170,7 +170,7 @@ class ExecutorTest(ReBenchTestCase):
 
 
 def Popen_override(cmdline, stdout, stderr=None, shell=None):
-    class Popen:
+    class Popen(object):
         returncode = 0
 
         def __init__(self, args):

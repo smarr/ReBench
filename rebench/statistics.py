@@ -51,7 +51,7 @@ def stddev(values):
     return math.sqrt(variance(values))
 
 
-class StatisticProperties:
+class StatisticProperties(object):
     """
     The statistics class calculates the statistic
     properties of a given set of data samples, i.e., the chosen values

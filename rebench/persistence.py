@@ -30,7 +30,7 @@ from .model.measurement import Measurement
 from .model.run_id      import RunId
 
 
-class DataStore:
+class DataStore(object):
 
     def __init__(self):
         self._files = {}
