@@ -59,7 +59,7 @@ class StatisticProperties(object):
     """
 
     def __init__(self, data_samples):
-        self._data_samples     = data_samples
+        self._data_samples = data_samples
 
         self.mean = 0
         self.geom_mean = 0

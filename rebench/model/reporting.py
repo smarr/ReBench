@@ -49,9 +49,9 @@ class Reporting(object):
 
     def combined(self, raw_config):
         rep = Reporting({}, self._cli_reporter, None)
-        rep._csv_file   = raw_config.get('csv_file',   self._csv_file)
+        rep._csv_file = raw_config.get('csv_file',   self._csv_file)
         rep._csv_locale = raw_config.get('csv_locale', self._csv_locale)
-        rep._csv_raw    = raw_config.get('csv_raw',    self._csv_raw)
+        rep._csv_raw = raw_config.get('csv_raw',    self._csv_raw)
 
         rep._codespeed = self._codespeed
         return rep

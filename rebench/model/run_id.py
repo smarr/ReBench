@@ -27,14 +27,14 @@ from .benchmark_config import BenchmarkConfig
 class RunId(object):
 
     def __init__(self, bench_cfg, cores, input_size, var_value):
-        self._bench_cfg   = bench_cfg
-        self._cores       = cores
-        self._input_size  = input_size
-        self._var_value   = var_value
+        self._bench_cfg = bench_cfg
+        self._cores = cores
+        self._input_size = input_size
+        self._var_value = var_value
 
-        self._reporters   = set()
+        self._reporters = set()
         self._persistence = set()
-        self._run_config  = None
+        self._run_config = None
         self._data_points = []
 
         self._termination_check = None

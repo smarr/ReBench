@@ -31,7 +31,7 @@ class BenchmarkConfig(object):
         """
         name, details = value_with_optional_details(bench, {})
 
-        command            = details.get('command', name)
+        command = details.get('command', name)
 
         # TODO: remove in ReBench 1.0
         if 'performance_reader' in details:
@@ -40,28 +40,30 @@ class BenchmarkConfig(object):
                             " key.")
             details['gauge_adapter'] = details['performance_reader']
 
-        gauge_adapter      = details.get('gauge_adapter',
-                                         suite.gauge_adapter)
-        extra_args         = details.get('extra_args', None)
-        codespeed_name     = details.get('codespeed_name', None)
-        warmup             = int(details.get('warmup',        0))
+        gauge_adapter = details.get('gauge_adapter',
+                                    suite.gauge_adapter)
+        extra_args = details.get('extra_args', None)
+        codespeed_name = details.get('codespeed_name', None)
+        warmup = int(details.get('warmup', 0))
         return BenchmarkConfig(name, command, gauge_adapter, suite,
                                suite.vm, extra_args, warmup, codespeed_name,
                                data_store)
 
     def __init__(self, name, command, gauge_adapter, suite, vm, extra_args,
                  warmup, codespeed_name, data_store):
-        self._name               = name
-        self._command            = command
-        self._extra_args         = extra_args
-        self._codespeed_name     = codespeed_name
-        self._warmup             = warmup
-        self._gauge_adapter      = gauge_adapter
+        self._name = name
+        self._command = command
+        self._extra_args = extra_args
+        self._codespeed_name = codespeed_name
+        self._warmup = warmup
+        self._gauge_adapter = gauge_adapter
         self._suite = suite
 
         self._vm = vm
-        self._runs = set()      # the compiled runs, these might be shared
-                                # with other benchmarks/suites
+
+        # the compiled runs, these might be shared with other benchmarks/suites
+        self._runs = set()
+
         data_store.register_config(self)
 
     def add_run(self, run):

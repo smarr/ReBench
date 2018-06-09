@@ -57,7 +57,7 @@ Glossary:
 """
 
 
-def value_with_optional_details(value, default_details = None):
+def value_with_optional_details(value, default_details=None):
     if isinstance(value, dict):
         assert len(value) == 1
         (value, details) = list(value.items())[0]

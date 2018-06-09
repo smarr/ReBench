@@ -36,16 +36,16 @@ class BenchmarkSuite(object):
             self._input_sizes = [None]
 
         # TODO: should the _location be made absolute as the vm._path??
-        self._location        = global_suite_cfg.get('location', vm.path)
-        self._cores           = global_suite_cfg.get('cores',    vm.cores)
+        self._location = global_suite_cfg.get('location', vm.path)
+        self._cores = global_suite_cfg.get('cores',    vm.cores)
         self._variable_values = global_suite_cfg.get('variable_values', [None])
 
-        self._vm                 = vm
-        self._benchmarks         = global_suite_cfg['benchmarks']
-        self._gauge_adapter      = global_suite_cfg['gauge_adapter']
+        self._vm = vm
+        self._benchmarks = global_suite_cfg['benchmarks']
+        self._gauge_adapter = global_suite_cfg['gauge_adapter']
 
-        self._command            = global_suite_cfg['command']
-        self._max_runtime        = global_suite_cfg.get('max_runtime', -1)
+        self._command = global_suite_cfg['command']
+        self._max_runtime = global_suite_cfg.get('max_runtime', -1)
 
         build = global_suite_cfg.get('build', None)
         if build:

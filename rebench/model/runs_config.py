@@ -25,10 +25,10 @@ class RunsConfig(object):
     """ General configuration parameters for runs """
     def __init__(self,
                  number_of_data_points = None,
-                 min_runtime           = None,
+                 min_runtime = None,
                  parallel_interference_factor = 2.5):
         self._number_of_data_points = number_of_data_points
-        self._min_runtime           = min_runtime
+        self._min_runtime = min_runtime
         self._parallel_interference_factor = parallel_interference_factor
 
     @property
@@ -68,9 +68,8 @@ class RunsConfig(object):
 
 class QuickRunsConfig(RunsConfig):
 
-    def __init__(self, number_of_data_points = None,
-                       min_runtime           = None,
-                       max_time              = None):
+    def __init__(self, number_of_data_points=None, min_runtime=None,
+                 max_time=None):
         super(QuickRunsConfig, self).__init__(number_of_data_points,
                                               min_runtime)
         self._max_time = max_time
@@ -100,7 +99,7 @@ class TerminationCheck(object):
 
     def indicate_failed_execution(self):
         self._consecutive_erroneous_executions += 1
-        self._failed_execution_count           += 1
+        self._failed_execution_count += 1
 
     def indicate_successful_execution(self):
         self._consecutive_erroneous_executions = 0

@@ -30,23 +30,23 @@ class Experiment(object):
                  global_suite_cfg, global_reporting_cfg, data_store,
                  build_commands, standard_data_file, discard_old_data,
                  cli_reporter, run_filter, options):
-        self._name           = name
+        self._name = name
         self._raw_definition = exp_def
-        self._runs_cfg       = global_runs_cfg.combined(exp_def)
-        self._reporting      = Reporting(
+        self._runs_cfg = global_runs_cfg.combined(exp_def)
+        self._reporting = Reporting(
             global_reporting_cfg, cli_reporter,
             options).combined(exp_def.get('reporting', {}))
-        self._data_store     = data_store
-        self._persistence    = data_store.get(exp_def.get('data_file',
-                                                          standard_data_file),
-                                              discard_old_data)
+        self._data_store = data_store
+        self._persistence = data_store.get(exp_def.get('data_file',
+                                                       standard_data_file),
+                                           discard_old_data)
 
-        self._vms            = self._compile_virtual_machines(global_vms_cfg,
-                                                              build_commands)
-        self._suites         = self._compile_benchmark_suites(global_suite_cfg,
-                                                              build_commands)
-        self._benchmarks     = self._compile_benchmarks()
-        self._runs           = self._compile_runs(run_filter)
+        self._vms = self._compile_virtual_machines(global_vms_cfg,
+                                                   build_commands)
+        self._suites = self._compile_benchmark_suites(global_suite_cfg,
+                                                      build_commands)
+        self._benchmarks = self._compile_benchmarks()
+        self._runs = self._compile_runs(run_filter)
 
     @property
     def name(self):
@@ -74,9 +74,9 @@ class Experiment(object):
         return runs
 
     def _compile_virtual_machines(self, global_vms_cfg, build_commands):
-        benchmarks  = self._raw_definition.get( 'benchmark', None)
+        benchmarks = self._raw_definition.get( 'benchmark', None)
         input_sizes = self._raw_definition.get('input_sizes', None)
-        executions  = self._raw_definition['executions']
+        executions = self._raw_definition['executions']
 
         vms = []
 

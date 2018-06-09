@@ -295,7 +295,7 @@ class CodespeedReporter(Reporter):
         replace = re.compile('bench(mark)?', re.IGNORECASE)
         return replace.sub('', name)
 
-    def _format_for_codespeed(self, run_id, stats = None):
+    def _format_for_codespeed(self, run_id, stats=None):
         result = self._result_data_template()
 
         if stats and not run_id.run_failed():
@@ -345,12 +345,12 @@ class CodespeedReporter(Reporter):
                               "either a wrong URL in the config file, or an "
                               "environment not configured in Codespeed. URL: "
                               + self._cfg.url)
-                envs        = list(set([i['environment']
-                                        for i in results]))
-                projects    = list(set([i['project']
-                                        for i in results]))
-                benchmarks  = list(set([i['benchmark']
-                                        for i in results]))
+                envs = list(set([i['environment']
+                                 for i in results]))
+                projects = list(set([i['project']
+                                     for i in results]))
+                benchmarks = list(set([i['benchmark']
+                                       for i in results]))
                 executables = list(set([i['executable']
                                         for i in results]))
                 logging.error("Sent data included environments: %s "

@@ -30,17 +30,17 @@ class VirtualMachine(object):
            the VM definitions
         """
         if vm_details:
-            benchmarks  = vm_details.get('benchmark', _benchmarks)
+            benchmarks = vm_details.get('benchmark', _benchmarks)
             input_sizes = vm_details.get('input_sizes', _input_sizes)
-            cores       = vm_details.get('cores', None)
+            cores = vm_details.get('cores', None)
         else:
-            benchmarks  = _benchmarks
+            benchmarks = _benchmarks
             input_sizes = _input_sizes
-            cores       = None
+            cores = None
 
-        self._name             = name
+        self._name = name
         self._benchsuite_names = benchmarks
-        self._input_sizes      = input_sizes
+        self._input_sizes = input_sizes
 
         self._cores = cores or global_cfg.get('cores', [1])
 

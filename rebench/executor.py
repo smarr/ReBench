@@ -284,8 +284,8 @@ class Executor(object):
         script = build_command.command
 
         proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             cwd=path)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                cwd=path)
         proc.stdin.write(str.encode(script))
         proc.stdin.close()
 
