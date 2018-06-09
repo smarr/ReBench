@@ -28,8 +28,8 @@ class Experiment:
     
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
                  global_suite_cfg, global_reporting_cfg, data_store,
-                 standard_data_file, discard_old_data, cli_reporter,
-                 run_filter, options):
+                 build_commands, standard_data_file, discard_old_data,
+                 cli_reporter, run_filter, options):
         self._name           = name
         self._raw_definition = exp_def
         self._runs_cfg       = global_runs_cfg.combined(exp_def)
@@ -41,8 +41,10 @@ class Experiment:
                                                           standard_data_file),
                                               discard_old_data)
 
-        self._vms            = self._compile_virtual_machines(global_vms_cfg)
-        self._suites         = self._compile_benchmark_suites(global_suite_cfg)
+        self._vms            = self._compile_virtual_machines(global_vms_cfg,
+                                                              build_commands)
+        self._suites         = self._compile_benchmark_suites(global_suite_cfg,
+                                                              build_commands)
         self._benchmarks     = self._compile_benchmarks()
         self._runs           = self._compile_runs(run_filter)
 
@@ -71,7 +73,7 @@ class Experiment:
                         run.set_run_config(self._runs_cfg)
         return runs
     
-    def _compile_virtual_machines(self, global_vms_cfg):
+    def _compile_virtual_machines(self, global_vms_cfg, build_commands):
         benchmarks  = self._raw_definition.get( 'benchmark', None)
         input_sizes = self._raw_definition.get('input_sizes', None)
         executions  = self._raw_definition['executions']
@@ -86,15 +88,17 @@ class Experiment:
             
             global_cfg = global_vms_cfg[vm]
             vms.append(VirtualMachine(vm, vm_details, global_cfg, benchmarks,
-                                      input_sizes, self.name))
+                                      input_sizes, self.name, build_commands))
         return vms
     
-    def _compile_benchmark_suites(self, global_suite_cfg):
+    def _compile_benchmark_suites(self, global_suite_cfg, build_commands):
         suites = []
         for vm in self._vms:
             for suite_name in vm.benchmark_suite_names:
-                suites.append(BenchmarkSuite(suite_name, vm,
-                                             global_suite_cfg[suite_name]))
+                suite = BenchmarkSuite(suite_name, vm,
+                                       global_suite_cfg[suite_name],
+                                       build_commands)
+                suites.append(suite)
         return suites
     
     def _compile_benchmarks(self):

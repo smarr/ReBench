@@ -107,6 +107,7 @@ class Configurator:
         self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
+        self._build_commands = dict()
         self._experiments = self._compile_experiments(cli_reporter,
                                                       _RunFilter(run_filter))
 
@@ -235,14 +236,16 @@ class Configurator:
 
     def _compile_experiment(self, exp_name, cli_reporter, run_filter):
         exp_def = self._raw_config['experiments'][exp_name]
-        run_cfg = (self.quick_runs if (self.options and self.options.quick)
-                                   else self.runs)
+        run_cfg = (self.quick_runs
+                   if (self.options and self.options.quick)
+                   else self.runs)
         
         return Experiment(exp_name, exp_def, run_cfg,
                           self._raw_config['virtual_machines'],
                           self._raw_config['benchmark_suites'],
                           self._raw_config.get('reporting', {}),
                           self._data_store,
+                          self._build_commands,
                           self._raw_config.get('standard_data_file', None),
                           self._options.clean if self._options else False,
                           cli_reporter,

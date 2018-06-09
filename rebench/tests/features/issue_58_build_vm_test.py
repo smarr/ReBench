@@ -32,7 +32,16 @@ class Issue58BuildVM(ReBenchTestCase):
     def setUp(self):
         super(Issue58BuildVM, self).setUp(__file__)
 
+    def _cleanup_log(self):
+        if os.path.isfile(self._path + '/build.log'):
+            os.remove(self._path + '/build.log')
+
+    def _read_log(self):
+        with open(self._path + '/build.log', 'r') as log_file:
+            return log_file.read()
+
     def test_build_vm_simple_cmd(self):
+        self._cleanup_log()
         cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
                            standard_data_file = self._tmp_file,
                            exp_name='A')
@@ -42,12 +51,16 @@ class Issue58BuildVM(ReBenchTestCase):
         ex = Executor(runs, False, False, build_log=cnf.build_log)
         ex.execute()
 
-        self.assertEqual("Bench1", runs[0].bench_cfg.name)
-        self.assertEqual(10, runs[0].get_number_of_data_points())
-        self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
-        os.remove(self._path + '/vm_58a.sh')
+        try:
+            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual(10, runs[0].get_number_of_data_points())
+            self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
+        finally:
+            os.remove(self._path + '/vm_58a.sh')
 
     def test_build_vm_cmd_list(self):
+        self._cleanup_log()
+
         cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
                            standard_data_file = self._tmp_file,
                            exp_name='B')
@@ -57,26 +70,26 @@ class Issue58BuildVM(ReBenchTestCase):
         ex = Executor(runs, False, False, build_log=cnf.build_log)
         ex.execute()
 
-        self.assertEqual("Bench1", runs[0].bench_cfg.name)
-        self.assertEqual(10, runs[0].get_number_of_data_points())
-        self.assertTrue(os.path.isfile(self._path + '/vm_58b.sh'))
-        os.remove(self._path + '/vm_58b.sh')
+        try:
+            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual(10, runs[0].get_number_of_data_points())
+            self.assertTrue(os.path.isfile(self._path + '/vm_58b.sh'))
+        finally:
+            os.remove(self._path + '/vm_58b.sh')
 
     def test_build_output_in_log(self):
-        if os.path.isfile(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        self._cleanup_log()
 
         self.test_build_vm_simple_cmd()
 
-        with open(self._path + '/build.log', 'r') as log_file:
-            log = log_file.read()
+        log = self._read_log()
 
         self.assertEqual(
-            "BashA|STD:standard\nBashA|ERR:error\n\n", log)
+            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n\n", log)
 
     def test_broken_build_prevents_experiments(self):
-        if os.path.isfile(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        self._cleanup_log()
+
         cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
                            standard_data_file=self._tmp_file,
                            exp_name='C')
@@ -86,14 +99,32 @@ class Issue58BuildVM(ReBenchTestCase):
         ex = Executor(runs, False, False, build_log=cnf.build_log)
         ex.execute()
 
-        self.assertEqual("Bench1", runs[0].bench_cfg.name)
-        self.assertEqual(0, runs[0].get_number_of_data_points())
-        print(self._path + '/vm_58a.sh')
-        self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
-        os.remove(self._path + '/vm_58a.sh')
+        try:
+            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual(0, runs[0].get_number_of_data_points())
+            self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
+        finally:
+            os.remove(self._path + '/vm_58a.sh')
 
-        with open(self._path + '/build.log', 'r') as log_file:
-            log = log_file.read()
+        log = self._read_log()
 
         self.assertEqual(
-            "BashC|STD:standard\nBashC|ERR:error\n\n", log)
+            "VM:BashC|STD:standard\nVM:BashC|ERR:error\n\n", log)
+
+    def test_build_is_run_only_once_for_same_command(self):
+        self._cleanup_log()
+        cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
+                           standard_data_file=self._tmp_file,
+                           exp_name='AandAA')
+        runs = list(cnf.get_runs())
+        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+
+        ex = Executor(runs, False, False, build_log=cnf.build_log)
+        ex.execute()
+
+        os.remove(self._path + '/vm_58a.sh')
+
+        log = self._read_log()
+
+        self.assertEqual(
+            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n\n", log)

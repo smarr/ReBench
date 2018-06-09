@@ -19,11 +19,13 @@
 # IN THE SOFTWARE.
 import os
 
+from .build_cmd import BuildCommand
+
 
 class VirtualMachine(object):
     
     def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes,
-                 experiment_name):
+                 experiment_name, build_commands):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
@@ -39,15 +41,21 @@ class VirtualMachine(object):
         self._name             = name
         self._benchsuite_names = benchmarks
         self._input_sizes      = input_sizes
-        self._build            = global_cfg.get('build', None)
-        self._do_build         = self._build is not None
-        self._build_failed     = False
-            
+
         self._cores = cores or global_cfg.get('cores', [1])
 
         self._path = global_cfg.get('path', None)
         if self._path:
             self._path = os.path.abspath(self._path)
+
+        build = global_cfg.get('build', None)
+        if build:
+            build_command = BuildCommand(build, self._path)
+            if build_command in build_commands:
+                build_command = build_commands[build_command]
+            self._build = build_command
+        else:
+            self._build = None
 
         self._binary           = global_cfg['binary']
         self._args             = global_cfg.get('args', '')
@@ -74,20 +82,6 @@ class VirtualMachine(object):
     def build(self):
         return self._build
 
-    @property
-    def is_built(self):
-        return not self._do_build
-
-    @property
-    def is_failed_build(self):
-        return self._build_failed
-
-    def mark_build(self):
-        self._do_build = False
-
-    def mark_build_failed(self):
-        self._build_failed = True
-    
     @property
     def path(self):
         return self._path

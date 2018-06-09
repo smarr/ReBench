@@ -33,10 +33,10 @@ class Issue4RunEquality(unittest.TestCase):
     def _create_template_run_id(self):
         vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
                                                   'binary': 'foo_bar_bin'},
-                                   None, [1], None)
+                                   None, [1], None, None)
         suite     = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'gauge_adapter': '',
-            'command': '%(benchmark)s %(cores)s %(input)s'})
+            'command': '%(benchmark)s %(cores)s %(input)s'}, None)
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
                                     '3', 0, None, DataStore())
         return RunId(bench_cfg, 1, 2, None)
@@ -44,10 +44,10 @@ class Issue4RunEquality(unittest.TestCase):
     def _create_hardcoded_run_id(self):
         vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
                                                   'binary': 'foo_bar_bin'},
-                                   None, [1], None)
+                                   None, [1], None, None)
         suite     = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'gauge_adapter': '',
-            'command': '%(benchmark)s %(cores)s 2 3'})
+            'command': '%(benchmark)s %(cores)s 2 3'}, None)
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
                                     None, 0, None, DataStore())
         return RunId(bench_cfg, 1, None, None)

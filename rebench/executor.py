@@ -37,10 +37,11 @@ from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
 
 
-class FailedBuildingVM(Exception):
-    """The exception to be raised when building of the VM failed."""
-    def __init__(self, vm_name):
-        self._vm_name = vm_name
+class FailedBuilding(Exception):
+    """The exception to be raised when building of the VM or suite failed."""
+    def __init__(self, name, build_command):
+        self._name = name
+        self._build_command = build_command
 
 
 class RunScheduler(object):
@@ -69,7 +70,7 @@ class BatchScheduler(RunScheduler):
                 completed = False
                 while not completed:
                     completed = self._executor.execute_run(run_id)
-            except FailedBuildingVM:
+            except FailedBuilding:
                 pass
 
 
@@ -84,7 +85,7 @@ class RoundRobinScheduler(RunScheduler):
                 completed = self._executor.execute_run(run)
                 if not completed:
                     task_list.append(run)
-            except FailedBuildingVM:
+            except FailedBuilding:
                 pass
 
 
@@ -99,7 +100,7 @@ class RandomScheduler(RunScheduler):
                 completed = self._executor.execute_run(run)
                 if completed:
                     task_list.remove(run)
-            except FailedBuildingVM:
+            except FailedBuilding:
                 task_list.remove(run)
 
 
@@ -251,16 +252,29 @@ class Executor:
         data = stream.readline()
         return data.decode('utf-8')
 
-    def _build_vm(self, run_id):
-        vm_name = run_id.bench_cfg.vm.name
-        if run_id.bench_cfg.vm.is_built or not run_id.bench_cfg.vm.build:
-            return
-        if run_id.bench_cfg.vm.is_failed_build:
-            run_id.fail_immediately()
-            raise FailedBuildingVM(vm_name)
+    def _build_vm_and_suite(self, run_id):
+        name = "VM:" + run_id.bench_cfg.vm.name
+        build = run_id.bench_cfg.vm.build
+        self._process_build(build, name, run_id)
 
-        path = run_id.bench_cfg.vm.path or os.getcwd()
-        script = run_id.bench_cfg.vm.build
+        name = "S:" + run_id.bench_cfg.suite.name
+        build = run_id.bench_cfg.suite.build
+        self._process_build(build, name, run_id)
+
+    def _process_build(self, build, name, run_id):
+        if not build or build.is_built:
+            return
+        if build.is_failed_build:
+            run_id.fail_immediately()
+            raise FailedBuilding(name, build)
+        self._execute_build_cmd(build, name, run_id)
+
+    def _execute_build_cmd(self, build_command, name, run_id):
+        path = build_command.location
+        if not path or path == ".":
+            path = os.getcwd()
+
+        script = build_command.command
 
         p = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -278,12 +292,12 @@ class Executor:
                         if fd == p.stdout.fileno():
                             read = self._read(p.stdout)
                             if len(read) > 0:
-                                log_file.write(vm_name + '|STD:')
+                                log_file.write(name + '|STD:')
                                 log_file.write(read)
                         elif fd == p.stderr.fileno():
                             read = self._read(p.stderr)
                             if len(read) > 0:
-                                log_file.write(vm_name + '|ERR:')
+                                log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
                     if p.poll() is not None:
@@ -293,24 +307,25 @@ class Executor:
                     read = self._read(p.stdout)
                     if read == "":
                         break
-                    log_file.write(vm_name + '|STD:')
+                    log_file.write(name + '|STD:')
                     log_file.write(read)
                 while True:
                     read = self._read(p.stderr)
                     if len(read) == 0:
                         break
-                    log_file.write(vm_name + '|ERR:')
+                    log_file.write(name + '|ERR:')
                     log_file.write(read)
 
                 log_file.write('\n')
 
         if p.returncode != 0:
-            run_id.bench_cfg.vm.mark_build_failed()
+            build_command.mark_failed()
             run_id.fail_immediately()
-            run_id.report_run_failed(script, p.returncode, "Build of VM " + vm_name + " failed.")
-            raise FailedBuildingVM(vm_name)
-
-        run_id.bench_cfg.vm.mark_build()
+            run_id.report_run_failed(
+                script, p.returncode, "Build of " + name + " failed.")
+            raise FailedBuilding(name, build_command)
+        else:
+            build_command.mark_succeeded()
 
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
@@ -325,7 +340,7 @@ class Executor:
         
         terminate = self._check_termination_condition(run_id, termination_check)
         if not terminate:
-            self._build_vm(run_id)
+            self._build_vm_and_suite(run_id)
 
         stats = StatisticProperties(run_id.get_total_values())
         

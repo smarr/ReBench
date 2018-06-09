@@ -19,10 +19,12 @@
 # IN THE SOFTWARE.
 import logging
 
+from .build_cmd import BuildCommand
+
 
 class BenchmarkSuite(object):
 
-    def __init__(self, suite_name, vm, global_suite_cfg):
+    def __init__(self, suite_name, vm, global_suite_cfg, build_commands):
         """Specialize the benchmark suite for the given VM"""
         
         self._name = suite_name
@@ -46,6 +48,15 @@ class BenchmarkSuite(object):
         self._command            = global_suite_cfg['command']
         self._max_runtime        = global_suite_cfg.get('max_runtime', -1)
 
+        build = global_suite_cfg.get('build', None)
+        if build:
+            build_command = BuildCommand(build, self._location)
+            if build_command in build_commands:
+                build_command = build_commands[build_command]
+            self._build = build_command
+        else:
+            self._build = None
+
         # TODO: remove in ReBench 1.0
         if 'performance_reader' in global_suite_cfg:
             logging.warning("Found deprecated 'performance_reader' key in"
@@ -64,6 +75,10 @@ class BenchmarkSuite(object):
     @property
     def cores(self):
         return self._cores
+
+    @property
+    def build(self):
+        return self._build
     
     @property
     def variable_values(self):
