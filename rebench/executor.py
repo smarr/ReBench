@@ -128,6 +128,7 @@ class BenchmarkThread(Thread):
 class BenchmarkThreadExceptions(Exception):
 
     def __init__(self, exceptions):
+        super(BenchmarkThreadExceptions, self).__init__()
         self.exceptions = exceptions
 
 

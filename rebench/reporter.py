@@ -63,9 +63,6 @@ class Reporter(object):
 
 class TextReporter(Reporter):
 
-    def __init__(self):
-        super(TextReporter, self).__init__()
-
     def _configuration_details(self, run_id, statistics = None):
         result = ["\t".join(run_id.as_str_list()), " = "]
         self._output_stats(result, run_id, statistics)

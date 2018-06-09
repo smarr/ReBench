@@ -29,6 +29,7 @@ from ..rebench_test_case import ReBenchTestCase
 class TestReporter(Reporter):
 
     def __init__(self, test_case):
+        super(TestReporter, self).__init__()
         self._test_case = test_case
 
     def run_failed(self, run_id, cmdline, return_code, output):

@@ -67,6 +67,7 @@ class ExecutionDeliveredNoResults(Exception):
     """The exception to be raised when no results were obtained from the given
        data string."""
     def __init__(self, unparsable_data):
+        super(ExecutionDeliveredNoResults, self).__init__()
         self._unparseable_data = unparsable_data
 
 

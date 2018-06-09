@@ -30,9 +30,6 @@ class SavinaLogAdapter(GaugeAdapter):
     re_log_line = re.compile(
         r"^([\w\.]+)\s+Iteration-(?:\d+):\s+([0-9]+\.[0-9]+) ms")
 
-    def __init__(self, include_faulty):
-        super(SavinaLogAdapter, self).__init__(include_faulty)
-
     def parse_data(self, data, run_id):
         data_points = []
 
