@@ -147,7 +147,7 @@ class Configurator(object):
 
     def _process_cli_options(self, options):
         if options is None:
-            return
+            return None
 
         if options.debug:
             if options.verbose:

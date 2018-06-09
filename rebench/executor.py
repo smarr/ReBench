@@ -375,6 +375,7 @@ class Executor(object):
                     p = None
             if p is not None and hasattr(p, adapter_name):
                 return getattr(p, adapter_name)(self._include_faulty)
+        return None
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
