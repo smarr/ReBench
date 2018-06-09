@@ -32,7 +32,7 @@ class TestReporter(Reporter):
         super(TestReporter, self).__init__()
         self._test_case = test_case
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, _run_id, _cmdline, _return_code, _output):
         self._test_case.fail()
 
     def run_completed(self, run_id, statistics, cmdline):

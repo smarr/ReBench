@@ -41,7 +41,7 @@ class RunsConfigTestCase(ReBenchTestCase):
         tc = TerminationCheck(self._run.run_config, self._run.bench_cfg)
         self.assertFalse(tc.should_terminate(0))
 
-        for i in range(0, 2):
+        for _ in range(0, 2):
             tc.indicate_failed_execution()
             self.assertFalse(tc.should_terminate(0))
 
@@ -52,7 +52,7 @@ class RunsConfigTestCase(ReBenchTestCase):
         tc = TerminationCheck(self._run.run_config, self._run.bench_cfg)
         self.assertFalse(tc.should_terminate(0))
 
-        for i in range(0, 6):
+        for _ in range(0, 6):
             tc.indicate_failed_execution()
             tc.indicate_successful_execution()
             self.assertFalse(tc.should_terminate(0))

@@ -210,7 +210,7 @@ class ParallelScheduler(RunScheduler):
             n = self._determine_num_work_items_to_take()
             assert n <= len(self._remaining_work)
             work = []
-            for i in range(n):
+            for _ in range(n):
                 work.append(self._remaining_work.pop())
             return work
 
@@ -372,10 +372,10 @@ class Executor(object):
             # depending on how ReBench was executed, name might one of the two
             try:
                 p = __import__("rebench.interop." + name, fromlist=adapter_name)
-            except ImportError as e1:
+            except ImportError:
                 try:
                     p = __import__("interop." + name, fromlist=adapter_name)
-                except ImportError as e2:
+                except ImportError:
                     p = None
             if p is not None and hasattr(p, adapter_name):
                 return getattr(p, adapter_name)(self._include_faulty)

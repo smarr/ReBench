@@ -71,7 +71,7 @@ class TextReporter(Reporter):
         self._output_stats(result, run_id, statistics)
         return result
 
-    def _output_stats(self, output_list, run_id, statistics):
+    def _output_stats(self, output_list, _run_id, statistics):
         if not statistics:
             return
 

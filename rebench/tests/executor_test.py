@@ -169,14 +169,14 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['vm:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stderr=None, shell=None):
+def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
         def __init__(self, args):
             self.args = args
 
-        def communicate(self, *args, **kwargs):
+        def communicate(self, *_args, **_kwargs):
             return "", b""
 
         def poll(self):
