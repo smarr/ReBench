@@ -100,7 +100,7 @@ class DataStore(object):
     @classmethod
     def discard_data_of_runs(cls, runs):
         by_file = cls.get_by_file(runs)
-        for filename, ms in by_file.iteritems():
+        for filename, ms in by_file.items():
             try:
                 with open(filename, 'r') as f:
                     lines = f.readlines()
