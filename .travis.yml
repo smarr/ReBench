@@ -26,9 +26,12 @@ addons:
 install:
   - pip install .
   - pip install coveralls
+  - pip install pylint
 
 # command to run tests
-script: nosetests --with-coverage --cover-package=rebench
+script:
+ - nosetests --with-coverage --cover-package=rebench
+ - pylint rebench
 
 after_success:
   coveralls
