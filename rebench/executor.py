@@ -144,6 +144,7 @@ class ParallelScheduler(RunScheduler):
         self._lock = RLock()
         self._num_worker_threads = self._number_of_threads()
         self._remaining_work = None
+        self._worker_threads = None
 
     def _number_of_threads(self):
         # TODO: read the configuration elements!
