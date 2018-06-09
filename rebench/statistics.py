@@ -20,7 +20,7 @@
 import copy
 import math
 import operator
-from functools import reduce
+from functools import reduce # pylint: disable=redefined-builtin
 
 
 def mean(values):

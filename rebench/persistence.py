@@ -218,7 +218,7 @@ class _DataPointPersistence(object):
                 f.flush()
                 shutil.copyfileobj(open(renamed_file, 'r'), f)
             os.remove(renamed_file)
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             logging.error("An error occurred " +
                           "while trying to insert a shebang line: %s", e)
 

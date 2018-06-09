@@ -122,7 +122,7 @@ def kill_process(pid, recursively, thread):
     for p in pids:
         try:
             kill(p, SIGKILL)
-        except ProcessLookupError:
+        except ProcessLookupError: # pylint: disable=undefined-variable
             # it's a race condition, so let's simply ignore it
             pass
 
