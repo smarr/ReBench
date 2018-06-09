@@ -36,7 +36,7 @@ class Issue57BinaryOnPath(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
-        ex = Executor(runs, False, False)
+        ex = Executor(runs, False, False, False)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].bench_cfg.name)

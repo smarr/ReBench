@@ -91,6 +91,10 @@ Argument:
             help='Used for debugging and environments without the tool nice.',
             default=True)
         execution.add_argument(
+            '-B', '--without-building', action='store_false', dest='do_builds',
+            help='Disables execution of build commands for VMs and suites.',
+            default=True)
+        execution.add_argument(
             '-s', '--scheduler', action='store', dest='scheduler',
             default='batch',
             help='execution order of benchmarks: '
@@ -197,7 +201,7 @@ Argument:
         if self._config.options.do_rerun:
             DataStore.discard_data_of_runs(runs)
 
-        executor = Executor(runs, self._config.use_nice,
+        executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._config.options.include_faulty,
                             self._config.options.verbose,
                             scheduler_class,

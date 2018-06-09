@@ -48,7 +48,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
-        ex = Executor(runs, False, False, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -67,7 +67,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
-        ex = Executor(runs, False, False, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -96,7 +96,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
-        ex = Executor(runs, False, False, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -119,7 +119,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
-        ex = Executor(runs, False, False, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         os.remove(self._path + '/vm_58a.sh')

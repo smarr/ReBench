@@ -193,6 +193,10 @@ class Configurator:
     @property
     def use_nice(self):
         return self.options is not None and self.options.use_nice
+
+    @property
+    def do_builds(self):
+        return self.options is not None and self.options.do_builds
         
     def experiment_name(self):
         return self._exp_name or self._raw_config['standard_experiment']

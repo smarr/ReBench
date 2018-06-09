@@ -212,10 +212,11 @@ class ParallelScheduler(RunScheduler):
 
 class Executor:
     
-    def __init__(self, runs, use_nice, include_faulty = False, verbose = False,
-                 scheduler = BatchScheduler, build_log = None):
+    def __init__(self, runs, use_nice, do_builds, include_faulty = False,
+                 verbose = False, scheduler = BatchScheduler, build_log = None):
         self._runs     = runs
         self._use_nice = use_nice
+        self._do_builds = do_builds
         self._include_faulty = include_faulty
         self._verbose   = verbose
         self._scheduler = self._create_scheduler(scheduler)
@@ -339,7 +340,7 @@ class Executor:
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
         
         terminate = self._check_termination_condition(run_id, termination_check)
-        if not terminate:
+        if not terminate and self._do_builds:
             self._build_vm_and_suite(run_id)
 
         stats = StatisticProperties(run_id.get_total_values())
