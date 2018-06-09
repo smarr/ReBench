@@ -50,7 +50,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
     def test_records_multiple_data_points_from_single_execution_20(self):
         self._records_data_points('Test2', 20)
 
-    def test_records_multiple_data_points_from_single_execution_20(self):
+    def test_records_multiple_data_points_from_single_execution_30(self):
         self._records_data_points('Test3', 10)
 
     def test_associates_measurements_and_data_points_correctly(self):
