@@ -20,18 +20,6 @@ schema;runs_type:
 schema;reporting_type:
   type: map
   mapping:
-    csv_file:
-      type: str
-      desc: Statistics are written to a CSV file
-    csv_locale:
-      type: str
-      desc: |
-        The local influences separators.
-        Setting it might make work with Excel easier.
-    csv_raw:
-      type: str
-      desc: |
-        Raw data file. TODO: what was this again? probable needs to be removed.
     codespeed:
       type: map
       desc: Send results to Codespeed for continuous performance tracking.
