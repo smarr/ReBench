@@ -33,41 +33,6 @@ schema;reporting_type:
             The URL to the /result/add/json/ rest endpoint for submitting
             results (the full URL).
 
-schema;statistics_type:
-  type: map
-  desc: |
-    Configuration for statistical reporting.
-    TODO: also abort condition? if so, needs to be removed
-    TODO: unify with runs_type? or remove overlap!
-  mapping:
-    min_runs:
-      type: int
-      desc: "Minimum number of runs? TODO: remove? 'run' outdated terminology?"
-    max_runs:
-      type: int
-      desc: "Maximum number of runs? TODO: remove? 'run' outdated terminology?"
-    max_time:
-      type: int
-      desc: "Time in second after which an invocation is terminated. TODO: remove?"
-    confidence_level:
-      type: float
-      desc: |
-        The desired confidence interval.
-        TODO: remove, it's measuring until goal reached, which is problematic.
-    error_margin:
-      type: float
-      desc: |
-        Desired error margin.
-        TODO: remove, not proper definition of experiment.
-        Need to define it up front
-    stop_criterium:
-      type: str
-      enum:
-        - percentage
-    stop_threshold:
-      type: int
-      desc: "TODO: what was this???"
-
 schema;benchmark_type_str:
   type: str
   desc: The name of a benchmark, can be simply the name.
@@ -258,8 +223,6 @@ schema;experiment_type:
       sequence:
         - type: str
         - include: exp_exec_type
-    statistics:
-      include: statistics_type
     reporting:
       include: reporting_type
 
@@ -279,8 +242,6 @@ mapping:
     include: runs_type
   reporting:
     include: reporting_type
-  statistics:
-    include: statistics_type
   benchmark_suites:
     type: map
     mapping:
