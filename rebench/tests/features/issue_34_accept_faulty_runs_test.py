@@ -27,7 +27,8 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue34AcceptFaultyRuns(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue34AcceptFaultyRuns, self).setUp(__file__)
+        super(Issue34AcceptFaultyRuns, self).setUp()
+        self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
         cnf = Configurator(self._path + '/issue_34.conf', DataStore(),

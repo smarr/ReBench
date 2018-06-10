@@ -33,7 +33,7 @@ from .rebench_test_case import ReBenchTestCase
 class ExecutorTest(ReBenchTestCase):
 
     def setUp(self):
-        super(ExecutorTest, self).setUp(__file__)
+        super(ExecutorTest, self).setUp()
         os.chdir(self._path + '/../')
 
     def test_setup_and_run_benchmark(self):

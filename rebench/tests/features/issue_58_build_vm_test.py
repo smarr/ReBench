@@ -29,7 +29,8 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue58BuildVM(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue58BuildVM, self).setUp(__file__)
+        super(Issue58BuildVM, self).setUp()
+        self._set_path(__file__)
 
     def _cleanup_log(self):
         if os.path.isfile(self._path + '/build.log'):

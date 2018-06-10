@@ -28,7 +28,7 @@ from .rebench_test_case import ReBenchTestCase
 class ConfiguratorTest(ReBenchTestCase):
 
     def setUp(self):
-        super(ConfiguratorTest, self).setUp(__file__)
+        super(ConfiguratorTest, self).setUp()
         self._logging_error = logging.error
 
     def tearDown(self):

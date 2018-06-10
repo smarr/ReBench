@@ -29,7 +29,8 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue59BuildSuite(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue59BuildSuite, self).setUp(__file__)
+        super(Issue59BuildSuite, self).setUp()
+        self._set_path(__file__)
 
     def test_build_suite1(self):
         cnf = Configurator(self._path + '/issue_59.conf', DataStore(),

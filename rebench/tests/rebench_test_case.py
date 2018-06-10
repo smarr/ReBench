@@ -26,13 +26,16 @@ from tempfile import mkstemp
 
 
 class ReBenchTestCase(TestCase):
-    def setUp(self, script_file=__file__):
-        self._path = dirname(realpath(script_file))
+
+    def _set_path(self, path):
+        self._path = dirname(realpath(path))
+        os.chdir(self._path)
+
+    def setUp(self):
+        self._set_path(__file__)
         self._tmp_file = mkstemp()[1]  # just use the file name
 
         self._sys_exit = sys.exit  # make sure that we restore sys.exit
-
-        os.chdir(self._path)
 
     def tearDown(self):
         os.remove(self._tmp_file)

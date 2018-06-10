@@ -32,8 +32,9 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         (let's ignore situations were the harness supports warm-up)
     """
 
-    def setUp(self, script_file = __file__):
-        super(Issue15WarmUpSupportTest, self).setUp(__file__)
+    def setUp(self):
+        super(Issue15WarmUpSupportTest, self).setUp()
+        self._set_path(__file__)
 
     def test_run_id_indicates_warm_up_iterations_required(self):
         cnf = Configurator(self._path + '/issue_15.conf', DataStore(),

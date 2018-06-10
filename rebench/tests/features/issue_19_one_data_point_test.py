@@ -56,7 +56,8 @@ class Issue19OneDataPointAtATime(ReBenchTestCase):
     """
 
     def setUp(self):
-        super(Issue19OneDataPointAtATime, self).setUp(__file__)
+        super(Issue19OneDataPointAtATime, self).setUp()
+        self._set_path(__file__)
 
 
 class OneMeasurementAtATime(Issue19OneDataPointAtATime):

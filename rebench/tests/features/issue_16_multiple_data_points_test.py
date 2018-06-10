@@ -31,7 +31,8 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
     """
 
     def setUp(self):
-        super(Issue16MultipleDataPointsTest, self).setUp(__file__)
+        super(Issue16MultipleDataPointsTest, self).setUp()
+        self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
         cnf = Configurator(self._path + '/issue_16.conf', DataStore(),

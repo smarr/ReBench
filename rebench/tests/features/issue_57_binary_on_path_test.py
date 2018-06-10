@@ -26,7 +26,8 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue57BinaryOnPath(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue57BinaryOnPath, self).setUp(__file__)
+        super(Issue57BinaryOnPath, self).setUp()
+        self._set_path(__file__)
 
     def test_sleep_gives_results(self):
         store = DataStore()

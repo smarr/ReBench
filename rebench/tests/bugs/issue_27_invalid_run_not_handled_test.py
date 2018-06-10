@@ -27,7 +27,8 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue27InvalidRunNotHandled(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue27InvalidRunNotHandled, self).setUp(__file__)
+        super(Issue27InvalidRunNotHandled, self).setUp()
+        self._set_path(__file__)
 
     def test_execution_should_recognize_invalid_run_and_continue_normally(self):
         cnf = Configurator(self._path + '/issue_27.conf',
