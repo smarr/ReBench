@@ -45,7 +45,7 @@ class BenchmarkSuite(object):
         self._gauge_adapter = global_suite_cfg['gauge_adapter']
 
         self._command = global_suite_cfg['command']
-        self._max_runtime = global_suite_cfg.get('max_runtime', -1)
+        self._max_invocation_time = global_suite_cfg.get('max_invocation_time', -1)
 
         build = global_suite_cfg.get('build', None)
         if build:
@@ -97,11 +97,11 @@ class BenchmarkSuite(object):
         return self._command
 
     @property
-    def max_runtime(self):
-        return self._max_runtime
+    def max_invocation_time(self):
+        return self._max_invocation_time
 
-    def has_max_runtime(self):
-        return self._max_runtime != -1
+    def has_max_invocation_time(self):
+        return self._max_invocation_time != -1
 
     def __str__(self):
         return "Suite(%s, %s)" % (self._name, self._command)

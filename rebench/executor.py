@@ -389,7 +389,7 @@ class Executor(object):
         (return_code, output, _) = subprocess_timeout.run(
             cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
-            timeout=run_id.bench_cfg.suite.max_runtime)
+            timeout=run_id.bench_cfg.suite.max_invocation_time)
         output = output.decode('utf-8')
 
         if return_code != 0 and not self._include_faulty:

@@ -119,7 +119,7 @@ class CliReporter(TextReporter):
         self._executes_verbose = executes_verbose
 
         # TODO: re-add support, think, we need that based on the proper config, i.e., the run id
-#         self._min_runtime = configurator.statistics.min_runtime
+#         self._min_iteration_time = configurator.statistics.min_iteration_time
 
     def run_failed(self, run_id, cmdline, return_code, output):
         # Additional information in debug mode
@@ -138,8 +138,8 @@ class CliReporter(TextReporter):
 
         print("Cmd: %s\n" % cmdline)
 
-        if run_id.bench_cfg.suite.has_max_runtime():
-            logging.debug("max_runtime: %s" % run_id.bench_cfg.suite.max_runtime)
+        if run_id.bench_cfg.suite.has_max_invocation_time():
+            logging.debug("max_invocation_time: %s" % run_id.bench_cfg.suite.max_invocation_time)
         logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
 
         if not self._executes_verbose and output and output.strip():
@@ -155,11 +155,11 @@ class CliReporter(TextReporter):
         self._runs_completed += 1
         self._runs_remaining -= 1
 
-        if run_id.run_config.min_runtime:
-            if statistics.mean < run_id.run_config.min_runtime:
-                print(("WARNING: measured mean is lower than min_runtime (%s) "
+        if run_id.run_config.min_iteration_time:
+            if statistics.mean < run_id.run_config.min_iteration_time:
+                print(("WARNING: measured mean is lower than min_iteration_time (%s) "
                        "\t mean: %.1f\trun id: %s")
-                      % (run_id.run_config.min_runtime,
+                      % (run_id.run_config.min_iteration_time,
                          statistics.mean,
                          run_id.as_simple_string()))
                 print("Cmd: %s" % cmdline)

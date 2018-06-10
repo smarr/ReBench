@@ -19,16 +19,14 @@ schema;runs_type:
     number_of_data_points:
       type: int
       desc: Benchmarks are executed until we have this number of data points
-    # TODO: min_iteration_time?
-    min_runtime:
+    min_iteration_time:
       type: int
       # TODO: make sure this is the correct default value
       default: 50
       desc: |
         Give a warning if the average run time is below this value in
         milliseconds.
-    # TODO: max_invocation_time?
-    max_runtime:
+    max_invocation_time:
       type: int
       desc: Time in second after which an invocation is terminated.
     parallel_interference_factor:
