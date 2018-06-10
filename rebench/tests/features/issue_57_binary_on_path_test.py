@@ -32,7 +32,7 @@ class Issue57BinaryOnPath(ReBenchTestCase):
     def test_sleep_gives_results(self):
         store = DataStore()
         cnf = Configurator(self._path + '/issue_57.conf', store,
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 

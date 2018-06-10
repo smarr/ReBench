@@ -152,21 +152,21 @@ class StatsTest(unittest.TestCase):
     @unittest.skipUnless(NUMPY_AND_SCIPY_AVAILABLE,
                          "NumPy or SciPy is not available")
     def test_stddev_vs_numpy(self):
-        self.assertAlmostEqual(numpy.std(   [1, 2, 3]),
+        self.assertAlmostEqual(numpy.std([1, 2, 3]),
                                stats.stddev([1, 2, 3]))
-        self.assertAlmostEqual(numpy.std(   [1.0, 2.0, 3.0]),
+        self.assertAlmostEqual(numpy.std([1.0, 2.0, 3.0]),
                                stats.stddev([1.0, 2.0, 3.0]))
 
-        self.assertAlmostEqual(numpy.std(   self._integers),
+        self.assertAlmostEqual(numpy.std(self._integers),
                                stats.stddev(self._integers))
 
-        self.assertAlmostEqual(numpy.std(   self._floats),
+        self.assertAlmostEqual(numpy.std(self._floats),
                                stats.stddev(self._floats))
 
-        self.assertAlmostEqual(numpy.std(   self._floats2),
+        self.assertAlmostEqual(numpy.std(self._floats2),
                                stats.stddev(self._floats2))
 
-        self.assertAlmostEqual(numpy.std(   self._mixed),
+        self.assertAlmostEqual(numpy.std(self._mixed),
                                stats.stddev(self._mixed))
 
 # TODO: implement

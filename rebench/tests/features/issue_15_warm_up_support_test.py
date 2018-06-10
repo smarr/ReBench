@@ -38,7 +38,7 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
 
     def test_run_id_indicates_warm_up_iterations_required(self):
         cnf = Configurator(self._path + '/issue_15.conf', DataStore(),
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         self.assertGreaterEqual(len(runs), 1)
 
@@ -47,7 +47,7 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
 
     def test_warm_up_results_should_be_ignored(self):
         cnf = Configurator(self._path + '/issue_15.conf', DataStore(),
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         self.assertEqual(runs[0].get_number_of_data_points(), 0)
         self.assertEqual(runs[0].warmup_iterations, 13)
@@ -56,5 +56,5 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         ex.execute()
 
         self.assertEqual(runs[0].get_number_of_data_points(),
-                          runs[0].run_config.number_of_data_points)
+                         runs[0].run_config.number_of_data_points)
         self.assertLessEqual(runs[0].get_total_values()[0], 850)

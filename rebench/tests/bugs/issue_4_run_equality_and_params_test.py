@@ -33,10 +33,10 @@ class Issue4RunEquality(unittest.TestCase):
 
     @staticmethod
     def _create_template_run_id():
-        vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
-                                                  'binary': 'foo_bar_bin'},
-                                   None, [1], None, None)
-        suite     = BenchmarkSuite("MySuite", vm, {
+        vm = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
+                                           'binary': 'foo_bar_bin'},
+                            None, [1], None, None)
+        suite = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s %(input)s'}, None)
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
@@ -45,10 +45,10 @@ class Issue4RunEquality(unittest.TestCase):
 
     @staticmethod
     def _create_hardcoded_run_id():
-        vm        = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
-                                                  'binary': 'foo_bar_bin'},
-                                   None, [1], None, None)
-        suite     = BenchmarkSuite("MySuite", vm, {
+        vm = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
+                                           'binary': 'foo_bar_bin'},
+                            None, [1], None, None)
+        suite = BenchmarkSuite("MySuite", vm, {
             'benchmarks': [], 'gauge_adapter': '',
             'command': '%(benchmark)s %(cores)s 2 3'}, None)
         bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
@@ -57,7 +57,7 @@ class Issue4RunEquality(unittest.TestCase):
 
     def test_hardcoded_equals_template_constructed(self):
         hard_coded = self._create_hardcoded_run_id()
-        template   = self._create_template_run_id()
+        template = self._create_template_run_id()
 
         self.assertEqual(hard_coded.cmdline(), template.cmdline())
         self.assertEqual(hard_coded, template)

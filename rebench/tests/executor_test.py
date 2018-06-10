@@ -42,8 +42,8 @@ class ExecutorTest(ReBenchTestCase):
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
-                            None, 'Test', standard_data_file = self._tmp_file)
+        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+                           None, 'Test', standard_data_file=self._tmp_file)
 
         ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
@@ -111,16 +111,16 @@ class ExecutorTest(ReBenchTestCase):
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
                 self.assertEqual(data_point.get_total_value(),
-                                  measurements[3].value)
+                                 measurements[3].value)
 
     def test_basic_execution(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None,
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None, None,
-                           'all', standard_data_file = self._tmp_file)
+                           'all', standard_data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_shell_options_without_filters(self):

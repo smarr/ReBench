@@ -74,7 +74,7 @@ class Experiment(object):
         return runs
 
     def _compile_virtual_machines(self, global_vms_cfg, build_commands):
-        benchmarks = self._raw_definition.get( 'benchmark', None)
+        benchmarks = self._raw_definition.get('benchmark', None)
         input_sizes = self._raw_definition.get('input_sizes', None)
         executions = self._raw_definition['executions']
 

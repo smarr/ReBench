@@ -57,9 +57,9 @@ class VirtualMachine(object):
         else:
             self._build = None
 
-        self._binary           = global_cfg['binary']
-        self._args             = global_cfg.get('args', '')
-        self._experiment_name  = experiment_name
+        self._binary = global_cfg['binary']
+        self._args = global_cfg.get('args', '')
+        self._experiment_name = experiment_name
         self._execute_exclusively = global_cfg.get('execute_exclusively', True)
 
     @property

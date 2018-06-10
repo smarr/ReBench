@@ -35,7 +35,7 @@ class PersistencyTest(ReBenchTestCase):
     def test_de_serialization(self):
         data_store = DataStore()
         vm = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
-                             None, [1], None, None)
+                            None, [1], None, None)
         suite = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
                                                'gauge_adapter': '',
                                                'command': ''}, None)
@@ -51,8 +51,8 @@ class PersistencyTest(ReBenchTestCase):
         deserialized = Measurement.from_str_list(data_store, serialized)
 
         self.assertEqual(deserialized.criterion, measurement.criterion)
-        self.assertEqual(deserialized.value,     measurement.value)
-        self.assertEqual(deserialized.unit,      measurement.unit)
+        self.assertEqual(deserialized.value, measurement.value)
+        self.assertEqual(deserialized.unit, measurement.unit)
         self.assertAlmostEqual(deserialized.timestamp, measurement.timestamp)
 
-        self.assertEqual(deserialized.run_id,    measurement.run_id)
+        self.assertEqual(deserialized.run_id, measurement.run_id)

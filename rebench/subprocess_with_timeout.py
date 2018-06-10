@@ -13,7 +13,7 @@ import sys
 class SubprocessThread(Thread):
 
     def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr):
-        Thread.__init__(self, name = "Subprocess %s" % binary_name)
+        Thread.__init__(self, name="Subprocess %s" % binary_name)
         self._args = args
         self._shell = shell
         self._cwd = cwd

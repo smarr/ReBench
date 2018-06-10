@@ -24,9 +24,9 @@ from ..reporter import CodespeedReporter
 class Reporting(object):
 
     def __init__(self, raw_config, cli_reporter, options):
-        self._csv_file   = raw_config.get('csv_file',   None)
+        self._csv_file = raw_config.get('csv_file', None)
         self._csv_locale = raw_config.get('csv_locale', None)
-        self._csv_raw    = raw_config.get('csv_raw',    None)
+        self._csv_raw = raw_config.get('csv_raw', None)
 
         if "codespeed" in raw_config and options.use_codespeed:
             self._codespeed = CodespeedReporting(raw_config, options)
@@ -49,9 +49,9 @@ class Reporting(object):
 
     def combined(self, raw_config):
         rep = Reporting({}, self._cli_reporter, None)
-        rep._csv_file = raw_config.get('csv_file',   self._csv_file)
+        rep._csv_file = raw_config.get('csv_file', self._csv_file)
         rep._csv_locale = raw_config.get('csv_locale', self._csv_locale)
-        rep._csv_raw = raw_config.get('csv_raw',    self._csv_raw)
+        rep._csv_raw = raw_config.get('csv_raw', self._csv_raw)
 
         rep._codespeed = self._codespeed
         return rep
@@ -97,8 +97,8 @@ class CodespeedReporting(object):
         self._url = codespeed["url"]
 
         self._report_incrementally = options.report_incrementally
-        self._branch               = options.branch
-        self._executable           = options.executable
+        self._branch = options.branch
+        self._executable = options.executable
 
         self._reporter = CodespeedReporter(self)
 

@@ -36,7 +36,7 @@ class TimeAdapter(GaugeAdapter):
     # This avoids issues with perhaps none-standard /bin/usr/time
     time_format = '"max rss (kb): %M\nwall-time (secounds): %e\n"'
     re_formatted_time = re.compile(r"^wall-time \(secounds\): (\d+\.\d+)")
-    re_formatted_rss  = re.compile(r"^max rss \(kb\): (\d+)")
+    re_formatted_rss = re.compile(r"^max rss \(kb\): (\d+)")
 
     def __init__(self, include_faulty):
         GaugeAdapter.__init__(self, include_faulty)

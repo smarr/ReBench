@@ -43,8 +43,7 @@ class Issue58BuildVM(ReBenchTestCase):
     def test_build_vm_simple_cmd(self):
         self._cleanup_log()
         cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
-                           standard_data_file = self._tmp_file,
-                           exp_name='A')
+                           standard_data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -62,8 +61,7 @@ class Issue58BuildVM(ReBenchTestCase):
         self._cleanup_log()
 
         cnf = Configurator(self._path + '/issue_58.conf', DataStore(),
-                           standard_data_file = self._tmp_file,
-                           exp_name='B')
+                           standard_data_file=self._tmp_file, exp_name='B')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 

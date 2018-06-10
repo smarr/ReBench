@@ -38,8 +38,8 @@ class PlainSecondsLogAdapter(GaugeAdapter):
     def __init__(self, include_faulty):
         super(PlainSecondsLogAdapter, self).__init__(include_faulty)
         self._other_error_definitions = [self.re_NPB_partial_invalid,
-                                       self.re_NPB_invalid, self.re_incorrect,
-                                       self.re_err]
+                                         self.re_NPB_invalid, self.re_incorrect,
+                                         self.re_err]
 
     def parse_data(self, data, run_id):
         data_points = []

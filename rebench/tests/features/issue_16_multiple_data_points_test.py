@@ -59,4 +59,4 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],
                                               point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
-                self.assertEqual(i,         int(measurement.value))
+                self.assertEqual(i, int(measurement.value))

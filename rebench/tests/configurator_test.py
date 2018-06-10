@@ -71,7 +71,7 @@ class ConfiguratorTest(ReBenchTestCase):
     def test_only_running_test_runner2(self):
         filter_args = ['vm:TestRunner2']
         cnf = Configurator(self._path + '/small.conf', DataStore(),
-                           run_filter = filter_args)
+                           run_filter=filter_args)
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
