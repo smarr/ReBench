@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...model.runs_config import TerminationCheck, QuickTerminationCheck
+from ...model.runs_config import TerminationCheck
 from ...configurator import Configurator
 from ...persistence  import DataStore
 from ..rebench_test_case import ReBenchTestCase
@@ -59,11 +59,3 @@ class RunsConfigTestCase(ReBenchTestCase):
 
         check.indicate_failed_execution()
         self.assertTrue(check.should_terminate(0))
-
-    def test_quick_termination(self):
-        check = QuickTerminationCheck(self._run.run_config, self._run.bench_cfg)
-        self._run.run_config.max_time = -1
-        self.assertTrue(check.should_terminate(0))
-
-        self._run.run_config.max_time = 100000000000
-        self.assertFalse(check.should_terminate(0))

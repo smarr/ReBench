@@ -23,7 +23,7 @@ import subprocess
 import traceback
 from os.path import dirname
 
-from .model.runs_config import RunsConfig, QuickRunsConfig
+from .model.runs_config import RunsConfig
 from .model.experiment  import Experiment
 
 
@@ -104,7 +104,6 @@ class Configurator(object):
         self._exp_name = exp_name
 
         self.runs = RunsConfig(**self._raw_config.get('runs', {}))
-        self.quick_runs = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
         self._build_commands = dict()
@@ -238,9 +237,7 @@ class Configurator(object):
 
     def _compile_experiment(self, exp_name, cli_reporter, run_filter):
         exp_def = self._raw_config['experiments'][exp_name]
-        run_cfg = (self.quick_runs
-                   if (self.options and self.options.quick)
-                   else self.runs)
+        run_cfg = self.runs
 
         return Experiment(exp_name, exp_def, run_cfg,
                           self._raw_config['virtual_machines'],

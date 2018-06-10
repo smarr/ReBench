@@ -68,26 +68,6 @@ schema;statistics_type:
       type: int
       desc: "TODO: what was this???"
 
-
-schema;quick_runs_type:
-  type: map
-  desc: Settings for quick runs, useful for fast feedback.
-  mapping:
-    number_of_data_points:
-      type: int
-      desc: |
-        Benchmarks are executed until we have this number of data points
-        TODO: keep consistent with `runs_type`
-    min_runs:
-      type: int
-      desc: "Minimum number of runs? TODO: remove? 'run' outdated terminology?"
-    max_runs:
-      type: int
-      desc: "Maximum number of runs? TODO: remove? 'run' outdated terminology?"
-    max_time:
-      type: int
-      desc: "Time in second after which an invocation is terminated. TODO: remove?"
-
 schema;benchmark_type_str:
   type: str
   desc: The name of a benchmark, can be simply the name.
@@ -299,8 +279,6 @@ mapping:
     include: runs_type
   reporting:
     include: reporting_type
-  quick_runs:
-    include: quick_runs_type
   statistics:
     include: statistics_type
   benchmark_suites:
