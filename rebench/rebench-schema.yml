@@ -4,12 +4,33 @@ desc: Specifies the elements of the YAML-based configuration format.
 schema;runs_type:
   type: map
   mapping: &EXP_RUN_DETAILS
+    invocations:
+      type: int
+      desc: |
+        The number of times a virtual machine is executed to run one experiment.
+        Thus, this is the number of runs per virtual machine.
+    iterations:
+      type: int
+      desc: |
+        The number of times a benchmark is executed within a virtual machine
+        invocation. This needs to be supported by a benchmark harness and
+        ReBench passes this value on to the harness or benchmark.
+    ## TODO: remove number_of_data_points
     number_of_data_points:
       type: int
       desc: Benchmarks are executed until we have this number of data points
+    # TODO: min_iteration_time?
     min_runtime:
       type: int
-      desc: Give a warning if the average run time is below this value in milliseconds
+      # TODO: make sure this is the correct default value
+      default: 50
+      desc: |
+        Give a warning if the average run time is below this value in
+        milliseconds.
+    # TODO: max_invocation_time?
+    max_runtime:
+      type: int
+      desc: Time in second after which an invocation is terminated.
     parallel_interference_factor:
       type: float
       desc: |
@@ -45,6 +66,7 @@ schema;benchmark_type_map:
     regex;(.+):
       type: map
       mapping:
+        <<: *EXP_RUN_DETAILS
         extra_args:
           type: scalar
           desc: This extra argument is appended to the benchmark's command line.
@@ -93,6 +115,7 @@ schema;variables:
 schema;benchmark_suite_type:
   type: map
   mapping:
+    <<: *EXP_RUN_DETAILS
     <<: *EXP_VARIABLES
     gauge_adapter:
       type: str
@@ -125,9 +148,6 @@ schema;benchmark_suite_type:
       sequence:
         - include: benchmark_type_str
         - include: benchmark_type_map
-    max_runtime:
-      type: int
-      desc: "max runtime in seconds. TODO: all time values should use the same unit"
     description:
       type: str
       desc: A description of the benchmark.
@@ -138,6 +158,7 @@ schema;benchmark_suite_type:
 schema;vm_type:
   type: map
   mapping:
+    <<: *EXP_RUN_DETAILS
     <<: *EXP_VARIABLES
     path:
       type: str
@@ -185,6 +206,7 @@ schema;exp_exec_type:
     regex;(.+):
       type: map
       mapping:
+        <<: *EXP_RUN_DETAILS
         <<: *EXP_VARIABLES
         benchmark:
           include: exp_suite_type
