@@ -1,15 +1,15 @@
 # Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,7 +29,6 @@ import random
 from select import select
 import subprocess
 import sys
-from tempfile  import mkstemp
 from threading import Thread, RLock
 
 from . import subprocess_with_timeout as subprocess_timeout
@@ -40,6 +39,7 @@ from .interop.adapter import ExecutionDeliveredNoResults
 class FailedBuilding(Exception):
     """The exception to be raised when building of the VM or suite failed."""
     def __init__(self, name, build_command):
+        super(FailedBuilding, self).__init__()
         self._name = name
         self._build_command = build_command
 
@@ -56,6 +56,10 @@ class RunScheduler(object):
     @staticmethod
     def number_of_uncompleted_runs(runs):
         return len(RunScheduler._filter_out_completed_runs(runs))
+
+    def _process_remaining_runs(self, runs):
+        """Abstract, to be implemented"""
+        pass
 
     def execute(self):
         runs = self._filter_out_completed_runs(self._executor.runs)
@@ -107,7 +111,7 @@ class RandomScheduler(RunScheduler):
 class BenchmarkThread(Thread):
 
     def __init__(self, par_scheduler, num):
-        Thread.__init__(self, name = "BenchmarkThread %d" % num)
+        Thread.__init__(self, name="BenchmarkThread %d" % num)
         self._par_scheduler = par_scheduler
         self._id = num
         self.exception = None
@@ -121,13 +125,14 @@ class BenchmarkThread(Thread):
                 if work is None:
                     return
                 scheduler._process_remaining_runs(work)
-        except BaseException as e:
-            self.exception = e
+        except BaseException as exp:
+            self.exception = exp
 
 
 class BenchmarkThreadExceptions(Exception):
 
     def __init__(self, exceptions):
+        super(BenchmarkThreadExceptions, self).__init__()
         self.exceptions = exceptions
 
 
@@ -139,6 +144,7 @@ class ParallelScheduler(RunScheduler):
         self._lock = RLock()
         self._num_worker_threads = self._number_of_threads()
         self._remaining_work = None
+        self._worker_threads = None
 
     def _number_of_threads(self):
         # TODO: read the configuration elements!
@@ -179,7 +185,7 @@ class ParallelScheduler(RunScheduler):
             if thread.exception is not None:
                 exceptions.append(thread.exception)
 
-        if len(exceptions) > 0:
+        if exceptions:
             print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
@@ -199,26 +205,26 @@ class ParallelScheduler(RunScheduler):
 
     def acquire_work(self):
         with self._lock:
-            if len(self._remaining_work) == 0:
+            if not self._remaining_work:
                 return None
 
-            n = self._determine_num_work_items_to_take()
-            assert n <= len(self._remaining_work)
+            num = self._determine_num_work_items_to_take()
+            assert num <= len(self._remaining_work)
             work = []
-            for i in range(n):
+            for _ in range(num):
                 work.append(self._remaining_work.pop())
             return work
 
 
-class Executor:
-    
-    def __init__(self, runs, use_nice, do_builds, include_faulty = False,
-                 verbose = False, scheduler = BatchScheduler, build_log = None):
-        self._runs     = runs
+class Executor(object):
+
+    def __init__(self, runs, use_nice, do_builds, include_faulty=False,
+                 verbose=False, scheduler=BatchScheduler, build_log=None):
+        self._runs = runs
         self._use_nice = use_nice
         self._do_builds = do_builds
         self._include_faulty = include_faulty
-        self._verbose   = verbose
+        self._verbose = verbose
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
 
@@ -239,11 +245,11 @@ class Executor:
         return scheduler(self)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
-        cmdline  = ""
-                
+        cmdline = ""
+
         if self._use_nice:
             cmdline += "nice -n-20 "
-        
+
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
 
         return cmdline
@@ -277,79 +283,79 @@ class Executor:
 
         script = build_command.command
 
-        p = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             cwd=path)
-        p.stdin.write(str.encode(script))
-        p.stdin.close()
+        proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                cwd=path)
+        proc.stdin.write(str.encode(script))
+        proc.stdin.close()
 
         if self._build_log:
             with open(self._build_log, 'a') as log_file:
                 while True:
-                    reads = [p.stdout.fileno(), p.stderr.fileno()]
+                    reads = [proc.stdout.fileno(), proc.stderr.fileno()]
                     ret = select(reads, [], [])
 
-                    for fd in ret[0]:
-                        if fd == p.stdout.fileno():
-                            read = self._read(p.stdout)
-                            if len(read) > 0:
+                    for file_no in ret[0]:
+                        if file_no == proc.stdout.fileno():
+                            read = self._read(proc.stdout)
+                            if read:
                                 log_file.write(name + '|STD:')
                                 log_file.write(read)
-                        elif fd == p.stderr.fileno():
-                            read = self._read(p.stderr)
-                            if len(read) > 0:
+                        elif file_no == proc.stderr.fileno():
+                            read = self._read(proc.stderr)
+                            if read:
                                 log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
-                    if p.poll() is not None:
+                    if proc.poll() is not None:
                         break
                 # read rest of pipes
                 while True:
-                    read = self._read(p.stdout)
+                    read = self._read(proc.stdout)
                     if read == "":
                         break
                     log_file.write(name + '|STD:')
                     log_file.write(read)
                 while True:
-                    read = self._read(p.stderr)
-                    if len(read) == 0:
+                    read = self._read(proc.stderr)
+                    if not read:
                         break
                     log_file.write(name + '|ERR:')
                     log_file.write(read)
 
                 log_file.write('\n')
 
-        if p.returncode != 0:
+        if proc.returncode != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, p.returncode, "Build of " + name + " failed.")
+                script, proc.returncode, "Build of " + name + " failed.")
             raise FailedBuilding(name, build_command)
         else:
             build_command.mark_succeeded()
 
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
-        
+
         run_id.run_config.log()
         run_id.report_start_run()
-        
+
         gauge_adapter = self._get_gauge_adapter_instance(
             run_id.bench_cfg.gauge_adapter)
-        
+
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
-        
+
         terminate = self._check_termination_condition(run_id, termination_check)
         if not terminate and self._do_builds:
             self._build_vm_and_suite(run_id)
 
         stats = StatisticProperties(run_id.get_total_values())
-        
+
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-            
+
             stats = StatisticProperties(run_id.get_total_values())
             logging.debug("Run: #%d" % stats.num_samples)
 
@@ -366,14 +372,15 @@ class Executor:
         for _, name, _ in pkgutil.walk_packages(root):
             # depending on how ReBench was executed, name might one of the two
             try:
-                p = __import__("rebench.interop." + name, fromlist=adapter_name)
-            except ImportError as e1:
+                mod = __import__("rebench.interop." + name, fromlist=adapter_name)
+            except ImportError:
                 try:
-                    p = __import__("interop." + name, fromlist=adapter_name)
-                except ImportError as e2:
-                    p = None
-            if p is not None and hasattr(p, adapter_name):
-                return getattr(p, adapter_name)(self._include_faulty)
+                    mod = __import__("interop." + name, fromlist=adapter_name)
+                except ImportError:
+                    mod = None
+            if mod is not None and hasattr(mod, adapter_name):
+                return getattr(mod, adapter_name)(self._include_faulty)
+        return None
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
@@ -394,9 +401,9 @@ class Executor:
                               % run_id.bench_cfg.vm.name)
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
-        
+
         return self._check_termination_condition(run_id, termination_check)
-    
+
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
             data_points = gauge_adapter.parse_data(output, run_id)

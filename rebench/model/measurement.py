@@ -23,27 +23,27 @@ from .run_id import RunId
 
 
 class Measurement(object):
-    def __init__(self, value, unit, run_id, criterion = 'total',
-                 timestamp = None, line_number = None, filename = None):
-        self._run_id    = run_id
+    def __init__(self, value, unit, run_id, criterion='total',
+                 timestamp=None, line_number=None, filename=None):
+        self._run_id = run_id
         self._criterion = criterion
-        self._value     = value
-        self._unit      = unit
+        self._value = value
+        self._unit = unit
         self._timestamp = timestamp or datetime.now()
         self._line_number = line_number
-        self._filename  = filename
-        
+        self._filename = filename
+
     def is_total(self):
         return self._criterion == 'total'
-    
+
     @property
     def criterion(self):
         return self._criterion
-    
+
     @property
     def value(self):
         return self._value
-    
+
     @property
     def unit(self):
         return self._unit
@@ -73,19 +73,19 @@ class Measurement(object):
             val = "%s" % self.value
 
         return ["[" + self._timestamp.strftime(self.TIME_FORMAT) + "]",
-                  val,
-                  self._unit,
-                  self._criterion] + self._run_id.as_str_list()
+                val,
+                self._unit,
+                self._criterion] + self._run_id.as_str_list()
 
     @classmethod
-    def from_str_list(cls, data_store, str_list, line_number = None,
-                      filename = None):
+    def from_str_list(cls, data_store, str_list, line_number=None,
+                      filename=None):
 
         timestamp = datetime.strptime(str_list[0][1:-1], cls.TIME_FORMAT)
-        value     = float(str_list[1])
-        unit      = str_list[2]
+        value = float(str_list[1])
+        unit = str_list[2]
         criterion = str_list[3]
-        run_id    = RunId.from_str_list(data_store, str_list[4:])
+        run_id = RunId.from_str_list(data_store, str_list[4:])
 
         return Measurement(value, unit, run_id, criterion, timestamp,
                            line_number, filename)

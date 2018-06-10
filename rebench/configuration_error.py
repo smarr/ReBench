@@ -17,9 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+
+
 class ConfigurationError(Exception):
 
     def __init__(self, msg):
+        super(ConfigurationError, self).__init__()
         self._msg = msg
 
     @property

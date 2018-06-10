@@ -6,10 +6,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,7 +27,7 @@ from .model.runs_config import RunsConfig, QuickRunsConfig
 from .model.experiment  import Experiment
 
 
-class _VMFilter:
+class _VMFilter(object):
 
     def __init__(self, name):
         self._name = name
@@ -57,17 +57,17 @@ class _BenchmarkFilter(_SuiteFilter):
         return bench.name == self._benchmark_name
 
 
-class _RunFilter:
+class _RunFilter(object):
 
-    def __init__(self, run_filter):
-        self._vm_filters    = []
+    def __init__(self, run_filters):
+        self._vm_filters = []
         self._suite_filters = []
 
-        if not run_filter:
+        if not run_filters:
             return
 
-        for f in run_filter:
-            parts = f.split(":")
+        for run_filter in run_filters:
+            parts = run_filter.split(":")
             if parts[0] == "vm":
                 self._vm_filters.append(_VMFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 2:
@@ -75,7 +75,7 @@ class _RunFilter:
             elif parts[0] == "s" and len(parts) == 3:
                 self._suite_filters.append(_BenchmarkFilter(parts[1], parts[2]))
             else:
-                raise Exception("Unknown filter expression: " + f)
+                raise Exception("Unknown filter expression: " + run_filter)
 
     def applies(self, bench):
         return (self._match(self._vm_filters, bench) and
@@ -85,34 +85,31 @@ class _RunFilter:
     def _match(filters, bench):
         if not filters:
             return True
-        for f in filters:
-            if f.matches(bench):
+        for run_filter in filters:
+            if run_filter.matches(bench):
                 return True
         return False
 
 
-class Configurator:
+class Configurator(object):
 
-    def __init__(self, file_name, data_store, cli_options = None,
-                 cli_reporter = None, exp_name = None,
-                 standard_data_file = None, run_filter = None):
+    def __init__(self, file_name, data_store, cli_options=None,
+                 cli_reporter=None, exp_name=None, standard_data_file=None,
+                 run_filter=None):
         self._raw_config = self._load_config(file_name)
         if standard_data_file:
             self._raw_config['standard_data_file'] = standard_data_file
 
-        self._options    = self._process_cli_options(cli_options)
-        self._exp_name   = exp_name
-        
-        self.runs        = RunsConfig(     **self._raw_config.get(      'runs', {}))
-        self.quick_runs  = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
+        self._options = self._process_cli_options(cli_options)
+        self._exp_name = exp_name
+
+        self.runs = RunsConfig(**self._raw_config.get('runs', {}))
+        self.quick_runs = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
 
         self._data_store = data_store
         self._build_commands = dict()
         self._experiments = self._compile_experiments(cli_reporter,
                                                       _RunFilter(run_filter))
-
-        # TODO: does visualization work?
-        # self.visualization = self._raw_config['experiments'][self.experiment_name()].get('visualization', None)
 
     @property
     def build_log(self):
@@ -127,15 +124,16 @@ class Configurator:
         logging.getLogger('pykwalify').setLevel(logging.ERROR)
 
         try:
-            with open(file_name, 'r') as f:
-                data = yaml.safe_load(f)
-                c = Core(source_data=data,
-                         schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-                c.validate(raise_exception=False)
-                if c.validation_errors and len(c.validation_errors) > 0:
+            with open(file_name, 'r') as conf_file:
+                data = yaml.safe_load(conf_file)
+                validator = Core(
+                    source_data=data,
+                    schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+                validator.validate(raise_exception=False)
+                if validator.validation_errors and validator.validation_errors:
                     logging.error(
                         "Validation of " + file_name + " failed. " +
-                        (" ".join(c.validation_errors)))
+                        (" ".join(validator.validation_errors)))
                     sys.exit(-1)
                 return data
         except IOError:
@@ -150,8 +148,8 @@ class Configurator:
 
     def _process_cli_options(self, options):
         if options is None:
-            return
-        
+            return None
+
         if options.debug:
             if options.verbose:
                 logging.basicConfig(level=logging.NOTSET)
@@ -172,14 +170,14 @@ class Configurator:
                               "you might need root/admin rights.")
                 logging.error("Deactivated usage of nice command.")
                 options.use_nice = False
-                    
+
         return options
 
     @staticmethod
     def _can_set_niceness():
         output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
                                          stderr=subprocess.STDOUT)
-        if type(output) != str:
+        if type(output) != str:  # pylint: disable=unidiomatic-typecheck
             output = output.decode('utf-8')
         if "cannot set niceness" in output or "Permission denied" in output:
             return False
@@ -197,10 +195,10 @@ class Configurator:
     @property
     def do_builds(self):
         return self.options is not None and self.options.do_builds
-        
+
     def experiment_name(self):
         return self._exp_name or self._raw_config['standard_experiment']
-    
+
     def get_experiments(self):
         """The configuration has been compiled before it is handed out
            to the client class, since some configurations can override
@@ -208,22 +206,22 @@ class Configurator:
            system.
         """
         return self._experiments
-    
+
     def get_experiment(self, name):
         return self._experiments[name]
-    
+
     def get_runs(self):
         runs = set()
         for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
         return runs
-    
+
     def _compile_experiments(self, cli_reporter, run_filter):
         if not self.experiment_name():
             raise ValueError("No experiment chosen.")
-        
+
         conf_defs = {}
-        
+
         if self.experiment_name() == "all":
             for exp_name in self._raw_config['experiments']:
                 conf_defs[exp_name] = self._compile_experiment(exp_name,
@@ -235,7 +233,7 @@ class Configurator:
                                  self.experiment_name())
             conf_defs[self.experiment_name()] = self._compile_experiment(
                 self.experiment_name(), cli_reporter, run_filter)
-        
+
         return conf_defs
 
     def _compile_experiment(self, exp_name, cli_reporter, run_filter):
@@ -243,7 +241,7 @@ class Configurator:
         run_cfg = (self.quick_runs
                    if (self.options and self.options.quick)
                    else self.runs)
-        
+
         return Experiment(exp_name, exp_def, run_cfg,
                           self._raw_config['virtual_machines'],
                           self._raw_config['benchmark_suites'],

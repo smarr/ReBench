@@ -29,9 +29,10 @@ from ..rebench_test_case import ReBenchTestCase
 class TestReporter(Reporter):
 
     def __init__(self, test_case):
+        super(TestReporter, self).__init__()
         self._test_case = test_case
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, _run_id, _cmdline, _return_code, _output):
         self._test_case.fail()
 
     def run_completed(self, run_id, statistics, cmdline):
@@ -55,12 +56,13 @@ class Issue19OneDataPointAtATime(ReBenchTestCase):
     """
 
     def setUp(self):
-        super(Issue19OneDataPointAtATime, self).setUp(__file__)
+        super(Issue19OneDataPointAtATime, self).setUp()
+        self._set_path(__file__)
 
 
 class OneMeasurementAtATime(Issue19OneDataPointAtATime):
 
-    def __init__(self, method_name = 'runTest'):
+    def __init__(self, method_name='runTest'):
         super(OneMeasurementAtATime, self).__init__(method_name)
         self._run_id = None
         self._run_count = {}

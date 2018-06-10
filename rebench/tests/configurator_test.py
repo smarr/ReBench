@@ -26,26 +26,26 @@ from .rebench_test_case import ReBenchTestCase
 
 
 class ConfiguratorTest(ReBenchTestCase):
-    
+
     def setUp(self):
-        super(ConfiguratorTest, self).setUp(__file__)
+        super(ConfiguratorTest, self).setUp()
         self._logging_error = logging.error
-    
+
     def tearDown(self):
         super(ConfiguratorTest, self).tearDown()
         logging.error = self._logging_error  # restore normal logging
-        
+
     def test_experiment_name_from_cli(self):
         cnf = Configurator(
             self._path + '/test.conf', DataStore(), None,
             'Test')
-        
+
         self.assertEqual('Test', cnf.experiment_name())
-    
+
     def test_experiment_name_from_config_file(self):
         cnf = Configurator(self._path + '/test.conf', DataStore(), None)
         self.assertEqual('Test', cnf.experiment_name())
-        
+
     def test_number_of_experiments_smallconf(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None)
         self.assertEqual(1, len(cnf.get_experiments()))
@@ -55,7 +55,7 @@ class ConfiguratorTest(ReBenchTestCase):
         cnf = Configurator(self._path + '/test.conf', DataStore(),
                            None, None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
-        
+
     def test_get_experiment(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None)
         exp = cnf.get_experiment('Test')
@@ -71,7 +71,7 @@ class ConfiguratorTest(ReBenchTestCase):
     def test_only_running_test_runner2(self):
         filter_args = ['vm:TestRunner2']
         cnf = Configurator(self._path + '/small.conf', DataStore(),
-                           run_filter = filter_args)
+                           run_filter=filter_args)
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
@@ -108,7 +108,7 @@ class ConfiguratorTest(ReBenchTestCase):
         self.assertEqual(2 * 2, len(runs))
 
 
-# allow command-line execution 
+# allow command-line execution
 def test_suite():
     return unittest.makeSuite(ConfiguratorTest)
 

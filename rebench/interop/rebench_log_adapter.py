@@ -38,12 +38,12 @@ class RebenchLogAdapter(GaugeAdapter):
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
-    re_incorrect   = re.compile(r".*incorrect.*")
+    re_incorrect = re.compile(r".*incorrect.*")
 
     def __init__(self, include_faulty):
         super(RebenchLogAdapter, self).__init__(include_faulty)
-        self._otherErrorDefinitions = [self.re_NPB_partial_invalid,
-                                       self.re_NPB_invalid, self.re_incorrect]
+        self._other_error_definitions = [self.re_NPB_partial_invalid,
+                                         self.re_NPB_invalid, self.re_incorrect]
 
     def parse_data(self, data, run_id):
         data_points = []
@@ -55,21 +55,21 @@ class RebenchLogAdapter(GaugeAdapter):
                     "Output of bench program indicated error.")
 
             measure = None
-            m = self.re_log_line.match(line)
-            if m:
-                time = float(m.group(4))
-                if m.group(5) == "u":
+            match = self.re_log_line.match(line)
+            if match:
+                time = float(match.group(4))
+                if match.group(5) == "u":
                     time /= 1000
-                criterion = (m.group(2) or 'total').strip()
+                criterion = (match.group(2) or 'total').strip()
 
                 measure = Measurement(time, 'ms', run_id, criterion)
 
             else:
-                m = self.re_extra_criterion_log_line.match(line)
-                if m:
-                    value = float(m.group(3))
-                    criterion = m.group(2)
-                    unit = m.group(4)
+                match = self.re_extra_criterion_log_line.match(line)
+                if match:
+                    value = float(match.group(3))
+                    criterion = match.group(2)
+                    unit = match.group(4)
 
                     measure = Measurement(value, unit, run_id, criterion)
 
@@ -80,7 +80,7 @@ class RebenchLogAdapter(GaugeAdapter):
                     data_points.append(current)
                     current = DataPoint(run_id)
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points

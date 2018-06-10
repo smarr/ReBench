@@ -31,7 +31,8 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
     """
 
     def setUp(self):
-        super(Issue31MultivariateDataPointsTest, self).setUp(__file__)
+        super(Issue31MultivariateDataPointsTest, self).setUp()
+        self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
         cnf = Configurator(self._path + '/issue_31.conf', DataStore(),
@@ -50,33 +51,27 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
     def test_records_multiple_data_points_from_single_execution_20(self):
         self._records_data_points('Test2', 20)
 
-    def test_records_multiple_data_points_from_single_execution_20(self):
+    def test_records_multiple_data_points_from_single_execution_30(self):
         self._records_data_points('Test3', 10)
 
     def test_associates_measurements_and_data_points_correctly(self):
-        """
-        print("%d:RESULT-bar:ms:   %d.%d" % (i, i, i))
-        print("%d:RESULT-total:    %d.%d" % (i, i, i))
-        print("%d:RESULT-baz:kbyte:   %d" % (i, i))
-        print("%d:RESULT-foo:kerf: %d.%d" % (i, i, i))
-        """
         data_points = self._records_data_points('Test1', 10)
-        for dp, i in zip(data_points, list(range(0, 10))):
-            self.assertEqual(4, dp.number_of_measurements())
+        for point, i in zip(data_points, list(range(0, 10))):
+            self.assertEqual(4, point.number_of_measurements())
 
             for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
                                                     ["ms", "ms", "kbyte", "kerf"],
-                                                    dp.get_measurements()):
+                                                    point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
-                self.assertEqual(i,         int(measurement.value))
-                self.assertEqual(unit,      measurement.unit)
+                self.assertEqual(i, int(measurement.value))
+                self.assertEqual(unit, measurement.unit)
 
     def test_is_compatible_to_issue16_format(self):
         data_points = self._records_data_points('Test3', 10)
-        for dp, i in zip(data_points, list(range(0, 10))):
-            self.assertEqual(4, dp.number_of_measurements())
+        for point, i in zip(data_points, list(range(0, 10))):
+            self.assertEqual(4, point.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],
-                                              dp.get_measurements()):
+                                              point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
-                self.assertEqual(i,         int(measurement.value))
+                self.assertEqual(i, int(measurement.value))

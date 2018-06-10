@@ -24,40 +24,40 @@ from .reporting        import Reporting
 from . import value_with_optional_details
 
 
-class Experiment:
-    
+class Experiment(object):
+
     def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
                  global_suite_cfg, global_reporting_cfg, data_store,
                  build_commands, standard_data_file, discard_old_data,
                  cli_reporter, run_filter, options):
-        self._name           = name
+        self._name = name
         self._raw_definition = exp_def
-        self._runs_cfg       = global_runs_cfg.combined(exp_def)
-        self._reporting      = Reporting(
+        self._runs_cfg = global_runs_cfg.combined(exp_def)
+        self._reporting = Reporting(
             global_reporting_cfg, cli_reporter,
             options).combined(exp_def.get('reporting', {}))
-        self._data_store     = data_store
-        self._persistence    = data_store.get(exp_def.get('data_file',
-                                                          standard_data_file),
-                                              discard_old_data)
+        self._data_store = data_store
+        self._persistence = data_store.get(exp_def.get('data_file',
+                                                       standard_data_file),
+                                           discard_old_data)
 
-        self._vms            = self._compile_virtual_machines(global_vms_cfg,
-                                                              build_commands)
-        self._suites         = self._compile_benchmark_suites(global_suite_cfg,
-                                                              build_commands)
-        self._benchmarks     = self._compile_benchmarks()
-        self._runs           = self._compile_runs(run_filter)
+        self._vms = self._compile_virtual_machines(global_vms_cfg,
+                                                   build_commands)
+        self._suites = self._compile_benchmark_suites(global_suite_cfg,
+                                                      build_commands)
+        self._benchmarks = self._compile_benchmarks()
+        self._runs = self._compile_runs(run_filter)
 
     @property
     def name(self):
         return self._name
-    
+
     def get_runs(self):
         return self._runs
-    
+
     def _compile_runs(self, run_filter):
         runs = set()
-        
+
         for bench in self._benchmarks:
             if not run_filter.applies(bench):
                 continue
@@ -72,25 +72,25 @@ class Experiment:
                         run.add_persistence(self._persistence)
                         run.set_run_config(self._runs_cfg)
         return runs
-    
+
     def _compile_virtual_machines(self, global_vms_cfg, build_commands):
-        benchmarks  = self._raw_definition.get( 'benchmark', None)
+        benchmarks = self._raw_definition.get('benchmark', None)
         input_sizes = self._raw_definition.get('input_sizes', None)
-        executions  = self._raw_definition['executions']
-        
+        executions = self._raw_definition['executions']
+
         vms = []
-        
+
         for vm in executions:
             vm, vm_details = value_with_optional_details(vm)
             if vm not in global_vms_cfg:
                 raise ValueError("The VM '%s' requested in %s was not found."
                                  % (vm, self.name))
-            
+
             global_cfg = global_vms_cfg[vm]
             vms.append(VirtualMachine(vm, vm_details, global_cfg, benchmarks,
                                       input_sizes, self.name, build_commands))
         return vms
-    
+
     def _compile_benchmark_suites(self, global_suite_cfg, build_commands):
         suites = []
         for vm in self._vms:
@@ -100,7 +100,7 @@ class Experiment:
                                        build_commands)
                 suites.append(suite)
         return suites
-    
+
     def _compile_benchmarks(self):
         bench_cfgs = []
         for suite in self._suites:

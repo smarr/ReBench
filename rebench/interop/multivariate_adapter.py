@@ -35,7 +35,7 @@ class MultivariateAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty):
         super(MultivariateAdapter, self).__init__(include_faulty)
-        self._otherErrorDefinitions = [re.compile("FAILED")]
+        self._other_error_definitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id):
         data_points = []
@@ -46,13 +46,13 @@ class MultivariateAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
-            m = self.variable_re.match(line)
-            if m:
-                (c, variable, unit, value_thing, floatpart) = m.groups()
+            match = self.variable_re.match(line)
+            if match:
+                (cnt, variable, unit, value_thing, floatpart) = match.groups()
 
                 # check for possible data point carry over
-                if c is not None:
-                    counter = int(c)
+                if cnt is not None:
+                    counter = int(cnt)
                     while counter >= len(data_points):
                         data_points.append(DataPoint(run_id))
                     current = data_points[counter]
@@ -67,13 +67,12 @@ class MultivariateAdapter(GaugeAdapter):
                                       run_id, variable)
                 current.add_measurement(measure)
 
-                if c is None and measure.is_total():
+                if cnt is None and measure.is_total():
                     # compatibility for TestVMPerformance
                     data_points.append(current)
                     current = DataPoint(run_id)
 
-
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points

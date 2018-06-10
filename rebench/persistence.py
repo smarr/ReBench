@@ -6,10 +6,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -30,7 +30,7 @@ from .model.measurement import Measurement
 from .model.run_id      import RunId
 
 
-class DataStore:
+class DataStore(object):
 
     def __init__(self):
         self._files = {}
@@ -85,36 +85,36 @@ class DataStore:
     @classmethod
     def get_by_file(cls, runs):
         by_file = {}
-        for r in runs:
-            points = r.get_data_points()
-            r.discard_data_points()
-            for p in points:
-                ms = p.get_measurements()
-                for m in ms:
-                    if m.filename in by_file:
-                        by_file[m.filename].append(m)
+        for run in runs:
+            points = run.get_data_points()
+            run.discard_data_points()
+            for point in points:
+                measurements = point.get_measurements()
+                for measure in measurements:
+                    if measure.filename in by_file:
+                        by_file[measure.filename].append(measure)
                     else:
-                        by_file[m.filename] = [m]
+                        by_file[measure.filename] = [measure]
         return by_file
 
     @classmethod
     def discard_data_of_runs(cls, runs):
         by_file = cls.get_by_file(runs)
-        for filename, ms in by_file.iteritems():
+        for filename, measures in by_file.items():
             try:
-                with open(filename, 'r') as f:
-                    lines = f.readlines()
+                with open(filename, 'r') as data_file:
+                    lines = data_file.readlines()
             except IOError:
                 logging.info("Failed to open data file: %s" % filename)
                 continue
 
-            for m in ms:
-                lines[m.line_number] = None
+            for measure in measures:
+                lines[measure.line_number] = None
 
             lines = filter(None, lines)
 
-            with open(filename, 'w') as f:
-                f.writelines(lines)
+            with open(filename, 'w') as data_file:
+                data_file.writelines(lines)
 
 
 class _DataPointPersistence(object):
@@ -124,14 +124,14 @@ class _DataPointPersistence(object):
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
                              "for data_filename, but got: %s" % data_filename)
-        
+
         self._data_filename = data_filename
         self._file = None
         if discard_old_data:
             self._discard_old_data()
         self._insert_shebang_line()
         self._lock = Lock()
-    
+
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
 
@@ -139,89 +139,88 @@ class _DataPointPersistence(object):
     def _truncate_file(filename):
         with open(filename, 'w'):
             pass
-    
+
     def _load_data(self):
         """
         Loads the data from the configured data file
         """
         try:
-            with open(self._data_filename, 'r') as f:
-                self._process_lines(f)
+            with open(self._data_filename, 'r') as data_file:
+                self._process_lines(data_file)
         except IOError:
             logging.info("No data loaded %s does not exist."
                          % self._data_filename)
-    
-    def _process_lines(self, f):
+
+    def _process_lines(self, data_file):
         """
          The most important assumptions we make here is that the total
          measurement is always the last one serialized for a data point.
         """
         errors = set()
-        
+
         previous_run_id = None
         line_number = 0
-        for line in f:
+        for line in data_file:
             if line.startswith('#'):  # skip comments, and shebang lines
                 line_number += 1
                 continue
-            
+
             try:
                 measurement = Measurement.from_str_list(
                     self._data_store, line.rstrip('\n').split(self._SEP),
                     line_number, self._data_filename)
 
-
                 run_id = measurement.run_id
                 if previous_run_id is not run_id:
-                    data_point      = DataPoint(run_id)
+                    data_point = DataPoint(run_id)
                     previous_run_id = run_id
-                
+
                 data_point.add_measurement(measurement)
-                
+
                 if measurement.is_total():
                     run_id.loaded_data_point(data_point)
                     data_point = DataPoint(run_id)
-            
-            except ValueError as e:
-                msg = str(e)
+
+            except ValueError as err:
+                msg = str(err)
                 if msg not in errors:
                     # Configuration is not available, skip data point
                     logging.log(logging.DEBUG - 1, msg)
                     errors.add(msg)
             line_number += 1
-    
+
     def _insert_shebang_line(self):
         """
         Insert a shebang (#!/path/to/executable) into the data file.
         This allows it theoretically to be executable.
         """
         shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
-        
+
         try:
             # if file doesn't exist, just create it
             if not os.path.exists(self._data_filename):
-                with open(self._data_filename, 'w') as f:
-                    f.write(shebang_line)
-                    f.flush()
-                    f.close()
+                with open(self._data_filename, 'w') as data_file:
+                    data_file.write(shebang_line)
+                    data_file.flush()
+                    data_file.close()
                 return
 
             # if file exists, the first line might already be the same line
-            with open(self._data_filename, 'r') as f:
-                if f.readline() == shebang_line:
+            with open(self._data_filename, 'r') as data_file:
+                if data_file.readline() == shebang_line:
                     return
 
             # otherwise, copy the file and insert line at the beginning
-            renamed_file = "%s-%.0f.tmp" % (self._data_filename, time.time()) 
+            renamed_file = "%s-%.0f.tmp" % (self._data_filename, time.time())
             os.rename(self._data_filename, renamed_file)
-            with open(self._data_filename, 'w') as f:
-                f.write(shebang_line)
-                f.flush()
-                shutil.copyfileobj(open(renamed_file, 'r'), f)
+            with open(self._data_filename, 'w') as data_file:
+                data_file.write(shebang_line)
+                data_file.flush()
+                shutil.copyfileobj(open(renamed_file, 'r'), data_file)
             os.remove(renamed_file)
-        except Exception as e:
+        except Exception as err:  # pylint: disable=broad-except
             logging.error("An error occurred " +
-                          "while trying to insert a shebang line: %s", e)
+                          "while trying to insert a shebang line: %s", err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 

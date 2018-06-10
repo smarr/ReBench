@@ -19,42 +19,43 @@
 # IN THE SOFTWARE.
 import unittest
 import subprocess
+import os
+import sys
 
 from ..executor          import Executor, BenchmarkThreadExceptions
 from ..configurator      import Configurator
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
 from ..                  import ReBench
-import os
-import sys
 from .rebench_test_case import ReBenchTestCase
 
 
 class ExecutorTest(ReBenchTestCase):
-    
+
     def setUp(self):
-        super(ExecutorTest, self).setUp(__file__)
+        super(ExecutorTest, self).setUp()
         os.chdir(self._path + '/../')
 
     def test_setup_and_run_benchmark(self):
-        # before executing the benchmark, we override stuff in subprocess for testing
+        # before executing the benchmark,
+        # we override stuff in subprocess for testing
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
-        
-        cnf  = Configurator(self._path + '/test.conf', DataStore(), options,
-                            None, 'Test', standard_data_file = self._tmp_file)
-        
+
+        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+                           None, 'Test', standard_data_file=self._tmp_file)
+
         ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
-        
-### should test more details
-#        (mean, sdev, (interval, interval_percentage), 
+
+# TODO: should test more details
+#        (mean, sdev, (interval, interval_percentage),
 #                (interval_t, interval_percentage_t)) = ex.result['test-vm']['test-bench']
-#        
+#
 #        self.assertEqual(31, len(ex.benchmark_data['test-vm']['test-bench']))
 #        self.assertAlmostEqual(45870.4193548, mean)
 #        self.assertAlmostEqual(2.93778711485, sdev)
-#        
+#
 #        (i_low, i_high) = interval
 #        self.assertAlmostEqual(45869.385195243565, i_low)
 #        self.assertAlmostEqual(45871.453514433859, i_high)
@@ -73,17 +74,17 @@ class ExecutorTest(ReBenchTestCase):
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", str(e))
-        except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
-    
+        except RuntimeError as err:
+            self.assertEqual("TEST-PASSED", str(err))
+        except BenchmarkThreadExceptions as err:
+            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
+
     def test_broken_command_format_with_TypeError(self):
         def test_exit(val):
             self.assertEqual(-1, val, "got the correct error code")
             raise RuntimeError("TEST-PASSED")
         sys.exit = test_exit
-        
+
         try:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(self._path + '/test.conf', DataStore(), options,
@@ -91,10 +92,10 @@ class ExecutorTest(ReBenchTestCase):
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as e:
-            self.assertEqual("TEST-PASSED", str(e))
-        except BenchmarkThreadExceptions as e:
-            self.assertEqual("TEST-PASSED", str(e.exceptions[0]))
+        except RuntimeError as err:
+            self.assertEqual("TEST-PASSED", str(err))
+        except BenchmarkThreadExceptions as err:
+            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
@@ -110,16 +111,16 @@ class ExecutorTest(ReBenchTestCase):
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
                 self.assertEqual(data_point.get_total_value(),
-                                  measurements[3].value)
+                                 measurements[3].value)
 
     def test_basic_execution(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None,
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(self._path + '/small.conf', DataStore(), None, None,
-                           'all', standard_data_file = self._tmp_file)
+                           'all', standard_data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_shell_options_without_filters(self):
@@ -168,14 +169,14 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['vm:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stderr=None, shell=None):
-    class Popen:
+def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable=unused-argument
+    class Popen(object):
         returncode = 0
 
         def __init__(self, args):
             self.args = args
 
-        def communicate(self, *args, **kwargs):
+        def communicate(self, *_args, **_kwargs):
             return "", b""
 
         def poll(self):
@@ -192,7 +193,7 @@ def Popen_override(cmdline, stdout, stderr=None, shell=None):
 
         def __exit__(self, _type, _value, _traceback):
             pass
-    
+
     return Popen(cmdline)
 
 

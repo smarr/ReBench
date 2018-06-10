@@ -31,7 +31,8 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
     """
 
     def setUp(self):
-        super(Issue16MultipleDataPointsTest, self).setUp(__file__)
+        super(Issue16MultipleDataPointsTest, self).setUp()
+        self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
         cnf = Configurator(self._path + '/issue_16.conf', DataStore(),
@@ -52,10 +53,10 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
 
     def test_associates_measurements_and_data_points_correctly(self):
         data_points = self._records_data_points('Test1', 10)
-        for dp, i in zip(data_points, list(range(0, 10))):
-            self.assertEqual(4, dp.number_of_measurements())
+        for point, i in zip(data_points, list(range(0, 10))):
+            self.assertEqual(4, point.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],
-                                              dp.get_measurements()):
+                                              point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
-                self.assertEqual(i,         int(measurement.value))
+                self.assertEqual(i, int(measurement.value))

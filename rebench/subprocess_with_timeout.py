@@ -13,31 +13,31 @@ import sys
 class SubprocessThread(Thread):
 
     def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr):
-        Thread.__init__(self, name = "Subprocess %s" % binary_name)
-        self._args    = args
-        self._shell   = shell
-        self._cwd     = cwd
+        Thread.__init__(self, name="Subprocess %s" % binary_name)
+        self._args = args
+        self._shell = shell
+        self._cwd = cwd
         self._verbose = verbose
-        self._stdout  = stdout
-        self._stderr  = stderr
+        self._stdout = stdout
+        self._stderr = stderr
 
-        self._pid        = None
+        self._pid = None
         self._started_cv = Condition()
 
         self.stdout_result = None
         self.stderr_result = None
-        self.returncode    = None
+        self.returncode = None
 
     def run(self):
         self._started_cv.acquire()
-        p = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                  stdout=self._stdout, stderr=self._stderr)
-        self._pid = p.pid
+        proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
+                     stdout=self._stdout, stderr=self._stderr)
+        self._pid = proc.pid
         self._started_cv.notify()
         self._started_cv.release()
 
-        self.process_output(p)
-        self.returncode = p.returncode
+        self.process_output(proc)
+        self.returncode = proc.returncode
 
     def get_pid(self):
         self._started_cv.acquire()
@@ -46,36 +46,36 @@ class SubprocessThread(Thread):
         self._started_cv.release()
         return self._pid
 
-    def process_output(self, p):
+    def process_output(self, proc):
         if self._verbose and self._stdout == PIPE and (self._stderr == PIPE or
                                                        self._stderr == STDOUT):
             self.stdout_result = ""
             self.stderr_result = ""
 
             while True:
-                reads = [p.stdout.fileno()]
+                reads = [proc.stdout.fileno()]
                 if self._stderr == PIPE:
-                    reads.append(p.stderr.fileno())
+                    reads.append(proc.stderr.fileno())
                 ret = select(reads, [], [])
 
-                for fd in ret[0]:
-                    if fd == p.stdout.fileno():
-                        read = p.stdout.readline()
+                for file_no in ret[0]:
+                    if file_no == proc.stdout.fileno():
+                        read = proc.stdout.readline()
                         sys.stdout.write(read)
                         self.stdout_result += read
-                    if self._stderr == PIPE and fd == p.stderr.fileno():
-                        read = p.stderr.readline()
+                    if self._stderr == PIPE and file_no == proc.stderr.fileno():
+                        read = proc.stderr.readline()
                         sys.stderr.write(read)
                         self.stderr_result += read
 
-                if p.poll() is not None:
+                if proc.poll() is not None:
                     break
         else:
-            self.stdout_result, self.stderr_result = p.communicate()
+            self.stdout_result, self.stderr_result = proc.communicate()
 
 
-def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
-        verbose = False, stdout = PIPE, stderr = PIPE):
+def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
+        verbose=False, stdout=PIPE, stderr=PIPE):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
@@ -97,10 +97,10 @@ def run(args, cwd = None, shell = False, kill_tree = True, timeout = -1,
             diff = 0
             while diff < timeout:
                 if t10min < timeout - diff:
-                    t = t10min
+                    max_10min_timeout = t10min
                 else:
-                    t = timeout - diff
-                thread.join(t)
+                    max_10min_timeout = timeout - diff
+                thread.join(max_10min_timeout)
                 if not thread.is_alive():
                     break
                 diff = time() - start
@@ -119,10 +119,10 @@ def kill_process(pid, recursively, thread):
     if recursively:
         pids.extend(get_process_children(pid))
 
-    for p in pids:
+    for proc_id in pids:
         try:
-            kill(p, SIGKILL)
-        except ProcessLookupError:
+            kill(proc_id, SIGKILL)
+        except ProcessLookupError:  # pylint: disable=undefined-variable
             # it's a race condition, so let's simply ignore it
             pass
 
@@ -132,11 +132,9 @@ def kill_process(pid, recursively, thread):
 
 
 def get_process_children(pid):
-    p = Popen('pgrep -P %d' % pid, shell = True,
-              stdout = PIPE, stderr = PIPE)
-    stdout, _stderr = p.communicate()
+    proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, _stderr = proc.communicate()
     result = [int(p) for p in stdout.split()]
     for child in result[:]:
         result.extend(get_process_children(child))
     return result
-

@@ -32,14 +32,14 @@ class PlainSecondsLogAdapter(GaugeAdapter):
     """
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
-    re_incorrect   = re.compile(r".*incorrect.*")
-    re_err         = re.compile(r".*error.*")
+    re_incorrect = re.compile(r".*incorrect.*")
+    re_err = re.compile(r".*error.*")
 
     def __init__(self, include_faulty):
         super(PlainSecondsLogAdapter, self).__init__(include_faulty)
-        self._otherErrorDefinitions = [self.re_NPB_partial_invalid,
-                                       self.re_NPB_invalid, self.re_incorrect,
-                                       self.re_err]
+        self._other_error_definitions = [self.re_NPB_partial_invalid,
+                                         self.re_NPB_invalid, self.re_incorrect,
+                                         self.re_err]
 
     def parse_data(self, data, run_id):
         data_points = []
@@ -60,7 +60,7 @@ class PlainSecondsLogAdapter(GaugeAdapter):
             except ValueError:
                 pass  # ignore that line
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points

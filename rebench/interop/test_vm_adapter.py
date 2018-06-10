@@ -33,7 +33,7 @@ class TestVMAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty):
         super(TestVMAdapter, self).__init__(include_faulty)
-        self._otherErrorDefinitions = [re.compile("FAILED")]
+        self._other_error_definitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id):
         data_points = []
@@ -44,17 +44,17 @@ class TestVMAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
-            m = TestVMAdapter.re_time.match(line)
-            if m:
-                measure = Measurement(float(m.group(2)), 'ms', run_id,
-                                      m.group(1))
+            match = TestVMAdapter.re_time.match(line)
+            if match:
+                measure = Measurement(float(match.group(2)), 'ms', run_id,
+                                      match.group(1))
                 current.add_measurement(measure)
 
                 if measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
 
-        if len(data_points) == 0:
+        if not data_points:
             raise OutputNotParseable(data)
 
         return data_points

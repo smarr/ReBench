@@ -17,14 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import os
-
 from datetime import datetime
 
 from .rebench_test_case import ReBenchTestCase
 
-from ..configurator import Configurator
-from ..executor     import Executor
 from ..persistence  import DataStore
 
 from ..model.run_id           import RunId
@@ -38,11 +34,11 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
         data_store = DataStore()
-        vm        = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
-                                   None, [1], None, None)
-        suite     = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
-                                                   'gauge_adapter': '',
-                                                   'command': ''}, None)
+        vm = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
+                            None, [1], None, None)
+        suite = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
+                                               'gauge_adapter': '',
+                                               'command': ''}, None)
         bench_cfg = BenchmarkConfig("Test Bench [>", "Test Bench [>", None,
                                     suite, vm, None, 0, None, data_store)
 
@@ -55,8 +51,8 @@ class PersistencyTest(ReBenchTestCase):
         deserialized = Measurement.from_str_list(data_store, serialized)
 
         self.assertEqual(deserialized.criterion, measurement.criterion)
-        self.assertEqual(deserialized.value,     measurement.value)
-        self.assertEqual(deserialized.unit,      measurement.unit)
+        self.assertEqual(deserialized.value, measurement.value)
+        self.assertEqual(deserialized.unit, measurement.unit)
         self.assertAlmostEqual(deserialized.timestamp, measurement.timestamp)
 
-        self.assertEqual(deserialized.run_id,    measurement.run_id)
+        self.assertEqual(deserialized.run_id, measurement.run_id)

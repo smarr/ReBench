@@ -24,17 +24,16 @@ import logging
 class RunsConfig(object):
     """ General configuration parameters for runs """
     def __init__(self,
-                 number_of_data_points = None,
-                 min_runtime           = None,
-                 parallel_interference_factor = 2.5):
+                 number_of_data_points=None, min_runtime=None,
+                 parallel_interference_factor=2.5):
         self._number_of_data_points = number_of_data_points
-        self._min_runtime           = min_runtime
+        self._min_runtime = min_runtime
         self._parallel_interference_factor = parallel_interference_factor
-    
+
     @property
     def number_of_data_points(self):
         return self._number_of_data_points
-        
+
     @property
     def min_runtime(self):
         return self._min_runtime
@@ -42,7 +41,7 @@ class RunsConfig(object):
     @property
     def parallel_interference_factor(self):
         return self._parallel_interference_factor
-        
+
     def combined(self, run_def):
         config = RunsConfig(self._number_of_data_points, self._min_runtime,
                             self._parallel_interference_factor)
@@ -55,41 +54,40 @@ class RunsConfig(object):
         # parallel_interference_factor is a global setting, so it is not
         # merged from other run definitions
         return config
-    
+
     def log(self):
         msg = "Run Config: number of data points: %d" % self._number_of_data_points
         if self._min_runtime:
             msg += ", min_runtime: %dms" % self._min_runtime
         logging.debug(msg)
-    
+
     def create_termination_check(self, bench_cfg):
         return TerminationCheck(self, bench_cfg)
 
 
 class QuickRunsConfig(RunsConfig):
-    
-    def __init__(self, number_of_data_points = None,
-                       min_runtime           = None,
-                       max_time              = None):
+
+    def __init__(self, number_of_data_points=None, min_runtime=None,
+                 max_time=None):
         super(QuickRunsConfig, self).__init__(number_of_data_points,
                                               min_runtime)
         self._max_time = max_time
-    
+
     def combined(self, run_def):
-        """For Quick runs, only the global config is taken into account.""" 
+        """For Quick runs, only the global config is taken into account."""
         return self
-    
+
     @property
     def max_time(self):
         return self._max_time
-    
+
     def create_termination_check(self, bench_cfg):
         return QuickTerminationCheck(self, bench_cfg)
 
 
 class TerminationCheck(object):
     def __init__(self, run_cfg, bench_cfg):
-        self._run_cfg   = run_cfg
+        self._run_cfg = run_cfg
         self._bench_cfg = bench_cfg
         self._consecutive_erroneous_executions = 0
         self._failed_execution_count = 0
@@ -100,7 +98,7 @@ class TerminationCheck(object):
 
     def indicate_failed_execution(self):
         self._consecutive_erroneous_executions += 1
-        self._failed_execution_count           += 1
+        self._failed_execution_count += 1
 
     def indicate_successful_execution(self):
         self._consecutive_erroneous_executions = 0
@@ -115,8 +113,8 @@ class TerminationCheck(object):
     def has_too_many_failures(self, number_of_data_points):
         return (self._fail_immediately or
                 (self._failed_execution_count > 6) or (
-                 number_of_data_points > 10 and (
-                    self._failed_execution_count > number_of_data_points / 2)))
+                    number_of_data_points > 10 and (
+                        self._failed_execution_count > number_of_data_points / 2)))
 
     def should_terminate(self, number_of_data_points):
         if self._fail_immediately:
@@ -128,7 +126,7 @@ class TerminationCheck(object):
             return True
         elif self.fails_consecutively():
             logging.error(("Three executions of %s have failed in a row, " +
-                          "benchmark is aborted") % self._bench_cfg.name)
+                           "benchmark is aborted") % self._bench_cfg.name)
             return True
         elif self.has_too_many_failures(number_of_data_points):
             logging.error("Many runs of %s are failing, benchmark is aborted."
@@ -142,7 +140,7 @@ class QuickTerminationCheck(TerminationCheck):
     def __init__(self, run_cfg, bench_cfg):
         super(QuickTerminationCheck, self).__init__(run_cfg, bench_cfg)
         self._start_time = time()
-    
+
     def should_terminate(self, number_of_data_points):
         if time() - self._start_time > self._run_cfg.max_time:
             logging.debug("Maximum runtime is reached for %s" % self._bench_cfg.name)

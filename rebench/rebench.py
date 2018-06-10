@@ -16,10 +16,10 @@
 # rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 # sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,13 +39,13 @@ from .configurator   import Configurator
 from .configuration_error import ConfigurationError
 
 
-class ReBench:
-    
+class ReBench(object):
+
     def __init__(self):
         self.version = "0.10.1"
         self.options = None
         self._config = None
-    
+
     def shell_options(self):
         usage = """%(prog)s [options] <config> [exp_name] [vm:$]* [s:$]*
         
@@ -109,7 +109,7 @@ Argument:
                                '(configured in the experiment).')
         data.add_argument('-r', '--rerun', action='store_true',
                           dest='do_rerun', default=False,
-                          help='Rerun experiments, ' +
+                          help='Rerun experiments, '
                                'and discard old data from data file.')
         data.add_argument('-f', '--faulty', action='store_true',
                           dest='include_faulty', default=False,
@@ -152,19 +152,19 @@ Argument:
                                default=True,
                                help='Override configuration and '
                                     'disable reporting to codespeed.')
-        
+
         return parser
 
     @staticmethod
     def determine_exp_name_and_filters(filters):
-        exp_name = filters[0] if len(filters) > 0 and (
-                not filters[0].startswith("vm:") and
-                not filters[0].startswith("s:")) else "all"
+        exp_name = filters[0] if filters and (
+            not filters[0].startswith("vm:") and
+            not filters[0].startswith("s:")) else "all"
         exp_filter = [f for f in filters if (f.startswith("vm:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
 
-    def run(self, argv = None):
+    def run(self, argv=None):
         if argv is None:
             argv = sys.argv
 
@@ -181,15 +181,15 @@ Argument:
             self._config = Configurator(config_filename, data_store, args,
                                         cli_reporter, exp_name, None,
                                         exp_filter)
-        except ConfigurationError as e:
-            logging.error(e.message)
+        except ConfigurationError as exc:
+            logging.error(exc.message)
             sys.exit(-1)
         data_store.load_data()
         return self.execute_experiment()
-        
+
     def execute_experiment(self):
         logging.debug("execute experiment: %s" % self._config.experiment_name())
-        
+
         # first load old data if available
         if self._config.options.clean:
             pass

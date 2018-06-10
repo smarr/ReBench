@@ -27,13 +27,13 @@ class GaugeAdapter(object):
     """
 
     # definition of some regular expression to identify erroneous runs
-    re_error     = re.compile("Error")
-    re_segfault  = re.compile("Segmentation fault")
+    re_error = re.compile("Error")
+    re_segfault = re.compile("Segmentation fault")
     re_bus_error = re.compile("Bus error")
 
     def __init__(self, include_faulty):
         self._include_faulty = include_faulty
-        self._otherErrorDefinitions = None
+        self._other_error_definitions = None
 
     def acquire_command(self, command):
         return command
@@ -55,9 +55,9 @@ class GaugeAdapter(object):
         if self.re_bus_error.search(line):
             return True
 
-        if self._otherErrorDefinitions:
-            for regEx in self._otherErrorDefinitions:
-                if regEx.search(line):
+        if self._other_error_definitions:
+            for reg_ex in self._other_error_definitions:
+                if reg_ex.search(line):
                     return True
 
         return False
@@ -67,6 +67,7 @@ class ExecutionDeliveredNoResults(Exception):
     """The exception to be raised when no results were obtained from the given
        data string."""
     def __init__(self, unparsable_data):
+        super(ExecutionDeliveredNoResults, self).__init__()
         self._unparseable_data = unparsable_data
 
 

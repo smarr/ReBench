@@ -23,24 +23,24 @@ from .build_cmd import BuildCommand
 
 
 class VirtualMachine(object):
-    
+
     def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes,
                  experiment_name, build_commands):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
         if vm_details:
-            benchmarks  = vm_details.get('benchmark', _benchmarks)
+            benchmarks = vm_details.get('benchmark', _benchmarks)
             input_sizes = vm_details.get('input_sizes', _input_sizes)
-            cores       = vm_details.get('cores', None)
+            cores = vm_details.get('cores', None)
         else:
-            benchmarks  = _benchmarks
+            benchmarks = _benchmarks
             input_sizes = _input_sizes
-            cores       = None
-        
-        self._name             = name
+            cores = None
+
+        self._name = name
         self._benchsuite_names = benchmarks
-        self._input_sizes      = input_sizes
+        self._input_sizes = input_sizes
 
         self._cores = cores or global_cfg.get('cores', [1])
 
@@ -57,23 +57,23 @@ class VirtualMachine(object):
         else:
             self._build = None
 
-        self._binary           = global_cfg['binary']
-        self._args             = global_cfg.get('args', '')
-        self._experiment_name  = experiment_name
+        self._binary = global_cfg['binary']
+        self._args = global_cfg.get('args', '')
+        self._experiment_name = experiment_name
         self._execute_exclusively = global_cfg.get('execute_exclusively', True)
-    
+
     @property
     def name(self):
         return self._name
-    
+
     @property
     def benchmark_suite_names(self):
         return self._benchsuite_names
-    
+
     @property
     def input_sizes(self):
         return self._input_sizes
-    
+
     @property
     def cores(self):
         return self._cores
@@ -85,7 +85,7 @@ class VirtualMachine(object):
     @property
     def path(self):
         return self._path
-    
+
     @property
     def binary(self):
         return self._binary

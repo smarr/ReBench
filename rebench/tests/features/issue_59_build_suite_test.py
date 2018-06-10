@@ -18,24 +18,23 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from __future__ import print_function
+import os
 
 from ...configurator     import Configurator
 from ...executor         import Executor
 from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
-import os
-
 
 class Issue59BuildSuite(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue59BuildSuite, self).setUp(__file__)
+        super(Issue59BuildSuite, self).setUp()
+        self._set_path(__file__)
 
     def test_build_suite1(self):
         cnf = Configurator(self._path + '/issue_59.conf', DataStore(),
-                           standard_data_file = self._tmp_file,
-                           exp_name='A')
+                           standard_data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -51,8 +50,7 @@ class Issue59BuildSuite(ReBenchTestCase):
 
     def test_build_suite_same_command_executed_once_only(self):
         cnf = Configurator(self._path + '/issue_59.conf', DataStore(),
-                           standard_data_file = self._tmp_file,
-                           exp_name='Test')
+                           standard_data_file=self._tmp_file, exp_name='Test')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -63,8 +61,8 @@ class Issue59BuildSuite(ReBenchTestCase):
             self.assertEqual("Bench1", runs[0].bench_cfg.name)
             self.assertEqual(2, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/issue_59_cnt'))
-            with open(self._path + '/issue_59_cnt', 'r') as f:
-                content = f.read()
+            with open(self._path + '/issue_59_cnt', 'r') as build_cnt:
+                content = build_cnt.read()
             self.assertEqual("I\n", content)
         finally:
             os.remove(self._path + '/issue_59_cnt')

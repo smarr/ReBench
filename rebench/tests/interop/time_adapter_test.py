@@ -26,27 +26,27 @@ from ...interop.time_adapter import TimeAdapter, TimeManualAdapter
 class TimeAdapterTest(TestCase):
 
     def test_acquire_command(self):
-        ta = TimeAdapter(False)
-        cmd = ta.acquire_command("FOO")
+        adapter = TimeAdapter(False)
+        cmd = adapter.acquire_command("FOO")
         self.assertTrue(cmd.startswith("/usr/bin/time"))
 
     def test_parse_data(self):
         data = """real        11.00
 user         5.00
 sys          1.00"""
-        ta = TimeAdapter(False)
-        d = ta.parse_data(data, None)
-        self.assertEqual(1, len(d))
+        adapter = TimeAdapter(False)
+        data = adapter.parse_data(data, None)
+        self.assertEqual(1, len(data))
 
-        m = d[0].get_measurements()
-        self.assertEqual(3, len(m))
-        self.assertEqual(11000, d[0].get_total_value())
+        measurements = data[0].get_measurements()
+        self.assertEqual(3, len(measurements))
+        self.assertEqual(11000, data[0].get_total_value())
 
     def test_parse_no_data(self):
-        ta = TimeAdapter(False)
-        self.assertRaises(OutputNotParseable, ta.parse_data, "", None)
+        adapter = TimeAdapter(False)
+        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None)
 
     def test_manual_adapter(self):
-        ta = TimeManualAdapter(False)
-        cmd = ta.acquire_command("FOO")
+        adapter = TimeManualAdapter(False)
+        cmd = adapter.acquire_command("FOO")
         self.assertEqual("FOO", cmd)

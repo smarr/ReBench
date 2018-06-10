@@ -27,11 +27,12 @@ from ..rebench_test_case import ReBenchTestCase
 class Issue34AcceptFaultyRuns(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue34AcceptFaultyRuns, self).setUp(__file__)
+        super(Issue34AcceptFaultyRuns, self).setUp()
+        self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
         cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -57,7 +58,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
 
     def test_faulty_runs_accepted_with_switch(self):
         cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
-                           standard_data_file = self._tmp_file)
+                           standard_data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -72,5 +73,3 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
 
         self.assertEqual("invalid", runs[2].bench_cfg.name)
         self.assertEqual(10, runs[2].get_number_of_data_points())
-
-
