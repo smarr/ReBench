@@ -33,13 +33,6 @@ class BenchmarkConfig(object):
 
         command = details.get('command', name)
 
-        # TODO: remove in ReBench 1.0
-        if 'performance_reader' in details:
-            logging.warning("Found deprecated 'performance_reader' key in"
-                            " configuration, please replace by 'gauge_adapter'"
-                            " key.")
-            details['gauge_adapter'] = details['performance_reader']
-
         gauge_adapter = details.get('gauge_adapter',
                                     suite.gauge_adapter)
         extra_args = details.get('extra_args', None)
