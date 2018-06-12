@@ -221,13 +221,6 @@ schema;experiment_type:
     desc:
       type: str
       desc: Description of the experiment
-    actions:
-      type: str
-      enum: [benchmark, profile]
-      desc: |
-        Different possible actions.
-        TODO: this should probably be removed.
-        Don't think this was ever really used.
     benchmark:
       desc: |
         Benchmark Suite to be used
