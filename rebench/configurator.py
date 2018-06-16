@@ -120,7 +120,7 @@ def load_config(file_name):
     from pykwalify.errors import SchemaError
 
     # Disable most logging for pykwalify
-    logging.getLogger('pykwalify').setLevel(logging.ERROR)
+    logging.getLogger('pykwalify').addHandler(logging.NullHandler())
 
     try:
         with open(file_name, 'r') as conf_file:
