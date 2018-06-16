@@ -17,10 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import sys
 import logging
 import subprocess
-import traceback
 from os.path import dirname
 
 from .model.experiment import Experiment
@@ -28,7 +26,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError
+from .ui import UIError, DETAIL_INDENT
 
 
 class _VMFilter(object):
@@ -117,6 +115,7 @@ def load_config(file_name):
     """
     import yaml
     from pykwalify.core import Core
+    from pykwalify.errors import SchemaError
 
     # Disable most logging for pykwalify
     logging.getLogger('pykwalify').setLevel(logging.ERROR)
@@ -130,10 +129,9 @@ def load_config(file_name):
             try:
                 validator.validate(raise_exception=True)
             except SchemaError as err:
-                indent = "\n    "
                 raise UIError(
-                    "Validation of " + file_name + " failed." + indent +
-                    (indent.join(validator.validation_errors)), err)
+                    "Validation of " + file_name + " failed." + DETAIL_INDENT +
+                    (DETAIL_INDENT.join(validator.validation_errors)), err)
             return data
     except IOError as err:
         if err.errno == 2:

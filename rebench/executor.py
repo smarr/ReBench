@@ -34,8 +34,9 @@ from threading import Thread, RLock
 from humanfriendly.terminal import warning
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
+from .statistics  import StatisticProperties
+from .ui import DETAIL_INDENT
 
 
 class FailedBuilding(Exception):
@@ -400,14 +401,14 @@ class Executor(object):
             run_id.fail_immediately()
             if err.errno == 2:
                 warning(
-                    ("Failed executing a run."
-                     "\n    It failed with: %s."
-                     "\n    File: %s") % (err.strerror, err.filename))
+                    ("Failed executing a run." +
+                     DETAIL_INDENT + "It failed with: %s." +
+                     DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
             else:
                 warning(str(err))
             warning(
-                ("\n    Cmd: %s"
-                 "\n    Cwd: %s") % (cmdline, run_id.location))
+                (DETAIL_INDENT + "Cmd: %s" +
+                 DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
             return True
 
         if return_code != 0 and not self._include_faulty:

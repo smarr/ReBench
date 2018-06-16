@@ -19,6 +19,9 @@
 # IN THE SOFTWARE.
 
 
+DETAIL_INDENT = "\n    "
+
+
 class UIError(Exception):
 
     def __init__(self, message, exception):
