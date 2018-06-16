@@ -26,6 +26,8 @@ import logging
 import json
 import re
 
+from .ui import warning_low_priority
+
 try:
     from http.client import HTTPException
     from urllib.request import urlopen
@@ -118,9 +120,6 @@ class CliReporter(TextReporter):
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
 
-        # TODO: re-add support, think, we need that based on the proper config, i.e., the run id
-#         self._min_iteration_time = configurator.statistics.min_iteration_time
-
     def run_failed(self, run_id, cmdline, return_code, output):
         # Additional information in debug mode
         result = "[%s] Run failed: %s\n" % (
@@ -155,14 +154,12 @@ class CliReporter(TextReporter):
         self._runs_completed += 1
         self._runs_remaining -= 1
 
-        if run_id.run_config.min_iteration_time:
-            if statistics.mean < run_id.run_config.min_iteration_time:
-                print(("WARNING: measured mean is lower than min_iteration_time (%s) "
-                       "\t mean: %.1f\trun id: %s")
-                      % (run_id.run_config.min_iteration_time,
-                         statistics.mean,
-                         run_id.as_simple_string()))
-                print("Cmd: %s" % cmdline)
+        if run_id.min_iteration_time and statistics.mean < run_id.min_iteration_time:
+            warning_low_priority(
+                ("WARNING: measured mean is lower than min_iteration_time (%s) "
+                 "\t mean: %.1f\trun id: %s")
+                % (run_id.min_iteration_time, statistics.mean, run_id.as_simple_string()))
+            warning_low_priority("Cmd: %s" % cmdline)
 
     def report_job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())
