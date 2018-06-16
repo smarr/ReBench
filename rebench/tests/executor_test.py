@@ -23,7 +23,7 @@ import os
 import sys
 
 from ..executor          import Executor, BenchmarkThreadExceptions
-from ..configurator      import Configurator
+from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
 from ..                  import ReBench
@@ -42,8 +42,8 @@ class ExecutorTest(ReBenchTestCase):
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf = Configurator(self._path + '/test.conf', DataStore(), options,
-                           None, 'Test', standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(), options,
+                           None, 'Test', data_file=self._tmp_file)
 
         ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
         ex.execute()
@@ -69,7 +69,8 @@ class ExecutorTest(ReBenchTestCase):
 
         try:
             options = ReBench().shell_options().parse_args(['dummy'])
-            cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+            cnf = Configurator(load_config(self._path + '/test.conf'),
+                               DataStore(), options,
                                None, 'TestBrokenCommandFormat',
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
@@ -87,7 +88,8 @@ class ExecutorTest(ReBenchTestCase):
 
         try:
             options = ReBench().shell_options().parse_args(['dummy'])
-            cnf = Configurator(self._path + '/test.conf', DataStore(), options,
+            cnf = Configurator(load_config(self._path + '/test.conf'),
+                               DataStore(), options,
                                None, 'TestBrokenCommandFormat2',
                                standard_data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
@@ -114,13 +116,15 @@ class ExecutorTest(ReBenchTestCase):
                                  measurements[3].value)
 
     def test_basic_execution(self):
-        cnf = Configurator(self._path + '/small.conf', DataStore(), None,
                            standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/small.conf'),
+                           DataStore(), None,
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
-        cnf = Configurator(self._path + '/small.conf', DataStore(), None, None,
                            'all', standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/small.conf'),
+                           DataStore(), None, None,
         self._basic_execution(cnf)
 
     def test_shell_options_without_filters(self):

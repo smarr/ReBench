@@ -20,7 +20,7 @@
 from __future__ import print_function
 import os
 
-from ...configurator     import Configurator
+from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
@@ -33,8 +33,8 @@ class Issue59BuildSuite(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_build_suite1(self):
-        cnf = Configurator(self._path + '/issue_59.conf', DataStore(),
                            standard_data_file=self._tmp_file, exp_name='A')
+        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 
@@ -49,8 +49,8 @@ class Issue59BuildSuite(ReBenchTestCase):
             os.remove(self._path + '/issue_59_cnt')
 
     def test_build_suite_same_command_executed_once_only(self):
-        cnf = Configurator(self._path + '/issue_59.conf', DataStore(),
                            standard_data_file=self._tmp_file, exp_name='Test')
+        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 

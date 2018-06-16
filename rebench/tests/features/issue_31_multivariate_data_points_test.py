@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 from __future__ import print_function
 
-from ...configurator           import Configurator
+from ...configurator           import Configurator, load_config
 from ...executor               import Executor
 from ...persistence            import DataStore
 from ..rebench_test_case import ReBenchTestCase
@@ -35,7 +35,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
-        cnf = Configurator(self._path + '/issue_31.conf', DataStore(),
+        cnf = Configurator(load_config(self._path + '/issue_31.conf'), DataStore(),
                            exp_name=exp_name,
                            standard_data_file=self._tmp_file)
         ex = Executor(cnf.get_runs(), False, False)

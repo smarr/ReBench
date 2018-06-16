@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from ...model.runs_config import TerminationCheck
-from ...configurator import Configurator
+from ...configurator import Configurator, load_config
 from ...persistence  import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
@@ -27,8 +27,8 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def setUp(self):
         super(RunsConfigTestCase, self).setUp()
-        self._cnf = Configurator(self._path + '/small.conf', DataStore(), None,
                                  standard_data_file=self._tmp_file)
+        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None,
         runs = self._cnf.get_runs()
         self._run = list(runs)[0]
 

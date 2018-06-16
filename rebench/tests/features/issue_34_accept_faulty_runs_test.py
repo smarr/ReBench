@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator
+from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...rebench          import ReBench
 from ...persistence      import DataStore
@@ -31,8 +31,8 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
-        cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
                            standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(),
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.bench_cfg.name)
 

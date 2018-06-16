@@ -91,6 +91,41 @@ class _RunFilter(object):
         return False
 
 
+def load_config(file_name):
+    """
+    Load the file, verify that it conforms to the schema,
+    and return the configuration.
+    """
+    import yaml
+    from pykwalify.core import Core
+
+    # Disable most logging for pykwalify
+    logging.getLogger('pykwalify').setLevel(logging.ERROR)
+
+    try:
+        with open(file_name, 'r') as conf_file:
+            data = yaml.safe_load(conf_file)
+            validator = Core(
+                source_data=data,
+                schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+            validator.validate(raise_exception=False)
+            if validator.validation_errors and validator.validation_errors:
+                logging.error(
+                    "Validation of " + file_name + " failed. " +
+                    (" ".join(validator.validation_errors)))
+                sys.exit(-1)
+            return data
+    except IOError:
+        logging.error("An error occurred on opening the config file (%s)."
+                      % file_name)
+        logging.error(traceback.format_exc(0))
+        sys.exit(-1)
+    except yaml.YAMLError:
+        logging.error("Failed parsing the config file (%s)." % file_name)
+        logging.error(traceback.format_exc(0))
+        sys.exit(-1)
+
+
 class Configurator(object):
 
     def __init__(self, file_name, data_store, cli_options=None,
@@ -113,37 +148,6 @@ class Configurator(object):
     @property
     def build_log(self):
         return self._raw_config.get('build_log', 'build.log')
-
-    @staticmethod
-    def _load_config(file_name):
-        import yaml
-        from pykwalify.core import Core
-
-        # Disable most logging for pykwalify
-        logging.getLogger('pykwalify').setLevel(logging.ERROR)
-
-        try:
-            with open(file_name, 'r') as conf_file:
-                data = yaml.safe_load(conf_file)
-                validator = Core(
-                    source_data=data,
-                    schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-                validator.validate(raise_exception=False)
-                if validator.validation_errors and validator.validation_errors:
-                    logging.error(
-                        "Validation of " + file_name + " failed. " +
-                        (" ".join(validator.validation_errors)))
-                    sys.exit(-1)
-                return data
-        except IOError:
-            logging.error("An error occurred on opening the config file (%s)."
-                          % file_name)
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
-        except yaml.YAMLError:
-            logging.error("Failed parsing the config file (%s)." % file_name)
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
 
     def _process_cli_options(self, options):
         if options is None:

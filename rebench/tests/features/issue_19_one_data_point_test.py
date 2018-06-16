@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 from __future__ import print_function
 
-from ...configurator     import Configurator
+from ...configurator     import Configurator, load_config
 from ...executor         import Executor, RoundRobinScheduler
 from ...persistence      import DataStore
 from ...reporter         import Reporter
@@ -79,8 +79,8 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         self._run_count[run_id] = self._run_count.get(run_id, 0) + 1
 
     def test_one_measurement_at_a_time_and_correct_number_of_data_points(self):
-        cnf = Configurator(self._path + '/issue_19.conf', DataStore(),
                            standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_19.conf'), DataStore(),
         reporter = TestReporter(self)
         for run in cnf.get_runs():
             run.add_reporter(reporter)
