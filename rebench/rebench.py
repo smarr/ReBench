@@ -189,8 +189,8 @@ Argument:
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
-            logging.error(exc.message)
-            sys.exit(-1)
+            raise UIError(exc.message, exc)
+
         data_store.load_data()
         return self.execute_experiment()
 
