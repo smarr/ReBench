@@ -17,9 +17,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import sys
 
+from humanfriendly.compat import coerce_string
+from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 
 DETAIL_INDENT = "\n    "
+
+
+def warning_low_priority(text, *args, **kw):
+    text = coerce_string(text)
+    if terminal_supports_colors(sys.stderr):
+        text = ansi_wrap(text, color='magenta')
+    auto_encode(sys.stderr, text + '\n', *args, **kw)
 
 
 class UIError(Exception):
