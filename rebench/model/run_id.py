@@ -19,10 +19,10 @@
 # IN THE SOFTWARE.
 import logging
 import re
-import sys
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
+from ..ui import UIError, DETAIL_INDENT
 
 
 class RunId(object):
@@ -188,11 +188,23 @@ class RunId(object):
                                 self._cores, self._input_size, self._var_value)
 
     def _expand_vars(self, string):
-        return string % {'benchmark' : self._benchmark.command,
-                         'input'     : self._input_size,
-                         'variable'  : self._var_value,
-                         'cores'     : self._cores,
-                         'warmup'    : self._benchmark.run_details.warmup}
+        try:
+            return string % {'benchmark': self._benchmark.command,
+                             'input': self._input_size,
+                             'variable': self._var_value,
+                             'cores': self._cores,
+                             'warmup': self._benchmark.run_details.warmup}
+        except ValueError as err:
+            self._report_format_issue_and_exit(string, err)
+        except TypeError as err:
+            self._report_format_issue_and_exit(string, err)
+        except KeyError as err:
+            msg = ("The configuration of %s contains improper Python format strings."
+                   % self._benchmark.name)
+            msg += DETAIL_INDENT + ("The command line configured is: %s" % string)
+            msg += DETAIL_INDENT + ("%s is not supported as key." % err.message)
+            msg += DETAIL_INDENT + "Only benchmark, input, variable, cores, and warmup are supported."
+            raise UIError(msg, err)
 
     def cmdline(self):
         if self._cmdline:
@@ -210,12 +222,7 @@ class RunId(object):
         if self._benchmark.extra_args is not None:
             cmdline += " %s" % self._benchmark.extra_args
 
-        try:
-            cmdline = self._expand_vars(cmdline)
-        except ValueError:
-            self._report_cmdline_format_issue_and_exit(cmdline)
-        except TypeError:
-            self._report_cmdline_format_issue_and_exit(cmdline)
+        cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
         return self._cmdline
@@ -227,20 +234,21 @@ class RunId(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def _report_cmdline_format_issue_and_exit(self, cmdline):
-        logging.critical("The configuration of %s contains improper "
-                         "Python format strings.", self._benchmark.name)
+    def _report_format_issue_and_exit(self, cmdline, err):
+        msg = ("The configuration of the benchmark %s contains an improper Python format string."
+               % self._benchmark.name)
 
         # figure out which format misses a conversion type
+        msg += DETAIL_INDENT + ("The command line configured is: %s" % cmdline)
+        msg += DETAIL_INDENT + ("Error: %s" % err.message)
         without_conversion_type = re.findall(
             r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
-        logging.error("The command line configured is: %s", cmdline)
-        logging.error("The following elements do not have conversion types: \"%s\"",
-                      '", "'.join(without_conversion_type))
-        logging.error("This can be fixed by replacing for instance %s with %ss",
-                      without_conversion_type[0],
-                      without_conversion_type[0])
-        sys.exit(-1)
+        if without_conversion_type:
+            msg += DETAIL_INDENT + ("The following elements do not have conversion types: \"%s\""
+                                    % '", "'.join(without_conversion_type))
+            msg += DETAIL_INDENT + ("This can be fixed by replacing for instance %s with %ss"
+                                    % (without_conversion_type[0], without_conversion_type[0]))
+        raise UIError(msg, err)
 
     def as_str_list(self):
         result = self._benchmark.as_str_list()
