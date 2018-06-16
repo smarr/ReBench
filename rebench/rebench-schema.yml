@@ -6,35 +6,49 @@ schema;runs_type:
   mapping: &EXP_RUN_DETAILS
     invocations:
       type: int
+      # default: 1  #  can't specify this here, because the defaults override settings
       desc: |
         The number of times a virtual machine is executed to run one experiment.
         Thus, this is the number of runs per virtual machine.
     iterations:
       type: int
+      # default: 1 #  can't specify this here, because the defaults override settings
       desc: |
         The number of times a benchmark is executed within a virtual machine
         invocation. This needs to be supported by a benchmark harness and
         ReBench passes this value on to the harness or benchmark.
-    ## TODO: remove number_of_data_points
-    number_of_data_points:
+    warmup:
       type: int
-      desc: Benchmarks are executed until we have this number of data points
+      desc: |
+        Consider the first N iterations as warmup.
+        This is used by reporters, for instance to discard these
+        N measurements before calculating statistics.
+
     min_iteration_time:
       type: int
       # TODO: make sure this is the correct default value
-      default: 50
+      # default: 50 #  can't specify this here, because the defaults override settings
       desc: |
         Give a warning if the average run time is below this value in
         milliseconds.
     max_invocation_time:
       type: int
-      desc: Time in second after which an invocation is terminated.
+      desc: |
+        Time in second after which an invocation is terminated.
+        The value -1 indicates that there is no timeout intended.
+      # default: -1 #  can't specify this here, because the defaults override settings
     parallel_interference_factor:
       type: float
       desc: |
         A higher factor means a lower degree of parallelism.
         TODO: should probably be removed
         TODO: then again, we might want this for research on the impact
+    execute_exclusively:
+      type: bool
+      # default: false #  can't specify this here, because the defaults override settings
+      desc: |
+        TODO: probably needs to be removed, not sure. parallel exec of
+        benchmarks introduced a lot of noise
 
 schema;reporting_type:
   type: map
@@ -52,6 +66,34 @@ schema;reporting_type:
             The URL to the /result/add/json/ rest endpoint for submitting
             results (the full URL).
 
+schema;variables:
+  desc: |
+    defining variables for an experiment. not, this is not a type used by the
+    schema. instead, we use YAML to reuse this definition
+  type: map
+  mapping: &EXP_VARIABLES
+    input_sizes:
+      type: seq
+      desc: |
+        Many benchmark harnesses and benchmarks take an input size as a
+        configuration parameter. It might identify a data file, or some other
+        way to adjust the amount of computation performed.
+      # default: ['']  # that's the semantics, but pykwalify does not support it
+      sequence:
+        - type: scalar
+    cores:
+      type: seq
+      desc: The cores to be used by the benchmark.
+      # default: [1]  # that's the semantics, but pykwalify does not support it
+      sequence:
+        - type: scalar
+    variable_values:
+      type: seq
+      desc: Another dimension by which the benchmark execution can be varied.
+      # default: ['']  # that's the semantics, but pykwalify does not support it
+      sequence:
+        - type: scalar
+
 schema;benchmark_type_str:
   type: str
   desc: The name of a benchmark, can be simply the name.
@@ -65,15 +107,11 @@ schema;benchmark_type_map:
       type: map
       mapping:
         <<: *EXP_RUN_DETAILS
+        <<: *EXP_VARIABLES
         extra_args:
           type: scalar
           desc: This extra argument is appended to the benchmark's command line.
-        warmup:
-          type: int
-          desc: |
-            Consider the first N iterations as warmup.
-            This is used by reporters, for instance to discard these
-            N measurements before calculating statistics.
+          # default: '' # causes issue in pykwalify
         command:
           type: str
           desc: use this command instead of the name for the command line.
@@ -84,32 +122,6 @@ schema;benchmark_type_map:
             This is useful to have a name different from the one relevant
             at the suite level.
 
-schema;variables:
-  desc: |
-    defining variables for an experiment. not, this is not a type used by the
-    schema. instead, we use YAML to reuse this definition
-  type: map
-  mapping: &EXP_VARIABLES
-    input_sizes:
-      type: seq
-      desc: |
-        Many benchmark harnesses and benchmarks take an input size as a
-        configuration parameter. It might identify a data file, or some other
-        way to adjust the amount of computation performed.
-      sequence:
-        - type: scalar
-    cores:
-      type: seq
-      desc: The cores to be used by the benchmark.
-      sequence:
-        - type: scalar
-    variable_values:
-      type: seq
-      desc: Another dimension by which the benchmark execution can be varied.
-      sequence:
-        - type: scalar
-
-
 schema;benchmark_suite_type:
   type: map
   mapping:
@@ -117,10 +129,12 @@ schema;benchmark_suite_type:
     <<: *EXP_VARIABLES
     gauge_adapter:
       type: str
+      required: yes
       desc: |
         Name of the parser that interpreters the output of the benchmark harness
     command:
       type: str
+      required: yes
       desc: |
         The command for the benchmark harness. It's going to be combined with the
         VM's command line. It supports various format variables, including:
@@ -142,6 +156,7 @@ schema;benchmark_suite_type:
       type: str
     benchmarks:
       type: seq
+      required: yes
       matching: any
       sequence:
         - include: benchmark_type_str
@@ -170,6 +185,7 @@ schema;vm_type:
       desc: the name of the binary to be used
     args:
       type: str
+      # default: '' # causes issue in pykwalify
       desc: |
         The arguments when assembling the command line.
         TODO: do we support format string parameters here?
@@ -185,11 +201,6 @@ schema;vm_type:
         the VM. If `path` is set, it is used as working directory. Otherwise,
         it is the current working directory of ReBench.
       type: str
-    execute_exclusively:
-      type: bool
-      desc: |
-        TODO: probably needs to be removed, not sure. parallel exec of
-        benchmarks introduced a lot of noise
 
 schema;exp_suite_type:
   desc: A list of suites
@@ -206,7 +217,7 @@ schema;exp_exec_type:
       mapping:
         <<: *EXP_RUN_DETAILS
         <<: *EXP_VARIABLES
-        benchmark:
+        suites:
           include: exp_suite_type
 
 schema;experiment_type:
@@ -221,14 +232,12 @@ schema;experiment_type:
     desc:
       type: str
       desc: Description of the experiment
-    benchmark:
-      desc: |
-        Benchmark Suite to be used
-        TODO: should this be renamed into suites
-      include: exp_suite_type
     data_file:
       desc: The data for this experiment goes into a separate file
       type: str
+    reporting:
+      include: reporting_type
+
     executions:
       type: seq
       desc: |
@@ -236,8 +245,9 @@ schema;experiment_type:
       sequence:
         - type: str
         - include: exp_exec_type
-    reporting:
-      include: reporting_type
+    suites:
+      desc: List of benchmark suites to be used.
+      include: exp_suite_type
 
 type: map
 mapping:
@@ -249,8 +259,10 @@ mapping:
     default:  all
   standard_data_file:
     type:     str
+    default:  rebench.data
   build_log:
     type:     str
+    default:  build.log
   runs:
     include: runs_type
   reporting:
