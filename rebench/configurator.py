@@ -91,6 +91,21 @@ class _RunFilter(object):
         return False
 
 
+def can_set_niceness():
+    """
+    Check whether we can ask the operating system to influence the priority of
+    our benchmarks.
+    """
+    output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
+                                     stderr=subprocess.STDOUT)
+    if type(output) != str:  # pylint: disable=unidiomatic-typecheck
+        output = output.decode('utf-8')
+    if "cannot set niceness" in output or "Permission denied" in output:
+        return False
+    else:
+        return True
+
+
 def load_config(file_name):
     """
     Load the file, verify that it conforms to the schema,
@@ -167,7 +182,7 @@ class Configurator(object):
             logging.getLogger().setLevel(logging.ERROR)
 
         if options.use_nice:
-            if not self._can_set_niceness():
+            if not can_set_niceness():
                 logging.error("Process niceness cannot be set currently. "
                               "To execute benchmarks with highest priority, "
                               "you might need root/admin rights.")
@@ -176,16 +191,6 @@ class Configurator(object):
 
         return options
 
-    @staticmethod
-    def _can_set_niceness():
-        output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
-                                         stderr=subprocess.STDOUT)
-        if type(output) != str:  # pylint: disable=unidiomatic-typecheck
-            output = output.decode('utf-8')
-        if "cannot set niceness" in output or "Permission denied" in output:
-            return False
-        else:
-            return True
 
     @property
     def options(self):
