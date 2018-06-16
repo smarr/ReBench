@@ -137,8 +137,8 @@ class CliReporter(TextReporter):
 
         print("Cmd: %s\n" % cmdline)
 
-        if run_id.benchmark.suite.has_max_invocation_time():
-            logging.debug("max_invocation_time: %s" % run_id.benchmark.suite.max_invocation_time)
+        if run_id.max_invocation_time:
+            logging.debug("max_invocation_time: %s" % run_id.max_invocation_time)
         logging.debug("cwd: %s" % run_id.benchmark.suite.location)
 
         if not self._executes_verbose and output and output.strip():
@@ -173,16 +173,9 @@ class CliReporter(TextReporter):
     def start_run(self, run_id):
         if self._runs_completed > 0:
             current = time()
-            data_points_per_run = run_id.run_config.number_of_data_points
-            data_points_completed = (self._runs_completed *
-                                     data_points_per_run +
-                                     len(run_id.get_data_points()))
-            data_points_remaining = (self._runs_remaining *
-                                     data_points_per_run -
-                                     len(run_id.get_data_points()))
-            time_per_data_point = ((current - self._start_time) /
-                                   data_points_completed)
-            etl = time_per_data_point * data_points_remaining
+
+            time_per_invocation = ((current - self._start_time) / self._runs_completed)
+            etl = time_per_invocation * self._runs_remaining
             sec = etl % 60
             minute = (etl - sec) / 60 % 60
             hour = (etl - sec - minute) / 60 / 60

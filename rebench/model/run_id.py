@@ -54,6 +54,14 @@ class RunId(object):
         return self._benchmark.run_details.max_invocation_time
 
     @property
+    def iterations(self):
+        return self._benchmark.run_details.iterations
+
+    @property
+    def invocations(self):
+        return self._benchmark.run_details.invocations
+
+    @property
     def execute_exclusively(self):
         return self._benchmark.run_details.execute_exclusively
 
@@ -203,7 +211,8 @@ class RunId(object):
                    % self._benchmark.name)
             msg += DETAIL_INDENT + ("The command line configured is: %s" % string)
             msg += DETAIL_INDENT + ("%s is not supported as key." % err.message)
-            msg += DETAIL_INDENT + "Only benchmark, input, variable, cores, and warmup are supported."
+            msg += DETAIL_INDENT
+            msg += "Only benchmark, input, variable, cores, and warmup are supported."
             raise UIError(msg, err)
 
     def cmdline(self):
