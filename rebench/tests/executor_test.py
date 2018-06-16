@@ -20,14 +20,14 @@
 import unittest
 import subprocess
 import os
-import sys
 
-from ..executor          import Executor, BenchmarkThreadExceptions
+from .rebench_test_case import ReBenchTestCase
+from ..                  import ReBench
+from ..executor          import Executor
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
-from ..                  import ReBench
-from .rebench_test_case import ReBenchTestCase
+from ..ui import UIError
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -61,13 +61,8 @@ class ExecutorTest(ReBenchTestCase):
 #        self.assertAlmostEqual(45871.453514433859, i_high)
 #        self.assertAlmostEqual(0.00450904792104, interval_percentage)
 
-    def test_broken_command_format(self):
-        def test_exit(val):
-            self.assertEqual(-1, val, "got the correct error code")
-            raise RuntimeError("TEST-PASSED")
-        sys.exit = test_exit
-
-        try:
+    def test_broken_command_format_with_ValueError(self):
+        with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
                                DataStore(), options,
@@ -75,18 +70,10 @@ class ExecutorTest(ReBenchTestCase):
                                data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as err:
-            self.assertEqual("TEST-PASSED", str(err))
-        except BenchmarkThreadExceptions as err:
-            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
+        self.assertIsInstance(err.exception.source_exception, ValueError)
 
     def test_broken_command_format_with_TypeError(self):
-        def test_exit(val):
-            self.assertEqual(-1, val, "got the correct error code")
-            raise RuntimeError("TEST-PASSED")
-        sys.exit = test_exit
-
-        try:
+        with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
                                DataStore(), options,
@@ -94,10 +81,7 @@ class ExecutorTest(ReBenchTestCase):
                                data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
-        except RuntimeError as err:
-            self.assertEqual("TEST-PASSED", str(err))
-        except BenchmarkThreadExceptions as err:
-            self.assertEqual("TEST-PASSED", str(err.exceptions[0]))
+            self.assertIsInstance(err.exception.source_exception, TypeError)
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()

@@ -28,6 +28,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
+from .ui import UIError
 
 
 class _VMFilter(object):
@@ -126,22 +127,24 @@ def load_config(file_name):
             validator = Core(
                 source_data=data,
                 schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-            validator.validate(raise_exception=False)
-            if validator.validation_errors and validator.validation_errors:
-                logging.error(
-                    "Validation of " + file_name + " failed. " +
-                    (" ".join(validator.validation_errors)))
-                sys.exit(-1)
+            try:
+                validator.validate(raise_exception=True)
+            except SchemaError as err:
+                indent = "\n    "
+                raise UIError(
+                    "Validation of " + file_name + " failed." + indent +
+                    (indent.join(validator.validation_errors)), err)
             return data
-    except IOError:
-        logging.error("An error occurred on opening the config file (%s)."
-                      % file_name)
-        logging.error(traceback.format_exc(0))
-        sys.exit(-1)
-    except yaml.YAMLError:
-        logging.error("Failed parsing the config file (%s)." % file_name)
-        logging.error(traceback.format_exc(0))
-        sys.exit(-1)
+    except IOError as err:
+        if err.errno == 2:
+            assert err.strerror == "No such file or directory"
+            raise UIError("The requested config file (%s) could not be opened. %s."
+                          % (file_name, err.strerror), err)
+        else:
+            raise UIError(str(err), err)
+    except yaml.YAMLError as err:
+        raise UIError("Parsing of the config file "
+                      + file_name + " failed.\nError " + str(err), err)
 
 
 class Configurator(object):

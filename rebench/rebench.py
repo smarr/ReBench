@@ -29,7 +29,10 @@
 # IN THE SOFTWARE.
 import logging
 import sys
+
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
+
+from humanfriendly.terminal import warning
 
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
@@ -37,6 +40,7 @@ from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
+from .ui import UIError
 
 
 class ReBench(object):
@@ -217,6 +221,9 @@ def main_func():
         return 0 if ReBench().run() else -1
     except KeyboardInterrupt:
         logging.info("Aborted by user request")
+        return -1
+    except UIError as err:
+        warning(err.message)
         return -1
 
 
