@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...model.runs import TerminationCheck
+from ...model.termination_check import TerminationCheck
 from ...configurator import Configurator, load_config
 from ...persistence  import DataStore
 from ..rebench_test_case import ReBenchTestCase

@@ -22,7 +22,7 @@ import re
 import sys
 
 from .benchmark import Benchmark
-from .runs import TerminationCheck
+from .termination_check import TerminationCheck
 
 
 class RunId(object):
