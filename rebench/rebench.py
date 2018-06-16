@@ -32,15 +32,13 @@ import sys
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 
-from humanfriendly.terminal import warning
-
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
 from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
-from .ui import UIError
+from .ui import UIError, error
 
 
 class ReBench(object):
@@ -223,7 +221,7 @@ def main_func():
         logging.info("Aborted by user request")
         return -1
     except UIError as err:
-        warning(err.message)
+        error(err.message)
         return -1
 
 

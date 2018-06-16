@@ -21,14 +21,12 @@ import logging
 import subprocess
 from os.path import dirname
 
-from humanfriendly.terminal import warning
-
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError, DETAIL_INDENT
+from .ui import UIError, DETAIL_INDENT, error
 
 
 class _VMFilter(object):
@@ -199,10 +197,10 @@ class Configurator(object):
             logging.getLogger().setLevel(logging.ERROR)
 
         if self._options.use_nice and not can_set_niceness():
-            warning("Error: Process niceness could not be set. "
-                    "To execute benchmarks with highest priority, "
-                    "you might need root/admin rights.")
-            warning("Deactivated usage of nice command.")
+            error("Error: Process niceness could not be set. "
+                  "To execute benchmarks with highest priority, "
+                  "you might need root/admin rights.")
+            error("Deactivated usage of nice command.")
             self._options.use_nice = False
 
     @property

@@ -32,12 +32,11 @@ import sys
 from threading import Thread, RLock
 
 from humanfriendly import Spinner
-from humanfriendly.terminal import warning
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
 from .statistics import StatisticProperties, mean
-from .ui import DETAIL_INDENT
+from .ui import DETAIL_INDENT, error
 
 
 class FailedBuilding(Exception):
@@ -70,7 +69,7 @@ class RunScheduler(object):
     def _indicate_progress(self, completed_task, run):
         if not self._progress_spinner:
             return
-        
+
         totals = run.get_total_values()
         if completed_task:
             self._progress += 1
@@ -429,13 +428,13 @@ class Executor(object):
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:
-                warning(
+                error(
                     ("Failed executing a run." +
                      DETAIL_INDENT + "It failed with: %s." +
                      DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
             else:
-                warning(str(err))
-            warning(
+                error(str(err))
+            error(
                 (DETAIL_INDENT + "Cmd: %s" +
                  DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
             return True

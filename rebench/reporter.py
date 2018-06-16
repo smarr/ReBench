@@ -26,7 +26,7 @@ import logging
 import json
 import re
 
-from .ui import warning_low_priority
+from .ui import warning
 
 try:
     from http.client import HTTPException
@@ -155,11 +155,11 @@ class CliReporter(TextReporter):
         self._runs_remaining -= 1
 
         if run_id.min_iteration_time and statistics.mean < run_id.min_iteration_time:
-            warning_low_priority(
+            warning(
                 ("WARNING: measured mean is lower than min_iteration_time (%s) "
                  "\t mean: %.1f\trun id: %s")
                 % (run_id.min_iteration_time, statistics.mean, run_id.as_simple_string()))
-            warning_low_priority("Cmd: %s" % cmdline)
+            warning("Cmd: %s" % cmdline)
 
     def report_job_completed(self, run_ids):
         print("[%s] Job completed" % datetime.now())

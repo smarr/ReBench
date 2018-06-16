@@ -20,16 +20,60 @@
 import sys
 
 from humanfriendly.compat import coerce_string
-from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
+from humanfriendly.terminal import terminal_supports_colors, ansi_wrap,\
+    auto_encode, warning as hf_warning, output as hf_output
 
 DETAIL_INDENT = "\n    "
+DETAIL_INDENT_WON = "    "
 
 
-def warning_low_priority(text, *args, **kw):
+_verbose_output = False
+_debug_output = False
+
+
+def set_verbose_debug_mode(verbose, debug):
+    global _verbose_output, _debug_output
+    _verbose_output = verbose
+    _debug_output = debug
+
+
+def output(text, *args, **kw):
+    hf_output(text, *args, **kw)
+
+
+def warning(text, *args, **kw):
     text = coerce_string(text)
     if terminal_supports_colors(sys.stderr):
         text = ansi_wrap(text, color='magenta')
     auto_encode(sys.stderr, text + '\n', *args, **kw)
+
+
+def error(text, *args, **kw):
+    return hf_warning(text, *args, **kw)
+
+
+def verbose_output_info(text, *args, **kw):
+    if _verbose_output:
+        text = coerce_string(text)
+        auto_encode(sys.stdout, text + '\n', *args, **kw)
+
+
+def verbose_error_info(text, *args, **kw):
+    if _verbose_output:
+        text = coerce_string(text)
+        auto_encode(sys.stderr, text + '\n', *args, **kw)
+
+
+def debug_output_info(text, *args, **kw):
+    if _debug_output:
+        text = coerce_string(text)
+        auto_encode(sys.stdout, text + '\n', *args, **kw)
+
+
+def debug_error_info(text, *args, **kw):
+    if _debug_output:
+        text = coerce_string(text)
+        auto_encode(sys.stderr, text + '\n', *args, **kw)
 
 
 class UIError(Exception):
