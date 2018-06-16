@@ -21,6 +21,8 @@ import logging
 import subprocess
 from os.path import dirname
 
+from humanfriendly.terminal import warning
+
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
@@ -198,13 +200,12 @@ class Configurator(object):
             logging.basicConfig(level=logging.ERROR)
             logging.getLogger().setLevel(logging.ERROR)
 
-        if self._options.use_nice:
-            if not can_set_niceness():
-                logging.error("Process niceness cannot be set currently. "
-                              "To execute benchmarks with highest priority, "
-                              "you might need root/admin rights.")
-                logging.error("Deactivated usage of nice command.")
-                self._options.use_nice = False
+        if self._options.use_nice and not can_set_niceness():
+            warning("Error: Process niceness could not be set. "
+                    "To execute benchmarks with highest priority, "
+                    "you might need root/admin rights.")
+            warning("Deactivated usage of nice command.")
+            self._options.use_nice = False
 
     @property
     def use_nice(self):
