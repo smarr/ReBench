@@ -31,6 +31,8 @@ import subprocess
 import sys
 from threading import Thread, RLock
 
+from humanfriendly.terminal import warning
+
 from . import subprocess_with_timeout as subprocess_timeout
 from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
@@ -387,11 +389,26 @@ class Executor(object):
         print(cmdline)
         # execute the external program here
         run_id.indicate_invocation_start()
-        (return_code, output, _) = subprocess_timeout.run(
-            cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
-            timeout=run_id.max_invocation_time)
-        output = output.decode('utf-8')
+
+        try:
+            (return_code, output, _) = subprocess_timeout.run(
+                cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
+                timeout=run_id.max_invocation_time)
+            output = output.decode('utf-8')
+        except OSError as err:
+            run_id.fail_immediately()
+            if err.errno == 2:
+                warning(
+                    ("Failed executing a run."
+                     "\n    It failed with: %s."
+                     "\n    File: %s") % (err.strerror, err.filename))
+            else:
+                warning(str(err))
+            warning(
+                ("\n    Cmd: %s"
+                 "\n    Cwd: %s") % (cmdline, run_id.location))
+            return True
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()

@@ -27,17 +27,25 @@ class SubprocessThread(Thread):
         self.stdout_result = None
         self.stderr_result = None
         self.returncode = None
+        self._exception = None
+
+    @property
+    def exception(self):
+        return self._exception
 
     def run(self):
-        self._started_cv.acquire()
-        proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                     stdout=self._stdout, stderr=self._stderr)
-        self._pid = proc.pid
-        self._started_cv.notify()
-        self._started_cv.release()
+        try:
+            self._started_cv.acquire()
+            proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
+                         stdout=self._stdout, stderr=self._stderr)
+            self._pid = proc.pid
+            self._started_cv.notify()
+            self._started_cv.release()
 
-        self.process_output(proc)
-        self.returncode = proc.returncode
+            self.process_output(proc)
+            self.returncode = proc.returncode
+        except Exception as err:  # pylint: disable=broad-except
+            self._exception = err
 
     def get_pid(self):
         self._started_cv.acquire()
@@ -110,6 +118,11 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
     if timeout != -1 and thread.is_alive():
         assert thread.get_pid() is not None
         return kill_process(thread.get_pid(), kill_tree, thread)
+
+    if not thread.is_alive():
+        exp = thread.exception
+        if exp:
+            raise exp  # pylint: disable=raising-bad-type
 
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
