@@ -29,6 +29,7 @@ class Measurement(object):
         self._criterion = criterion
         self._value = value
         self._unit = unit
+        assert unit is not None
         self._timestamp = timestamp or datetime.now()
         self._line_number = line_number
         self._filename = filename
