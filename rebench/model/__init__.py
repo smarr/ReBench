@@ -57,6 +57,24 @@ Glossary:
 """
 
 
+def none_or_int(value):
+    if value:
+        return int(value)
+    return value
+
+
+def none_or_float(value):
+    if value:
+        return float(value)
+    return value
+
+
+def none_or_bool(value):
+    if value:
+        return bool(value)
+    return value
+
+
 def value_with_optional_details(value, default_details=None):
     if isinstance(value, dict):
         assert len(value) == 1

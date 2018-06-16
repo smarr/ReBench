@@ -138,9 +138,9 @@ class CliReporter(TextReporter):
 
         print("Cmd: %s\n" % cmdline)
 
-        if run_id.bench_cfg.suite.has_max_invocation_time():
-            logging.debug("max_invocation_time: %s" % run_id.bench_cfg.suite.max_invocation_time)
-        logging.debug("cwd: %s" % run_id.bench_cfg.suite.location)
+        if run_id.benchmark.suite.has_max_invocation_time():
+            logging.debug("max_invocation_time: %s" % run_id.benchmark.suite.max_invocation_time)
+        logging.debug("cwd: %s" % run_id.benchmark.suite.location)
 
         if not self._executes_verbose and output and output.strip():
             print("Output:\n%s\n" % output)
@@ -190,13 +190,13 @@ class CliReporter(TextReporter):
             minute = (etl - sec) / 60 % 60
             hour = (etl - sec - minute) / 60 / 60
             print(("Run %s \t runs left: %00d \t " +
-                   "time left: %02d:%02d:%02d") % (run_id.bench_cfg.name,
+                   "time left: %02d:%02d:%02d") % (run_id.benchmark.name,
                                                    self._runs_remaining,
                                                    floor(hour), floor(minute),
                                                    floor(sec)))
         else:
             self._start_time = time()
-            print("Run %s \t runs left: %d" % (run_id.bench_cfg.name,
+            print("Run %s \t runs left: %d" % (run_id.benchmark.name,
                                                self._runs_remaining))
 
     def _output_stats(self, output_list, run_id, statistics):
@@ -303,18 +303,18 @@ class CodespeedReporter(Reporter):
         else:
             result['result_value'] = -1
 
-        result['executable'] = self._cfg.executable or run_id.bench_cfg.vm.name
+        result['executable'] = self._cfg.executable or run_id.benchmark.vm.name
 
-        if run_id.bench_cfg.codespeed_name:
-            name = run_id.bench_cfg.codespeed_name
+        if run_id.benchmark.codespeed_name:
+            name = run_id.benchmark.codespeed_name
         else:
-            name = (self._beautify_benchmark_name(run_id.bench_cfg.name)
+            name = (self._beautify_benchmark_name(run_id.benchmark.name)
                     + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)")
 
         # TODO: this is incomplete:
         name = name % {'cores'       : run_id.cores_as_str,
                        'input_sizes' : run_id.input_size_as_str,
-                       'extra_args'  : run_id.bench_cfg.extra_args}
+                       'extra_args'  : run_id.benchmark.extra_args}
 
         result['benchmark'] = name
 

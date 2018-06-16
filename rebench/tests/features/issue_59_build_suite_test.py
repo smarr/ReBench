@@ -33,32 +33,32 @@ class Issue59BuildSuite(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_build_suite1(self):
-                           standard_data_file=self._tmp_file, exp_name='A')
         cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
+                           data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
-            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(2, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/issue_59_cnt'))
         finally:
             os.remove(self._path + '/issue_59_cnt')
 
     def test_build_suite_same_command_executed_once_only(self):
-                           standard_data_file=self._tmp_file, exp_name='Test')
         cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
+                           data_file=self._tmp_file, exp_name='Test')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
-            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(2, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/issue_59_cnt'))
             with open(self._path + '/issue_59_cnt', 'r') as build_cnt:

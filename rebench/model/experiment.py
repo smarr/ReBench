@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2018 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,36 +17,116 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from .virtual_machine  import VirtualMachine
-from .benchmark_suite  import BenchmarkSuite
-from .benchmark_config import BenchmarkConfig
-from .reporting        import Reporting
 from . import value_with_optional_details
+from .benchmark import Benchmark
+from .benchmark_suite import BenchmarkSuite
+from .exp_run_details import ExpRunDetails
+from .exp_variables import ExpVariables
+from .reporting import Reporting
 
 
 class Experiment(object):
 
-    def __init__(self, name, exp_def, global_runs_cfg, global_vms_cfg,
-                 global_suite_cfg, global_reporting_cfg, data_store,
-                 build_commands, standard_data_file, discard_old_data,
-                 cli_reporter, run_filter, options):
-        self._name = name
-        self._raw_definition = exp_def
-        self._runs_cfg = global_runs_cfg.combined(exp_def)
-        self._reporting = Reporting(
-            global_reporting_cfg, cli_reporter,
-            options).combined(exp_def.get('reporting', {}))
-        self._data_store = data_store
-        self._persistence = data_store.get(exp_def.get('data_file',
-                                                       standard_data_file),
-                                           discard_old_data)
+    @classmethod
+    def compile(cls, name, exp, configurator):
+        description = exp.get('description')
+        desc = exp.get('desc')
+        data_file = exp.get('data_file') or configurator.data_file
 
-        self._vms = self._compile_virtual_machines(global_vms_cfg,
-                                                   build_commands)
-        self._suites = self._compile_benchmark_suites(global_suite_cfg,
-                                                      build_commands)
+        reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
+                                      configurator.options)
+
+        run_details = ExpRunDetails.compile(exp, configurator.run_details)
+        variables = ExpVariables.compile(exp, ExpVariables.empty())
+
+        executions = exp.get('executions')
+        suites = exp.get('suites')
+
+        return Experiment(name, description or desc, data_file, reporting,
+                          run_details, variables, configurator, executions, suites)
+
+    def __init__(self, name, description, data_file, reporting, run_details,
+                 variables, configurator, executions, suites):
+        self._name = name
+        self._description = description
+        self._data_file = data_file
+
+        self._run_details = run_details
+        self._variables = variables
+        self._reporting = reporting
+
+        self._data_store = configurator.data_store
+        self._persistence = self._data_store.get(data_file,
+                                                 configurator.discard_old_data)
+
+        self._vms = self._compile_virtual_machines(executions, configurator)
+
+        self._suites = self._compile_benchmark_suites(
+            executions, suites, configurator)
         self._benchmarks = self._compile_benchmarks()
-        self._runs = self._compile_runs(run_filter)
+        self._runs = self._compile_runs(configurator)
+
+    def _compile_runs(self, configurator):
+        runs = set()
+
+        for bench in self._benchmarks:
+            if not configurator.run_filter.applies(bench):
+                continue
+            variables = bench.suite.variables
+            for cores in variables.cores:
+                for input_size in variables.input_sizes:
+                    for var_val in variables.variable_values:
+                        run = self._data_store.create_run_id(
+                            bench, cores, input_size, var_val)
+                        bench.add_run(run)
+                        runs.add(run)
+                        run.add_reporting(self._reporting)
+                        run.add_persistence(self._persistence)
+        return runs
+
+    def _compile_virtual_machines(self, executions, configurator):
+        vms = {}
+
+        for vm in executions:
+            vm_name, _ = value_with_optional_details(vm)
+            if not configurator.has_vm(vm_name):
+                raise ValueError("The VM '%s' requested in %s was not found."
+                                 % (vm, self._name))
+
+            vms[vm_name] = configurator.get_vm(vm_name)
+
+        return vms
+
+    def _compile_benchmark_suites(self, executions, suites, configurator):
+        # for each VM, we now assemble the benchmark suites
+        results = []
+        for vm in executions:
+            vm_name, vm_details = value_with_optional_details(vm)
+            global_vm = self._vms[vm_name]
+            run_details = global_vm.run_details
+            variables = global_vm.variables
+            if vm_details:
+                run_details = ExpRunDetails.compile(vm_details, run_details)
+                variables = ExpVariables.compile(vm_details, variables)
+                suites_for_vm = vm_details.get('suites', suites)
+            else:
+                suites_for_vm = suites
+
+            for suite_name in suites_for_vm:
+                suite = BenchmarkSuite.compile(
+                    suite_name, configurator.get_suite(suite_name), global_vm,
+                    run_details, variables, configurator.build_commands)
+                results.append(suite)
+
+        return results
+
+    def _compile_benchmarks(self):
+        bench_cfgs = []
+        for suite in self._suites:
+            for bench in suite.benchmarks_config:
+                bench_cfgs.append(Benchmark.compile(
+                    bench, suite, self._data_store))
+        return bench_cfgs
 
     @property
     def name(self):
@@ -54,57 +134,3 @@ class Experiment(object):
 
     def get_runs(self):
         return self._runs
-
-    def _compile_runs(self, run_filter):
-        runs = set()
-
-        for bench in self._benchmarks:
-            if not run_filter.applies(bench):
-                continue
-            for cores in bench.suite.cores:
-                for input_size in bench.suite.input_sizes:
-                    for var_val in bench.suite.variable_values:
-                        run = self._data_store.create_run_id(
-                            bench, cores, input_size, var_val)
-                        bench.add_run(run)
-                        runs.add(run)
-                        run.add_reporting(self._reporting)
-                        run.add_persistence(self._persistence)
-                        run.set_run_config(self._runs_cfg)
-        return runs
-
-    def _compile_virtual_machines(self, global_vms_cfg, build_commands):
-        benchmarks = self._raw_definition.get('benchmark', None)
-        input_sizes = self._raw_definition.get('input_sizes', None)
-        executions = self._raw_definition['executions']
-
-        vms = []
-
-        for vm in executions:
-            vm, vm_details = value_with_optional_details(vm)
-            if vm not in global_vms_cfg:
-                raise ValueError("The VM '%s' requested in %s was not found."
-                                 % (vm, self.name))
-
-            global_cfg = global_vms_cfg[vm]
-            vms.append(VirtualMachine(vm, vm_details, global_cfg, benchmarks,
-                                      input_sizes, self.name, build_commands))
-        return vms
-
-    def _compile_benchmark_suites(self, global_suite_cfg, build_commands):
-        suites = []
-        for vm in self._vms:
-            for suite_name in vm.benchmark_suite_names:
-                suite = BenchmarkSuite(suite_name, vm,
-                                       global_suite_cfg[suite_name],
-                                       build_commands)
-                suites.append(suite)
-        return suites
-
-    def _compile_benchmarks(self):
-        bench_cfgs = []
-        for suite in self._suites:
-            for bench in suite.benchmarks:
-                bench_cfgs.append(BenchmarkConfig.compile(
-                    bench, suite, self._data_store))
-        return bench_cfgs

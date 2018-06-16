@@ -260,12 +260,12 @@ class Executor(object):
         return data.decode('utf-8')
 
     def _build_vm_and_suite(self, run_id):
-        name = "VM:" + run_id.bench_cfg.vm.name
-        build = run_id.bench_cfg.vm.build
+        name = "VM:" + run_id.benchmark.suite.vm.name
+        build = run_id.benchmark.suite.vm.build
         self._process_build(build, name, run_id)
 
-        name = "S:" + run_id.bench_cfg.suite.name
-        build = run_id.bench_cfg.suite.build
+        name = "S:" + run_id.benchmark.suite.name
+        build = run_id.benchmark.suite.build
         self._process_build(build, name, run_id)
 
     def _process_build(self, build, name, run_id):
@@ -337,11 +337,11 @@ class Executor(object):
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
 
-        run_id.run_config.log()
+        run_id.log()
         run_id.report_start_run()
 
         gauge_adapter = self._get_gauge_adapter_instance(
-            run_id.bench_cfg.gauge_adapter)
+            run_id.benchmark.gauge_adapter)
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 
@@ -386,10 +386,11 @@ class Executor(object):
                              termination_check):
         print(cmdline)
         # execute the external program here
+        run_id.indicate_invocation_start()
         (return_code, output, _) = subprocess_timeout.run(
             cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
-            timeout=run_id.bench_cfg.suite.max_invocation_time)
+            timeout=run_id.max_invocation_time)
         output = output.decode('utf-8')
 
         if return_code != 0 and not self._include_faulty:
@@ -398,7 +399,7 @@ class Executor(object):
             if return_code == 126:
                 logging.error(("Could not execute %s. A likely cause is that "
                                "the file is not marked as executable.")
-                              % run_id.bench_cfg.vm.name)
+                              % run_id.benchmark.vm.name)
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
@@ -416,14 +417,14 @@ class Executor(object):
                 logging.debug("Recorded %d data points, show last 20..." % num_points)
             i = 0
             for data_point in data_points:
-                if warmup > 0:
+                if warmup is not None and warmup > 0:
                     warmup -= 1
                 else:
                     run_id.add_data_point(data_point)
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
                         logging.debug("Run %s:%s result=%s" % (
-                            run_id.bench_cfg.vm.name, run_id.bench_cfg.name,
+                            run_id.benchmark.suite.vm.name, run_id.benchmark.name,
                             data_point.get_total_value()))
                 i += 1
             run_id.indicate_successful_execution()

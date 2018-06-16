@@ -17,12 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
-
 from . import value_with_optional_details
+from .exp_run_details import ExpRunDetails
+from .exp_variables import ExpVariables
 
 
-class BenchmarkConfig(object):
+class Benchmark(object):
 
     @classmethod
     def compile(cls, bench, suite, data_store):
@@ -37,22 +37,26 @@ class BenchmarkConfig(object):
                                     suite.gauge_adapter)
         extra_args = details.get('extra_args', None)
         codespeed_name = details.get('codespeed_name', None)
-        warmup = int(details.get('warmup', 0))
-        return BenchmarkConfig(name, command, gauge_adapter, suite,
-                               suite.vm, extra_args, warmup, codespeed_name,
-                               data_store)
 
-    def __init__(self, name, command, gauge_adapter, suite, vm, extra_args,
-                 warmup, codespeed_name, data_store):
+        run_details = ExpRunDetails.compile(details, suite.run_details)
+        variables = ExpVariables.compile(details, suite.variables)
+
+        return Benchmark(name, command, gauge_adapter, suite,
+                         variables, extra_args, run_details, codespeed_name,
+                         data_store)
+
+    def __init__(self, name, command, gauge_adapter, suite, variables, extra_args,
+                 run_details, codespeed_name, data_store):
+        assert run_details is None or isinstance(run_details, ExpRunDetails)
         self._name = name
         self._command = command
         self._extra_args = extra_args
         self._codespeed_name = codespeed_name
-        self._warmup = warmup
+        self._run_details = run_details
         self._gauge_adapter = gauge_adapter
         self._suite = suite
 
-        self._vm = vm
+        self._variables = variables
 
         # the compiled runs, these might be shared with other benchmarks/suites
         self._runs = set()
@@ -87,8 +91,8 @@ class BenchmarkConfig(object):
         return self._extra_args
 
     @property
-    def warmup_iterations(self):
-        return self._warmup
+    def run_details(self):
+        return self._run_details
 
     @property
     def gauge_adapter(self):
@@ -99,34 +103,29 @@ class BenchmarkConfig(object):
         return self._suite
 
     @property
-    def vm(self):
-        return self._vm
+    def variables(self):
+        return self._variables
 
     @property
     def execute_exclusively(self):
-        return self._vm.execute_exclusively
+        return self._run_details.execute_exclusively
 
     def __str__(self):
-        return "%s, vm:%s, suite:%s, args:'%s', warmup: %d" % (
-            self._name, self._vm.name, self._suite.name, self._extra_args or '',
-            self._warmup)
+        return "%s, vm:%s, suite:%s, args:'%s'" % (
+            self._name, self._suite.vm.name, self._suite.name, self._extra_args or '')
 
     def as_simple_string(self):
         if self._extra_args:
-            return "%s (%s, %s, %s, %d)"  % (self._name, self._vm.name,
-                                             self._suite.name, self._extra_args,
-                                             self._warmup)
+            return "%s (%s, %s, %s)"  % (self._name, self._suite.vm.name,
+                                         self._suite.name, self._extra_args)
         else:
-            return "%s (%s, %s, %d)" % (self._name, self._vm.name,
-                                        self._suite.name, self._warmup)
+            return "%s (%s, %s)" % (self._name, self._suite.vm.name, self._suite.name)
 
     def as_str_list(self):
-        return [self._name, self._vm.name, self._suite.name,
-                '' if self._extra_args is None else str(self._extra_args),
-                str(self._warmup)]
+        return [self._name, self._suite.vm.name, self._suite.name,
+                '' if self._extra_args is None else str(self._extra_args)]
 
     @classmethod
     def from_str_list(cls, data_store, str_list):
         return data_store.get_config(str_list[0], str_list[1], str_list[2],
-                                     None if str_list[3] == '' else str_list[3],
-                                     int(str_list[4]))
+                                     None if str_list[3] == '' else str_list[3])

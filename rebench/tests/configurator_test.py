@@ -39,11 +39,11 @@ class ConfiguratorTest(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/test.conf'),
                            DataStore(), None, 'Test')
 
-        self.assertEqual('Test', cnf.experiment_name())
+        self.assertEqual('Test', cnf.experiment_name)
 
     def test_experiment_name_from_config_file(self):
-        self.assertEqual('Test', cnf.experiment_name())
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(), None)
+        self.assertEqual('Test', cnf.experiment_name)
 
     def test_number_of_experiments_smallconf(self):
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None)

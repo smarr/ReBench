@@ -20,6 +20,17 @@
 
 
 class BuildCommand(object):
+
+    @classmethod
+    def create(cls, cmd, build_commands, location):
+        if not cmd:
+            return None
+
+        build_command = BuildCommand(cmd, location)
+        if build_command in build_commands:
+            return build_commands[build_command]
+        return build_command
+
     def __init__(self, cmd, location):
         self._cmd = cmd
         self._location = location

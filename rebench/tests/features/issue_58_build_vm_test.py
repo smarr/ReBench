@@ -42,16 +42,16 @@ class Issue58BuildVM(ReBenchTestCase):
 
     def test_build_vm_simple_cmd(self):
         self._cleanup_log()
-                           standard_data_file=self._tmp_file, exp_name='A')
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(),
+                           data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
-            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(10, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
         finally:
@@ -60,16 +60,16 @@ class Issue58BuildVM(ReBenchTestCase):
     def test_build_vm_cmd_list(self):
         self._cleanup_log()
 
-                           standard_data_file=self._tmp_file, exp_name='B')
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(),
+                           data_file=self._tmp_file, exp_name='B')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
-            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(10, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/vm_58b.sh'))
         finally:
@@ -88,17 +88,17 @@ class Issue58BuildVM(ReBenchTestCase):
     def test_broken_build_prevents_experiments(self):
         self._cleanup_log()
 
-                           standard_data_file=self._tmp_file,
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(),
+                           data_file=self._tmp_file,
                            exp_name='C')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()
 
         try:
-            self.assertEqual("Bench1", runs[0].bench_cfg.name)
+            self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(0, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
         finally:
@@ -111,11 +111,11 @@ class Issue58BuildVM(ReBenchTestCase):
 
     def test_build_is_run_only_once_for_same_command(self):
         self._cleanup_log()
-                           standard_data_file=self._tmp_file,
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(),
+                           data_file=self._tmp_file,
                            exp_name='AandAA')
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, True, build_log=cnf.build_log)
         ex.execute()

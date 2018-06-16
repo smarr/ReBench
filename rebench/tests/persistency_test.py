@@ -23,10 +23,11 @@ from .rebench_test_case import ReBenchTestCase
 
 from ..persistence  import DataStore
 
-from ..model.run_id           import RunId
+from ..model.benchmark import Benchmark
+from ..model.benchmark_suite import BenchmarkSuite
+from ..model.exp_run_details import ExpRunDetails
 from ..model.measurement      import Measurement
-from ..model.benchmark_config import BenchmarkConfig
-from ..model.benchmark_suite  import BenchmarkSuite
+from ..model.run_id           import RunId
 from ..model.virtual_machine  import VirtualMachine
 
 
@@ -34,15 +35,14 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
         data_store = DataStore()
-        vm = VirtualMachine("MyVM", None, {'path': '', 'binary': ''},
-                            None, [1], None, None)
-        suite = BenchmarkSuite("MySuite", vm, {'benchmarks': [],
-                                               'gauge_adapter': '',
-                                               'command': ''}, None)
-        bench_cfg = BenchmarkConfig("Test Bench [>", "Test Bench [>", None,
-                                    suite, vm, None, 0, None, data_store)
+        vm = VirtualMachine("MyVM", '', '',
+                            None, None, None, None, None)
+        suite = BenchmarkSuite("MySuite", vm, '', '', None, None,
+                               None, None, None, None)
+        benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
+                              suite, None, None, ExpRunDetails.default(), None, data_store)
 
-        run_id = RunId(bench_cfg, 1000, 44, 'sdf sdf sdf sdfsf')
+        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf')
         timestamp = datetime.now().replace(microsecond=0)
         measurement = Measurement(2222.2222, 'ms', run_id, 'foobar crit',
                                   timestamp)

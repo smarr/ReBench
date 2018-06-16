@@ -37,7 +37,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
     def _records_data_points(self, exp_name, num_data_points):
         cnf = Configurator(load_config(self._path + '/issue_31.conf'), DataStore(),
                            exp_name=exp_name,
-                           standard_data_file=self._tmp_file)
+                           data_file=self._tmp_file)
         ex = Executor(cnf.get_runs(), False, False)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))

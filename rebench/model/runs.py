@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2009-2018 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -20,54 +20,10 @@
 import logging
 
 
-class RunsConfig(object):
-    """ General configuration parameters for runs """
-    def __init__(self,
-                 number_of_data_points=None, min_iteration_time=None,
-                 parallel_interference_factor=2.5):
-        self._number_of_data_points = number_of_data_points
-        self._min_iteration_time = min_iteration_time
-        self._parallel_interference_factor = parallel_interference_factor
-
-    @property
-    def number_of_data_points(self):
-        return self._number_of_data_points
-
-    @property
-    def min_iteration_time(self):
-        return self._min_iteration_time
-
-    @property
-    def parallel_interference_factor(self):
-        return self._parallel_interference_factor
-
-    def combined(self, run_def):
-        config = RunsConfig(self._number_of_data_points, self._min_iteration_time,
-                            self._parallel_interference_factor)
-        val = run_def.get('number_of_data_points', None)
-        if val:
-            config._number_of_data_points = val
-        val = run_def.get('min_iteration_time', None)
-        if val:
-            config._min_iteration_time = val
-        # parallel_interference_factor is a global setting, so it is not
-        # merged from other run definitions
-        return config
-
-    def log(self):
-        msg = "Run Config: number of data points: %d" % self._number_of_data_points
-        if self._min_iteration_time:
-            msg += ", min_iteration_time: %dms" % self._min_iteration_time
-        logging.debug(msg)
-
-    def create_termination_check(self, bench_cfg):
-        return TerminationCheck(self, bench_cfg)
-
-
 class TerminationCheck(object):
-    def __init__(self, run_cfg, bench_cfg):
-        self._run_cfg = run_cfg
-        self._bench_cfg = bench_cfg
+    def __init__(self, benchmark):
+        self._benchmark = benchmark
+        self._num_invocations = 0
         self._consecutive_erroneous_executions = 0
         self._failed_execution_count = 0
         self._fail_immediately = False
@@ -75,15 +31,15 @@ class TerminationCheck(object):
     def fail_immediately(self):
         self._fail_immediately = True
 
+    def indicate_invocation_start(self):
+        self._num_invocations += 1
+
     def indicate_failed_execution(self):
         self._consecutive_erroneous_executions += 1
         self._failed_execution_count += 1
 
     def indicate_successful_execution(self):
         self._consecutive_erroneous_executions = 0
-
-    def has_sufficient_number_of_data_points(self, number_of_data_points):
-        return number_of_data_points >= self._run_cfg.number_of_data_points
 
     def fails_consecutively(self):
         return (self._fail_immediately or
@@ -98,18 +54,16 @@ class TerminationCheck(object):
     def should_terminate(self, number_of_data_points):
         if self._fail_immediately:
             logging.info(
-                "%s was marked to fail immediately" % self._bench_cfg.name)
-        if self.has_sufficient_number_of_data_points(number_of_data_points):
-            logging.debug("Reached number_of_data_points for %s"
-                          % self._bench_cfg.name)
-            return True
-        elif self.fails_consecutively():
+                "%s was marked to fail immediately" % self._benchmark.name)
+        if self.fails_consecutively():
             logging.error(("Three executions of %s have failed in a row, " +
-                           "benchmark is aborted") % self._bench_cfg.name)
+                           "benchmark is aborted") % self._benchmark.name)
             return True
         elif self.has_too_many_failures(number_of_data_points):
             logging.error("Many runs of %s are failing, benchmark is aborted."
-                          % self._bench_cfg.name)
+                          % self._benchmark.name)
+            return True
+        elif self._num_invocations >= self._benchmark.run_details.invocations:
             return True
         else:
             return False

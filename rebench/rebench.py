@@ -188,7 +188,7 @@ Argument:
         return self.execute_experiment()
 
     def execute_experiment(self):
-        logging.debug("execute experiment: %s" % self._config.experiment_name())
+        logging.debug("execute experiment: %s" % self._config.experiment_name)
 
         # first load old data if available
         if self._config.options.clean:

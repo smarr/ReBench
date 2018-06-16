@@ -21,39 +21,56 @@ import logging
 import re
 import sys
 
-from .benchmark_config import BenchmarkConfig
+from .benchmark import Benchmark
+from .runs import TerminationCheck
 
 
 class RunId(object):
 
-    def __init__(self, bench_cfg, cores, input_size, var_value):
-        self._bench_cfg = bench_cfg
+    def __init__(self, benchmark, cores, input_size, var_value):
+        self._benchmark = benchmark
         self._cores = cores
         self._input_size = input_size
         self._var_value = var_value
 
         self._reporters = set()
         self._persistence = set()
-        self._run_config = None
         self._data_points = []
 
         self._termination_check = None
         self._cmdline = None
         self._failed = True
 
+    def log(self):
+        msg = "Run Config: number of data points: %d" % self.get_number_of_data_points()
+        if self._benchmark.run_details.min_iteration_time:
+            msg += ", min_iteration_time: %dms" % self._benchmark.run_details.min_iteration_time
+        logging.debug(msg)
+
     def requires_warmup(self):
-        return self._bench_cfg.warmup_iterations > 0
+        return self._benchmark.run_details.warmup > 0
 
     @property
     def warmup_iterations(self):
-        return self._bench_cfg.warmup_iterations
+        return self._benchmark.run_details.warmup
+
+    @property
+    def min_iteration_time(self):
+        return self._benchmark.run_details.min_iteration_time
+
+    @property
+    def max_invocation_time(self):
+        return self._benchmark.run_details.max_invocation_time
 
     @property
     def execute_exclusively(self):
-        return self._bench_cfg.execute_exclusively
+        return self._benchmark.run_details.execute_exclusively
 
     def fail_immediately(self):
         self._termination_check.fail_immediately()
+
+    def indicate_invocation_start(self):
+        self._termination_check.indicate_invocation_start()
 
     def indicate_failed_execution(self):
         self._termination_check.indicate_failed_execution()
@@ -114,16 +131,9 @@ class RunId(object):
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]
 
-    def set_run_config(self, run_cfg):
-        if self._run_config and self._run_config != run_cfg:
-            raise ValueError("Run config has already been set "
-                             "and is not the same.")
-        self._run_config = run_cfg
-
     def get_termination_check(self):
         if self._termination_check is None:
-            self._termination_check = self._run_config.create_termination_check(
-                self._bench_cfg)
+            self._termination_check = TerminationCheck(self._benchmark)
         return self._termination_check
 
     def is_completed(self):
@@ -137,12 +147,8 @@ class RunId(object):
                     len(self._data_points)))
 
     @property
-    def run_config(self):
-        return self._run_config
-
-    @property
-    def bench_cfg(self):
-        return self._bench_cfg
+    def benchmark(self):
+        return self._benchmark
 
     @property
     def cores(self):
@@ -172,32 +178,31 @@ class RunId(object):
         return hash(self.cmdline())
 
     def as_simple_string(self):
-        return "%s %s %s %s" % (self._bench_cfg.as_simple_string(),
+        return "%s %s %s %s" % (self._benchmark.as_simple_string(),
                                 self._cores, self._input_size, self._var_value)
 
     def _expand_vars(self, string):
-        return string % {'benchmark' : self._bench_cfg.command,
+        return string % {'benchmark' : self._benchmark.command,
                          'input'     : self._input_size,
                          'variable'  : self._var_value,
                          'cores'     : self._cores,
-                         'warmup'    : self._bench_cfg.warmup_iterations
-                        }
+                         'warmup'    : self._benchmark.run_details.warmup}
 
     def cmdline(self):
         if self._cmdline:
             return self._cmdline
 
         cmdline = ""
-        if self._bench_cfg.vm.path:
-            cmdline = "%s/" % (self._bench_cfg.vm.path, )
+        if self._benchmark.suite.vm.path:
+            cmdline = "%s/" % (self._benchmark.suite.vm.path, )
 
-        cmdline += "%s %s" % (self._bench_cfg.vm.binary,
-                              self._bench_cfg.vm.args)
+        cmdline += "%s %s" % (self._benchmark.suite.vm.binary,
+                              self._benchmark.suite.vm.args or '')
 
-        cmdline += self._bench_cfg.suite.command
+        cmdline += self._benchmark.suite.command
 
-        if self._bench_cfg.extra_args is not None:
-            cmdline += " %s" % self._bench_cfg.extra_args
+        if self._benchmark.extra_args is not None:
+            cmdline += " %s" % self._benchmark.extra_args
 
         try:
             cmdline = self._expand_vars(cmdline)
@@ -211,9 +216,9 @@ class RunId(object):
 
     @property
     def location(self):
-        if not self._bench_cfg.suite.location:
+        if not self._benchmark.suite.location:
             return None
-        return self._expand_vars(self._bench_cfg.suite.location)
+        return self._expand_vars(self._benchmark.suite.location)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
@@ -224,7 +229,7 @@ class RunId(object):
 
     def _report_cmdline_format_issue_and_exit(self, cmdline):
         logging.critical("The configuration of %s contains improper "
-                         "Python format strings.", self._bench_cfg.name)
+                         "Python format strings.", self._benchmark.name)
 
         # figure out which format misses a conversion type
         without_conversion_type = re.findall(
@@ -238,7 +243,7 @@ class RunId(object):
         sys.exit(-1)
 
     def as_str_list(self):
-        result = self._bench_cfg.as_str_list()
+        result = self._benchmark.as_str_list()
 
         result.append(self.cores_as_str)
         result.append(self.input_size_as_str)
@@ -248,14 +253,14 @@ class RunId(object):
 
     @classmethod
     def from_str_list(cls, data_store, str_list):
-        bench_cfg = BenchmarkConfig.from_str_list(data_store, str_list[:-3])
+        benchmark = Benchmark.from_str_list(data_store, str_list[:-3])
         return data_store.create_run_id(
-            bench_cfg, str_list[-3], str_list[-2], str_list[-1])
+            benchmark, str_list[-3], str_list[-2], str_list[-1])
 
     def __str__(self):
-        return "RunId(%s, %s, %s, %s, %s, %d)" % (self._bench_cfg.name,
+        return "RunId(%s, %s, %s, %s, %s, %d)" % (self._benchmark.name,
                                                   self._cores,
-                                                  self._bench_cfg.extra_args,
+                                                  self._benchmark.extra_args,
                                                   self._input_size or '',
                                                   self._var_value  or '',
-                                                  self._bench_cfg.warmup_iterations)
+                                                  self._benchmark.run_details.warmup or 0)

@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...model.runs_config import TerminationCheck
+from ...model.runs import TerminationCheck
 from ...configurator import Configurator, load_config
 from ...persistence  import DataStore
 from ..rebench_test_case import ReBenchTestCase
@@ -27,18 +27,31 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def setUp(self):
         super(RunsConfigTestCase, self).setUp()
-                                 standard_data_file=self._tmp_file)
         self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None,
+                                 data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         self._run = list(runs)[0]
 
     def test_termination_check_basic(self):
-        check = TerminationCheck(self._run.run_config, self._run.bench_cfg)
+        check = TerminationCheck(self._run.benchmark)
         self.assertFalse(check.should_terminate(0))
-        self.assertTrue(check.should_terminate(10))
+
+        # start 9 times, but expect to be done only after 10
+        for _ in range(0, 9):
+            check.indicate_invocation_start()
+        self.assertFalse(check.should_terminate(0))
+
+        check.indicate_invocation_start()
+        self.assertTrue(check.should_terminate(0))
+
+    def test_terminate_not_determine_by_number_of_data_points(self):
+        check = TerminationCheck(self._run.benchmark)
+        self.assertFalse(check.should_terminate(0))
+        self.assertFalse(check.should_terminate(10))
+        self.assertFalse(check.should_terminate(10000))
 
     def test_consecutive_fails(self):
-        check = TerminationCheck(self._run.run_config, self._run.bench_cfg)
+        check = TerminationCheck(self._run.benchmark)
         self.assertFalse(check.should_terminate(0))
 
         for _ in range(0, 2):
@@ -49,7 +62,7 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertTrue(check.should_terminate(0))
 
     def test_too_many_fails(self):
-        check = TerminationCheck(self._run.run_config, self._run.bench_cfg)
+        check = TerminationCheck(self._run.benchmark)
         self.assertFalse(check.should_terminate(0))
 
         for _ in range(0, 6):

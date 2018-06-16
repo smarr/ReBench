@@ -72,7 +72,7 @@ class ExecutorTest(ReBenchTestCase):
             cnf = Configurator(load_config(self._path + '/test.conf'),
                                DataStore(), options,
                                None, 'TestBrokenCommandFormat',
-                               standard_data_file=self._tmp_file)
+                               data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
         except RuntimeError as err:
@@ -91,7 +91,7 @@ class ExecutorTest(ReBenchTestCase):
             cnf = Configurator(load_config(self._path + '/test.conf'),
                                DataStore(), options,
                                None, 'TestBrokenCommandFormat2',
-                               standard_data_file=self._tmp_file)
+                               data_file=self._tmp_file)
             ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
             ex.execute()
         except RuntimeError as err:
@@ -116,15 +116,15 @@ class ExecutorTest(ReBenchTestCase):
                                  measurements[3].value)
 
     def test_basic_execution(self):
-                           standard_data_file=self._tmp_file)
         cnf = Configurator(load_config(self._path + '/small.conf'),
                            DataStore(), None,
+                           data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
-                           'all', standard_data_file=self._tmp_file)
         cnf = Configurator(load_config(self._path + '/small.conf'),
                            DataStore(), None, None,
+                           'all', data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_shell_options_without_filters(self):
