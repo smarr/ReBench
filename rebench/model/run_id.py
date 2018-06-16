@@ -41,15 +41,6 @@ class RunId(object):
         self._cmdline = None
         self._failed = True
 
-    def log(self):
-        msg = "Run Config: number of data points: %d" % self.get_number_of_data_points()
-        if self._benchmark.run_details.min_iteration_time:
-            msg += ", min_iteration_time: %dms" % self._benchmark.run_details.min_iteration_time
-        logging.debug(msg)
-
-    def requires_warmup(self):
-        return self._benchmark.run_details.warmup > 0
-
     @property
     def warmup_iterations(self):
         return self._benchmark.run_details.warmup
@@ -65,6 +56,49 @@ class RunId(object):
     @property
     def execute_exclusively(self):
         return self._benchmark.run_details.execute_exclusively
+
+    @property
+    def benchmark(self):
+        return self._benchmark
+
+    @property
+    def cores(self):
+        return self._cores
+
+    @property
+    def input_size(self):
+        return self._input_size
+
+    @property
+    def cores_as_str(self):
+        return '' if self._cores is None else str(self._cores)
+
+    @property
+    def input_size_as_str(self):
+        return '' if self._input_size is None else str(self._input_size)
+
+    @property
+    def var_value_as_str(self):
+        return '' if self._var_value is None else str(self._var_value)
+
+    @property
+    def var_value(self):
+        return self._var_value
+
+    @property
+    def location(self):
+        if not self._benchmark.suite.location:
+            return None
+        return self._expand_vars(self._benchmark.suite.location)
+
+    def log(self):
+        msg = "Run Config: number of data points: %d" % self.get_number_of_data_points()
+        if self._benchmark.run_details.min_iteration_time:
+            msg += ", min_iteration_time: %dms" % self._benchmark.run_details.min_iteration_time
+        logging.debug(msg)
+
+    def requires_warmup(self):
+        return self._benchmark.run_details.warmup > 0
 
     def fail_immediately(self):
         self._termination_check.fail_immediately()
@@ -146,34 +180,6 @@ class RunId(object):
                 self._termination_check.has_too_many_failures(
                     len(self._data_points)))
 
-    @property
-    def benchmark(self):
-        return self._benchmark
-
-    @property
-    def cores(self):
-        return self._cores
-
-    @property
-    def input_size(self):
-        return self._input_size
-
-    @property
-    def cores_as_str(self):
-        return '' if self._cores is None else str(self._cores)
-
-    @property
-    def input_size_as_str(self):
-        return '' if self._input_size is None else str(self._input_size)
-
-    @property
-    def var_value_as_str(self):
-        return '' if self._var_value is None else str(self._var_value)
-
-    @property
-    def var_value(self):
-        return self._var_value
-
     def __hash__(self):
         return hash(self.cmdline())
 
@@ -213,12 +219,6 @@ class RunId(object):
 
         self._cmdline = cmdline.strip()
         return self._cmdline
-
-    @property
-    def location(self):
-        if not self._benchmark.suite.location:
-            return None
-        return self._expand_vars(self._benchmark.suite.location)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
