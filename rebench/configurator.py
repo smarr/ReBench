@@ -160,12 +160,10 @@ class Configurator(object):
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default())
         self._root_reporting = Reporting.compile(
-            raw_config.get('reporting', {}), Reporting.empty(), cli_options)
+            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options)
 
         self._options = cli_options
         self._process_cli_options()
-
-        self._cli_reporter = cli_reporter
 
         self._data_store = data_store
         self._build_commands = dict()
