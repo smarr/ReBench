@@ -31,11 +31,12 @@ import subprocess
 import sys
 from threading import Thread, RLock
 
+from humanfriendly import Spinner
 from humanfriendly.terminal import warning
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
-from .statistics  import StatisticProperties
+from .statistics import StatisticProperties, mean
 from .ui import DETAIL_INDENT
 
 
@@ -51,6 +52,8 @@ class RunScheduler(object):
 
     def __init__(self, executor):
         self._executor = executor
+        self._progress = 0
+        self._progress_spinner = None
 
     @staticmethod
     def _filter_out_completed_runs(runs):
@@ -64,9 +67,32 @@ class RunScheduler(object):
         """Abstract, to be implemented"""
         pass
 
+    def _indicate_progress(self, completed_task, run):
+        if not self._progress_spinner:
+            return
+        
+        totals = run.get_total_values()
+        if completed_task:
+            self._progress += 1
+
+        if totals:
+            art_mean = mean(run.get_total_values())
+        else:
+            art_mean = 0
+        label = "Running Benchmarks: %70s\tmean: %10.1f" \
+                % (run.as_simple_string(), art_mean)
+        self._progress_spinner.step(self._progress, label)
+
     def execute(self):
+        total_num_runs = len(self._executor.runs)
         runs = self._filter_out_completed_runs(self._executor.runs)
-        self._process_remaining_runs(runs)
+        completed_runs = total_num_runs - len(runs)
+        self._progress = completed_runs
+
+        with Spinner(label="Running Benchmarks", total=total_num_runs) as spinner:
+            self._progress_spinner = spinner
+            spinner.step(completed_runs)
+            self._process_remaining_runs(runs)
 
 
 class BatchScheduler(RunScheduler):
@@ -77,6 +103,7 @@ class BatchScheduler(RunScheduler):
                 completed = False
                 while not completed:
                     completed = self._executor.execute_run(run_id)
+                    self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
 
@@ -90,6 +117,7 @@ class RoundRobinScheduler(RunScheduler):
             try:
                 run = task_list.popleft()
                 completed = self._executor.execute_run(run)
+                self._indicate_progress(completed, run)
                 if not completed:
                     task_list.append(run)
             except FailedBuilding:
@@ -102,9 +130,10 @@ class RandomScheduler(RunScheduler):
         task_list = list(runs)
 
         while task_list:
+            run = random.choice(task_list)
             try:
-                run = random.choice(task_list)
                 completed = self._executor.execute_run(run)
+                self._indicate_progress(completed, run)
                 if completed:
                     task_list.remove(run)
             except FailedBuilding:
