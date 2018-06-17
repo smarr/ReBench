@@ -465,8 +465,9 @@ class Executor(object):
             for data_point in data_points:
                 if warmup is not None and warmup > 0:
                     warmup -= 1
+                    run_id.add_data_point(data_point, True)
                 else:
-                    run_id.add_data_point(data_point)
+                    run_id.add_data_point(data_point, False)
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
                         logging.debug("Run %s:%s result=%s" % (

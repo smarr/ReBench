@@ -156,8 +156,9 @@ class RunId(object):
     def loaded_data_point(self, data_point):
         self._data_points.append(data_point)
 
-    def add_data_point(self, data_point):
-        self._data_points.append(data_point)
+    def add_data_point(self, data_point, warmup):
+        if not warmup:
+            self._data_points.append(data_point)
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
 
