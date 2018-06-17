@@ -30,13 +30,14 @@ from select import select
 import subprocess
 import sys
 from threading import Thread, RLock
+from time import time
 
 from humanfriendly import Spinner
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
 from .statistics import StatisticProperties, mean
-from .ui import DETAIL_INDENT, error
+from .ui import DETAIL_INDENT, error, verbose_output_info, warning, debug_output_info
 
 
 class FailedBuilding(Exception):
@@ -51,8 +52,10 @@ class RunScheduler(object):
 
     def __init__(self, executor):
         self._executor = executor
-        self._progress = 0
+        self._runs_completed = 0
         self._progress_spinner = None
+        self._start_time = time()
+        self._total_num_runs = 0
 
     @staticmethod
     def _filter_out_completed_runs(runs):
@@ -66,29 +69,44 @@ class RunScheduler(object):
         """Abstract, to be implemented"""
         pass
 
+    def _estimate_time_left(self):
+        if self._runs_completed == 0:
+            return 0, 0, 0
+
+        current = time()
+        time_per_invocation = ((current - self._start_time) / self._runs_completed)
+        etl = time_per_invocation * (self._total_num_runs - self._runs_completed)
+        sec = etl % 60
+        minute = (etl - sec) / 60 % 60
+        hour = (etl - sec - minute) / 60 / 60
+        return floor(hour), floor(minute), floor(sec)
+
     def _indicate_progress(self, completed_task, run):
         if not self._progress_spinner:
             return
 
         totals = run.get_total_values()
         if completed_task:
-            self._progress += 1
+            self._runs_completed += 1
 
         if totals:
             art_mean = mean(run.get_total_values())
         else:
             art_mean = 0
-        label = "Running Benchmarks: %70s\tmean: %10.1f" \
-                % (run.as_simple_string(), art_mean)
-        self._progress_spinner.step(self._progress, label)
+
+        hour, minute, sec = self._estimate_time_left()
+
+        label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
+                % (run.as_simple_string(), art_mean, hour, minute, sec)
+        self._progress_spinner.step(self._runs_completed, label)
 
     def execute(self):
-        total_num_runs = len(self._executor.runs)
+        self._total_num_runs = len(self._executor.runs)
         runs = self._filter_out_completed_runs(self._executor.runs)
-        completed_runs = total_num_runs - len(runs)
-        self._progress = completed_runs
+        completed_runs = self._total_num_runs - len(runs)
+        self._runs_completed = completed_runs
 
-        with Spinner(label="Running Benchmarks", total=total_num_runs) as spinner:
+        with Spinner(label="Running Benchmarks", total=self._total_num_runs) as spinner:
             self._progress_spinner = spinner
             spinner.step(completed_runs)
             self._process_remaining_runs(runs)

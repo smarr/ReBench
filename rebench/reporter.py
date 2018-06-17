@@ -170,25 +170,6 @@ class CliReporter(TextReporter):
         self._num_runs = num_runs
         self._runs_remaining = num_runs
 
-    def start_run(self, run_id):
-        if self._runs_completed > 0:
-            current = time()
-
-            time_per_invocation = ((current - self._start_time) / self._runs_completed)
-            etl = time_per_invocation * self._runs_remaining
-            sec = etl % 60
-            minute = (etl - sec) / 60 % 60
-            hour = (etl - sec - minute) / 60 / 60
-            print(("Run %s \t runs left: %00d \t " +
-                   "time left: %02d:%02d:%02d") % (run_id.benchmark.name,
-                                                   self._runs_remaining,
-                                                   floor(hour), floor(minute),
-                                                   floor(sec)))
-        else:
-            self._start_time = time()
-            print("Run %s \t runs left: %d" % (run_id.benchmark.name,
-                                               self._runs_remaining))
-
     def _output_stats(self, output_list, run_id, statistics):
         if not statistics:
             return
