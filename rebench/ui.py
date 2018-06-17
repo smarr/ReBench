@@ -32,7 +32,7 @@ _debug_output = False
 
 
 def set_verbose_debug_mode(verbose, debug):
-    global _verbose_output, _debug_output
+    global _verbose_output, _debug_output  # pylint: disable=global-statement
     _verbose_output = verbose
     _debug_output = debug
 

@@ -19,7 +19,6 @@
 # THE SOFTWARE.
 from __future__ import with_statement
 
-from datetime import datetime
 from time import time
 import json
 import re
@@ -100,7 +99,7 @@ class CliReporter(TextReporter):
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
 
-    def run_failed(self, run_id, cmdline, return_code, output):
+    def run_failed(self, run_id, cmdline, return_code, cmd_output):
         pass
 
     def run_completed(self, run_id, statistics, cmdline):
@@ -224,12 +223,12 @@ class CodespeedReporter(Reporter):
                        DETAIL_INDENT + "projects: %s" +
                        DETAIL_INDENT + "benchmarks: %s" +
                        DETAIL_INDENT + "executables: %s") % (
-                    envs, projects, benchmarks, executables)
+                           envs, projects, benchmarks, executables)
 
                 error("Error: Reporting to Codespeed failed." +
                       DETAIL_INDENT + str(error) +
                       DETAIL_INDENT + "This is most likely caused by "
-                                      "either a wrong URL in the config file, or an " 
+                                      "either a wrong URL in the config file, or an "
                                       "environment not configured in Codespeed." +
                       DETAIL_INDENT + "URL: " + self._cfg.url +
                       DETAIL_INDENT + msg)
