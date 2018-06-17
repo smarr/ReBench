@@ -208,7 +208,7 @@ Argument:
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._config.options.include_faulty,
-                            self._config.options.verbose,
+                            self._config.options.debug,
                             scheduler_class,
                             self._config.build_log)
         return executor.execute()

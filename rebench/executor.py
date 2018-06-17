@@ -268,12 +268,12 @@ class ParallelScheduler(RunScheduler):
 class Executor(object):
 
     def __init__(self, runs, use_nice, do_builds, include_faulty=False,
-                 verbose=False, scheduler=BatchScheduler, build_log=None):
+                 debug=False, scheduler=BatchScheduler, build_log=None):
         self._runs = runs
         self._use_nice = use_nice
         self._do_builds = do_builds
         self._include_faulty = include_faulty
-        self._verbose = verbose
+        self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
 
@@ -332,9 +332,13 @@ class Executor(object):
 
         script = build_command.command
 
+        debug_output_info("Starting build" +
+                          DETAIL_INDENT + "Cmd: " + script +
+                          DETAIL_INDENT + "Cwd: " + path)
+
         proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=path)
+                                cwd=path, verbose=self._debug)
         proc.stdin.write(str.encode(script))
         proc.stdin.close()
 
@@ -438,9 +442,13 @@ class Executor(object):
         run_id.indicate_invocation_start()
 
         try:
+            debug_output_info("Starting run" +
+                              DETAIL_INDENT + "Cmd: " + cmdline +
+                              DETAIL_INDENT + "Cwd: " + run_id.location)
+
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
+                stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
                 timeout=run_id.max_invocation_time)
             output = output.decode('utf-8')
         except OSError as err:
