@@ -17,12 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement, print_function
+from __future__ import with_statement
 
 from datetime import datetime
 from time import time
-from math import floor
-import logging
 import json
 import re
 
@@ -69,19 +67,6 @@ class Reporter(object):
 
 
 class TextReporter(Reporter):
-
-    def _configuration_details(self, run_id, statistics=None):
-        result = ["\t".join(run_id.as_str_list()), " = "]
-        self._output_stats(result, run_id, statistics)
-        return result
-
-    def _output_stats(self, output_list, _run_id, statistics):
-        if not statistics:
-            return
-
-        for field, value in statistics.__dict__.iteritems():
-            if not field.startswith('_'):
-                output_list.append("%s: %s " % (field, value))
 
     @staticmethod
     def _path_to_string(path):
@@ -131,48 +116,6 @@ class CliReporter(TextReporter):
     def set_total_number_of_runs(self, num_runs):
         self._num_runs = num_runs
         self._runs_remaining = num_runs
-
-    def _output_stats(self, output_list, run_id, statistics):
-        if not statistics:
-            return
-
-        if run_id.run_failed():
-            output_list.append("run failed.")
-            output_list.append("")
-            output_list.append("")
-            output_list.append("")
-        else:
-            output_list.append("mean:")
-            output_list.append(("%.1f" % statistics.mean).rjust(8))
-
-
-class FileReporter(TextReporter):
-    """ should be mainly a log file
-        data is the responsibility of the data_aggregator
-    """
-
-    def __init__(self, filename):
-        super(FileReporter, self).__init__()
-        self._file = open(filename, 'a+')
-
-    def run_failed(self, run_id, _cmdline, _return_code, _output):
-        result = "[%s] Run failed: %s\n" % (
-            datetime.now(),
-            " ".join(self._configuration_details(run_id)))
-        self._file.writelines(result)
-
-    def run_completed(self, run_id, statistics, cmdline):
-        result = "[%s] Run completed: %s\n" % (
-            datetime.now(),
-            " ".join(self._configuration_details(run_id, statistics)))
-        self._file.writelines(result)
-
-    def report_job_completed(self, run_ids):
-        self._file.write("[%s] Job completed\n" % datetime.now())
-        for line in self._generate_all_output(run_ids):
-            self._file.write(line + "\n")
-
-        self._file.close()
 
 
 class CodespeedReporter(Reporter):
