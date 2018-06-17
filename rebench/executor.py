@@ -336,7 +336,7 @@ class Executor(object):
 
         proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=path, verbose=self._debug)
+                                cwd=path)
         proc.stdin.write(str.encode(script))
         proc.stdin.close()
 
@@ -350,11 +350,15 @@ class Executor(object):
                         if file_no == proc.stdout.fileno():
                             read = self._read(proc.stdout)
                             if read:
+                                if self._debug:
+                                    sys.stdout.write(read)
                                 log_file.write(name + '|STD:')
                                 log_file.write(read)
                         elif file_no == proc.stderr.fileno():
                             read = self._read(proc.stderr)
                             if read:
+                                if self._debug:
+                                    sys.stderr.write(read)
                                 log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
