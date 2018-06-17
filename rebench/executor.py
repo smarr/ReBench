@@ -17,11 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement, print_function
+from __future__ import with_statement
 
 from collections import deque
 from math import floor
-import logging
 from multiprocessing import cpu_count
 import os
 import pkgutil
@@ -235,7 +234,6 @@ class ParallelScheduler(RunScheduler):
                 exceptions.append(thread.exception)
 
         if exceptions:
-            print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
             else:
@@ -390,7 +388,6 @@ class Executor(object):
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
 
-        run_id.log()
         run_id.report_start_run()
 
         gauge_adapter = self._get_gauge_adapter_instance(
@@ -408,12 +405,15 @@ class Executor(object):
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-
             stats = StatisticProperties(run_id.get_total_values())
-            logging.debug("Run: #%d" % stats.num_samples)
 
         if terminate:
             run_id.report_run_completed(stats, cmdline)
+            if run_id.min_iteration_time and stats.mean < run_id.min_iteration_time:
+                warning(
+                    ("Warning: The mean (%.1f) is lower than min_iteration_time (%d)"
+                     "%sCmd: %s")
+                    % (stats.mean, run_id.min_iteration_time, DETAIL_INDENT, cmdline))
 
         return terminate
 
@@ -437,7 +437,6 @@ class Executor(object):
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
-        print(cmdline)
         # execute the external program here
         run_id.indicate_invocation_start()
 
@@ -460,18 +459,30 @@ class Executor(object):
                      DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
             else:
                 error(str(err))
-            error(
-                (DETAIL_INDENT + "Cmd: %s" +
-                 DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+            error((DETAIL_INDENT + "Cmd: %s" +
+                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
             return True
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
-                logging.error(("Could not execute %s. A likely cause is that "
-                               "the file is not marked as executable.")
-                              % run_id.benchmark.vm.name)
+                error(("Error: Could not execute %s. A likely cause is that "
+                       "the file is not marked as executable. Return code: %d")
+                      % (run_id.benchmark.vm.name, return_code))
+            elif return_code == -9:
+                error("Run timed out. Return code: %d" % return_code)
+                error(DETAIL_INDENT + "max_invocation_time: %s" % run_id.max_invocation_time)
+            else:
+                error("Run failed. Return code: %d" % return_code)
+
+            error((DETAIL_INDENT + "Cmd: %s" +
+                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+
+            if output and output.strip():
+                lines = output.split('\n')
+                error(DETAIL_INDENT + "Output: ")
+                error(DETAIL_INDENT + DETAIL_INDENT.join(lines) + "\n\n")
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
@@ -485,8 +496,12 @@ class Executor(object):
 
             num_points_to_show = 20
             num_points = len(data_points)
+
+            msg = "\nCompleted invocation of " + run_id.as_simple_string()
+            msg += DETAIL_INDENT + "Cmd: " + cmdline
+
             if num_points > num_points_to_show:
-                logging.debug("Recorded %d data points, show last 20..." % num_points)
+                msg += DETAIL_INDENT + "Recorded %d data points, show last 20..." % num_points
             i = 0
             for data_point in data_points:
                 if warmup is not None and warmup > 0:
@@ -496,11 +511,12 @@ class Executor(object):
                     run_id.add_data_point(data_point, False)
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
-                        logging.debug("Run %s:%s result=%s" % (
-                            run_id.benchmark.suite.vm.name, run_id.benchmark.name,
-                            data_point.get_total_value()))
+                        msg += DETAIL_INDENT + "%4d\t%s%s" % (
+                            i + 1, data_point.get_total_value(), data_point.get_total_unit())
                 i += 1
+
             run_id.indicate_successful_execution()
+            verbose_output_info(msg)
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)

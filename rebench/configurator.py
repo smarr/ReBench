@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
 import subprocess
 from os.path import dirname
 
@@ -26,7 +25,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError, DETAIL_INDENT, error
+from .ui import UIError, DETAIL_INDENT, error, set_verbose_debug_mode
 
 
 class _VMFilter(object):
@@ -118,6 +117,7 @@ def load_config(file_name):
     from pykwalify.errors import SchemaError
 
     # Disable most logging for pykwalify
+    import logging
     logging.getLogger('pykwalify').addHandler(logging.NullHandler())
 
     try:
@@ -183,18 +183,7 @@ class Configurator(object):
         if self._options is None:
             return
 
-        if self._options.debug:
-            if self._options.verbose:
-                logging.basicConfig(level=logging.NOTSET)
-                logging.getLogger().setLevel(logging.NOTSET)
-                logging.debug("Enabled verbose debug output.")
-            else:
-                logging.basicConfig(level=logging.DEBUG)
-                logging.getLogger().setLevel(logging.DEBUG)
-                logging.debug("Enabled debug output.")
-        else:
-            logging.basicConfig(level=logging.ERROR)
-            logging.getLogger().setLevel(logging.ERROR)
+        set_verbose_debug_mode(self._options.verbose, self._options.debug)
 
         if self._options.use_nice and not can_set_niceness():
             error("Error: Process niceness could not be set. "

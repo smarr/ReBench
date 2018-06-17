@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
 import re
 
 from .benchmark import Benchmark
@@ -99,12 +98,6 @@ class RunId(object):
             return None
         return self._expand_vars(self._benchmark.suite.location)
 
-    def log(self):
-        msg = "Run Config: number of data points: %d" % self.get_number_of_data_points()
-        if self._benchmark.run_details.min_iteration_time:
-            msg += ", min_iteration_time: %dms" % self._benchmark.run_details.min_iteration_time
-        logging.debug(msg)
-
     def requires_warmup(self):
         return self._benchmark.run_details.warmup > 0
 
@@ -174,6 +167,11 @@ class RunId(object):
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]
 
+    def get_total_unit(self):
+        if not self._data_points:
+            return None
+        return self._data_points[0].get_total_unit()
+
     def get_termination_check(self):
         if self._termination_check is None:
             self._termination_check = TerminationCheck(self._benchmark)
@@ -211,7 +209,7 @@ class RunId(object):
             msg = ("The configuration of %s contains improper Python format strings."
                    % self._benchmark.name)
             msg += DETAIL_INDENT + ("The command line configured is: %s" % string)
-            msg += DETAIL_INDENT + ("%s is not supported as key." % err.message)
+            msg += DETAIL_INDENT + ("%s is not supported as key." % err)
             msg += DETAIL_INDENT
             msg += "Only benchmark, input, variable, cores, and warmup are supported."
             raise UIError(msg, err)
@@ -250,7 +248,7 @@ class RunId(object):
 
         # figure out which format misses a conversion type
         msg += DETAIL_INDENT + ("The command line configured is: %s" % cmdline)
-        msg += DETAIL_INDENT + ("Error: %s" % err.message)
+        msg += DETAIL_INDENT + ("Error: %s" % err)
         without_conversion_type = re.findall(
             r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
         if without_conversion_type:

@@ -26,7 +26,9 @@ import logging
 import json
 import re
 
-from .ui import warning
+from humanfriendly.tables import format_pretty_table
+
+from .ui import output, DETAIL_INDENT, verbose_error_info
 
 try:
     from http.client import HTTPException
@@ -89,24 +91,17 @@ class TextReporter(Reporter):
                 out.append(str(item))
         return " ".join(out) + " "
 
-    def _generate_all_output(self, run_ids):
+    @staticmethod
+    def _generate_all_output(run_ids):
         rows = []
-        col_width = None
 
         for run_id in run_ids:
             stats = StatisticProperties(run_id.get_total_values())
             out = run_id.as_str_list()
-            self._output_stats(out, run_id, stats)
-            if col_width is None:
-                col_width = [0] * len(out)
+            out.append(stats.mean)
             rows.append(out)
-            col_width = [max(len(col_content), col)
-                         for col_content, col in zip(out, col_width)]
 
-        for row in rows:
-            result = "  ".join([col.ljust(width)
-                                for col, width in zip(row, col_width)])
-            yield result
+        return rows
 
 
 class CliReporter(TextReporter):
@@ -121,50 +116,17 @@ class CliReporter(TextReporter):
         self._executes_verbose = executes_verbose
 
     def run_failed(self, run_id, cmdline, return_code, output):
-        # Additional information in debug mode
-        result = "[%s] Run failed: %s\n" % (
-            datetime.now(),
-            " ".join(self._configuration_details(run_id)))
-        logging.debug(result)
-
-        # Standard error output
-        if return_code == -9:
-            log_msg = "Run timed out. return_code: %s"
-        else:
-            log_msg = "Run failed return_code: %s"
-
-        print(log_msg % return_code)
-
-        print("Cmd: %s\n" % cmdline)
-
-        if run_id.max_invocation_time:
-            logging.debug("max_invocation_time: %s" % run_id.max_invocation_time)
-        logging.debug("cwd: %s" % run_id.benchmark.suite.location)
-
-        if not self._executes_verbose and output and output.strip():
-            print("Output:\n%s\n" % output)
+        pass
 
     def run_completed(self, run_id, statistics, cmdline):
-        result = "[%s] Run completed: %s\n" % (
-            datetime.now(),
-            " ".join(self._configuration_details(run_id, statistics)))
-
-        logging.debug(result)
-
         self._runs_completed += 1
         self._runs_remaining -= 1
 
-        if run_id.min_iteration_time and statistics.mean < run_id.min_iteration_time:
-            warning(
-                ("WARNING: measured mean is lower than min_iteration_time (%s) "
-                 "\t mean: %.1f\trun id: %s")
-                % (run_id.min_iteration_time, statistics.mean, run_id.as_simple_string()))
-            warning("Cmd: %s" % cmdline)
-
     def report_job_completed(self, run_ids):
-        print("[%s] Job completed" % datetime.now())
-        for line in self._generate_all_output(run_ids):
-            print(line)
+        output(format_pretty_table(
+            self._generate_all_output(run_ids),
+            ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', 'Mean'],
+            vertical_bar=' '))
 
     def set_total_number_of_runs(self, num_runs):
         self._num_runs = num_runs
@@ -295,8 +257,7 @@ class CodespeedReporter(Reporter):
         socket = urlopen(self._cfg.url, payload)
         response = socket.read()
         socket.close()
-        logging.info("Results were sent to Codespeed, response was: "
-                     + response)
+        return response
 
     def _send_to_codespeed(self, results):
         payload = urlencode({'json': json.dumps(results)})
@@ -307,25 +268,28 @@ class CodespeedReporter(Reporter):
             # sometimes Codespeed fails to accept a request because something
             # is not yet properly initialized, let's try again for those cases
             try:
-                self._send_payload(payload)
+                response = self._send_payload(payload)
+                verbose_error_info("Sent %d results to Codespeed, response was: %s"
+                                   % (len(results), response))
             except (IOError, HTTPException) as error:
-                logging.error(str(error) + " This is most likely caused by "
-                              "either a wrong URL in the config file, or an "
-                              "environment not configured in Codespeed. URL: "
-                              + self._cfg.url)
-                envs = list(set([i['environment']
-                                 for i in results]))
-                projects = list(set([i['project']
-                                     for i in results]))
-                benchmarks = list(set([i['benchmark']
-                                       for i in results]))
-                executables = list(set([i['executable']
-                                        for i in results]))
-                logging.error("Sent data included environments: %s "
-                              "projects: %s benchmarks: %s executables: %s"
-                              % (envs, projects, benchmarks, executables))
+                envs = list(set([i['environment'] for i in results]))
+                projects = list(set([i['project'] for i in results]))
+                benchmarks = list(set([i['benchmark'] for i in results]))
+                executables = list(set([i['executable'] for i in results]))
+                msg = ("Data" +
+                       DETAIL_INDENT + "environments: %s" +
+                       DETAIL_INDENT + "projects: %s" +
+                       DETAIL_INDENT + "benchmarks: %s" +
+                       DETAIL_INDENT + "executables: %s") % (
+                    envs, projects, benchmarks, executables)
 
-        logging.info("Sent %d results to Codespeed." % len(results))
+                error("Error: Reporting to Codespeed failed." +
+                      DETAIL_INDENT + str(error) +
+                      DETAIL_INDENT + "This is most likely caused by "
+                                      "either a wrong URL in the config file, or an " 
+                                      "environment not configured in Codespeed." +
+                      DETAIL_INDENT + "URL: " + self._cfg.url +
+                      DETAIL_INDENT + msg)
 
     def _prepare_result(self, run_id):
         stats = StatisticProperties(run_id.get_total_values())

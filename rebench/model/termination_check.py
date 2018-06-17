@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
+from ..ui import verbose_error_info
 
 
 class TerminationCheck(object):
@@ -53,15 +53,17 @@ class TerminationCheck(object):
 
     def should_terminate(self, number_of_data_points):
         if self._fail_immediately:
-            logging.info(
+            verbose_error_info(
                 "%s was marked to fail immediately" % self._benchmark.name)
         if self.fails_consecutively():
-            logging.error(("Three executions of %s have failed in a row, " +
-                           "benchmark is aborted") % self._benchmark.name)
+            verbose_error_info(
+                ("Three executions of %s have failed in a row, "
+                 "benchmark is aborted") % self._benchmark.name)
             return True
         elif self.has_too_many_failures(number_of_data_points):
-            logging.error("Many runs of %s are failing, benchmark is aborted."
-                          % self._benchmark.name)
+            verbose_error_info(
+                "Many runs of %s are failing, benchmark is aborted."
+                % self._benchmark.name)
             return True
         elif self._num_invocations >= self._benchmark.run_details.invocations:
             return True
