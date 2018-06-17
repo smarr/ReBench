@@ -118,6 +118,7 @@ def load_config(file_name):
 
     # Disable most logging for pykwalify
     import logging
+    logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
     logging.getLogger('pykwalify').addHandler(logging.NullHandler())
 
     try:
