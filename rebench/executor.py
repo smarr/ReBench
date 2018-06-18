@@ -445,9 +445,10 @@ class Executor(object):
         run_id.indicate_invocation_start()
 
         try:
-            debug_output_info("Starting run" +
-                              DETAIL_INDENT + "Cmd: " + cmdline +
-                              DETAIL_INDENT + "Cwd: " + run_id.location)
+            msg = "Starting run" + DETAIL_INDENT + "Cmd: " + cmdline
+            if run_id.location:
+                msg += DETAIL_INDENT + "Cwd: " + run_id.location
+            debug_output_info(msg)
 
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
