@@ -35,7 +35,7 @@ from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
 from .persistence    import DataStore
 from .reporter       import CliReporter
-from .configurator   import Configurator
+from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
 
 
@@ -114,9 +114,12 @@ Argument:
         data.add_argument('-f', '--faulty', action='store_true',
                           dest='include_faulty', default=False,
                           help='Include results of faulty or failing runs')
-        data.add_argument('-o', '--out', dest='output_file', default=None,
-                          help='Report is saved to the given file. '
-                               'The report is always verbose.')
+        data.add_argument('-df', '--data-file', dest='data_file', default=None,
+                          help='Record all data into given file. '
+                               'This overrides the configuration\'s settings.')
+        data.add_argument('-b', '--build-log', dest='build_log', default=None,
+                          help='File for the output of build commands.'
+                               'This overrides the configuration\'s setting.')
 
         codespeed = parser.add_argument_group(
             'Reporting to Codespeed',
@@ -177,10 +180,10 @@ Argument:
         exp_name, exp_filter = self.determine_exp_name_and_filters(args.exp_filter)
 
         try:
-            config_filename = args.config[0]
-            self._config = Configurator(config_filename, data_store, args,
-                                        cli_reporter, exp_name, None,
-                                        exp_filter)
+            config = load_config(args.config[0])
+            self._config = Configurator(config, data_store, args,
+                                        cli_reporter, exp_name, args.data_file,
+                                        args.build_log, exp_filter)
         except ConfigurationError as exc:
             logging.error(exc.message)
             sys.exit(-1)
@@ -188,7 +191,7 @@ Argument:
         return self.execute_experiment()
 
     def execute_experiment(self):
-        logging.debug("execute experiment: %s" % self._config.experiment_name())
+        logging.debug("execute experiment: %s" % self._config.experiment_name)
 
         # first load old data if available
         if self._config.options.clean:

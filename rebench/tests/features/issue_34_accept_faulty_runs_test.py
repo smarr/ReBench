@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator
+from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...rebench          import ReBench
 from ...persistence      import DataStore
@@ -31,21 +31,21 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
-        cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
-                           standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(),
+                           data_file=self._tmp_file)
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, False, False)
         ex.execute()
 
-        self.assertEqual("error-code", runs[0].bench_cfg.name)
+        self.assertEqual("error-code", runs[0].benchmark.name)
         self.assertEqual(0, runs[0].get_number_of_data_points())
 
-        self.assertEqual("everything-ok", runs[1].bench_cfg.name)
+        self.assertEqual("everything-ok", runs[1].benchmark.name)
         self.assertEqual(10, runs[1].get_number_of_data_points())
 
-        self.assertEqual("invalid", runs[2].bench_cfg.name)
+        self.assertEqual("invalid", runs[2].benchmark.name)
         self.assertEqual(0, runs[2].get_number_of_data_points())
 
     def test_parse_command_switch(self):
@@ -57,19 +57,19 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self.assertFalse(options.include_faulty)
 
     def test_faulty_runs_accepted_with_switch(self):
-        cnf = Configurator(self._path + '/issue_34.conf', DataStore(),
-                           standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(),
+                           data_file=self._tmp_file)
         runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.bench_cfg.name)
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
 
         ex = Executor(runs, False, False, True)
         ex.execute()
 
-        self.assertEqual("error-code", runs[0].bench_cfg.name)
+        self.assertEqual("error-code", runs[0].benchmark.name)
         self.assertEqual(10, runs[0].get_number_of_data_points())
 
-        self.assertEqual("everything-ok", runs[1].bench_cfg.name)
+        self.assertEqual("everything-ok", runs[1].benchmark.name)
         self.assertEqual(10, runs[1].get_number_of_data_points())
 
-        self.assertEqual("invalid", runs[2].bench_cfg.name)
+        self.assertEqual("invalid", runs[2].benchmark.name)
         self.assertEqual(10, runs[2].get_number_of_data_points())

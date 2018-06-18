@@ -18,71 +18,72 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from .build_cmd import BuildCommand
+from .exp_run_details import ExpRunDetails
+from .exp_variables import ExpVariables
 
 
 class BenchmarkSuite(object):
 
-    def __init__(self, suite_name, vm, global_suite_cfg, build_commands):
+    @classmethod
+    def compile(cls, suite_name, suite, vm, run_details, variables, build_commands):
+        gauge_adapter = suite.get('gauge_adapter')
+        command = suite.get('command')
+
+        # TODO: should the location be made absolute as the vm._path??
+        location = suite.get('location', vm.path)
+        build = BuildCommand.create(suite.get('build'), build_commands, location)
+        benchmarks_config = suite.get('benchmarks')
+
+        description = suite.get('description')
+        desc = suite.get('desc')
+
+        run_details = ExpRunDetails.compile(suite, run_details)
+        variables = ExpVariables.compile(suite, variables)
+
+        return BenchmarkSuite(suite_name, vm, gauge_adapter, command, location,
+                              build, benchmarks_config, description or desc, run_details, variables)
+
+    def __init__(self, suite_name, vm, gauge_adapter, command, location, build,
+                 benchmarks_config, desc, run_details, variables):
         """Specialize the benchmark suite for the given VM"""
-
         self._name = suite_name
-
-        ## TODO: why do we do handle input_sizes the other way around?
-        if vm.input_sizes:
-            self._input_sizes = vm.input_sizes
-        else:
-            self._input_sizes = global_suite_cfg.get('input_sizes')
-        if self._input_sizes is None:
-            self._input_sizes = [None]
-
-        # TODO: should the _location be made absolute as the vm._path??
-        self._location = global_suite_cfg.get('location', vm.path)
-        self._cores = global_suite_cfg.get('cores', vm.cores)
-        self._variable_values = global_suite_cfg.get('variable_values', [None])
-
         self._vm = vm
-        self._benchmarks = global_suite_cfg['benchmarks']
-        self._gauge_adapter = global_suite_cfg['gauge_adapter']
-
-        self._command = global_suite_cfg['command']
-        self._max_runtime = global_suite_cfg.get('max_runtime', -1)
-
-        build = global_suite_cfg.get('build', None)
-        if build:
-            build_command = BuildCommand(build, self._location)
-            if build_command in build_commands:
-                build_command = build_commands[build_command]
-            self._build = build_command
-        else:
-            self._build = None
+        self._gauge_adapter = gauge_adapter
+        self._command = command
+        self._location = location
+        self._build = build
+        self._benchmarks_config = benchmarks_config
+        self._desc = desc
+        self._run_details = run_details
+        self._variables = variables
 
     @property
-    def input_sizes(self):
-        return self._input_sizes
+    def variables(self):
+        return self._variables
 
     @property
     def location(self):
         return self._location
 
     @property
-    def cores(self):
-        return self._cores
+    def run_details(self):
+        return self._run_details
 
     @property
     def build(self):
         return self._build
 
     @property
-    def variable_values(self):
-        return self._variable_values
-
-    @property
     def vm(self):
         return self._vm
 
     @property
-    def benchmarks(self):
-        return self._benchmarks
+    def benchmarks_config(self):
+        """
+        This is the raw configuration, i.e.,
+        the list of benchmarks and their properties.
+        """
+        return self._benchmarks_config
 
     @property
     def gauge_adapter(self):
@@ -95,13 +96,6 @@ class BenchmarkSuite(object):
     @property
     def command(self):
         return self._command
-
-    @property
-    def max_runtime(self):
-        return self._max_runtime
-
-    def has_max_runtime(self):
-        return self._max_runtime != -1
 
     def __str__(self):
         return "Suite(%s, %s)" % (self._name, self._command)

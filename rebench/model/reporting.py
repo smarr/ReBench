@@ -23,26 +23,38 @@ from ..reporter import CodespeedReporter
 
 class Reporting(object):
 
-    def __init__(self, raw_config, cli_reporter, options):
-        if "codespeed" in raw_config and options.use_codespeed:
-            self._codespeed = CodespeedReporting(raw_config, options)
+    @classmethod
+    def compile(cls, reporting, root_reporting, options):
+        if "codespeed" in reporting and options and options.use_codespeed:
+            codespeed = CodespeedReporting(reporting, options).get_reporter()
         else:
-            self._codespeed = None
+            codespeed = root_reporting.codespeed_reporter
 
+        cli_reporter = root_reporting.cli_reporter
+        return Reporting(codespeed, cli_reporter)
+
+    @classmethod
+    def empty(cls):
+        return Reporting(None, None)
+
+    def __init__(self, codespeed_reporter, cli_reporter):
+        self._codespeed_reporter = codespeed_reporter
         self._cli_reporter = cli_reporter
 
-    def combined(self, _raw_config):
-        rep = Reporting({}, self._cli_reporter, None)
+    @property
+    def codespeed_reporter(self):
+        return self._codespeed_reporter
 
-        rep._codespeed = self._codespeed
-        return rep
+    @property
+    def cli_reporter(self):
+        return self._cli_reporter
 
     def get_reporters(self):
         result = []
         if self._cli_reporter:
             result.append(self._cli_reporter)
-        if self._codespeed:
-            result.append(self._codespeed.get_reporter())
+        if self._codespeed_reporter:
+            result.append(self._codespeed_reporter)
         return result
 
 

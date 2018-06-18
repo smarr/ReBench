@@ -47,7 +47,7 @@ class DataStore(object):
                                                           discard_old_data)
         return self._files[filename]
 
-    def create_run_id(self, bench_cfg, cores, input_size, var_value):
+    def create_run_id(self, benchmark, cores, input_size, var_value):
         if isinstance(cores, str) and cores.isdigit():
             cores = int(cores)
         if input_size == '':
@@ -55,17 +55,16 @@ class DataStore(object):
         if var_value == '':
             var_value = None
 
-        run = RunId(bench_cfg, cores, input_size, var_value)
+        run = RunId(benchmark, cores, input_size, var_value)
         if run in self._run_ids:
             return self._run_ids[run]
         else:
             self._run_ids[run] = run
             return run
 
-    def get_config(self, name, vm_name, suite_name, extra_args, warmup):
+    def get_config(self, name, vm_name, suite_name, extra_args):
         key = (name, vm_name, suite_name,
-               '' if extra_args is None else str(extra_args),
-               str(warmup))
+               '' if extra_args is None else str(extra_args))
 
         if key not in self._bench_cfgs:
             raise ValueError("Requested configuration is not available: " +

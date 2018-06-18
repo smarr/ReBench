@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from ...configurator           import Configurator
+from ...configurator           import Configurator, load_config
 from ...executor               import Executor
 from ...persistence            import DataStore
 
@@ -31,8 +31,8 @@ class Issue27InvalidRunNotHandled(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_execution_should_recognize_invalid_run_and_continue_normally(self):
-        cnf = Configurator(self._path + '/issue_27.conf', DataStore(),
-                           standard_data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_27.conf'), DataStore(),
+                           data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         self.assertEqual(runs[0].get_number_of_data_points(), 0)
 

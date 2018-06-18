@@ -19,9 +19,10 @@
 # THE SOFTWARE.
 import os
 import unittest
-from ...model.benchmark_config import BenchmarkConfig
+from ...model.benchmark import Benchmark
 from ...model.benchmark_suite  import BenchmarkSuite
 from ...model.run_id           import RunId
+from ...model.exp_run_details  import ExpRunDetails
 from ...model.virtual_machine  import VirtualMachine
 from ...persistence            import DataStore
 
@@ -33,27 +34,23 @@ class Issue4RunEquality(unittest.TestCase):
 
     @staticmethod
     def _create_template_run_id():
-        vm = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
-                                           'binary': 'foo_bar_bin'},
-                            None, [1], None, None)
-        suite = BenchmarkSuite("MySuite", vm, {
-            'benchmarks': [], 'gauge_adapter': '',
-            'command': '%(benchmark)s %(cores)s %(input)s'}, None)
-        bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
-                                    '3', 0, None, DataStore())
-        return RunId(bench_cfg, 1, 2, None)
+        vm = VirtualMachine('MyVM', 'foo_bar_path', 'foo_bar_bin',
+                            None, None, None, None, None)
+        suite = BenchmarkSuite("MySuite", vm, '', '%(benchmark)s %(cores)s %(input)s',
+                               None, None, [], None, None, None)
+        benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
+                              '3', ExpRunDetails.empty(), None, DataStore())
+        return RunId(benchmark, 1, 2, None)
 
     @staticmethod
     def _create_hardcoded_run_id():
-        vm = VirtualMachine("MyVM", None, {'path':   'foo_bar_path',
-                                           'binary': 'foo_bar_bin'},
-                            None, [1], None, None)
-        suite = BenchmarkSuite("MySuite", vm, {
-            'benchmarks': [], 'gauge_adapter': '',
-            'command': '%(benchmark)s %(cores)s 2 3'}, None)
-        bench_cfg = BenchmarkConfig("TestBench", "TestBench", None, suite, vm,
-                                    None, 0, None, DataStore())
-        return RunId(bench_cfg, 1, None, None)
+        vm = VirtualMachine('MyVM', 'foo_bar_path', 'foo_bar_bin',
+                            None, None, None, None, None)
+        suite = BenchmarkSuite('MySuite', vm, '', '%(benchmark)s %(cores)s 2 3',
+                               None, None, [], None, None, None)
+        benchmark = Benchmark("TestBench", "TestBench", None, suite,
+                              None, None, ExpRunDetails.empty(), None, DataStore())
+        return RunId(benchmark, 1, None, None)
 
     def test_hardcoded_equals_template_constructed(self):
         hard_coded = self._create_hardcoded_run_id()

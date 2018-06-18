@@ -20,67 +20,51 @@
 import os
 
 from .build_cmd import BuildCommand
+from .exp_run_details import ExpRunDetails
+from .exp_variables import ExpVariables
 
 
 class VirtualMachine(object):
 
-    def __init__(self, name, vm_details, global_cfg, _benchmarks, _input_sizes,
-                 experiment_name, build_commands):
+    @classmethod
+    def compile(cls, vm_name, vm, run_details, variables, build_commands):
+        path = vm.get('path')
+        if path:
+            path = os.path.abspath(path)
+        binary = vm.get('binary')
+        args = vm.get('args')
+
+        build = BuildCommand.create(vm.get('build'), build_commands, path)
+
+        description = vm.get('description')
+        desc = vm.get('desc')
+
+        run_details = ExpRunDetails.compile(vm, run_details)
+        variables = ExpVariables.compile(vm, variables)
+
+        return VirtualMachine(vm_name, path, binary, args, build, description or desc,
+                              run_details, variables)
+
+    def __init__(self, name, path, binary, args, build, description,
+                 run_details, variables):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
         """
-        if vm_details:
-            benchmarks = vm_details.get('benchmark', _benchmarks)
-            input_sizes = vm_details.get('input_sizes', _input_sizes)
-            cores = vm_details.get('cores', None)
-        else:
-            benchmarks = _benchmarks
-            input_sizes = _input_sizes
-            cores = None
-
         self._name = name
-        self._benchsuite_names = benchmarks
-        self._input_sizes = input_sizes
 
-        self._cores = cores or global_cfg.get('cores', [1])
+        self._path = path
+        self._binary = binary
+        self._args = args
 
-        self._path = global_cfg.get('path', None)
-        if self._path:
-            self._path = os.path.abspath(self._path)
+        self._build = build
+        self._description = description
 
-        build = global_cfg.get('build', None)
-        if build:
-            build_command = BuildCommand(build, self._path)
-            if build_command in build_commands:
-                build_command = build_commands[build_command]
-            self._build = build_command
-        else:
-            self._build = None
-
-        self._binary = global_cfg['binary']
-        self._args = global_cfg.get('args', '')
-        self._experiment_name = experiment_name
-        self._execute_exclusively = global_cfg.get('execute_exclusively', True)
+        self._run_details = run_details
+        self._variables = variables
 
     @property
     def name(self):
         return self._name
-
-    @property
-    def benchmark_suite_names(self):
-        return self._benchsuite_names
-
-    @property
-    def input_sizes(self):
-        return self._input_sizes
-
-    @property
-    def cores(self):
-        return self._cores
-
-    @property
-    def build(self):
-        return self._build
 
     @property
     def path(self):
@@ -95,5 +79,17 @@ class VirtualMachine(object):
         return self._args
 
     @property
-    def execute_exclusively(self):
-        return self._execute_exclusively
+    def build(self):
+        return self._build
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def run_details(self):
+        return self._run_details
+
+    @property
+    def variables(self):
+        return self._variables

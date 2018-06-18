@@ -23,8 +23,11 @@ import subprocess
 import traceback
 from os.path import dirname
 
-from .model.runs_config import RunsConfig, QuickRunsConfig
-from .model.experiment  import Experiment
+from .model.experiment import Experiment
+from .model.exp_run_details import ExpRunDetails
+from .model.exp_variables import ExpVariables
+from .model.reporting import Reporting
+from .model.virtual_machine import VirtualMachine
 
 
 class _VMFilter(object):
@@ -33,7 +36,7 @@ class _VMFilter(object):
         self._name = name
 
     def matches(self, bench):
-        return bench.vm.name == self._name
+        return bench.suite.vm.name == self._name
 
 
 class _SuiteFilter(object):
@@ -91,67 +94,98 @@ class _RunFilter(object):
         return False
 
 
+def can_set_niceness():
+    """
+    Check whether we can ask the operating system to influence the priority of
+    our benchmarks.
+    """
+    output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
+                                     stderr=subprocess.STDOUT)
+    if type(output) != str:  # pylint: disable=unidiomatic-typecheck
+        output = output.decode('utf-8')
+    if "cannot set niceness" in output or "Permission denied" in output:
+        return False
+    else:
+        return True
+
+
+def load_config(file_name):
+    """
+    Load the file, verify that it conforms to the schema,
+    and return the configuration.
+    """
+    import yaml
+    from pykwalify.core import Core
+
+    # Disable most logging for pykwalify
+    logging.getLogger('pykwalify').setLevel(logging.ERROR)
+
+    try:
+        with open(file_name, 'r') as conf_file:
+            data = yaml.safe_load(conf_file)
+            validator = Core(
+                source_data=data,
+                schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+            validator.validate(raise_exception=False)
+            if validator.validation_errors and validator.validation_errors:
+                logging.error(
+                    "Validation of " + file_name + " failed. " +
+                    (" ".join(validator.validation_errors)))
+                sys.exit(-1)
+            return data
+    except IOError:
+        logging.error("An error occurred on opening the config file (%s)."
+                      % file_name)
+        logging.error(traceback.format_exc(0))
+        sys.exit(-1)
+    except yaml.YAMLError:
+        logging.error("Failed parsing the config file (%s)." % file_name)
+        logging.error(traceback.format_exc(0))
+        sys.exit(-1)
+
+
 class Configurator(object):
 
-    def __init__(self, file_name, data_store, cli_options=None,
-                 cli_reporter=None, exp_name=None, standard_data_file=None,
-                 run_filter=None):
-        self._raw_config = self._load_config(file_name)
-        if standard_data_file:
-            self._raw_config['standard_data_file'] = standard_data_file
+    def __init__(self, raw_config, data_store, cli_options=None, cli_reporter=None,
+                 exp_name=None, data_file=None, build_log=None, run_filter=None):
+        self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self._options = self._process_cli_options(cli_options)
-        self._exp_name = exp_name
+        self._build_log = build_log or raw_config.get('build_log', 'build.log')
+        self._data_file = data_file or raw_config.get('standard_data_file', 'rebench.data')
+        self._exp_name = exp_name or raw_config.get('standard_experiment', 'all')
 
-        self.runs = RunsConfig(**self._raw_config.get('runs', {}))
-        self.quick_runs = QuickRunsConfig(**self._raw_config.get('quick_runs', {}))
+        self._root_run_details = ExpRunDetails.compile(
+            raw_config.get('runs', {}), ExpRunDetails.default())
+        self._root_reporting = Reporting.compile(
+            raw_config.get('reporting', {}), Reporting.empty(), cli_options)
+
+        self._options = cli_options
+        self._process_cli_options()
+
+        self._cli_reporter = cli_reporter
 
         self._data_store = data_store
         self._build_commands = dict()
-        self._experiments = self._compile_experiments(cli_reporter,
-                                                      _RunFilter(run_filter))
+
+        self._run_filter = _RunFilter(run_filter)
+
+        self._vms = self._compile_vms(raw_config.get('virtual_machines', {}))
+
+        self._suites_config = raw_config.get('benchmark_suites', {})
+
+        experiments = raw_config.get('experiments', {})
+        self._experiments = self._compile_experiments(experiments)
 
     @property
     def build_log(self):
-        return self._raw_config.get('build_log', 'build.log')
+        return self._build_log
 
-    @staticmethod
-    def _load_config(file_name):
-        import yaml
-        from pykwalify.core import Core
+    def _process_cli_options(self):
+        if self._options is None:
+            return
 
-        # Disable most logging for pykwalify
-        logging.getLogger('pykwalify').setLevel(logging.ERROR)
-
-        try:
-            with open(file_name, 'r') as conf_file:
-                data = yaml.safe_load(conf_file)
-                validator = Core(
-                    source_data=data,
-                    schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-                validator.validate(raise_exception=False)
-                if validator.validation_errors and validator.validation_errors:
-                    logging.error(
-                        "Validation of " + file_name + " failed. " +
-                        (" ".join(validator.validation_errors)))
-                    sys.exit(-1)
-                return data
-        except IOError:
-            logging.error("An error occurred on opening the config file (%s)."
-                          % file_name)
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
-        except yaml.YAMLError:
-            logging.error("Failed parsing the config file (%s)." % file_name)
-            logging.error(traceback.format_exc(0))
-            sys.exit(-1)
-
-    def _process_cli_options(self, options):
-        if options is None:
-            return None
-
-        if options.debug:
-            if options.verbose:
+        if self._options.debug:
+            if self._options.verbose:
                 logging.basicConfig(level=logging.NOTSET)
                 logging.getLogger().setLevel(logging.NOTSET)
                 logging.debug("Enabled verbose debug output.")
@@ -163,41 +197,66 @@ class Configurator(object):
             logging.basicConfig(level=logging.ERROR)
             logging.getLogger().setLevel(logging.ERROR)
 
-        if options.use_nice:
-            if not self._can_set_niceness():
+        if self._options.use_nice:
+            if not can_set_niceness():
                 logging.error("Process niceness cannot be set currently. "
                               "To execute benchmarks with highest priority, "
                               "you might need root/admin rights.")
                 logging.error("Deactivated usage of nice command.")
-                options.use_nice = False
+                self._options.use_nice = False
 
-        return options
+    @property
+    def use_nice(self):
+        return self._options is not None and self._options.use_nice
 
-    @staticmethod
-    def _can_set_niceness():
-        output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
-                                         stderr=subprocess.STDOUT)
-        if type(output) != str:  # pylint: disable=unidiomatic-typecheck
-            output = output.decode('utf-8')
-        if "cannot set niceness" in output or "Permission denied" in output:
-            return False
-        else:
-            return True
+    @property
+    def do_builds(self):
+        return self._options is not None and self._options.do_builds
+
+    @property
+    def discard_old_data(self):
+        return self._options is not None and self._options.clean
+
+    @property
+    def experiment_name(self):
+        return self._exp_name
+
+    @property
+    def data_file(self):
+        return self._data_file
+
+    @property
+    def reporting(self):
+        return self._root_reporting
+
+    @property
+    def run_details(self):
+        return self._root_run_details
 
     @property
     def options(self):
         return self._options
 
     @property
-    def use_nice(self):
-        return self.options is not None and self.options.use_nice
+    def build_commands(self):
+        return self._build_commands
 
     @property
-    def do_builds(self):
-        return self.options is not None and self.options.do_builds
+    def run_filter(self):
+        return self._run_filter
 
-    def experiment_name(self):
-        return self._exp_name or self._raw_config['standard_experiment']
+    @property
+    def data_store(self):
+        return self._data_store
+
+    def has_vm(self, vm_name):
+        return vm_name in self._vms
+
+    def get_vm(self, vm_name):
+        return self._vms[vm_name]
+
+    def get_suite(self, suite_name):
+        return self._suites_config[suite_name]
 
     def get_experiments(self):
         """The configuration has been compiled before it is handed out
@@ -216,40 +275,31 @@ class Configurator(object):
             runs |= exp.get_runs()
         return runs
 
-    def _compile_experiments(self, cli_reporter, run_filter):
-        if not self.experiment_name():
-            raise ValueError("No experiment chosen.")
+    def _compile_vms(self, vms):
+        result = {}
 
-        conf_defs = {}
+        variables = ExpVariables.empty()
 
-        if self.experiment_name() == "all":
-            for exp_name in self._raw_config['experiments']:
-                conf_defs[exp_name] = self._compile_experiment(exp_name,
-                                                               cli_reporter,
-                                                               run_filter)
+        for vm_name, details in vms.items():
+            result[vm_name] = VirtualMachine.compile(
+                vm_name, details, self._root_run_details, variables, self._build_commands)
+
+        return result
+
+    def _compile_experiments(self, experiments):
+        results = {}
+
+        if self._exp_name == 'all':
+            for exp_name in experiments:
+                results[exp_name] = self._compile_experiment(exp_name, experiments[exp_name])
         else:
-            if self.experiment_name() not in self._raw_config['experiments']:
+            if self._exp_name not in experiments:
                 raise ValueError("Requested experiment '%s' not available." %
-                                 self.experiment_name())
-            conf_defs[self.experiment_name()] = self._compile_experiment(
-                self.experiment_name(), cli_reporter, run_filter)
+                                 self._exp_name)
+            results[self._exp_name] = self._compile_experiment(
+                self._exp_name, experiments[self._exp_name])
 
-        return conf_defs
+        return results
 
-    def _compile_experiment(self, exp_name, cli_reporter, run_filter):
-        exp_def = self._raw_config['experiments'][exp_name]
-        run_cfg = (self.quick_runs
-                   if (self.options and self.options.quick)
-                   else self.runs)
-
-        return Experiment(exp_name, exp_def, run_cfg,
-                          self._raw_config['virtual_machines'],
-                          self._raw_config['benchmark_suites'],
-                          self._raw_config.get('reporting', {}),
-                          self._data_store,
-                          self._build_commands,
-                          self._raw_config.get('standard_data_file', None),
-                          self._options.clean if self._options else False,
-                          cli_reporter,
-                          run_filter,
-                          self._options)
+    def _compile_experiment(self, exp_name, experiment):
+        return Experiment.compile(exp_name, experiment, self)

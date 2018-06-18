@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Stefan Marr <http://www.stefan-marr.de/>
+# Copyright (c) 2018 Stefan Marr <http://www.stefan-marr.de/>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,27 +17,34 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator, load_config
-from ...executor         import Executor
-from ...persistence      import DataStore
-from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue57BinaryOnPath(ReBenchTestCase):
+class ExpVariables(object):
 
-    def setUp(self):
-        super(Issue57BinaryOnPath, self).setUp()
-        self._set_path(__file__)
+    @classmethod
+    def compile(cls, config, defaults):
+        input_sizes = config.get('input_sizes', defaults.input_sizes)
+        cores = config.get('cores', defaults.cores)
+        variable_values = config.get('variable_values', defaults.variable_values)
+        return ExpVariables(input_sizes, cores, variable_values)
 
-    def test_sleep_gives_results(self):
-        store = DataStore()
-        cnf = Configurator(load_config(self._path + '/issue_57.conf'), store,
-                           data_file=self._tmp_file)
-        runs = list(cnf.get_runs())
-        runs = sorted(runs, key=lambda e: e.benchmark.name)
+    @classmethod
+    def empty(cls):
+        return ExpVariables([''], [1], [''])
 
-        ex = Executor(runs, False, False, False)
-        ex.execute()
+    def __init__(self, input_sizes, cores, variable_values):
+        self._input_sizes = input_sizes
+        self._cores = cores
+        self._variable_values = variable_values
 
-        self.assertEqual("Bench1", runs[0].benchmark.name)
-        self.assertEqual(10, runs[0].get_number_of_data_points())
+    @property
+    def input_sizes(self):
+        return self._input_sizes
+
+    @property
+    def cores(self):
+        return self._cores
+
+    @property
+    def variable_values(self):
+        return self._variable_values
