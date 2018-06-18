@@ -17,12 +17,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
 import re
-import sys
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
+from ..ui import UIError, DETAIL_INDENT
 
 
 class RunId(object):
@@ -52,6 +51,14 @@ class RunId(object):
     @property
     def max_invocation_time(self):
         return self._benchmark.run_details.max_invocation_time
+
+    @property
+    def iterations(self):
+        return self._benchmark.run_details.iterations
+
+    @property
+    def invocations(self):
+        return self._benchmark.run_details.invocations
 
     @property
     def execute_exclusively(self):
@@ -90,12 +97,6 @@ class RunId(object):
         if not self._benchmark.suite.location:
             return None
         return self._expand_vars(self._benchmark.suite.location)
-
-    def log(self):
-        msg = "Run Config: number of data points: %d" % self.get_number_of_data_points()
-        if self._benchmark.run_details.min_iteration_time:
-            msg += ", min_iteration_time: %dms" % self._benchmark.run_details.min_iteration_time
-        logging.debug(msg)
 
     def requires_warmup(self):
         return self._benchmark.run_details.warmup > 0
@@ -148,8 +149,9 @@ class RunId(object):
     def loaded_data_point(self, data_point):
         self._data_points.append(data_point)
 
-    def add_data_point(self, data_point):
-        self._data_points.append(data_point)
+    def add_data_point(self, data_point, warmup):
+        if not warmup:
+            self._data_points.append(data_point)
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
 
@@ -164,6 +166,11 @@ class RunId(object):
 
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]
+
+    def get_total_unit(self):
+        if not self._data_points:
+            return None
+        return self._data_points[0].get_total_unit()
 
     def get_termination_check(self):
         if self._termination_check is None:
@@ -188,11 +195,24 @@ class RunId(object):
                                 self._cores, self._input_size, self._var_value)
 
     def _expand_vars(self, string):
-        return string % {'benchmark' : self._benchmark.command,
-                         'input'     : self._input_size,
-                         'variable'  : self._var_value,
-                         'cores'     : self._cores,
-                         'warmup'    : self._benchmark.run_details.warmup}
+        try:
+            return string % {'benchmark': self._benchmark.command,
+                             'input': self._input_size,
+                             'variable': self._var_value,
+                             'cores': self._cores,
+                             'warmup': self._benchmark.run_details.warmup}
+        except ValueError as err:
+            self._report_format_issue_and_exit(string, err)
+        except TypeError as err:
+            self._report_format_issue_and_exit(string, err)
+        except KeyError as err:
+            msg = ("The configuration of %s contains improper Python format strings."
+                   % self._benchmark.name)
+            msg += DETAIL_INDENT + ("The command line configured is: %s" % string)
+            msg += DETAIL_INDENT + ("%s is not supported as key." % err)
+            msg += DETAIL_INDENT
+            msg += "Only benchmark, input, variable, cores, and warmup are supported."
+            raise UIError(msg, err)
 
     def cmdline(self):
         if self._cmdline:
@@ -210,12 +230,7 @@ class RunId(object):
         if self._benchmark.extra_args is not None:
             cmdline += " %s" % self._benchmark.extra_args
 
-        try:
-            cmdline = self._expand_vars(cmdline)
-        except ValueError:
-            self._report_cmdline_format_issue_and_exit(cmdline)
-        except TypeError:
-            self._report_cmdline_format_issue_and_exit(cmdline)
+        cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
         return self._cmdline
@@ -227,20 +242,21 @@ class RunId(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def _report_cmdline_format_issue_and_exit(self, cmdline):
-        logging.critical("The configuration of %s contains improper "
-                         "Python format strings.", self._benchmark.name)
+    def _report_format_issue_and_exit(self, cmdline, err):
+        msg = ("The configuration of the benchmark %s contains an improper Python format string."
+               % self._benchmark.name)
 
         # figure out which format misses a conversion type
+        msg += DETAIL_INDENT + ("The command line configured is: %s" % cmdline)
+        msg += DETAIL_INDENT + ("Error: %s" % err)
         without_conversion_type = re.findall(
             r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
-        logging.error("The command line configured is: %s", cmdline)
-        logging.error("The following elements do not have conversion types: \"%s\"",
-                      '", "'.join(without_conversion_type))
-        logging.error("This can be fixed by replacing for instance %s with %ss",
-                      without_conversion_type[0],
-                      without_conversion_type[0])
-        sys.exit(-1)
+        if without_conversion_type:
+            msg += DETAIL_INDENT + ("The following elements do not have conversion types: \"%s\""
+                                    % '", "'.join(without_conversion_type))
+            msg += DETAIL_INDENT + ("This can be fixed by replacing for instance %s with %ss"
+                                    % (without_conversion_type[0], without_conversion_type[0]))
+        raise UIError(msg, err)
 
     def as_str_list(self):
         result = self._benchmark.as_str_list()

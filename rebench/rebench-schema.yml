@@ -20,9 +20,8 @@ schema;runs_type:
     warmup:
       type: int
       desc: |
-        Consider the first N iterations as warmup.
-        This is used by reporters, for instance to discard these
-        N measurements before calculating statistics.
+        Consider the first N iterations as warmup and ignore them in summary
+        statistics. Note they are still persistet in the data file.
 
     min_iteration_time:
       type: int

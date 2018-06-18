@@ -19,7 +19,6 @@
 # IN THE SOFTWARE.
 import os
 import sys
-import logging
 import subprocess
 import shutil
 from threading import Lock
@@ -28,6 +27,7 @@ import time
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
+from .ui import debug_error_info, DETAIL_INDENT, error, DETAIL_INDENT_WON
 
 
 class DataStore(object):
@@ -104,7 +104,8 @@ class DataStore(object):
                 with open(filename, 'r') as data_file:
                     lines = data_file.readlines()
             except IOError:
-                logging.info("Failed to open data file: %s" % filename)
+                debug_error_info(
+                    "Tried to discard old data, but file does not seem to exist: %s" % filename)
                 continue
 
             for measure in measures:
@@ -147,8 +148,8 @@ class _DataPointPersistence(object):
             with open(self._data_filename, 'r') as data_file:
                 self._process_lines(data_file)
         except IOError:
-            logging.info("No data loaded %s does not exist."
-                         % self._data_filename)
+            debug_error_info("No data loaded, since %s does not exist."
+                             % self._data_filename)
 
     def _process_lines(self, data_file):
         """
@@ -156,6 +157,7 @@ class _DataPointPersistence(object):
          measurement is always the last one serialized for a data point.
         """
         errors = set()
+        data_point = None
 
         previous_run_id = None
         line_number = 0
@@ -182,9 +184,11 @@ class _DataPointPersistence(object):
 
             except ValueError as err:
                 msg = str(err)
+                if not errors:
+                    debug_error_info("Failed loading data from data file: " + data_file)
                 if msg not in errors:
                     # Configuration is not available, skip data point
-                    logging.log(logging.DEBUG - 1, msg)
+                    debug_error_info(DETAIL_INDENT_WON + msg)
                     errors.add(msg)
             line_number += 1
 
@@ -218,8 +222,8 @@ class _DataPointPersistence(object):
                 shutil.copyfileobj(open(renamed_file, 'r'), data_file)
             os.remove(renamed_file)
         except Exception as err:  # pylint: disable=broad-except
-            logging.error("An error occurred " +
-                          "while trying to insert a shebang line: %s", err)
+            error("Error: While inserting a shebang line into the data file.%s%s"
+                  % (DETAIL_INDENT, err))
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 

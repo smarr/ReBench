@@ -41,3 +41,6 @@ class DataPoint(object):
 
     def get_total_value(self):
         return self._total.value if self._total else None
+
+    def get_total_unit(self):
+        return self._total.unit

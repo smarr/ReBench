@@ -34,8 +34,8 @@ class Reporting(object):
         return Reporting(codespeed, cli_reporter)
 
     @classmethod
-    def empty(cls):
-        return Reporting(None, None)
+    def empty(cls, cli_reporter):
+        return Reporting(None, cli_reporter)
 
     def __init__(self, codespeed_reporter, cli_reporter):
         self._codespeed_reporter = codespeed_reporter

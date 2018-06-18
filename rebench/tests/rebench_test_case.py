@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import logging
 import os
 from os.path  import dirname, realpath
 
@@ -32,6 +33,8 @@ class ReBenchTestCase(TestCase):
         os.chdir(self._path)
 
     def setUp(self):
+        logging.getLogger('pykwalify').addHandler(logging.NullHandler())
+
         self._set_path(__file__)
         self._tmp_file = mkstemp()[1]  # just use the file name
 

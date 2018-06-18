@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import unittest
-import logging
 
 from ..configurator           import Configurator, load_config
 from ..persistence            import DataStore
@@ -26,14 +25,6 @@ from .rebench_test_case import ReBenchTestCase
 
 
 class ConfiguratorTest(ReBenchTestCase):
-
-    def setUp(self):
-        super(ConfiguratorTest, self).setUp()
-        self._logging_error = logging.error
-
-    def tearDown(self):
-        super(ConfiguratorTest, self).tearDown()
-        logging.error = self._logging_error  # restore normal logging
 
     def test_experiment_name_from_cli(self):
         cnf = Configurator(load_config(self._path + '/test.conf'),

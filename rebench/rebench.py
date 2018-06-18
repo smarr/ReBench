@@ -27,8 +27,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import logging
 import sys
+
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
@@ -37,6 +37,7 @@ from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
+from .ui import UIError, error, debug_error_info, verbose_output_info
 
 
 class ReBench(object):
@@ -77,7 +78,7 @@ Argument:
                             default=False, help='Enable debug output')
         basics.add_argument('-v', '--verbose', action='store_true',
                             dest='verbose', default=False,
-                            help='Output more details in the report.')
+                            help='Output more details during execution.')
 
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
@@ -185,13 +186,13 @@ Argument:
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
-            logging.error(exc.message)
-            sys.exit(-1)
+            raise UIError(exc.message, exc)
+
         data_store.load_data()
         return self.execute_experiment()
 
     def execute_experiment(self):
-        logging.debug("execute experiment: %s" % self._config.experiment_name)
+        verbose_output_info("Execute experiment: %s" % self._config.experiment_name)
 
         # first load old data if available
         if self._config.options.clean:
@@ -206,7 +207,7 @@ Argument:
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._config.options.include_faulty,
-                            self._config.options.verbose,
+                            self._config.options.debug,
                             scheduler_class,
                             self._config.build_log)
         return executor.execute()
@@ -216,7 +217,10 @@ def main_func():
     try:
         return 0 if ReBench().run() else -1
     except KeyboardInterrupt:
-        logging.info("Aborted by user request")
+        debug_error_info("Aborted by user request")
+        return -1
+    except UIError as err:
+        error(err.message)
         return -1
 
 

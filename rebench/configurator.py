@@ -17,10 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import sys
-import logging
 import subprocess
-import traceback
 from os.path import dirname
 
 from .model.experiment import Experiment
@@ -28,6 +25,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
+from .ui import UIError, DETAIL_INDENT, error, set_verbose_debug_mode
 
 
 class _VMFilter(object):
@@ -116,9 +114,12 @@ def load_config(file_name):
     """
     import yaml
     from pykwalify.core import Core
+    from pykwalify.errors import SchemaError
 
     # Disable most logging for pykwalify
-    logging.getLogger('pykwalify').setLevel(logging.ERROR)
+    import logging
+    logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
+    logging.getLogger('pykwalify').addHandler(logging.NullHandler())
 
     try:
         with open(file_name, 'r') as conf_file:
@@ -126,22 +127,23 @@ def load_config(file_name):
             validator = Core(
                 source_data=data,
                 schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-            validator.validate(raise_exception=False)
-            if validator.validation_errors and validator.validation_errors:
-                logging.error(
-                    "Validation of " + file_name + " failed. " +
-                    (" ".join(validator.validation_errors)))
-                sys.exit(-1)
+            try:
+                validator.validate(raise_exception=True)
+            except SchemaError as err:
+                raise UIError(
+                    "Validation of " + file_name + " failed." + DETAIL_INDENT +
+                    (DETAIL_INDENT.join(validator.validation_errors)), err)
             return data
-    except IOError:
-        logging.error("An error occurred on opening the config file (%s)."
-                      % file_name)
-        logging.error(traceback.format_exc(0))
-        sys.exit(-1)
-    except yaml.YAMLError:
-        logging.error("Failed parsing the config file (%s)." % file_name)
-        logging.error(traceback.format_exc(0))
-        sys.exit(-1)
+    except IOError as err:
+        if err.errno == 2:
+            assert err.strerror == "No such file or directory"
+            raise UIError("The requested config file (%s) could not be opened. %s."
+                          % (file_name, err.strerror), err)
+        else:
+            raise UIError(str(err), err)
+    except yaml.YAMLError as err:
+        raise UIError("Parsing of the config file "
+                      + file_name + " failed.\nError " + str(err), err)
 
 
 class Configurator(object):
@@ -157,12 +159,10 @@ class Configurator(object):
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default())
         self._root_reporting = Reporting.compile(
-            raw_config.get('reporting', {}), Reporting.empty(), cli_options)
+            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options)
 
         self._options = cli_options
         self._process_cli_options()
-
-        self._cli_reporter = cli_reporter
 
         self._data_store = data_store
         self._build_commands = dict()
@@ -184,26 +184,14 @@ class Configurator(object):
         if self._options is None:
             return
 
-        if self._options.debug:
-            if self._options.verbose:
-                logging.basicConfig(level=logging.NOTSET)
-                logging.getLogger().setLevel(logging.NOTSET)
-                logging.debug("Enabled verbose debug output.")
-            else:
-                logging.basicConfig(level=logging.DEBUG)
-                logging.getLogger().setLevel(logging.DEBUG)
-                logging.debug("Enabled debug output.")
-        else:
-            logging.basicConfig(level=logging.ERROR)
-            logging.getLogger().setLevel(logging.ERROR)
+        set_verbose_debug_mode(self._options.verbose, self._options.debug)
 
-        if self._options.use_nice:
-            if not can_set_niceness():
-                logging.error("Process niceness cannot be set currently. "
-                              "To execute benchmarks with highest priority, "
-                              "you might need root/admin rights.")
-                logging.error("Deactivated usage of nice command.")
-                self._options.use_nice = False
+        if self._options.use_nice and not can_set_niceness():
+            error("Error: Process niceness could not be set. "
+                  "To execute benchmarks with highest priority, "
+                  "you might need root/admin rights.")
+            error("Deactivated usage of nice command.")
+            self._options.use_nice = False
 
     @property
     def use_nice(self):

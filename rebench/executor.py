@@ -17,11 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement, print_function
+from __future__ import with_statement
 
 from collections import deque
 from math import floor
-import logging
 from multiprocessing import cpu_count
 import os
 import pkgutil
@@ -30,10 +29,14 @@ from select import select
 import subprocess
 import sys
 from threading import Thread, RLock
+from time import time
+
+from humanfriendly import Spinner
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .statistics  import StatisticProperties
 from .interop.adapter import ExecutionDeliveredNoResults
+from .statistics import StatisticProperties, mean
+from .ui import DETAIL_INDENT, error, verbose_output_info, warning, debug_output_info
 
 
 class FailedBuilding(Exception):
@@ -48,6 +51,10 @@ class RunScheduler(object):
 
     def __init__(self, executor):
         self._executor = executor
+        self._runs_completed = 0
+        self._progress_spinner = None
+        self._start_time = time()
+        self._total_num_runs = 0
 
     @staticmethod
     def _filter_out_completed_runs(runs):
@@ -61,9 +68,47 @@ class RunScheduler(object):
         """Abstract, to be implemented"""
         pass
 
+    def _estimate_time_left(self):
+        if self._runs_completed == 0:
+            return 0, 0, 0
+
+        current = time()
+        time_per_invocation = ((current - self._start_time) / self._runs_completed)
+        etl = time_per_invocation * (self._total_num_runs - self._runs_completed)
+        sec = etl % 60
+        minute = (etl - sec) / 60 % 60
+        hour = (etl - sec - minute) / 60 / 60
+        return floor(hour), floor(minute), floor(sec)
+
+    def _indicate_progress(self, completed_task, run):
+        if not self._progress_spinner:
+            return
+
+        totals = run.get_total_values()
+        if completed_task:
+            self._runs_completed += 1
+
+        if totals:
+            art_mean = mean(run.get_total_values())
+        else:
+            art_mean = 0
+
+        hour, minute, sec = self._estimate_time_left()
+
+        label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
+                % (run.as_simple_string(), art_mean, hour, minute, sec)
+        self._progress_spinner.step(self._runs_completed, label)
+
     def execute(self):
+        self._total_num_runs = len(self._executor.runs)
         runs = self._filter_out_completed_runs(self._executor.runs)
-        self._process_remaining_runs(runs)
+        completed_runs = self._total_num_runs - len(runs)
+        self._runs_completed = completed_runs
+
+        with Spinner(label="Running Benchmarks", total=self._total_num_runs) as spinner:
+            self._progress_spinner = spinner
+            spinner.step(completed_runs)
+            self._process_remaining_runs(runs)
 
 
 class BatchScheduler(RunScheduler):
@@ -74,6 +119,7 @@ class BatchScheduler(RunScheduler):
                 completed = False
                 while not completed:
                     completed = self._executor.execute_run(run_id)
+                    self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
 
@@ -87,6 +133,7 @@ class RoundRobinScheduler(RunScheduler):
             try:
                 run = task_list.popleft()
                 completed = self._executor.execute_run(run)
+                self._indicate_progress(completed, run)
                 if not completed:
                     task_list.append(run)
             except FailedBuilding:
@@ -99,9 +146,10 @@ class RandomScheduler(RunScheduler):
         task_list = list(runs)
 
         while task_list:
+            run = random.choice(task_list)
             try:
-                run = random.choice(task_list)
                 completed = self._executor.execute_run(run)
+                self._indicate_progress(completed, run)
                 if completed:
                     task_list.remove(run)
             except FailedBuilding:
@@ -186,7 +234,6 @@ class ParallelScheduler(RunScheduler):
                 exceptions.append(thread.exception)
 
         if exceptions:
-            print(exceptions)
             if len(exceptions) == 1:
                 raise exceptions[0]
             else:
@@ -219,12 +266,12 @@ class ParallelScheduler(RunScheduler):
 class Executor(object):
 
     def __init__(self, runs, use_nice, do_builds, include_faulty=False,
-                 verbose=False, scheduler=BatchScheduler, build_log=None):
+                 debug=False, scheduler=BatchScheduler, build_log=None):
         self._runs = runs
         self._use_nice = use_nice
         self._do_builds = do_builds
         self._include_faulty = include_faulty
-        self._verbose = verbose
+        self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
 
@@ -283,6 +330,10 @@ class Executor(object):
 
         script = build_command.command
 
+        debug_output_info("Starting build" +
+                          DETAIL_INDENT + "Cmd: " + script +
+                          DETAIL_INDENT + "Cwd: " + path)
+
         proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 cwd=path)
@@ -299,11 +350,15 @@ class Executor(object):
                         if file_no == proc.stdout.fileno():
                             read = self._read(proc.stdout)
                             if read:
+                                if self._debug:
+                                    sys.stdout.write(read)
                                 log_file.write(name + '|STD:')
                                 log_file.write(read)
                         elif file_no == proc.stderr.fileno():
                             read = self._read(proc.stderr)
                             if read:
+                                if self._debug:
+                                    sys.stderr.write(read)
                                 log_file.write(name + '|ERR:')
                                 log_file.write(read)
 
@@ -337,7 +392,6 @@ class Executor(object):
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check()
 
-        run_id.log()
         run_id.report_start_run()
 
         gauge_adapter = self._get_gauge_adapter_instance(
@@ -355,12 +409,15 @@ class Executor(object):
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-
             stats = StatisticProperties(run_id.get_total_values())
-            logging.debug("Run: #%d" % stats.num_samples)
 
         if terminate:
             run_id.report_run_completed(stats, cmdline)
+            if run_id.min_iteration_time and stats.mean < run_id.min_iteration_time:
+                warning(
+                    ("Warning: The mean (%.1f) is lower than min_iteration_time (%d)"
+                     "%sCmd: %s")
+                    % (stats.mean, run_id.min_iteration_time, DETAIL_INDENT, cmdline))
 
         return terminate
 
@@ -384,22 +441,53 @@ class Executor(object):
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
-        print(cmdline)
         # execute the external program here
         run_id.indicate_invocation_start()
-        (return_code, output, _) = subprocess_timeout.run(
-            cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, shell=True, verbose=self._verbose,
-            timeout=run_id.max_invocation_time)
-        output = output.decode('utf-8')
+
+        try:
+            msg = "Starting run" + DETAIL_INDENT + "Cmd: " + cmdline
+            if run_id.location:
+                msg += DETAIL_INDENT + "Cwd: " + run_id.location
+            debug_output_info(msg)
+
+            (return_code, output, _) = subprocess_timeout.run(
+                cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
+                timeout=run_id.max_invocation_time)
+            output = output.decode('utf-8')
+        except OSError as err:
+            run_id.fail_immediately()
+            if err.errno == 2:
+                error(
+                    ("Failed executing a run." +
+                     DETAIL_INDENT + "It failed with: %s." +
+                     DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
+            else:
+                error(str(err))
+            error((DETAIL_INDENT + "Cmd: %s" +
+                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+            return True
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
-                logging.error(("Could not execute %s. A likely cause is that "
-                               "the file is not marked as executable.")
-                              % run_id.benchmark.vm.name)
+                error(("Error: Could not execute %s. A likely cause is that "
+                       "the file is not marked as executable. Return code: %d")
+                      % (run_id.benchmark.vm.name, return_code))
+            elif return_code == -9:
+                error("Run timed out. Return code: %d" % return_code)
+                error(DETAIL_INDENT + "max_invocation_time: %s" % run_id.max_invocation_time)
+            else:
+                error("Run failed. Return code: %d" % return_code)
+
+            error((DETAIL_INDENT + "Cmd: %s" +
+                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+
+            if output and output.strip():
+                lines = output.split('\n')
+                error(DETAIL_INDENT + "Output: ")
+                error(DETAIL_INDENT + DETAIL_INDENT.join(lines) + "\n\n")
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
@@ -413,21 +501,27 @@ class Executor(object):
 
             num_points_to_show = 20
             num_points = len(data_points)
+
+            msg = "\nCompleted invocation of " + run_id.as_simple_string()
+            msg += DETAIL_INDENT + "Cmd: " + cmdline
+
             if num_points > num_points_to_show:
-                logging.debug("Recorded %d data points, show last 20..." % num_points)
+                msg += DETAIL_INDENT + "Recorded %d data points, show last 20..." % num_points
             i = 0
             for data_point in data_points:
                 if warmup is not None and warmup > 0:
                     warmup -= 1
+                    run_id.add_data_point(data_point, True)
                 else:
-                    run_id.add_data_point(data_point)
+                    run_id.add_data_point(data_point, False)
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
-                        logging.debug("Run %s:%s result=%s" % (
-                            run_id.benchmark.suite.vm.name, run_id.benchmark.name,
-                            data_point.get_total_value()))
+                        msg += DETAIL_INDENT + "%4d\t%s%s" % (
+                            i + 1, data_point.get_total_value(), data_point.get_total_unit())
                 i += 1
+
             run_id.indicate_successful_execution()
+            verbose_output_info(msg)
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)
