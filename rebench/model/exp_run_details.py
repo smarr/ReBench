@@ -30,7 +30,7 @@ class ExpRunDetails(object):
 
         min_iteration_time = none_or_int(config.get('min_iteration_time',
                                                     defaults.min_iteration_time))
-        max_invocation_time = none_or_int(config.get('min_iteration_time',
+        max_invocation_time = none_or_int(config.get('max_invocation_time',
                                                      defaults.max_invocation_time))
 
         parallel_interference_factor = none_or_float(config.get(

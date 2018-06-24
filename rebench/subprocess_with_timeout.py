@@ -9,6 +9,14 @@ from time       import time
 
 import sys
 
+IS_PY3 = None
+
+try:
+    _ = ProcessLookupError
+    IS_PY3 = True
+except NameError:
+    IS_PY3 = False
+
 
 class SubprocessThread(Thread):
 
@@ -127,17 +135,32 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
 
+def kill_py2(proc_id):
+    try:
+        kill(proc_id, SIGKILL)
+    except IOError:
+        # it's a race condition, so let's simply ignore it
+        pass
+
+
+def kill_py3(proc_id):
+    try:
+        kill(proc_id, SIGKILL)
+    except ProcessLookupError:  # pylint: disable=undefined-variable
+        # it's a race condition, so let's simply ignore it
+        pass
+
+
 def kill_process(pid, recursively, thread):
     pids = [pid]
     if recursively:
         pids.extend(get_process_children(pid))
 
     for proc_id in pids:
-        try:
-            kill(proc_id, SIGKILL)
-        except ProcessLookupError:  # pylint: disable=undefined-variable
-            # it's a race condition, so let's simply ignore it
-            pass
+        if IS_PY3:
+            kill_py3(proc_id)
+        else:
+            kill_py2(proc_id)
 
     thread.join()
 

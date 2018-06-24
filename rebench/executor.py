@@ -19,19 +19,21 @@
 # THE SOFTWARE.
 from __future__ import with_statement
 
+from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
 import os
 import pkgutil
 import random
-from select import select
 import subprocess
 import sys
+from select import select
 from threading import Thread, RLock
 from time import time
 
 from humanfriendly import Spinner
+from humanfriendly.compat import coerce_string
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
@@ -304,7 +306,8 @@ class Executor(object):
     @staticmethod
     def _read(stream):
         data = stream.readline()
-        return data.decode('utf-8')
+        decoded = data.decode('utf-8')
+        return coerce_string(decoded)
 
     def _build_vm_and_suite(self, run_id):
         name = "VM:" + run_id.benchmark.suite.vm.name
@@ -341,7 +344,7 @@ class Executor(object):
         proc.stdin.close()
 
         if self._build_log:
-            with open(self._build_log, 'a') as log_file:
+            with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
                 while True:
                     reads = [proc.stdout.fileno(), proc.stderr.fileno()]
                     ret = select(reads, [], [])
