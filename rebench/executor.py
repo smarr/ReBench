@@ -418,9 +418,10 @@ class Executor(object):
             run_id.report_run_completed(stats, cmdline)
             if run_id.min_iteration_time and stats.mean < run_id.min_iteration_time:
                 warning(
-                    ("Warning: The mean (%.1f) is lower than min_iteration_time (%d)"
-                     "%sCmd: %s")
-                    % (stats.mean, run_id.min_iteration_time, DETAIL_INDENT, cmdline))
+                    ("Warning: Low mean run time for run %s."
+                     + DETAIL_INDENT + "The mean (%.1f) is lower than min_iteration_time (%d)"
+                     + DETAIL_INDENT + "Cmd: %s\n")
+                    % (run_id.as_simple_string(), stats.mean, run_id.min_iteration_time, cmdline))
 
         return terminate
 
@@ -461,14 +462,15 @@ class Executor(object):
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:
-                error(
-                    ("Failed executing a run." +
-                     DETAIL_INDENT + "It failed with: %s." +
-                     DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
+                msg = ("Failed executing run: %s"
+                       + DETAIL_INDENT + "It failed with: %s."
+                       + DETAIL_INDENT + "File name: %s") % (run_id.as_simple_string(),
+                                                             err.strerror, err.filename)
             else:
-                error(str(err))
-            error((DETAIL_INDENT + "Cmd: %s" +
-                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+                msg = str(err)
+            error((msg
+                   + DETAIL_INDENT + "Cmd: %s"
+                   + DETAIL_INDENT + "Cwd: %s\n") % (cmdline, run_id.location))
             return True
 
         if return_code != 0 and not self._include_faulty:
