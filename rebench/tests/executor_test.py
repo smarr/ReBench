@@ -27,7 +27,7 @@ from ..executor          import Executor
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
-from ..ui import UIError
+from ..ui import UIError, TestDummyUI
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -45,7 +45,7 @@ class ExecutorTest(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(), options,
                            None, 'Test', data_file=self._tmp_file)
 
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
 
 # TODO: should test more details
@@ -68,7 +68,7 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(), options,
                                None, 'TestBrokenCommandFormat',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
@@ -79,14 +79,14 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(), options,
                                None, 'TestBrokenCommandFormat2',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()

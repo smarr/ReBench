@@ -21,6 +21,7 @@ from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...rebench          import ReBench
 from ...persistence      import DataStore
+from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -36,7 +37,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, False)
+        ex = Executor(runs, False, False, TestDummyUI(), False)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)
@@ -62,7 +63,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, True)
+        ex = Executor(runs, False, False, TestDummyUI(), True)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)

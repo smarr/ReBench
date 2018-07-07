@@ -23,6 +23,7 @@ import os
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
+from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -47,7 +48,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -65,7 +66,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -94,7 +95,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -117,7 +118,7 @@ class Issue58BuildVM(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
         ex.execute()
 
         os.remove(self._path + '/vm_58a.sh')

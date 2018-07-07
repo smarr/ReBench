@@ -25,6 +25,7 @@ from codecs import open as open_with_enc
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
+from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -42,7 +43,7 @@ class Issue81UnicodeSuite(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, build_log=cnf.build_log)
+        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

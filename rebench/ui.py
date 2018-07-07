@@ -19,61 +19,115 @@
 # IN THE SOFTWARE.
 import sys
 
+from humanfriendly import erase_line_code, Spinner
 from humanfriendly.compat import coerce_string
-from humanfriendly.terminal import terminal_supports_colors, ansi_wrap,\
-    auto_encode, warning as hf_warning, output as hf_output
+from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 
-DETAIL_INDENT = "\n    "
-DETAIL_INDENT_WON = "    "
+_DETAIL_INDENT = "    "
 
 
-_verbose_output = False
-_debug_output = False
+class UI(object):
 
+    def __init__(self, verbose, debug):
+        self._verbose = verbose
+        self._debug = debug
 
-def set_verbose_debug_mode(verbose, debug):
-    global _verbose_output, _debug_output  # pylint: disable=global-statement
-    _verbose_output = verbose
-    _debug_output = debug
+        self._prev_run_id = None
+        self._prev_cmd = None
+        self._prev_cwd = None
+        self._progress_spinner = None
+        self._need_to_erase_spinner = False
 
+    def spinner_initialized(self):
+        return self._progress_spinner is not None
 
-def output(text, *args, **kw):
-    hf_output(text, *args, **kw)
+    def init_spinner(self, total):
+        self._progress_spinner = Spinner(label="Running Benchmarks", total=total)
+        return self._progress_spinner
 
+    def step_spinner(self, completed_runs, label=None):
+        assert self._progress_spinner
+        self._progress_spinner.step(completed_runs, label)
+        self._need_to_erase_spinner = True
 
-def warning(text, *args, **kw):
-    text = coerce_string(text)
-    if terminal_supports_colors(sys.stderr):
-        text = ansi_wrap(text, color='magenta')
-    auto_encode(sys.stderr, text + '\n', *args, **kw)
+    def _prepare_details(self, run_id, cmd, cwd):
+        if not run_id and not cmd:
+            return None
 
+        # avoid duplicate details
+        if run_id and run_id is self._prev_run_id:
+            return None
 
-def error(text, *args, **kw):
-    return hf_warning(text, *args, **kw)
+        if cmd and cmd is self._prev_cmd:
+            return None
 
+        text = None
+        if run_id:
+            text = "\nExecuting run:" + run_id.as_simple_string() + "\n"
 
-def verbose_output_info(text, *args, **kw):
-    if _verbose_output:
+        if cmd and text:
+            text += _DETAIL_INDENT + "cmd: " + cmd + "\n"
+        elif cmd:
+            text = "\nExecuting cmd: " + cmd + "\n"
+
+        assert text
+        if cwd:
+            text += _DETAIL_INDENT + "cwd: " + cwd + "\n"
+        elif run_id:
+            text += _DETAIL_INDENT + "cwd: " + run_id.location + "\n"
+
+        self._prev_run_id = run_id
+        self._prev_cmd = cmd
+        self._prev_cwd = cwd
+
+        return text
+
+    def _output_detail_header(self, run_id, cmd, cwd):
+        text = self._prepare_details(run_id, cmd, cwd)
+        if text:
+            self._output(text, 'black')
+
+    @staticmethod
+    def output(text, *args, **kw):
+        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
+
+    def _output(self, text, color, *args, **kw):
+        if self._need_to_erase_spinner:
+            sys.stdout.write(erase_line_code)
+            self._need_to_erase_spinner = False
+
         text = coerce_string(text)
-        auto_encode(sys.stdout, text + '\n', *args, **kw)
+        if terminal_supports_colors(sys.stdout):
+            text = ansi_wrap(text, color=color)
+        auto_encode(sys.stdout, text, ind=_DETAIL_INDENT, *args, **kw)
 
+    def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        self._output_detail_header(run_id, cmd, cwd)
+        self._output(text, 'magenta', **kw)
 
-def verbose_error_info(text, *args, **kw):
-    if _verbose_output:
-        text = coerce_string(text)
-        auto_encode(sys.stderr, text + '\n', *args, **kw)
+    def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        self._output_detail_header(run_id, cmd, cwd)
+        self._output(text, 'red', **kw)
 
+    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        if self._verbose:
+            self._output_detail_header(run_id, cmd, cwd)
+            self._output(text, 'black', faint=True, **kw)
 
-def debug_output_info(text, *args, **kw):
-    if _debug_output:
-        text = coerce_string(text)
-        auto_encode(sys.stdout, text + '\n', *args, **kw)
+    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        if self._verbose:
+            self._output_detail_header(run_id, cmd, cwd)
+            self._output(text, 'error', faint=True, **kw)
 
+    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        if self._debug:
+            self._output_detail_header(run_id, cmd, cwd)
+            self._output(text, 'black', faint=True, **kw)
 
-def debug_error_info(text, *args, **kw):
-    if _debug_output:
-        text = coerce_string(text)
-        auto_encode(sys.stderr, text + '\n', *args, **kw)
+    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        if self._debug:
+            self._output_detail_header(run_id, cmd, cwd)
+            self._output(text, 'error', faint=True, **kw)
 
 
 class UIError(Exception):
@@ -90,3 +144,45 @@ class UIError(Exception):
     @property
     def source_exception(self):
         return self._exception
+
+
+class TestDummyUI(object):
+
+    def spinner_initialized(self):
+        pass
+
+    def init_spinner(self, _total):
+        return DummySpinner()
+
+    def step_spinner(self, completed_runs, label=None):
+        pass
+
+    def output(self, text, **kw):
+        pass
+
+    def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+
+class DummySpinner(object):
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        pass

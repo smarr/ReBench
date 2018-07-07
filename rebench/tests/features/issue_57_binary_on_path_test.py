@@ -20,6 +20,7 @@
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
+from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -36,7 +37,7 @@ class Issue57BinaryOnPath(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, False)
+        ex = Executor(runs, False, False, TestDummyUI(), False)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

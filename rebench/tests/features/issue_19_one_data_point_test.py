@@ -23,6 +23,7 @@ from ...configurator     import Configurator, load_config
 from ...executor         import Executor, RoundRobinScheduler
 from ...persistence      import DataStore
 from ...reporter         import Reporter
+from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -85,7 +86,7 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         for run in cnf.get_runs():
             run.add_reporter(reporter)
 
-        ex = Executor(cnf.get_runs(), False, False, False, False,
+        ex = Executor(cnf.get_runs(), False, False, TestDummyUI(), False, False,
                       RoundRobinScheduler)
         ex.execute()
 

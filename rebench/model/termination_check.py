@@ -17,12 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ..ui import verbose_error_info
 
 
 class TerminationCheck(object):
-    def __init__(self, benchmark):
-        self._benchmark = benchmark
+    def __init__(self, run_id, ui):
+        self._run_id = run_id
+        self._ui = ui
         self._num_invocations = 0
         self._consecutive_erroneous_executions = 0
         self._failed_execution_count = 0
@@ -53,19 +53,16 @@ class TerminationCheck(object):
 
     def should_terminate(self, number_of_data_points):
         if self._fail_immediately:
-            verbose_error_info(
-                "%s was marked to fail immediately" % self._benchmark.name)
+            self._ui.verbose_error_info("{ind}Marked to fail immediately.\n", self._run_id)
         if self.fails_consecutively():
-            verbose_error_info(
-                ("Three executions of %s have failed in a row, "
-                 "benchmark is aborted") % self._benchmark.name)
+            self._ui.verbose_error_info(
+                "{ind}Three executions have failed in a row, benchmark is aborted.\n", self._run_id)
             return True
         elif self.has_too_many_failures(number_of_data_points):
-            verbose_error_info(
-                "Many runs of %s are failing, benchmark is aborted."
-                % self._benchmark.name)
+            self._ui.verbose_error_info(
+                "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id)
             return True
-        elif self._num_invocations >= self._benchmark.run_details.invocations:
+        elif self._num_invocations >= self._run_id.benchmark.run_details.invocations:
             return True
         else:
             return False

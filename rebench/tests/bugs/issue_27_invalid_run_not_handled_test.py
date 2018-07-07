@@ -20,6 +20,7 @@
 from ...configurator           import Configurator, load_config
 from ...executor               import Executor
 from ...persistence            import DataStore
+from ...ui                     import TestDummyUI
 
 from ..rebench_test_case import ReBenchTestCase
 
@@ -36,7 +37,7 @@ class Issue27InvalidRunNotHandled(ReBenchTestCase):
         runs = list(cnf.get_runs())
         self.assertEqual(runs[0].get_number_of_data_points(), 0)
 
-        ex = Executor([runs[0]], False, False)
+        ex = Executor([runs[0]], False, False, TestDummyUI())
         ex.execute()
 
         self.assertEqual(runs[0].get_number_of_data_points(), 0)

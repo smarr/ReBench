@@ -27,7 +27,6 @@ import time
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
-from .ui import debug_error_info, DETAIL_INDENT, error, DETAIL_INDENT_WON
 
 
 class DataStore(object):
@@ -36,6 +35,12 @@ class DataStore(object):
         self._files = {}
         self._run_ids = {}
         self._bench_cfgs = {}
+        self._ui = None
+
+    def set_ui(self, ui):
+        self._ui = ui
+        for persistence in list(self._files.values()):
+            persistence.set_ui(ui)
 
     def load_data(self):
         for persistence in list(self._files.values()):
@@ -44,7 +49,8 @@ class DataStore(object):
     def get(self, filename, discard_old_data):
         if filename not in self._files:
             self._files[filename] = _DataPointPersistence(filename, self,
-                                                          discard_old_data)
+                                                          discard_old_data,
+                                                          self._ui)
         return self._files[filename]
 
     def create_run_id(self, benchmark, cores, input_size, var_value):
@@ -97,15 +103,15 @@ class DataStore(object):
         return by_file
 
     @classmethod
-    def discard_data_of_runs(cls, runs):
+    def discard_data_of_runs(cls, runs, ui):
         by_file = cls.get_by_file(runs)
         for filename, measures in by_file.items():
             try:
                 with open(filename, 'r') as data_file:
                     lines = data_file.readlines()
             except IOError:
-                debug_error_info(
-                    "Tried to discard old data, but file does not seem to exist: %s" % filename)
+                ui.debug_error_info(
+                    "Tried to discard old data, but file does not seem to exist: %s\n" % filename)
                 continue
 
             for measure in measures:
@@ -119,8 +125,9 @@ class DataStore(object):
 
 class _DataPointPersistence(object):
 
-    def __init__(self, data_filename, data_store, discard_old_data):
+    def __init__(self, data_filename, data_store, discard_old_data, ui):
         self._data_store = data_store
+        self._ui = ui
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
                              "for data_filename, but got: %s" % data_filename)
@@ -131,6 +138,9 @@ class _DataPointPersistence(object):
             self._discard_old_data()
         self._insert_shebang_line()
         self._lock = Lock()
+
+    def set_ui(self, ui):
+        self._ui = ui
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -148,8 +158,8 @@ class _DataPointPersistence(object):
             with open(self._data_filename, 'r') as data_file:
                 self._process_lines(data_file)
         except IOError:
-            debug_error_info("No data loaded, since %s does not exist."
-                             % self._data_filename)
+            self._ui.debug_error_info("No data loaded, since %s does not exist.\n"
+                                      % self._data_filename)
 
     def _process_lines(self, data_file):
         """
@@ -185,10 +195,11 @@ class _DataPointPersistence(object):
             except ValueError as err:
                 msg = str(err)
                 if not errors:
-                    debug_error_info("Failed loading data from data file: " + data_file)
+                    self._ui.debug_error_info("Failed loading data from data file: "
+                                              + data_file + "\n")
                 if msg not in errors:
                     # Configuration is not available, skip data point
-                    debug_error_info(DETAIL_INDENT_WON + msg)
+                    self._ui.debug_error_info("{ind}" + msg + "\n")
                     errors.add(msg)
             line_number += 1
 
@@ -222,8 +233,8 @@ class _DataPointPersistence(object):
                 shutil.copyfileobj(open(renamed_file, 'r'), data_file)
             os.remove(renamed_file)
         except Exception as err:  # pylint: disable=broad-except
-            error("Error: While inserting a shebang line into the data file.%s%s"
-                  % (DETAIL_INDENT, err))
+            self._ui.error(
+                "Error: While inserting a shebang line into the data file.\n{ind}%s\n" % err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 
