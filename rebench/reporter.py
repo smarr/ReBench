@@ -25,7 +25,6 @@ import re
 
 from humanfriendly.tables import format_pretty_table
 
-from .ui import output, DETAIL_INDENT, verbose_error_info
 
 try:
     from http.client import HTTPException
@@ -82,7 +81,10 @@ class TextReporter(Reporter):
         for run_id in run_ids:
             stats = StatisticProperties(run_id.get_total_values())
             out = run_id.as_str_list()
-            out.append(stats.mean)
+            if stats.num_samples == 0:
+                out.append("Failed")
+            else:
+                out.append(stats.mean)
             rows.append(out)
 
         return rows
@@ -91,9 +93,10 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
 
-    def __init__(self, executes_verbose):
+    def __init__(self, executes_verbose, ui):
         super(CliReporter, self).__init__()
         self._num_runs = None
+        self._ui = ui
         self._runs_completed = 0
         self._start_time = None
         self._runs_remaining = 0
@@ -107,7 +110,7 @@ class CliReporter(TextReporter):
         self._runs_remaining -= 1
 
     def report_job_completed(self, run_ids):
-        output(format_pretty_table(
+        self._ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
             ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', 'Mean'],
             vertical_bar=' '))
@@ -123,13 +126,14 @@ class CodespeedReporter(Reporter):
     to the configured Codespeed instance.
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, ui):
         super(CodespeedReporter, self).__init__()
         self._cfg = cfg
         self._incremental_report = self._cfg.report_incrementally
         self._cache_for_seconds = 30
         self._cache = {}
         self._last_send = time()
+        self._ui = ui
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
@@ -142,7 +146,11 @@ class CodespeedReporter(Reporter):
             self._send_and_empty_cache()
 
     def _send_and_empty_cache(self):
-        self._send_to_codespeed(list(self._cache.values()))
+        if len(self._cache) == 1:
+            run_id = list(self._cache.keys())[0]
+        else:
+            run_id = None
+        self._send_to_codespeed(list(self._cache.values()), run_id)
         self._cache = {}
 
     def _result_data_template(self):
@@ -201,7 +209,7 @@ class CodespeedReporter(Reporter):
         socket.close()
         return response
 
-    def _send_to_codespeed(self, results):
+    def _send_to_codespeed(self, results, run_id):
         payload = urlencode({'json': json.dumps(results)})
 
         try:
@@ -211,27 +219,26 @@ class CodespeedReporter(Reporter):
             # is not yet properly initialized, let's try again for those cases
             try:
                 response = self._send_payload(payload)
-                verbose_error_info("Sent %d results to Codespeed, response was: %s"
-                                   % (len(results), response))
+                self._ui.verbose_error_info("Sent %d results to Codespeed, response was: %s\n"
+                                            % (len(results), response))
             except (IOError, HTTPException) as error:
                 envs = list(set([i['environment'] for i in results]))
                 projects = list(set([i['project'] for i in results]))
                 benchmarks = list(set([i['benchmark'] for i in results]))
                 executables = list(set([i['executable'] for i in results]))
-                msg = ("Data" +
-                       DETAIL_INDENT + "environments: %s" +
-                       DETAIL_INDENT + "projects: %s" +
-                       DETAIL_INDENT + "benchmarks: %s" +
-                       DETAIL_INDENT + "executables: %s") % (
+                msg = ("{ind}Data\n"
+                       + "{ind}{ind}environments: %s\n"
+                       + "{ind}{ind}projects: %s\n"
+                       + "{ind}{ind}benchmarks: %s\n"
+                       + "{ind}{ind}executables: %s\n") % (
                            envs, projects, benchmarks, executables)
 
-                error("Error: Reporting to Codespeed failed." +
-                      DETAIL_INDENT + str(error) +
-                      DETAIL_INDENT + "This is most likely caused by "
-                                      "either a wrong URL in the config file, or an "
-                                      "environment not configured in Codespeed." +
-                      DETAIL_INDENT + "URL: " + self._cfg.url +
-                      DETAIL_INDENT + msg)
+                error("{ind}Error: Reporting to Codespeed failed.\n"
+                      + "{ind}{ind}" + str(error) + "\n"
+                      + "{ind}{ind}This is most likely caused by either a wrong URL in the\n"
+                      + "{ind}{ind}config file, or an environment not configured in Codespeed.\n"
+                      + "{ind}{ind}URL: " + self._cfg.url + "\n"
+                      + "{ind}{ind}" + msg + "\n", run_id)
 
     def _prepare_result(self, run_id):
         stats = StatisticProperties(run_id.get_total_values())
@@ -245,5 +252,10 @@ class CodespeedReporter(Reporter):
 
         results = [self._prepare_result(run_id) for run_id in run_ids]
 
+        if len(run_ids) == 1:
+            run_id = run_ids[0]
+        else:
+            run_id = None
+
         # now, send them of to codespeed
-        self._send_to_codespeed(results)
+        self._send_to_codespeed(results, run_id)

@@ -34,7 +34,7 @@ from ..model.virtual_machine  import VirtualMachine
 class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
-        data_store = DataStore()
+        data_store = DataStore(self._ui)
         vm = VirtualMachine("MyVM", '', '',
                             None, None, None, None, None)
         suite = BenchmarkSuite("MySuite", vm, '', '', None, None,

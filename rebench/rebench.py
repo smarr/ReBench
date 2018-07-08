@@ -37,7 +37,7 @@ from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
-from .ui import UIError, error, debug_error_info, verbose_output_info
+from .ui import UIError, UI
 
 
 class ReBench(object):
@@ -46,6 +46,11 @@ class ReBench(object):
         self.version = "0.10.1"
         self.options = None
         self._config = None
+        self._ui = UI()
+
+    @property
+    def ui(self):
+        return self._ui
 
     def shell_options(self):
         usage = """%(prog)s [options] <config> [exp_name] [vm:$]* [s:$]*
@@ -172,27 +177,28 @@ Argument:
         if argv is None:
             argv = sys.argv
 
-        data_store = DataStore()
+        data_store = DataStore(self._ui)
         opt_parser = self.shell_options()
         args = opt_parser.parse_args(argv[1:])
 
-        cli_reporter = CliReporter(args.verbose)
+        cli_reporter = CliReporter(args.verbose, self._ui)
 
         exp_name, exp_filter = self.determine_exp_name_and_filters(args.exp_filter)
 
         try:
             config = load_config(args.config[0])
-            self._config = Configurator(config, data_store, args,
+            self._config = Configurator(config, data_store, self._ui, args,
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
+            #TODO how to set ui on codespeed reporter?
         except ConfigurationError as exc:
-            raise UIError(exc.message, exc)
+            raise UIError(exc.message + "\n", exc)
 
         data_store.load_data()
         return self.execute_experiment()
 
     def execute_experiment(self):
-        verbose_output_info("Execute experiment: %s" % self._config.experiment_name)
+        self._ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
 
         # first load old data if available
         if self._config.options.clean:
@@ -203,9 +209,10 @@ Argument:
                            'random':      RandomScheduler}.get(self._config.options.scheduler)
         runs = self._config.get_runs()
         if self._config.options.do_rerun:
-            DataStore.discard_data_of_runs(runs)
+            DataStore.discard_data_of_runs(runs, self._ui)
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
+                            self._ui,
                             self._config.options.include_faulty,
                             self._config.options.debug,
                             scheduler_class,
@@ -215,12 +222,13 @@ Argument:
 
 def main_func():
     try:
-        return 0 if ReBench().run() else -1
+        rebench = ReBench()
+        return 0 if rebench.run() else -1
     except KeyboardInterrupt:
-        debug_error_info("Aborted by user request")
+        rebench.ui.debug_error_info("Aborted by user request")
         return -1
     except UIError as err:
-        error(err.message)
+        rebench.ui.error(err.message)
         return -1
 
 

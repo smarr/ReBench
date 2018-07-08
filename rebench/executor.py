@@ -32,13 +32,11 @@ from select import select
 from threading import Thread, RLock
 from time import time
 
-from humanfriendly import Spinner
 from humanfriendly.compat import coerce_string
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
 from .statistics import StatisticProperties, mean
-from .ui import DETAIL_INDENT, error, verbose_output_info, warning, debug_output_info
 
 
 class FailedBuilding(Exception):
@@ -51,20 +49,20 @@ class FailedBuilding(Exception):
 
 class RunScheduler(object):
 
-    def __init__(self, executor):
+    def __init__(self, executor, ui):
         self._executor = executor
+        self._ui = ui
         self._runs_completed = 0
-        self._progress_spinner = None
         self._start_time = time()
         self._total_num_runs = 0
 
     @staticmethod
-    def _filter_out_completed_runs(runs):
-        return [run for run in runs if not run.is_completed()]
+    def _filter_out_completed_runs(runs, ui):
+        return [run for run in runs if not run.is_completed(ui)]
 
     @staticmethod
-    def number_of_uncompleted_runs(runs):
-        return len(RunScheduler._filter_out_completed_runs(runs))
+    def number_of_uncompleted_runs(runs, ui):
+        return len(RunScheduler._filter_out_completed_runs(runs, ui))
 
     def _process_remaining_runs(self, runs):
         """Abstract, to be implemented"""
@@ -83,7 +81,7 @@ class RunScheduler(object):
         return floor(hour), floor(minute), floor(sec)
 
     def _indicate_progress(self, completed_task, run):
-        if not self._progress_spinner:
+        if not self._ui.spinner_initialized():
             return
 
         totals = run.get_total_values()
@@ -99,17 +97,16 @@ class RunScheduler(object):
 
         label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
                 % (run.as_simple_string(), art_mean, hour, minute, sec)
-        self._progress_spinner.step(self._runs_completed, label)
+        self._ui.step_spinner(self._runs_completed, label)
 
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
-        runs = self._filter_out_completed_runs(self._executor.runs)
+        runs = self._filter_out_completed_runs(self._executor.runs, self._ui)
         completed_runs = self._total_num_runs - len(runs)
         self._runs_completed = completed_runs
 
-        with Spinner(label="Running Benchmarks", total=self._total_num_runs) as spinner:
-            self._progress_spinner = spinner
-            spinner.step(completed_runs)
+        with self._ui.init_spinner(self._total_num_runs):
+            self._ui.step_spinner(completed_runs)
             self._process_remaining_runs(runs)
 
 
@@ -188,8 +185,8 @@ class BenchmarkThreadExceptions(Exception):
 
 class ParallelScheduler(RunScheduler):
 
-    def __init__(self, executor, seq_scheduler_class):
-        RunScheduler.__init__(self, executor)
+    def __init__(self, executor, seq_scheduler_class, ui):
+        RunScheduler.__init__(self, executor, ui)
         self._seq_scheduler_class = seq_scheduler_class
         self._lock = RLock()
         self._num_worker_threads = self._number_of_threads()
@@ -215,7 +212,7 @@ class ParallelScheduler(RunScheduler):
     def _process_sequential_runs(self, runs):
         seq_runs, par_runs = self._split_runs(runs)
 
-        scheduler = self._seq_scheduler_class(self._executor)
+        scheduler = self._seq_scheduler_class(self._executor, self._ui)
         scheduler._process_remaining_runs(seq_runs)
 
         return par_runs
@@ -250,7 +247,7 @@ class ParallelScheduler(RunScheduler):
         return per_thread
 
     def get_local_scheduler(self):
-        return self._seq_scheduler_class(self._executor)
+        return self._seq_scheduler_class(self._executor, self._ui)
 
     def acquire_work(self):
         with self._lock:
@@ -267,17 +264,18 @@ class ParallelScheduler(RunScheduler):
 
 class Executor(object):
 
-    def __init__(self, runs, use_nice, do_builds, include_faulty=False,
+    def __init__(self, runs, use_nice, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None):
         self._runs = runs
         self._use_nice = use_nice
         self._do_builds = do_builds
+        self._ui = ui
         self._include_faulty = include_faulty
         self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
 
-        num_runs = RunScheduler.number_of_uncompleted_runs(runs)
+        num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
         for run in runs:
             run.set_total_number_of_runs(num_runs)
 
@@ -289,9 +287,9 @@ class Executor(object):
                 if not run.execute_exclusively:
                     i += 1
             if i > 1:
-                return ParallelScheduler(self, scheduler)
+                return ParallelScheduler(self, scheduler, self._ui)
 
-        return scheduler(self)
+        return scheduler(self, self._ui)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
@@ -333,9 +331,7 @@ class Executor(object):
 
         script = build_command.command
 
-        debug_output_info("Starting build" +
-                          DETAIL_INDENT + "Cmd: " + script +
-                          DETAIL_INDENT + "Cwd: " + path)
+        self._ui.debug_output_info("Start build\n", None, script, path)
 
         proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -344,56 +340,70 @@ class Executor(object):
         proc.stdin.close()
 
         if self._build_log:
-            with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
-                while True:
-                    reads = [proc.stdout.fileno(), proc.stderr.fileno()]
-                    ret = select(reads, [], [])
-
-                    for file_no in ret[0]:
-                        if file_no == proc.stdout.fileno():
-                            read = self._read(proc.stdout)
-                            if read:
-                                if self._debug:
-                                    sys.stdout.write(read)
-                                log_file.write(name + '|STD:')
-                                log_file.write(read)
-                        elif file_no == proc.stderr.fileno():
-                            read = self._read(proc.stderr)
-                            if read:
-                                if self._debug:
-                                    sys.stderr.write(read)
-                                log_file.write(name + '|ERR:')
-                                log_file.write(read)
-
-                    if proc.poll() is not None:
-                        break
-                # read rest of pipes
-                while True:
-                    read = self._read(proc.stdout)
-                    if read == "":
-                        break
-                    log_file.write(name + '|STD:')
-                    log_file.write(read)
-                while True:
-                    read = self._read(proc.stderr)
-                    if not read:
-                        break
-                    log_file.write(name + '|ERR:')
-                    log_file.write(read)
-
-                log_file.write('\n')
+            output = self.process_output(name, proc)
 
         if proc.returncode != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
                 script, proc.returncode, "Build of " + name + " failed.")
+            self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
+            if output and output.strip():
+                lines = output.split('\n')
+                self._ui.error("{ind}Output:\n\n{ind}{ind}"
+                               + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
         else:
             build_command.mark_succeeded()
 
+    def process_output(self, name, proc):
+        output = ""
+        with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
+            while True:
+                reads = [proc.stdout.fileno(), proc.stderr.fileno()]
+                ret = select(reads, [], [])
+
+                for file_no in ret[0]:
+                    if file_no == proc.stdout.fileno():
+                        read = self._read(proc.stdout)
+                        if read:
+                            if self._debug:
+                                sys.stdout.write(read)
+                            log_file.write(name + '|STD:')
+                            log_file.write(read)
+                            output += read
+                    elif file_no == proc.stderr.fileno():
+                        read = self._read(proc.stderr)
+                        if read:
+                            if self._debug:
+                                sys.stderr.write(read)
+                            log_file.write(name + '|ERR:')
+                            log_file.write(read)
+                            output += read
+
+                if proc.poll() is not None:
+                    break
+            # read rest of pipes
+            while True:
+                read = self._read(proc.stdout)
+                if read == "":
+                    break
+                log_file.write(name + '|STD:')
+                log_file.write(read)
+                output += read
+            while True:
+                read = self._read(proc.stderr)
+                if not read:
+                    break
+                log_file.write(name + '|ERR:')
+                log_file.write(read)
+                output += read
+
+            log_file.write('\n')
+        return output
+
     def execute_run(self, run_id):
-        termination_check = run_id.get_termination_check()
+        termination_check = run_id.get_termination_check(self._ui)
 
         run_id.report_start_run()
 
@@ -416,11 +426,12 @@ class Executor(object):
 
         if terminate:
             run_id.report_run_completed(stats, cmdline)
-            if run_id.min_iteration_time and stats.mean < run_id.min_iteration_time:
-                warning(
-                    ("Warning: The mean (%.1f) is lower than min_iteration_time (%d)"
-                     "%sCmd: %s")
-                    % (stats.mean, run_id.min_iteration_time, DETAIL_INDENT, cmdline))
+            if (not run_id.is_failed() and run_id.min_iteration_time
+                    and stats.mean < run_id.min_iteration_time):
+                self._ui.warning(
+                    ("{ind}Warning: Low mean run time.\n"
+                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)")
+                    % (stats.mean, run_id.min_iteration_time), run_id, cmdline)
 
         return terminate
 
@@ -448,10 +459,7 @@ class Executor(object):
         run_id.indicate_invocation_start()
 
         try:
-            msg = "Starting run" + DETAIL_INDENT + "Cmd: " + cmdline
-            if run_id.location:
-                msg += DETAIL_INDENT + "Cwd: " + run_id.location
-            debug_output_info(msg)
+            self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
@@ -461,36 +469,36 @@ class Executor(object):
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:
-                error(
-                    ("Failed executing a run." +
-                     DETAIL_INDENT + "It failed with: %s." +
-                     DETAIL_INDENT + "File: %s") % (err.strerror, err.filename))
+                msg = ("{ind}Failed executing run\n"
+                       + "{ind}{ind}It failed with: %s.\n"
+                       + "{ind}{ind}File name: %s\n") % (err.strerror, err.filename)
             else:
-                error(str(err))
-            error((DETAIL_INDENT + "Cmd: %s" +
-                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+                msg = str(err)
+            self._ui.error(msg, run_id, cmdline)
             return True
 
         if return_code != 0 and not self._include_faulty:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
-                error(("Error: Could not execute %s. A likely cause is that "
-                       "the file is not marked as executable. Return code: %d")
-                      % (run_id.benchmark.vm.name, return_code))
+                msg = ("{ind}Error: Could not execute %s.\n"
+                       + "{ind}{ind}The file may not be marked as executable.\n"
+                       + "{ind}Return code: %d\n") % (
+                           run_id.benchmark.vm.name, return_code)
             elif return_code == -9:
-                error("Run timed out. Return code: %d" % return_code)
-                error(DETAIL_INDENT + "max_invocation_time: %s" % run_id.max_invocation_time)
+                msg = ("{ind}Run timed out.\n"
+                       + "{ind}{ind}Return code: %d\n"
+                       + "{ind}{ind}max_invocation_time: %s\n") % (
+                           return_code, run_id.max_invocation_time)
             else:
-                error("Run failed. Return code: %d" % return_code)
+                msg = "{ind}Run failed. Return code: %d\n" % return_code
 
-            error((DETAIL_INDENT + "Cmd: %s" +
-                   DETAIL_INDENT + "Cwd: %s") % (cmdline, run_id.location))
+            self._ui.error(msg, run_id, cmdline)
 
             if output and output.strip():
                 lines = output.split('\n')
-                error(DETAIL_INDENT + "Output: ")
-                error(DETAIL_INDENT + DETAIL_INDENT.join(lines) + "\n\n")
+                self._ui.error("{ind}Output:\n\n{ind}{ind}"
+                               + "\n{ind}{ind}".join(lines) + "\n")
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
@@ -505,11 +513,10 @@ class Executor(object):
             num_points_to_show = 20
             num_points = len(data_points)
 
-            msg = "\nCompleted invocation of " + run_id.as_simple_string()
-            msg += DETAIL_INDENT + "Cmd: " + cmdline
+            msg = "{ind}Completed invocation\n"
 
             if num_points > num_points_to_show:
-                msg += DETAIL_INDENT + "Recorded %d data points, show last 20..." % num_points
+                msg += "{ind}{ind}Recorded %d data points, show last 20...\n" % num_points
             i = 0
             for data_point in data_points:
                 if warmup is not None and warmup > 0:
@@ -519,12 +526,12 @@ class Executor(object):
                     run_id.add_data_point(data_point, False)
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
-                        msg += DETAIL_INDENT + "%4d\t%s%s" % (
+                        msg += "{ind}{ind}%4d\t%s%s\n" % (
                             i + 1, data_point.get_total_value(), data_point.get_total_unit())
                 i += 1
 
             run_id.indicate_successful_execution()
-            verbose_output_info(msg)
+            self._ui.verbose_output_info(msg, run_id, cmdline)
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)

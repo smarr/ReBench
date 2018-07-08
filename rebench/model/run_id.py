@@ -21,7 +21,7 @@ import re
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
-from ..ui import UIError, DETAIL_INDENT
+from ..ui import UIError
 
 
 class RunId(object):
@@ -172,14 +172,14 @@ class RunId(object):
             return None
         return self._data_points[0].get_total_unit()
 
-    def get_termination_check(self):
+    def get_termination_check(self, ui):
         if self._termination_check is None:
-            self._termination_check = TerminationCheck(self._benchmark)
+            self._termination_check = TerminationCheck(self, ui)
         return self._termination_check
 
-    def is_completed(self):
+    def is_completed(self, ui):
         """ Check whether the termination condition is satisfied. """
-        return self.get_termination_check().should_terminate(
+        return self.get_termination_check(ui).should_terminate(
             self.get_number_of_data_points())
 
     def run_failed(self):
@@ -206,12 +206,11 @@ class RunId(object):
         except TypeError as err:
             self._report_format_issue_and_exit(string, err)
         except KeyError as err:
-            msg = ("The configuration of %s contains improper Python format strings."
-                   % self._benchmark.name)
-            msg += DETAIL_INDENT + ("The command line configured is: %s" % string)
-            msg += DETAIL_INDENT + ("%s is not supported as key." % err)
-            msg += DETAIL_INDENT
-            msg += "Only benchmark, input, variable, cores, and warmup are supported."
+            msg = ("The configuration of %s contains improper Python format strings.\n"
+                   + "{ind}The command line configured is: %s\n"
+                   + "{ind}%s is not supported as key.\n"
+                   + "{ind}Only benchmark, input, variable, cores, and warmup are supported.\n") % (
+                       self._benchmark.name, string, err)
             raise UIError(msg, err)
 
     def cmdline(self):
@@ -243,19 +242,19 @@ class RunId(object):
         return not self.__eq__(other)
 
     def _report_format_issue_and_exit(self, cmdline, err):
-        msg = ("The configuration of the benchmark %s contains an improper Python format string."
-               % self._benchmark.name)
+        msg = ("The configuration of the benchmark %s contains an improper Python format string.\n"
+               + "{ind}The command line configured is: %s\n"
+               + "{ind}Error: %s\n") % (
+                   self._benchmark.name, cmdline, err)
 
         # figure out which format misses a conversion type
-        msg += DETAIL_INDENT + ("The command line configured is: %s" % cmdline)
-        msg += DETAIL_INDENT + ("Error: %s" % err)
         without_conversion_type = re.findall(
             r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
         if without_conversion_type:
-            msg += DETAIL_INDENT + ("The following elements do not have conversion types: \"%s\""
-                                    % '", "'.join(without_conversion_type))
-            msg += DETAIL_INDENT + ("This can be fixed by replacing for instance %s with %ss"
-                                    % (without_conversion_type[0], without_conversion_type[0]))
+            msg += ("{ind}The following elements do not have conversion types: \"%s\""
+                    + "{ind}This can be fixed by replacing for instance %s with %ss\n") % (
+                        '", "'.join(without_conversion_type),
+                        without_conversion_type[0], without_conversion_type[0])
         raise UIError(msg, err)
 
     def as_str_list(self):

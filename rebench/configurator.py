@@ -25,7 +25,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError, DETAIL_INDENT, error, set_verbose_debug_mode
+from .ui import UIError
 
 
 class _VMFilter(object):
@@ -131,24 +131,24 @@ def load_config(file_name):
                 validator.validate(raise_exception=True)
             except SchemaError as err:
                 raise UIError(
-                    "Validation of " + file_name + " failed." + DETAIL_INDENT +
-                    (DETAIL_INDENT.join(validator.validation_errors)), err)
+                    "Validation of " + file_name + " failed.\n{ind}" +
+                    "{ind}".join(validator.validation_errors) + "\n", err)
             return data
     except IOError as err:
         if err.errno == 2:
             assert err.strerror == "No such file or directory"
-            raise UIError("The requested config file (%s) could not be opened. %s."
+            raise UIError("The requested config file (%s) could not be opened. %s.\n"
                           % (file_name, err.strerror), err)
         else:
-            raise UIError(str(err), err)
+            raise UIError(str(err) + "\n", err)
     except yaml.YAMLError as err:
         raise UIError("Parsing of the config file "
-                      + file_name + " failed.\nError " + str(err), err)
+                      + file_name + " failed.\nError " + str(err) + "\n", err)
 
 
 class Configurator(object):
 
-    def __init__(self, raw_config, data_store, cli_options=None, cli_reporter=None,
+    def __init__(self, raw_config, data_store, ui, cli_options=None, cli_reporter=None,
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
@@ -159,12 +159,13 @@ class Configurator(object):
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default())
         self._root_reporting = Reporting.compile(
-            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options)
+            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
         self._options = cli_options
+        self._ui = ui
+        self._data_store = data_store
         self._process_cli_options()
 
-        self._data_store = data_store
         self._build_commands = dict()
 
         self._run_filter = _RunFilter(run_filter)
@@ -177,6 +178,10 @@ class Configurator(object):
         self._experiments = self._compile_experiments(experiments)
 
     @property
+    def ui(self):
+        return self._ui
+
+    @property
     def build_log(self):
         return self._build_log
 
@@ -184,13 +189,13 @@ class Configurator(object):
         if self._options is None:
             return
 
-        set_verbose_debug_mode(self._options.verbose, self._options.debug)
+        self._ui.init(self._options.verbose, self._options.debug)
 
         if self._options.use_nice and not can_set_niceness():
-            error("Error: Process niceness could not be set. "
-                  "To execute benchmarks with highest priority, "
-                  "you might need root/admin rights.")
-            error("Deactivated usage of nice command.")
+            self._ui.error("Error: Process niceness can not be set.\n"
+                           + "{ind}To execute benchmarks with highest priority,\n"
+                           + "{ind}you might need root/admin rights.\n"
+                           + "{ind}Deactivated usage of nice command.\n")
             self._options.use_nice = False
 
     @property

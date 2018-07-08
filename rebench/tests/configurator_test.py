@@ -28,26 +28,29 @@ class ConfiguratorTest(ReBenchTestCase):
 
     def test_experiment_name_from_cli(self):
         cnf = Configurator(load_config(self._path + '/test.conf'),
-                           DataStore(), None, 'Test')
+                           DataStore(self._ui), self._ui, None, 'Test')
 
         self.assertEqual('Test', cnf.experiment_name)
 
     def test_experiment_name_from_config_file(self):
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(), None)
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
+                           self._ui, None)
         self.assertEqual('Test', cnf.experiment_name)
 
     def test_number_of_experiments_smallconf(self):
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, None)
         self.assertEqual(1, len(cnf.get_experiments()))
 
     @unittest.skip
     def test_number_of_experiments_testconf(self):
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(),
-                           None, None, 'all')
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
+                           self._ui, None, None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
 
     def test_get_experiment(self):
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, None)
         exp = cnf.get_experiment('Test')
         self.assertIsNotNone(exp)
         return exp
@@ -60,39 +63,39 @@ class ConfiguratorTest(ReBenchTestCase):
     # Support for running a selected experiment
     def test_only_running_test_runner2(self):
         filter_args = ['vm:TestRunner2']
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(),
-                           run_filter=filter_args)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, run_filter=filter_args)
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
     def test_only_running_bench1(self):
         filter_args = ['s:Suite:Bench1']
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(),
-                           run_filter=filter_args)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
     def test_only_running_non_existing_stuff(self):
         filter_args = ['s:non-existing', 'vm:non-existing']
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(),
-                           run_filter=filter_args)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(0, len(runs))
 
     def test_only_running_bench1_and_test_runner2(self):
         filter_args = ['s:Suite:Bench1', 'vm:TestRunner2']
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(),
-                           run_filter=filter_args)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(2, len(runs))
 
     def test_only_running_bench1_or_bench2_and_test_runner2(self):
         filter_args = ['s:Suite:Bench1', 's:Suite:Bench2', 'vm:TestRunner2']
-        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(),
-                           run_filter=filter_args)
+        cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                           self._ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))

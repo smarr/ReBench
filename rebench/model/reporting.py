@@ -24,9 +24,9 @@ from ..reporter import CodespeedReporter
 class Reporting(object):
 
     @classmethod
-    def compile(cls, reporting, root_reporting, options):
+    def compile(cls, reporting, root_reporting, options, ui):
         if "codespeed" in reporting and options and options.use_codespeed:
-            codespeed = CodespeedReporting(reporting, options).get_reporter()
+            codespeed = CodespeedReporting(reporting, options, ui).get_reporter()
         else:
             codespeed = root_reporting.codespeed_reporter
 
@@ -60,7 +60,7 @@ class Reporting(object):
 
 class CodespeedReporting(object):
 
-    def __init__(self, raw_config, options):
+    def __init__(self, raw_config, options, ui):
         codespeed = raw_config.get("codespeed", {})
 
         if options.commit_id is None:
@@ -93,7 +93,7 @@ class CodespeedReporting(object):
         self._branch = options.branch
         self._executable = options.executable
 
-        self._reporter = CodespeedReporter(self)
+        self._reporter = CodespeedReporter(self, ui)
 
     @property
     def report_incrementally(self):

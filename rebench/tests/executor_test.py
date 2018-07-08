@@ -27,7 +27,7 @@ from ..executor          import Executor
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
-from ..ui import UIError
+from ..ui import UIError, TestDummyUI
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -42,10 +42,11 @@ class ExecutorTest(ReBenchTestCase):
         subprocess.Popen = Popen_override
         options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(), options,
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
+                           self._ui, options,
                            None, 'Test', data_file=self._tmp_file)
 
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
 
 # TODO: should test more details
@@ -65,10 +66,10 @@ class ExecutorTest(ReBenchTestCase):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(), options,
+                               DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
@@ -76,17 +77,17 @@ class ExecutorTest(ReBenchTestCase):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(), options,
+                               DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat2',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds)
+        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
             data_points = run.get_data_points()
@@ -101,13 +102,13 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_basic_execution(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(), None,
+                           DataStore(self._ui), self._ui, None,
                            data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(), None, None,
+                           DataStore(self._ui), self._ui, None, None,
                            'all', data_file=self._tmp_file)
         self._basic_execution(cnf)
 

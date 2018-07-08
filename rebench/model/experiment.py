@@ -34,7 +34,7 @@ class Experiment(object):
         data_file = exp.get('data_file') or configurator.data_file
 
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
-                                      configurator.options)
+                                      configurator.options, configurator.ui)
 
         run_details = ExpRunDetails.compile(exp, configurator.run_details)
         variables = ExpVariables.compile(exp, ExpVariables.empty())
