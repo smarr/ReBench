@@ -23,7 +23,6 @@ import os
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
-from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -34,12 +33,12 @@ class Issue59BuildSuite(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_build_suite1(self):
-        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
-                           data_file=self._tmp_file, exp_name='A')
+        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(self._ui),
+                           self._ui, data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
+        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -50,12 +49,12 @@ class Issue59BuildSuite(ReBenchTestCase):
             os.remove(self._path + '/issue_59_cnt')
 
     def test_build_suite_same_command_executed_once_only(self):
-        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(),
-                           data_file=self._tmp_file, exp_name='Test')
+        cnf = Configurator(load_config(self._path + '/issue_59.conf'), DataStore(self._ui),
+                           self._ui, data_file=self._tmp_file, exp_name='Test')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
+        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         try:

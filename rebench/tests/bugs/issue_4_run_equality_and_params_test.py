@@ -25,6 +25,7 @@ from ...model.run_id           import RunId
 from ...model.exp_run_details  import ExpRunDetails
 from ...model.virtual_machine  import VirtualMachine
 from ...persistence            import DataStore
+from ...ui                     import TestDummyUI
 
 
 class Issue4RunEquality(unittest.TestCase):
@@ -39,7 +40,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite = BenchmarkSuite("MySuite", vm, '', '%(benchmark)s %(cores)s %(input)s',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
-                              '3', ExpRunDetails.empty(), None, DataStore())
+                              '3', ExpRunDetails.empty(), None, DataStore(TestDummyUI()))
         return RunId(benchmark, 1, 2, None)
 
     @staticmethod
@@ -49,7 +50,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite = BenchmarkSuite('MySuite', vm, '', '%(benchmark)s %(cores)s 2 3',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite,
-                              None, None, ExpRunDetails.empty(), None, DataStore())
+                              None, None, ExpRunDetails.empty(), None, DataStore(TestDummyUI()))
         return RunId(benchmark, 1, None, None)
 
     def test_hardcoded_equals_template_constructed(self):

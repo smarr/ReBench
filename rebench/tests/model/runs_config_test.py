@@ -20,7 +20,6 @@
 from ...model.termination_check import TerminationCheck
 from ...configurator import Configurator, load_config
 from ...persistence  import DataStore
-from ...ui import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -28,13 +27,14 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def setUp(self):
         super(RunsConfigTestCase, self).setUp()
-        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(), None,
+        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
+                                 self._ui, None,
                                  data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         self._run = list(runs)[0]
 
     def test_termination_check_basic(self):
-        check = TerminationCheck(self._run, TestDummyUI())
+        check = TerminationCheck(self._run, self._ui)
         self.assertFalse(check.should_terminate(0))
 
         # start 9 times, but expect to be done only after 10
@@ -46,13 +46,13 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertTrue(check.should_terminate(0))
 
     def test_terminate_not_determine_by_number_of_data_points(self):
-        check = TerminationCheck(self._run, TestDummyUI())
+        check = TerminationCheck(self._run, self._ui)
         self.assertFalse(check.should_terminate(0))
         self.assertFalse(check.should_terminate(10))
         self.assertFalse(check.should_terminate(10000))
 
     def test_consecutive_fails(self):
-        check = TerminationCheck(self._run, TestDummyUI())
+        check = TerminationCheck(self._run, self._ui)
         self.assertFalse(check.should_terminate(0))
 
         for _ in range(0, 2):
@@ -63,7 +63,7 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertTrue(check.should_terminate(0))
 
     def test_too_many_fails(self):
-        check = TerminationCheck(self._run, TestDummyUI())
+        check = TerminationCheck(self._run, self._ui)
         self.assertFalse(check.should_terminate(0))
 
         for _ in range(0, 6):

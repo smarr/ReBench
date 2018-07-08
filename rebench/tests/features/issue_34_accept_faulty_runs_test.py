@@ -21,7 +21,6 @@ from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...rebench          import ReBench
 from ...persistence      import DataStore
-from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -32,12 +31,12 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
-        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(),
-                           data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(self._ui),
+                           self._ui, data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, TestDummyUI(), False)
+        ex = Executor(runs, False, False, self._ui, False)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)
@@ -58,12 +57,12 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self.assertFalse(options.include_faulty)
 
     def test_faulty_runs_accepted_with_switch(self):
-        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(),
-                           data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(self._ui),
+                           self._ui, data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, TestDummyUI(), True)
+        ex = Executor(runs, False, False, self._ui, True)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)

@@ -25,7 +25,6 @@ from codecs import open as open_with_enc
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
-from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -38,12 +37,12 @@ class Issue81UnicodeSuite(ReBenchTestCase):
             os.remove(self._path + '/build.log')
 
     def test_building(self):
-        cnf = Configurator(load_config(self._path + '/issue_81.conf'), DataStore(),
-                           data_file=self._tmp_file, exp_name='Test')
+        cnf = Configurator(load_config(self._path + '/issue_81.conf'), DataStore(self._ui),
+                           self._ui, data_file=self._tmp_file, exp_name='Test')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, TestDummyUI(), build_log=cnf.build_log)
+        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

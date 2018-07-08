@@ -28,15 +28,19 @@ _DETAIL_INDENT = "    "
 
 class UI(object):
 
-    def __init__(self, verbose, debug):
-        self._verbose = verbose
-        self._debug = debug
+    def __init__(self):
+        self._verbose = True
+        self._debug = True
 
         self._prev_run_id = None
         self._prev_cmd = None
         self._prev_cwd = None
         self._progress_spinner = None
         self._need_to_erase_spinner = False
+
+    def init(self, verbose, debug):
+        self._verbose = verbose
+        self._debug = debug
 
     def spinner_initialized(self):
         return self._progress_spinner is not None
@@ -147,6 +151,9 @@ class UIError(Exception):
 
 
 class TestDummyUI(object):
+
+    def init(self, _verbose, _debug):
+        pass
 
     def spinner_initialized(self):
         pass

@@ -46,7 +46,7 @@ class ReBench(object):
         self.version = "0.10.1"
         self.options = None
         self._config = None
-        self._ui = None
+        self._ui = UI()
 
     @property
     def ui(self):
@@ -177,21 +177,20 @@ Argument:
         if argv is None:
             argv = sys.argv
 
-        data_store = DataStore()
+        data_store = DataStore(self._ui)
         opt_parser = self.shell_options()
         args = opt_parser.parse_args(argv[1:])
 
-        cli_reporter = CliReporter(args.verbose)
+        cli_reporter = CliReporter(args.verbose, self._ui)
 
         exp_name, exp_filter = self.determine_exp_name_and_filters(args.exp_filter)
 
         try:
             config = load_config(args.config[0])
-            self._config = Configurator(config, data_store, args,
+            self._config = Configurator(config, data_store, self._ui, args,
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
-            self._ui = self._config.ui
-            cli_reporter.set_ui(self._ui)
+            #TODO how to set ui on codespeed reporter?
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
 
@@ -226,12 +225,10 @@ def main_func():
         rebench = ReBench()
         return 0 if rebench.run() else -1
     except KeyboardInterrupt:
-        ui = rebench.ui or UI(False, False)
-        ui.debug_error_info("Aborted by user request")
+        rebench.ui.debug_error_info("Aborted by user request")
         return -1
     except UIError as err:
-        ui = rebench.ui or UI(False, False)
-        ui.error(err.message)
+        rebench.ui.error(err.message)
         return -1
 
 

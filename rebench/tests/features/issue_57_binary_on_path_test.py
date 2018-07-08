@@ -20,7 +20,6 @@
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
-from ...ui               import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -31,13 +30,13 @@ class Issue57BinaryOnPath(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_sleep_gives_results(self):
-        store = DataStore()
+        store = DataStore(self._ui)
         cnf = Configurator(load_config(self._path + '/issue_57.conf'), store,
-                           data_file=self._tmp_file)
+                           self._ui, data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, TestDummyUI(), False)
+        ex = Executor(runs, False, False, self._ui, False)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

@@ -20,7 +20,6 @@
 from ...configurator           import Configurator, load_config
 from ...executor               import Executor
 from ...persistence            import DataStore
-from ...ui                     import TestDummyUI
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -36,10 +35,10 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
-        cnf = Configurator(load_config(self._path + '/issue_16.conf'), DataStore(),
-                           exp_name=exp_name,
+        cnf = Configurator(load_config(self._path + '/issue_16.conf'), DataStore(self._ui),
+                           self._ui, exp_name=exp_name,
                            data_file=self._tmp_file)
-        ex = Executor(cnf.get_runs(), False, False, TestDummyUI())
+        ex = Executor(cnf.get_runs(), False, False, self._ui)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
         run = next(iter(cnf.get_runs()))

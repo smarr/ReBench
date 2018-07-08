@@ -25,7 +25,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError, UI
+from .ui import UIError
 
 
 class _VMFilter(object):
@@ -148,7 +148,7 @@ def load_config(file_name):
 
 class Configurator(object):
 
-    def __init__(self, raw_config, data_store, cli_options=None, cli_reporter=None,
+    def __init__(self, raw_config, data_store, ui, cli_options=None, cli_reporter=None,
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
@@ -159,10 +159,10 @@ class Configurator(object):
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default())
         self._root_reporting = Reporting.compile(
-            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options)
+            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
         self._options = cli_options
-        self._ui = None
+        self._ui = ui
         self._data_store = data_store
         self._process_cli_options()
 
@@ -187,12 +187,9 @@ class Configurator(object):
 
     def _process_cli_options(self):
         if self._options is None:
-            self._ui = UI(False, False)
-            self._data_store.set_ui(self._ui)
             return
 
-        self._ui = UI(self._options.verbose, self._options.debug)
-        self._data_store.set_ui(self._ui)
+        self._ui.init(self._options.verbose, self._options.debug)
 
         if self._options.use_nice and not can_set_niceness():
             self._ui.error("Error: Process niceness can not be set.\n"

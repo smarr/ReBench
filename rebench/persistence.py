@@ -31,16 +31,11 @@ from .model.run_id      import RunId
 
 class DataStore(object):
 
-    def __init__(self):
+    def __init__(self, ui):
         self._files = {}
         self._run_ids = {}
         self._bench_cfgs = {}
-        self._ui = None
-
-    def set_ui(self, ui):
         self._ui = ui
-        for persistence in list(self._files.values()):
-            persistence.set_ui(ui)
 
     def load_data(self):
         for persistence in list(self._files.values()):
@@ -138,9 +133,6 @@ class _DataPointPersistence(object):
             self._discard_old_data()
         self._insert_shebang_line()
         self._lock = Lock()
-
-    def set_ui(self, ui):
-        self._ui = ui
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)

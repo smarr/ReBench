@@ -93,19 +93,14 @@ class TextReporter(Reporter):
 class CliReporter(TextReporter):
     """ Reports to standard out using the logging framework """
 
-    def __init__(self, executes_verbose):
+    def __init__(self, executes_verbose, ui):
         super(CliReporter, self).__init__()
         self._num_runs = None
-        self._ui = None
+        self._ui = ui
         self._runs_completed = 0
         self._start_time = None
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
-
-    def set_ui(self, ui):
-        assert ui
-        assert not self._ui
-        self._ui = ui
 
     def run_failed(self, run_id, cmdline, return_code, cmd_output):
         pass
@@ -131,13 +126,14 @@ class CodespeedReporter(Reporter):
     to the configured Codespeed instance.
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, ui):
         super(CodespeedReporter, self).__init__()
         self._cfg = cfg
         self._incremental_report = self._cfg.report_incrementally
         self._cache_for_seconds = 30
         self._cache = {}
         self._last_send = time()
+        self._ui = ui
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
