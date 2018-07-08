@@ -340,53 +340,67 @@ class Executor(object):
         proc.stdin.close()
 
         if self._build_log:
-            with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
-                while True:
-                    reads = [proc.stdout.fileno(), proc.stderr.fileno()]
-                    ret = select(reads, [], [])
-
-                    for file_no in ret[0]:
-                        if file_no == proc.stdout.fileno():
-                            read = self._read(proc.stdout)
-                            if read:
-                                if self._debug:
-                                    sys.stdout.write(read)
-                                log_file.write(name + '|STD:')
-                                log_file.write(read)
-                        elif file_no == proc.stderr.fileno():
-                            read = self._read(proc.stderr)
-                            if read:
-                                if self._debug:
-                                    sys.stderr.write(read)
-                                log_file.write(name + '|ERR:')
-                                log_file.write(read)
-
-                    if proc.poll() is not None:
-                        break
-                # read rest of pipes
-                while True:
-                    read = self._read(proc.stdout)
-                    if read == "":
-                        break
-                    log_file.write(name + '|STD:')
-                    log_file.write(read)
-                while True:
-                    read = self._read(proc.stderr)
-                    if not read:
-                        break
-                    log_file.write(name + '|ERR:')
-                    log_file.write(read)
-
-                log_file.write('\n')
+            output = self.process_output(name, proc)
 
         if proc.returncode != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
                 script, proc.returncode, "Build of " + name + " failed.")
+            self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
+            if output and output.strip():
+                lines = output.split('\n')
+                self._ui.error("{ind}Output:\n\n{ind}{ind}"
+                               + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
         else:
             build_command.mark_succeeded()
+
+    def process_output(self, name, proc):
+        output = ""
+        with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
+            while True:
+                reads = [proc.stdout.fileno(), proc.stderr.fileno()]
+                ret = select(reads, [], [])
+
+                for file_no in ret[0]:
+                    if file_no == proc.stdout.fileno():
+                        read = self._read(proc.stdout)
+                        if read:
+                            if self._debug:
+                                sys.stdout.write(read)
+                            log_file.write(name + '|STD:')
+                            log_file.write(read)
+                            output += read
+                    elif file_no == proc.stderr.fileno():
+                        read = self._read(proc.stderr)
+                        if read:
+                            if self._debug:
+                                sys.stderr.write(read)
+                            log_file.write(name + '|ERR:')
+                            log_file.write(read)
+                            output += read
+
+                if proc.poll() is not None:
+                    break
+            # read rest of pipes
+            while True:
+                read = self._read(proc.stdout)
+                if read == "":
+                    break
+                log_file.write(name + '|STD:')
+                log_file.write(read)
+                output += read
+            while True:
+                read = self._read(proc.stderr)
+                if not read:
+                    break
+                log_file.write(name + '|ERR:')
+                log_file.write(read)
+                output += read
+
+            log_file.write('\n')
+        return output
 
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check(self._ui)
@@ -412,7 +426,8 @@ class Executor(object):
 
         if terminate:
             run_id.report_run_completed(stats, cmdline)
-            if run_id.min_iteration_time and stats.mean < run_id.min_iteration_time:
+            if (not run_id.is_failed() and run_id.min_iteration_time
+                    and stats.mean < run_id.min_iteration_time):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)")

@@ -81,7 +81,10 @@ class TextReporter(Reporter):
         for run_id in run_ids:
             stats = StatisticProperties(run_id.get_total_values())
             out = run_id.as_str_list()
-            out.append(stats.mean)
+            if stats.num_samples == 0:
+                out.append("Failed")
+            else:
+                out.append(stats.mean)
             rows.append(out)
 
         return rows
