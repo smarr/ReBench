@@ -40,7 +40,8 @@ class PersistencyTest(ReBenchTestCase):
         suite = BenchmarkSuite("MySuite", vm, '', '', None, None,
                                None, None, None, None)
         benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
-                              suite, None, None, ExpRunDetails.default(), None, data_store)
+                              suite, None, None, ExpRunDetails.default(None, None),
+                              None, data_store)
 
         run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf')
         timestamp = datetime.now().replace(microsecond=0)

@@ -158,7 +158,9 @@ class Configurator(object):
         self._exp_name = exp_name or raw_config.get('standard_experiment', 'all')
 
         self._root_run_details = ExpRunDetails.compile(
-            raw_config.get('runs', {}), ExpRunDetails.default())
+            raw_config.get('runs', {}), ExpRunDetails.default(
+                cli_options.invocations if cli_options else 1,
+                cli_options.iterations if cli_options else 1))
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 

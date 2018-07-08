@@ -54,11 +54,17 @@ class RunId(object):
 
     @property
     def iterations(self):
-        return self._benchmark.run_details.iterations
+        run_details = self._benchmark.run_details
+        if run_details.iterations_override is not None:
+            return run_details.iterations_override
+        return run_details.iterations
 
     @property
     def invocations(self):
-        return self._benchmark.run_details.invocations
+        run_details = self._benchmark.run_details
+        if run_details.invocations_override is not None:
+            return run_details.invocations_override
+        return run_details.invocations
 
     @property
     def execute_exclusively(self):
@@ -197,9 +203,10 @@ class RunId(object):
     def _expand_vars(self, string):
         try:
             return string % {'benchmark': self._benchmark.command,
-                             'input': self._input_size,
-                             'variable': self._var_value,
                              'cores': self._cores,
+                             'input': self._input_size,
+                             'iterations': self.iterations,
+                             'variable': self._var_value,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)

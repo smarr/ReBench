@@ -88,9 +88,16 @@ Argument:
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
         execution.add_argument(
+            '-in', '--invocations', action='store', dest='invocations',
+            help='The number of times a VM is started to execute a run.',
+            default=None)
+        execution.add_argument(
+            '-it', '--iterations', action='store', dest='iterations',
+            help='The number of times a benchmark is to be executed within a VM invocation.',
+            default=None)
+        execution.add_argument(
             '-q', '--quick', action='store_true', dest='quick',
-            help='Do a quick benchmark run instead of a full, '
-                 'statistical rigorous experiment.',
+            help='Execute quickly. Identical with --iterations=1 --invocations=1',
             default=False)
         execution.add_argument(
             '-N', '--without-nice', action='store_false', dest='use_nice',
