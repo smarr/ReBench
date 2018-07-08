@@ -26,6 +26,11 @@ from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_enc
 _DETAIL_INDENT = "    "
 
 
+def escape_braces(string):
+    string = coerce_string(string)
+    return string.replace('{', '{{').replace('}', '}}')
+
+
 class UI(object):
 
     def __init__(self):

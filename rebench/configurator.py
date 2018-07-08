@@ -25,7 +25,7 @@ from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.virtual_machine import VirtualMachine
-from .ui import UIError
+from .ui import UIError, escape_braces
 
 
 class _VMFilter(object):
@@ -130,9 +130,10 @@ def load_config(file_name):
             try:
                 validator.validate(raise_exception=True)
             except SchemaError as err:
+                errors = [escape_braces(val_err) for val_err in validator.validation_errors]
                 raise UIError(
                     "Validation of " + file_name + " failed.\n{ind}" +
-                    "{ind}".join(validator.validation_errors) + "\n", err)
+                    "\n{ind}".join(errors) + "\n", err)
             return data
     except IOError as err:
         if err.errno == 2:
