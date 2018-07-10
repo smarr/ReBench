@@ -430,7 +430,7 @@ class Executor(object):
                     and stats.mean < run_id.min_iteration_time):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
-                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)")
+                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
                     % (stats.mean, run_id.min_iteration_time), run_id, cmdline)
 
         return terminate
