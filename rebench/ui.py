@@ -19,6 +19,8 @@
 # IN THE SOFTWARE.
 import sys
 
+from os import getcwd
+
 from humanfriendly import erase_line_code, Spinner
 from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
@@ -82,8 +84,10 @@ class UI(object):
         assert text
         if cwd:
             text += _DETAIL_INDENT + "cwd: " + cwd + "\n"
-        elif run_id:
+        elif run_id and run_id.location:
             text += _DETAIL_INDENT + "cwd: " + run_id.location + "\n"
+        else:
+            text += _DETAIL_INDENT + "cwd: " + getcwd() + "\n"
 
         self._prev_run_id = run_id
         self._prev_cmd = cmd
