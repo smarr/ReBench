@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from ..ui import UIError
 
 
 class DataPoint(object):
@@ -24,11 +25,23 @@ class DataPoint(object):
         self._run_id = run_id
         self._measurements = []
         self._total = None
+        self._invocation = -1
+
+    @property
+    def invocation(self):
+        return self._invocation
 
     def number_of_measurements(self):
         return len(self._measurements)
 
     def add_measurement(self, measurement):
+        if self._invocation == -1:
+            self._invocation = measurement.invocation
+        elif self._invocation != measurement.invocation:
+            raise UIError("A data point is expected to represent a single invocation " +
+                          "but we got invocation " + str(measurement.invocation) +
+                          " and " + str(self._invocation) + "\n", None)
+
         self._measurements.append(measurement)
         if measurement.is_total():
             if self._total is not None:

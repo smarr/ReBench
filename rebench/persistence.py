@@ -18,11 +18,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import os
-import sys
 import subprocess
-import shutil
+import sys
+from datetime import datetime
 from threading import Lock
-import time
 
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
@@ -131,7 +130,7 @@ class _DataPointPersistence(object):
         self._file = None
         if discard_old_data:
             self._discard_old_data()
-        self._insert_shebang_line()
+        self._append_execution_comment()
         self._lock = Lock()
 
     def _discard_old_data(self):
@@ -193,14 +192,15 @@ class _DataPointPersistence(object):
                     # Configuration is not available, skip data point
                     self._ui.debug_error_info("{ind}" + msg + "\n")
                     errors.add(msg)
-            line_number += 1
 
-    def _insert_shebang_line(self):
+    def _append_execution_comment(self):
         """
-        Insert a shebang (#!/path/to/executable) into the data file.
+        Append a shebang (#!/path/to/executable) to the data file.
         This allows it theoretically to be executable.
+        But more importantly also records execution metadata to reproduce the data.
         """
         shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
+        shebang_line += "# Execution Start: " + datetime.now().strftime("%Y-%m-%dT%H:%M:%S\n")
 
         try:
             # if file doesn't exist, just create it
@@ -211,22 +211,13 @@ class _DataPointPersistence(object):
                     data_file.close()
                 return
 
-            # if file exists, the first line might already be the same line
-            with open(self._data_filename, 'r') as data_file:
-                if data_file.readline() == shebang_line:
-                    return
-
-            # otherwise, copy the file and insert line at the beginning
-            renamed_file = "%s-%.0f.tmp" % (self._data_filename, time.time())
-            os.rename(self._data_filename, renamed_file)
-            with open(self._data_filename, 'w') as data_file:
+            # otherwise, append the lines
+            with open(self._data_filename, 'a') as data_file:
                 data_file.write(shebang_line)
                 data_file.flush()
-                shutil.copyfileobj(open(renamed_file, 'r'), data_file)
-            os.remove(renamed_file)
         except Exception as err:  # pylint: disable=broad-except
             self._ui.error(
-                "Error: While inserting a shebang line into the data file.\n{ind}%s\n" % err)
+                "Error: While appending metadata to the data file.\n{ind}%s\n" % err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 

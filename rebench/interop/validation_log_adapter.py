@@ -47,7 +47,8 @@ class ValidationLogAdapter(GaugeAdapter):
         self._other_error_definitions = [self.re_NPB_partial_invalid,
                                          self.re_NPB_invalid, self.re_incorrect]
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
 
@@ -62,27 +63,34 @@ class ValidationLogAdapter(GaugeAdapter):
                 if match.group(5) == "u":
                     time /= 1000
                 criterion = (match.group(2) or 'total').strip()
-                success_measure = Measurement(match.group(6) == "true", 'bool', run_id, 'Success')
-                measure = Measurement(time, 'ms', run_id, criterion)
+                success_measure = Measurement(invocation, iteration,
+                                              match.group(6) == "true", 'bool', run_id, 'Success')
+                measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
                 current.add_measurement(success_measure)
                 current.add_measurement(measure)
 
                 if measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
             else:
                 match = self.re_actors.match(line)
                 if match:
-                    measure1 = Measurement(int(match.group(1)), 'count', run_id, 'Actors')
-                    measure2 = Measurement(int(match.group(2)), 'count', run_id, 'Messages')
-                    measure3 = Measurement(int(match.group(3)), 'count', run_id, 'Promises')
-                    measure4 = Measurement(0, 'ms', run_id, 'total')
+                    measure1 = Measurement(invocation, iteration,
+                                           int(match.group(1)), 'count', run_id, 'Actors')
+                    measure2 = Measurement(invocation, iteration,
+                                           int(match.group(2)), 'count', run_id, 'Messages')
+                    measure3 = Measurement(invocation, iteration,
+                                           int(match.group(3)), 'count', run_id, 'Promises')
+                    measure4 = Measurement(invocation, iteration,
+                                           0, 'ms', run_id, 'total')
                     current.add_measurement(measure1)
                     current.add_measurement(measure2)
                     current.add_measurement(measure3)
                     current.add_measurement(measure4)
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)

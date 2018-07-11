@@ -35,7 +35,7 @@ class Issue32JMHSupport(TestCase):
 
     def test_parsing(self):
         adapter = JMHAdapter(False)
-        data_points = adapter.parse_data(self._data, None)
+        data_points = adapter.parse_data(self._data, None, 1)
 
         self.assertEqual(4 * 20, len(data_points))
 

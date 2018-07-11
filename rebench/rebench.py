@@ -197,7 +197,6 @@ Argument:
             self._config = Configurator(config, data_store, self._ui, args,
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
-            #TODO how to set ui on codespeed reporter?
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
 

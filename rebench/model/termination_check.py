@@ -23,16 +23,12 @@ class TerminationCheck(object):
     def __init__(self, run_id, ui):
         self._run_id = run_id
         self._ui = ui
-        self._num_invocations = 0
         self._consecutive_erroneous_executions = 0
         self._failed_execution_count = 0
         self._fail_immediately = False
 
     def fail_immediately(self):
         self._fail_immediately = True
-
-    def indicate_invocation_start(self):
-        self._num_invocations += 1
 
     def indicate_failed_execution(self):
         self._consecutive_erroneous_executions += 1
@@ -62,7 +58,7 @@ class TerminationCheck(object):
             self._ui.verbose_error_info(
                 "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id)
             return True
-        elif self._num_invocations >= self._run_id.benchmark.run_details.invocations:
+        elif self._run_id.completed_invocations >= self._run_id.benchmark.run_details.invocations:
             return True
         else:
             return False

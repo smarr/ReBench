@@ -32,9 +32,9 @@ class TestAdapter(GaugeAdapter):
                  45875, 45871, 45869, 45870, 45874]
     index = 0
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, _invocation):
         point = DataPoint(run_id)
-        point.add_measurement(Measurement(self.test_data[self.index], "ms",
+        point.add_measurement(Measurement(1, 1, self.test_data[self.index], "ms",
                                           run_id))
         self.index = (self.index + 1) % len(self.test_data)
         return [point]

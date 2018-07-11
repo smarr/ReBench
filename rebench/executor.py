@@ -456,7 +456,6 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
-        run_id.indicate_invocation_start()
 
         try:
             self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
@@ -506,7 +505,7 @@ class Executor(object):
 
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
-            data_points = gauge_adapter.parse_data(output, run_id)
+            data_points = gauge_adapter.parse_data(output, run_id, run_id.completed_invocations + 1)
 
             warmup = run_id.warmup_iterations
 

@@ -40,6 +40,8 @@ class RunId(object):
         self._cmdline = None
         self._failed = True
 
+        self._max_invocation = 0
+
     @property
     def warmup_iterations(self):
         return self._benchmark.run_details.warmup
@@ -65,6 +67,10 @@ class RunId(object):
         if run_details.invocations_override is not None:
             return run_details.invocations_override
         return run_details.invocations
+
+    @property
+    def completed_invocations(self):
+        return self._max_invocation
 
     @property
     def execute_exclusively(self):
@@ -110,9 +116,6 @@ class RunId(object):
     def fail_immediately(self):
         self._termination_check.fail_immediately()
 
-    def indicate_invocation_start(self):
-        self._termination_check.indicate_invocation_start()
-
     def indicate_failed_execution(self):
         self._termination_check.indicate_failed_execution()
 
@@ -153,9 +156,12 @@ class RunId(object):
         self._persistence.add(persistence)
 
     def loaded_data_point(self, data_point):
+        self._max_invocation = max(self._max_invocation, data_point.invocation)
         self._data_points.append(data_point)
 
     def add_data_point(self, data_point, warmup):
+        self._max_invocation = max(self._max_invocation, data_point.invocation)
+
         if not warmup:
             self._data_points.append(data_point)
         for persistence in self._persistence:
@@ -169,6 +175,7 @@ class RunId(object):
 
     def discard_data_points(self):
         self._data_points = []
+        self._max_invocation = 0
 
     def get_total_values(self):
         return [dp.get_total_value() for dp in self._data_points]

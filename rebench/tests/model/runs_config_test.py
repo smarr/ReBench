@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from ...model.data_point import DataPoint
+from ...model.measurement import Measurement
 from ...model.termination_check import TerminationCheck
 from ...configurator import Configurator, load_config
 from ...persistence  import DataStore
@@ -38,11 +40,15 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertFalse(check.should_terminate(0))
 
         # start 9 times, but expect to be done only after 10
-        for _ in range(0, 9):
-            check.indicate_invocation_start()
+        for i in range(1, 10):
+            dp = DataPoint(self._run)
+            dp.add_measurement(Measurement(i, 1, 0, 'ms', self._run))
+            self._run.loaded_data_point(dp)
         self.assertFalse(check.should_terminate(0))
 
-        check.indicate_invocation_start()
+        dp = DataPoint(self._run)
+        dp.add_measurement(Measurement(10, 1, 0, 'ms', self._run))
+        self._run.loaded_data_point(dp)
         self.assertTrue(check.should_terminate(0))
 
     def test_terminate_not_determine_by_number_of_data_points(self):

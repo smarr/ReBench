@@ -37,7 +37,8 @@ class MultivariateAdapter(GaugeAdapter):
         super(MultivariateAdapter, self).__init__(include_faulty)
         self._other_error_definitions = [re.compile("FAILED")]
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
 
@@ -63,7 +64,8 @@ class MultivariateAdapter(GaugeAdapter):
                 else:
                     value = float(value_thing)
 
-                measure = Measurement(value, unit if unit is not None else 'ms',
+                measure = Measurement(invocation, iteration, value,
+                                      unit if unit is not None else 'ms',
                                       run_id, variable)
                 current.add_measurement(measure)
 
@@ -71,6 +73,7 @@ class MultivariateAdapter(GaugeAdapter):
                     # compatibility for TestVMPerformance
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)
