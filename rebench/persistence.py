@@ -188,7 +188,7 @@ class _DataPointPersistence(object):
                 msg = str(err)
                 if not errors:
                     self._ui.debug_error_info("Failed loading data from data file: "
-                                              + data_file + "\n")
+                                              + self._data_filename + "\n")
                 if msg not in errors:
                     # Configuration is not available, skip data point
                     self._ui.debug_error_info("{ind}" + msg + "\n")
