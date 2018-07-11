@@ -39,15 +39,20 @@ class ExecutorTest(ReBenchTestCase):
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark,
         # we override stuff in subprocess for testing
+        old_popen = subprocess.Popen
         subprocess.Popen = Popen_override
-        options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
-                           self._ui, options,
-                           None, 'Test', data_file=self._tmp_file)
+        try:
+            options = ReBench().shell_options().parse_args(['dummy'])
 
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
-        ex.execute()
+            cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
+                               self._ui, options,
+                               None, 'Test', data_file=self._tmp_file)
+
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+            ex.execute()
+        finally:
+            subprocess.Popen = old_popen
 
 # TODO: should test more details
 #        (mean, sdev, (interval, interval_percentage),
@@ -158,7 +163,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['vm:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable=unused-argument
+def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
@@ -174,7 +179,7 @@ def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable
         def kill(self):
             pass
 
-        def wait(self):
+        def wait(self, **_kwargs):
             pass
 
         def __enter__(self):
