@@ -416,14 +416,12 @@ class Executor(object):
         if not terminate and self._do_builds:
             self._build_vm_and_suite(run_id)
 
-        stats = StatisticProperties(run_id.get_total_values())
-
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-            stats = StatisticProperties(run_id.get_total_values())
 
+        stats = StatisticProperties(run_id.get_total_values())
         if terminate:
             run_id.report_run_completed(stats, cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
