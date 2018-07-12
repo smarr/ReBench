@@ -90,11 +90,11 @@ Argument:
         execution.add_argument(
             '-in', '--invocations', action='store', dest='invocations',
             help='The number of times a VM is started to execute a run.',
-            default=None)
+            default=None, type=int)
         execution.add_argument(
             '-it', '--iterations', action='store', dest='iterations',
             help='The number of times a benchmark is to be executed within a VM invocation.',
-            default=None)
+            default=None, type=int)
         execution.add_argument(
             '-q', '--quick', action='store_true', dest='quick',
             help='Execute quickly. Identical with --iterations=1 --invocations=1',

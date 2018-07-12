@@ -134,6 +134,24 @@ class ExecutorTest(ReBenchTestCase):
 
         self.assertEqual(1, run.get_number_of_data_points())
 
+    def test_execution_with_invocation_and_iteration_set(self):
+        self._set_path(__file__)
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['-in=2', '-it=2', 'persistency.conf'])
+        self.assertEqual(2, cmd_config.invocations)
+        self.assertEqual(2, cmd_config.iterations)
+
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
+                           self._ui, cmd_config, data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        self.assertEqual(1, len(runs))
+
+        ex = Executor(runs, False, False, self._ui)
+        ex.execute()
+        run = list(runs)[0]
+
+        self.assertEqual(2, run.get_number_of_data_points())
+
     def test_shell_options_without_filters(self):
         option_parser = ReBench().shell_options()
         args = option_parser.parse_args(['-d', '-v', 'some.conf'])
