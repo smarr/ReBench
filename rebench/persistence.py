@@ -238,3 +238,8 @@ class _DataPointPersistence(object):
     def _open_file_to_add_new_data(self):
         if not self._file:
             self._file = open(self._data_filename, 'a+')
+
+    def close(self):
+        if self._file:
+            self._file.close()
+            self._file = None

@@ -541,13 +541,17 @@ class Executor(object):
             run_id.get_number_of_data_points())
 
     def execute(self):
-        self._scheduler.execute()
-        successful = True
-        for run in self._runs:
-            run.report_job_completed(self._runs)
-            if run.is_failed():
-                successful = False
-        return successful
+        try:
+            self._scheduler.execute()
+            successful = True
+            for run in self._runs:
+                run.report_job_completed(self._runs)
+                if run.is_failed():
+                    successful = False
+            return successful
+        finally:
+            for run in self._runs:
+                run.close_files()
 
     @property
     def runs(self):

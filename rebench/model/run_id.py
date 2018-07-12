@@ -155,6 +155,10 @@ class RunId(object):
     def add_persistence(self, persistence):
         self._persistence.add(persistence)
 
+    def close_files(self):
+        for persistence in self._persistence:
+            persistence.close()
+
     def loaded_data_point(self, data_point):
         self._max_invocation = max(self._max_invocation, data_point.invocation)
         self._data_points.append(data_point)
