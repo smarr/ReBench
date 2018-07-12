@@ -117,6 +117,23 @@ class ExecutorTest(ReBenchTestCase):
                            'all', data_file=self._tmp_file)
         self._basic_execution(cnf)
 
+    def test_execution_with_quick_set(self):
+        self._set_path(__file__)
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['-q', 'persistency.conf'])
+        self.assertTrue(cmd_config.quick)
+
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
+                           self._ui, cmd_config, data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        self.assertEqual(1, len(runs))
+
+        ex = Executor(runs, False, False, self._ui)
+        ex.execute()
+        run = list(runs)[0]
+
+        self.assertEqual(1, run.get_number_of_data_points())
+
     def test_shell_options_without_filters(self):
         option_parser = ReBench().shell_options()
         args = option_parser.parse_args(['-d', '-v', 'some.conf'])

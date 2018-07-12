@@ -58,7 +58,7 @@ class TerminationCheck(object):
             self._ui.verbose_error_info(
                 "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id)
             return True
-        elif self._run_id.completed_invocations >= self._run_id.benchmark.run_details.invocations:
+        elif self._run_id.completed_invocations >= self._run_id.invocations:
             return True
         else:
             return False

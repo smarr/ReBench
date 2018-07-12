@@ -157,10 +157,16 @@ class Configurator(object):
         self._data_file = data_file or raw_config.get('standard_data_file', 'rebench.data')
         self._exp_name = exp_name or raw_config.get('standard_experiment', 'all')
 
+        # capture invocation and iteration settings and override when quick is selected
+        invocations = cli_options.invocations if cli_options else None
+        iterations = cli_options.iterations if cli_options else None
+        if cli_options and cli_options.quick:
+            invocations = 1
+            iterations = 1
+
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default(
-                cli_options.invocations if cli_options else 1,
-                cli_options.iterations if cli_options else 1))
+                invocations, iterations))
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
