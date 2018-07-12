@@ -41,7 +41,8 @@ class PlainSecondsLogAdapter(GaugeAdapter):
                                          self.re_NPB_invalid, self.re_incorrect,
                                          self.re_err]
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
 
@@ -52,11 +53,12 @@ class PlainSecondsLogAdapter(GaugeAdapter):
 
             try:
                 time = float(line) * 1000
-                measure = Measurement(time, 'ms', run_id, 'total')
+                measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
                 current.add_measurement(measure)
 
                 data_points.append(current)
                 current = DataPoint(run_id)
+                iteration += 1
             except ValueError:
                 pass  # ignore that line
 

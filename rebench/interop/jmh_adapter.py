@@ -33,7 +33,8 @@ class JMHAdapter(GaugeAdapter):
     re_result_line = re.compile(r"^Iteration\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
     re_bench = re.compile(r"^# Benchmark: (.+)")
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
 
         for line in data.split("\n"):
@@ -60,8 +61,10 @@ class JMHAdapter(GaugeAdapter):
                 criterion = "total"
 
                 point = DataPoint(run_id)
-                point.add_measurement(Measurement(value, unit, run_id, criterion))
+                point.add_measurement(Measurement(invocation, iteration,
+                                                  value, unit, run_id, criterion))
                 data_points.append(point)
+                iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)

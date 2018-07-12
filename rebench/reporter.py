@@ -81,10 +81,11 @@ class TextReporter(Reporter):
         for run_id in run_ids:
             stats = StatisticProperties(run_id.get_total_values())
             out = run_id.as_str_list()
+            out.append(stats.num_samples)
             if stats.num_samples == 0:
                 out.append("Failed")
             else:
-                out.append(stats.mean)
+                out.append(int(round(stats.mean, 0)))
             rows.append(out)
 
         return rows
@@ -112,7 +113,7 @@ class CliReporter(TextReporter):
     def report_job_completed(self, run_ids):
         self._ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
-            ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', 'Mean'],
+            ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', '#Samples', 'Mean (ms)'],
             vertical_bar=' '))
 
     def set_total_number_of_runs(self, num_runs):

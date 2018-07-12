@@ -32,7 +32,6 @@ class ReBenchTestCase(TestCase):
     def _set_path(self, path):
         self._path = dirname(realpath(path))
         os.chdir(self._path)
-        self._ui = TestDummyUI()
 
     def setUp(self):
         logging.getLogger('pykwalify').addHandler(logging.NullHandler())
@@ -41,6 +40,7 @@ class ReBenchTestCase(TestCase):
         self._tmp_file = mkstemp()[1]  # just use the file name
 
         self._sys_exit = sys.exit  # make sure that we restore sys.exit
+        self._ui = TestDummyUI()
 
     def tearDown(self):
         os.remove(self._tmp_file)

@@ -57,9 +57,11 @@ class TimeAdapter(GaugeAdapter):
             # TODO: add support for reading out memory info on OS X
             return "/usr/bin/time -p %s" % command
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
+        total_measure = None
 
         for line in data.split("\n"):
             if self.check_for_error(line):
@@ -70,14 +72,15 @@ class TimeAdapter(GaugeAdapter):
                 match2 = self.re_formatted_time.match(line)
                 if match1:
                     mem_kb = float(match1.group(1))
-                    measure = Measurement(mem_kb, 'kb', run_id, 'MaxRSS')
+                    measure = Measurement(invocation, iteration, mem_kb, 'kb', run_id, 'MaxRSS')
                     current.add_measurement(measure)
                 elif match2:
                     time = float(match2.group(1)) * 1000
-                    measure = Measurement(time, 'ms', run_id, 'total')
+                    measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
                     current.add_measurement(measure)
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
             else:
                 match1 = self.re_time.match(line)
                 match2 = self.re_time2.match(line)
@@ -86,8 +89,11 @@ class TimeAdapter(GaugeAdapter):
                     criterion = 'total' if match.group(1) == 'real' else match.group(1)
                     time = (float(match.group(2).strip() or 0) * 60 +
                             float(match.group(3))) * 1000
-                    measure = Measurement(time, 'ms', run_id, criterion)
-                    current.add_measurement(measure)
+                    measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
+                    if measure.is_total():
+                        total_measure = measure
+                    else:
+                        current.add_measurement(measure)
                 else:
                     measure = None
 
@@ -95,6 +101,11 @@ class TimeAdapter(GaugeAdapter):
                         current.get_total_value() is not None:
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
+
+        if total_measure:
+            current.add_measurement(total_measure)
+            data_points.append(current)
 
         if not data_points:
             raise OutputNotParseable(data)

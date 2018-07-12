@@ -416,21 +416,19 @@ class Executor(object):
         if not terminate and self._do_builds:
             self._build_vm_and_suite(run_id)
 
-        stats = StatisticProperties(run_id.get_total_values())
-
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
-            stats = StatisticProperties(run_id.get_total_values())
 
+        stats = StatisticProperties(run_id.get_total_values())
         if terminate:
             run_id.report_run_completed(stats, cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
                     and stats.mean < run_id.min_iteration_time):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
-                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)")
+                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
                     % (stats.mean, run_id.min_iteration_time), run_id, cmdline)
 
         return terminate
@@ -456,7 +454,6 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
-        run_id.indicate_invocation_start()
 
         try:
             self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
@@ -506,7 +503,7 @@ class Executor(object):
 
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
-            data_points = gauge_adapter.parse_data(output, run_id)
+            data_points = gauge_adapter.parse_data(output, run_id, run_id.completed_invocations + 1)
 
             warmup = run_id.warmup_iterations
 
@@ -542,13 +539,17 @@ class Executor(object):
             run_id.get_number_of_data_points())
 
     def execute(self):
-        self._scheduler.execute()
-        successful = True
-        for run in self._runs:
-            run.report_job_completed(self._runs)
-            if run.is_failed():
-                successful = False
-        return successful
+        try:
+            self._scheduler.execute()
+            successful = True
+            for run in self._runs:
+                run.report_job_completed(self._runs)
+                if run.is_failed():
+                    successful = False
+            return successful
+        finally:
+            for run in self._runs:
+                run.close_files()
 
     @property
     def runs(self):

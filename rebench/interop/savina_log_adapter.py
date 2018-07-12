@@ -30,17 +30,19 @@ class SavinaLogAdapter(GaugeAdapter):
     re_log_line = re.compile(
         r"^([\w\.]+)\s+Iteration-(?:\d+):\s+([0-9]+\.[0-9]+) ms")
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
 
         for line in data.split("\n"):
             match = self.re_log_line.match(line)
             if match:
                 time = float(match.group(2))
-                measure = Measurement(time, 'ms', run_id, 'total')
+                measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
                 current = DataPoint(run_id)
                 current.add_measurement(measure)
                 data_points.append(current)
+                iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)

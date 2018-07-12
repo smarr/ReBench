@@ -35,7 +35,7 @@ class TimeAdapterTest(TestCase):
 user         5.00
 sys          1.00"""
         adapter = TimeAdapter(False)
-        data = adapter.parse_data(data, None)
+        data = adapter.parse_data(data, None, 1)
         self.assertEqual(1, len(data))
 
         measurements = data[0].get_measurements()
@@ -44,7 +44,7 @@ sys          1.00"""
 
     def test_parse_no_data(self):
         adapter = TimeAdapter(False)
-        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None)
+        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None, 1)
 
     def test_manual_adapter(self):
         adapter = TimeManualAdapter(False)

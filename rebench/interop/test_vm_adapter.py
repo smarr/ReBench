@@ -35,7 +35,8 @@ class TestVMAdapter(GaugeAdapter):
         super(TestVMAdapter, self).__init__(include_faulty)
         self._other_error_definitions = [re.compile("FAILED")]
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
 
@@ -46,13 +47,15 @@ class TestVMAdapter(GaugeAdapter):
 
             match = TestVMAdapter.re_time.match(line)
             if match:
-                measure = Measurement(float(match.group(2)), 'ms', run_id,
+                measure = Measurement(invocation, iteration,
+                                      float(match.group(2)), 'ms', run_id,
                                       match.group(1))
                 current.add_measurement(measure)
 
                 if measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)

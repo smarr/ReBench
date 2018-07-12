@@ -19,11 +19,18 @@
 # IN THE SOFTWARE.
 import sys
 
+from os import getcwd
+
 from humanfriendly import erase_line_code, Spinner
 from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 
 _DETAIL_INDENT = "    "
+
+
+def escape_braces(string):
+    string = coerce_string(string)
+    return string.replace('{', '{{').replace('}', '}}')
 
 
 class UI(object):
@@ -77,8 +84,10 @@ class UI(object):
         assert text
         if cwd:
             text += _DETAIL_INDENT + "cwd: " + cwd + "\n"
-        elif run_id:
+        elif run_id and run_id.location:
             text += _DETAIL_INDENT + "cwd: " + run_id.location + "\n"
+        else:
+            text += _DETAIL_INDENT + "cwd: " + getcwd() + "\n"
 
         self._prev_run_id = run_id
         self._prev_cmd = cmd
@@ -121,7 +130,7 @@ class UI(object):
     def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'error', faint=True, **kw)
+            self._output(text, 'red', faint=True, **kw)
 
     def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
@@ -131,7 +140,7 @@ class UI(object):
     def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'error', faint=True, **kw)
+            self._output(text, 'red', faint=True, **kw)
 
 
 class UIError(Exception):

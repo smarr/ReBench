@@ -39,15 +39,20 @@ class ExecutorTest(ReBenchTestCase):
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark,
         # we override stuff in subprocess for testing
+        old_popen = subprocess.Popen
         subprocess.Popen = Popen_override
-        options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
-                           self._ui, options,
-                           None, 'Test', data_file=self._tmp_file)
+        try:
+            options = ReBench().shell_options().parse_args(['dummy'])
 
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
-        ex.execute()
+            cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
+                               self._ui, options,
+                               None, 'Test', data_file=self._tmp_file)
+
+            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+            ex.execute()
+        finally:
+            subprocess.Popen = old_popen
 
 # TODO: should test more details
 #        (mean, sdev, (interval, interval_percentage),
@@ -112,6 +117,41 @@ class ExecutorTest(ReBenchTestCase):
                            'all', data_file=self._tmp_file)
         self._basic_execution(cnf)
 
+    def test_execution_with_quick_set(self):
+        self._set_path(__file__)
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['-q', 'persistency.conf'])
+        self.assertTrue(cmd_config.quick)
+
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
+                           self._ui, cmd_config, data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        self.assertEqual(1, len(runs))
+
+        ex = Executor(runs, False, False, self._ui)
+        ex.execute()
+        run = list(runs)[0]
+
+        self.assertEqual(1, run.get_number_of_data_points())
+
+    def test_execution_with_invocation_and_iteration_set(self):
+        self._set_path(__file__)
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['-in=2', '-it=2', 'persistency.conf'])
+        self.assertEqual(2, cmd_config.invocations)
+        self.assertEqual(2, cmd_config.iterations)
+
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
+                           self._ui, cmd_config, data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        self.assertEqual(1, len(runs))
+
+        ex = Executor(runs, False, False, self._ui)
+        ex.execute()
+        run = list(runs)[0]
+
+        self.assertEqual(2, run.get_number_of_data_points())
+
     def test_shell_options_without_filters(self):
         option_parser = ReBench().shell_options()
         args = option_parser.parse_args(['-d', '-v', 'some.conf'])
@@ -158,7 +198,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['vm:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable=unused-argument
+def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
@@ -174,7 +214,7 @@ def Popen_override(cmdline, stdout, stderr=None, shell=None):  # pylint: disable
         def kill(self):
             pass
 
-        def wait(self):
+        def wait(self, **_kwargs):
             pass
 
         def __enter__(self):

@@ -88,9 +88,16 @@ Argument:
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
         execution.add_argument(
+            '-in', '--invocations', action='store', dest='invocations',
+            help='The number of times a VM is started to execute a run.',
+            default=None, type=int)
+        execution.add_argument(
+            '-it', '--iterations', action='store', dest='iterations',
+            help='The number of times a benchmark is to be executed within a VM invocation.',
+            default=None, type=int)
+        execution.add_argument(
             '-q', '--quick', action='store_true', dest='quick',
-            help='Do a quick benchmark run instead of a full, '
-                 'statistical rigorous experiment.',
+            help='Execute quickly. Identical with --iterations=1 --invocations=1',
             default=False)
         execution.add_argument(
             '-N', '--without-nice', action='store_false', dest='use_nice',
@@ -190,7 +197,6 @@ Argument:
             self._config = Configurator(config, data_store, self._ui, args,
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
-            #TODO how to set ui on codespeed reporter?
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
 
@@ -225,7 +231,7 @@ def main_func():
         rebench = ReBench()
         return 0 if rebench.run() else -1
     except KeyboardInterrupt:
-        rebench.ui.debug_error_info("Aborted by user request")
+        rebench.ui.debug_error_info("Aborted by user request\n")
         return -1
     except UIError as err:
         rebench.ui.error(err.message)

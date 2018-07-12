@@ -35,7 +35,7 @@ class PlainSecondsAdapterTest(TestCase):
 50
 1"""
         adapter = PlainSecondsLogAdapter(False)
-        data = adapter.parse_data(data, None)
+        data = adapter.parse_data(data, None, 2)
         self.assertEqual(3, len(data))
 
         self.assertEqual(1, len(data[0].get_measurements()))
@@ -49,4 +49,4 @@ class PlainSecondsAdapterTest(TestCase):
 
     def test_parse_no_data(self):
         adapter = PlainSecondsLogAdapter(False)
-        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None)
+        self.assertRaises(OutputNotParseable, adapter.parse_data, "", None, 1)

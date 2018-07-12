@@ -45,7 +45,8 @@ class RebenchLogAdapter(GaugeAdapter):
         self._other_error_definitions = [self.re_NPB_partial_invalid,
                                          self.re_NPB_invalid, self.re_incorrect]
 
-    def parse_data(self, data, run_id):
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
         data_points = []
         current = DataPoint(run_id)
 
@@ -62,7 +63,7 @@ class RebenchLogAdapter(GaugeAdapter):
                     time /= 1000
                 criterion = (match.group(2) or 'total').strip()
 
-                measure = Measurement(time, 'ms', run_id, criterion)
+                measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
 
             else:
                 match = self.re_extra_criterion_log_line.match(line)
@@ -71,7 +72,7 @@ class RebenchLogAdapter(GaugeAdapter):
                     criterion = match.group(2)
                     unit = match.group(4)
 
-                    measure = Measurement(value, unit, run_id, criterion)
+                    measure = Measurement(invocation, iteration, value, unit, run_id, criterion)
 
             if measure:
                 current.add_measurement(measure)
@@ -79,6 +80,7 @@ class RebenchLogAdapter(GaugeAdapter):
                 if measure.is_total():
                     data_points.append(current)
                     current = DataPoint(run_id)
+                    iteration += 1
 
         if not data_points:
             raise OutputNotParseable(data)

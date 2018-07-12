@@ -17,25 +17,32 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from datetime import datetime
-
 from .run_id import RunId
 
 
 class Measurement(object):
-    def __init__(self, value, unit, run_id, criterion='total',
-                 timestamp=None, line_number=None, filename=None):
-        self._run_id = run_id
-        self._criterion = criterion
+    def __init__(self, invocation, iteration, value, unit,
+                 run_id, criterion='total', line_number=None, filename=None):
+        self._invocation = invocation
+        self._iteration = iteration
         self._value = value
         self._unit = unit
+        self._run_id = run_id
+        self._criterion = criterion
         assert unit is not None
-        self._timestamp = timestamp or datetime.now()
         self._line_number = line_number
         self._filename = filename
 
     def is_total(self):
         return self._criterion == 'total'
+
+    @property
+    def invocation(self):
+        return self._invocation
+
+    @property
+    def iteration(self):
+        return self._iteration
 
     @property
     def criterion(self):
@@ -50,10 +57,6 @@ class Measurement(object):
         return self._unit
 
     @property
-    def timestamp(self):
-        return self._timestamp
-
-    @property
     def run_id(self):
         return self._run_id
 
@@ -65,28 +68,25 @@ class Measurement(object):
     def line_number(self):
         return self._line_number
 
-    TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
-
     def as_str_list(self):
         if isinstance(self._value, float):
             val = "%f" % self.value
         else:
             val = "%s" % self.value
 
-        return ["[" + self._timestamp.strftime(self.TIME_FORMAT) + "]",
+        return [str(self._invocation), str(self._iteration),
                 val,
                 self._unit,
                 self._criterion] + self._run_id.as_str_list()
 
     @classmethod
-    def from_str_list(cls, data_store, str_list, line_number=None,
-                      filename=None):
+    def from_str_list(cls, data_store, str_list, line_number=None, filename=None):
+        invocation = int(str_list[0])
+        iteration = int(str_list[1])
+        value = float(str_list[2])
+        unit = str_list[3]
+        criterion = str_list[4]
+        run_id = RunId.from_str_list(data_store, str_list[5:])
 
-        timestamp = datetime.strptime(str_list[0][1:-1], cls.TIME_FORMAT)
-        value = float(str_list[1])
-        unit = str_list[2]
-        criterion = str_list[3]
-        run_id = RunId.from_str_list(data_store, str_list[4:])
-
-        return Measurement(value, unit, run_id, criterion, timestamp,
-                           line_number, filename)
+        return Measurement(invocation, iteration, value, unit, run_id,
+                           criterion, line_number, filename)
