@@ -21,7 +21,7 @@ Argument:
 ...
 ```
 
-[Configuration files](configuration.md) provide the setup for experiments by
+[Configuration files](config.md) provide the setup for experiments by
 defining benchmarks, benchmark suites, their parameters, and virtual machines
 to execute them.
 
@@ -29,7 +29,7 @@ to execute them.
 
 ReBench takes a given configuration file, executes the experiments and stores
 the measurement results into the configured data file. Assuming a basic
-configuration as seen in the [README](README.md#install), the following command
+configuration as seen in the [README](index.md#install), the following command
 line will execute all experiments and store the results in the `example.data`
 file:
 
@@ -45,7 +45,7 @@ Instead of executing the configured experiments, we can ask ReBench to only
 execute a subset of them, a specific experiment, only selected VMs, suites, and
 benchmarks.
 
-The [configuration file](configuration.md) allows us to select a
+The [configuration file](config.md) allows us to select a
 `standard_experiment`. But we can override this setting with the `exp_name`
 parameter. Thus, the following will execute only the `Example` experiment:
 
@@ -79,7 +79,7 @@ ReBench supports a range of other options to control execution.
 
 #### Quick Runs, Iterations, Invocations
 
-The [configuration](configuration.md#invocation) uses the notion of iteration
+The [configuration](config.md#invocation) uses the notion of iteration
 and invocation to define how often a VM is started (invocation) and how many
 times a benchmark is executed in the same VM (iteration).
 
@@ -127,7 +127,7 @@ For this purpose we use *schedulers* to determine the execution order.
 #### Continuous Performance Tracking
 
 ReBench supports [Codespeed][1] as platform for continuous performance
-tracking. To report data to a Codespeed setup, the [configuration](configuration.md#codespeed)
+tracking. To report data to a Codespeed setup, the [configuration](config.md#codespeed)
 needs to have the corresponding details.
 
 And, Codespeed needs details on the concrete execution:

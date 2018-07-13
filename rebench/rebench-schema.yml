@@ -252,7 +252,7 @@ type: map
 mapping:
   regex;(\..+):
     type: any
-    desc: dot properties, for example `.test` are going to be ignored
+    desc: dot keys, for example `.test` are going to be ignored
   standard_experiment:
     type:     str
     default:  all
