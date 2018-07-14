@@ -59,7 +59,7 @@ Argument:
   config    required argument, file containing the experiment to be executed
   exp_name  optional argument, the name of an experiment definition
             from the config file
-            If not provided, the configured standard_experiment is used.
+            If not provided, the configured default_experiment is used.
             If 'all' is given, all experiments will be executed.
 
   vm:$      filter experiments to only include the named VM, example: vm:VM1 vm:VM3

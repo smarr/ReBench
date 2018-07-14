@@ -154,8 +154,8 @@ class Configurator(object):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
         self._build_log = build_log or raw_config.get('build_log', 'build.log')
-        self._data_file = data_file or raw_config.get('standard_data_file', 'rebench.data')
-        self._exp_name = exp_name or raw_config.get('standard_experiment', 'all')
+        self._data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
+        self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
 
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None

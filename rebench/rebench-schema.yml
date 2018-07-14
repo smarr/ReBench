@@ -253,10 +253,10 @@ mapping:
   regex;(\..+):
     type: any
     desc: dot keys, for example `.test` are going to be ignored
-  standard_experiment:
+  default_experiment:
     type:     str
     default:  all
-  standard_data_file:
+  default_data_file:
     type:     str
     default:  rebench.data
   build_log:

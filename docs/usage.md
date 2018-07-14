@@ -11,7 +11,7 @@ Argument:
   config    required argument, file containing the experiment to be executed
   exp_name  optional argument, the name of an experiment definition
             from the config file
-            If not provided, the configured standard_experiment is used.
+            If not provided, the configured default_experiment is used.
             If 'all' is given, all experiments will be executed.
 
   vm:$      filter experiments to only include the named VM, example: vm:VM1 vm:VM3
@@ -46,7 +46,7 @@ execute a subset of them, a specific experiment, only selected VMs, suites, and
 benchmarks.
 
 The [configuration file](config.md) allows us to select a
-`standard_experiment`. But we can override this setting with the `exp_name`
+`default_experiment`. But we can override this setting with the `exp_name`
 parameter. Thus, the following will execute only the `Example` experiment:
 
 ```bash

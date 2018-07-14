@@ -14,8 +14,8 @@ Below a very basic configuration file:
 
 ```YAML
 # this run definition will be chosen if no parameters are given to rebench
-standard_experiment: all
-standard_data_file:  'example.data'
+default_experiment: all
+default_data_file:  'example.data'
 
 # a set of suites with different benchmarks and possibly different settings
 benchmark_suites:
@@ -46,10 +46,10 @@ This example shows the general structure of a ReBench configuration.
 
 **General Settings.**
 It can contain some general settings, for instance that all defined
-experiments are going to be executed (as defined by the `standard_experiment` key)
+experiments are going to be executed (as defined by the `default_experiment` key)
 or that the data is to be stored in the `example.data` file.
 
-**Benchmark Suites.** The `benchmark_suites` key is used to defined collections of benchmarks.
+**Benchmark Suites.** The `benchmark_suites` key is used to define collections of benchmarks.
 A suite is defined by its name, here `ExampleSuite`, and by:
 
 - a `gauge_adapter` to interpret the output of the suite's benchmark harness

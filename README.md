@@ -70,8 +70,8 @@ A minimal configuration file looks like:
 
 ```yaml
 # this run definition will be chosen if no parameters are given to rebench
-standard_experiment: all
-standard_data_file:  'example.data'
+default_experiment: all
+default_data_file:  'example.data'
 
 # a set of suites with different benchmarks and possibly different settings
 benchmark_suites:
