@@ -8,11 +8,11 @@ and store it in its own data files for later processing.
 
 ReBench provides currently builtin support for the following benchmark harnesses:
 
-- [JMH](http://openjdk.java.net/projects/code-tools/jmh/), Java's mircobenchmark harness
-- a plain seconds log, i.e., a floating point number per line
-- the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
-- the harness of the [Savina](https://github.com/shamsimam/savina) benchmarks
-- a harness that use automatically `/usr/bin/time`
+- `JMH`: [JMH](http://openjdk.java.net/projects/code-tools/jmh/), Java's mircobenchmark harness
+- `PlainSecondsLog`: a plain seconds log, i.e., a floating point number per line
+- `ReBenchLog`: the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
+- `SavinaLog`: the harness of the [Savina](https://github.com/shamsimam/savina) benchmarks
+- `Time`: a harness that use automatically `/usr/bin/time`
 
 ## Supporting other Benchmark Harness
 
