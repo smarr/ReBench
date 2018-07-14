@@ -4,19 +4,23 @@
 
  - 
 
+## [0.10.1] - 2018-06-08
+
+ - fix experiment filters and reporting on codespeed submission errors (#77)
+
 ## [0.10.0] - 2018-06-08
 
- - Restructure command-line options in help, and use argparse (#73)
- - Add support for Python 3 and PyPy (#65)
- - Add support for extra criteria (things beside run time) (#64)
- - Add support for path names in ReBenchLog benchmark names
+ - restructure command-line options in help, and use argparse (#73)
+ - add support for Python 3 and PyPy (#65)
+ - add support for extra criteria (things beside run time) (#64)
+ - add support for path names in ReBenchLog benchmark names
 
 ## [0.9.1] - 2017-12-21
 
- - Fix time-left reporting of invalid times (#60)
- - Take the number of data points per run into account for estimated time left (#62)
- - Obtain process output on timeout to enable results of partial runs
- - Fix incompatibility with latest setuptools
+ - fix time-left reporting of invalid times (#60)
+ - take the number of data points per run into account for estimated time left (#62)
+ - obtain process output on timeout to enable results of partial runs
+ - fix incompatibility with latest setuptools
 
 ## [0.9.0] - 2017-04-23
 
@@ -56,7 +60,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/smarr/ReBench/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/smarr/ReBench/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/smarr/ReBench/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/smarr/ReBench/compare/v0.8.0...v0.9.0

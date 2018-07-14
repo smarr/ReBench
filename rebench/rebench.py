@@ -57,8 +57,11 @@ class ReBench(object):
         
 Argument:
   config    required argument, file containing the experiment to be executed
-  exp_name  optional argument, the name of a experiment definition
+  exp_name  optional argument, the name of an experiment definition
             from the config file
+            If not provided, the configured default_experiment is used.
+            If 'all' is given, all experiments will be executed.
+
   vm:$      filter experiments to only include the named VM, example: vm:VM1 vm:VM3
   s:$       filter experiments to only include the named suite and possibly benchmark
             example: s:Suite1 s:Suite2:Bench3

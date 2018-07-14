@@ -8,28 +8,26 @@ schema;runs_type:
       type: int
       # default: 1  #  can't specify this here, because the defaults override settings
       desc: |
-        The number of times a virtual machine is executed to run one experiment.
-        Thus, this is the number of runs per virtual machine.
+        The number of times a virtual machine is executed a run.
     iterations:
       type: int
       # default: 1 #  can't specify this here, because the defaults override settings
       desc: |
-        The number of times a benchmark is executed within a virtual machine
+        The number of times a run is executed within a virtual machine
         invocation. This needs to be supported by a benchmark harness and
         ReBench passes this value on to the harness or benchmark.
     warmup:
       type: int
       desc: |
-        Consider the first N iterations as warmup and ignore them in summary
-        statistics. Note they are still persistet in the data file.
+        Consider the first N iterations as warmup and ignore them in ReBench's summary
+        statistics. Note ,they are still persisted in the data file.
 
     min_iteration_time:
       type: int
-      # TODO: make sure this is the correct default value
       # default: 50 #  can't specify this here, because the defaults override settings
       desc: |
-        Give a warning if the average run time is below this value in
-        milliseconds.
+        Give a warning if the average total run time of an iteration is below
+        this value in milliseconds.
     max_invocation_time:
       type: int
       desc: |
@@ -44,7 +42,7 @@ schema;runs_type:
         TODO: then again, we might want this for research on the impact
     execute_exclusively:
       type: bool
-      # default: false #  can't specify this here, because the defaults override settings
+      # default: true #  can't specify this here, because the defaults override settings
       desc: |
         TODO: probably needs to be removed, not sure. parallel exec of
         benchmarks introduced a lot of noise
@@ -138,9 +136,11 @@ schema;benchmark_suite_type:
         The command for the benchmark harness. It's going to be combined with the
         VM's command line. It supports various format variables, including:
          - benchmark (the benchmark's name)
-         - input (the input variable's value)
-         - variable (another variable's value)
          - cores (the number of cores to be used by the benchmark)
+         - input (the input variable's value)
+         - iterations (the number of iterations)
+         - variable (another variable's value)
+         - warmup (the number of iterations to be considered warmup)
     location:
       type: str
       desc: |
@@ -162,10 +162,10 @@ schema;benchmark_suite_type:
         - include: benchmark_type_map
     description:
       type: str
-      desc: A description of the benchmark.
+      desc: A description of the benchmark suite.
     desc:
       type: str
-      desc: A description of the benchmark.
+      desc: A description of the benchmark suite.
 
 schema;vm_type:
   type: map
@@ -252,11 +252,11 @@ type: map
 mapping:
   regex;(\..+):
     type: any
-    desc: dot properties, for example `.test` are going to be ignored
-  standard_experiment:
+    desc: dot keys, for example `.test` are going to be ignored
+  default_experiment:
     type:     str
     default:  all
-  standard_data_file:
+  default_data_file:
     type:     str
     default:  rebench.data
   build_log:
