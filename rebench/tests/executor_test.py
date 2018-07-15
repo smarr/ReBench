@@ -22,7 +22,7 @@ import subprocess
 import os
 
 from .rebench_test_case import ReBenchTestCase
-from ..                  import ReBench
+from ..rebench           import ReBench
 from ..executor          import Executor
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement

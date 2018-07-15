@@ -21,12 +21,10 @@
 # IN THE SOFTWARE.
 
 from setuptools import setup, find_packages
-from rebench import ReBench
-
-rebench = ReBench()
+from rebench import __version__ as rebench_version
 
 setup(name='ReBench',
-      version=rebench.version,
+      version=rebench_version,
       description='Execute and document benchmarks reproducibly.',
       author='Stefan Marr',
       author_email='rebench@stefan-marr.de',
@@ -38,7 +36,7 @@ setup(name='ReBench',
           'humanfriendly>=4.12'
       ],
       entry_points = {
-          'console_scripts' : ['rebench = rebench:main_func']
+          'console_scripts' : ['rebench = rebench.rebench:main_func']
       },
       tests_require = ['scipy>=0.8.0'],
       test_suite = 'rebench.tests',

@@ -1,3 +1,1 @@
-from .rebench import ReBench, main_func
-
-__version__ = ReBench().version
+__version__ = "0.10.1"
