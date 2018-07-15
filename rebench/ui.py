@@ -53,7 +53,7 @@ class UI(object):
         return self._progress_spinner is not None
 
     def init_spinner(self, total):
-        self._progress_spinner = Spinner(label="Running Benchmarks", total=total)
+        self._progress_spinner = UiSpinner("Running Benchmarks", total, sys.stdout)
         return self._progress_spinner
 
     def step_spinner(self, completed_runs, label=None):
@@ -106,7 +106,8 @@ class UI(object):
 
     def _output(self, text, color, *args, **kw):
         if self._need_to_erase_spinner:
-            sys.stdout.write(erase_line_code)
+            if self._progress_spinner and self._progress_spinner.interactive:
+                sys.stdout.write(erase_line_code)
             self._need_to_erase_spinner = False
 
         text = coerce_string(text)
@@ -193,6 +194,27 @@ class TestDummyUI(object):
 
     def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         pass
+
+
+class UiSpinner(Spinner):
+
+    def step(self, progress=0, label=None):
+        if self.interactive:
+            super(UiSpinner, self).step(progress, label)
+            return
+
+        assert not self.interactive
+        label = label or self.label
+        if not label:
+            raise Exception("No label set for spinner!")
+        elif self.total:
+            label = "%s: %.2f%%\n" % (label, progress / (self.total / 100.0))
+        elif self.timer and self.timer.elapsed_time > 2:
+            label = "%s (%s)\n" % (label, self.timer.rounded)
+        else:
+            label = label + "\n"
+        self.stream.write(label)
+        self.counter += 1
 
 
 class DummySpinner(object):
