@@ -223,10 +223,10 @@ class CodespeedReporter(Reporter):
                 self._ui.verbose_error_info("Sent %d results to Codespeed, response was: %s\n"
                                             % (len(results), response))
             except (IOError, HTTPException) as error:
-                envs = list(set([i['environment'] for i in results]))
-                projects = list(set([i['project'] for i in results]))
-                benchmarks = list(set([i['benchmark'] for i in results]))
-                executables = list(set([i['executable'] for i in results]))
+                envs = list({i['environment'] for i in results})
+                projects = list({i['project'] for i in results})
+                benchmarks = list({i['benchmark'] for i in results})
+                executables = list({i['executable'] for i in results})
                 msg = ("{ind}Data\n"
                        + "{ind}{ind}environments: %s\n"
                        + "{ind}{ind}projects: %s\n"
