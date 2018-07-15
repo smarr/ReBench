@@ -31,6 +31,7 @@ import sys
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 
+from . import __version__ as rebench_version
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
                             RandomScheduler
 from .persistence    import DataStore
@@ -43,7 +44,7 @@ from .ui import UIError, UI
 class ReBench(object):
 
     def __init__(self):
-        self.version = "0.10.1"
+        self.version = rebench_version
         self.options = None
         self._config = None
         self._ui = UI()
