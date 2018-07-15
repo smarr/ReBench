@@ -147,6 +147,9 @@ class CodespeedReporter(Reporter):
             self._send_and_empty_cache()
 
     def _send_and_empty_cache(self):
+        if not self._cache:
+            return
+
         if len(self._cache) == 1:
             run_id = list(self._cache.keys())[0]
         else:
@@ -187,7 +190,7 @@ class CodespeedReporter(Reporter):
         else:
             result['result_value'] = -1
 
-        result['executable'] = self._cfg.executable or run_id.benchmark.vm.name
+        result['executable'] = self._cfg.executable or run_id.benchmark.suite.vm.name
 
         if run_id.benchmark.codespeed_name:
             name = run_id.benchmark.codespeed_name
@@ -234,12 +237,13 @@ class CodespeedReporter(Reporter):
                        + "{ind}{ind}executables: %s\n") % (
                            envs, projects, benchmarks, executables)
 
-                error("{ind}Error: Reporting to Codespeed failed.\n"
-                      + "{ind}{ind}" + str(error) + "\n"
-                      + "{ind}{ind}This is most likely caused by either a wrong URL in the\n"
-                      + "{ind}{ind}config file, or an environment not configured in Codespeed.\n"
-                      + "{ind}{ind}URL: " + self._cfg.url + "\n"
-                      + "{ind}{ind}" + msg + "\n", run_id)
+                self._ui.error(
+                    "{ind}Error: Reporting to Codespeed failed.\n"
+                    + "{ind}{ind}" + str(error) + "\n"
+                    + "{ind}{ind}This is most likely caused by either a wrong URL in the\n"
+                    + "{ind}{ind}config file, or an environment not configured in Codespeed.\n"
+                    + "{ind}{ind}URL: " + self._cfg.url + "\n"
+                    + "{ind}{ind}" + msg + "\n", run_id)
 
     def _prepare_result(self, run_id):
         stats = StatisticProperties(run_id.get_total_values())
