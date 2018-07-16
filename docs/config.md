@@ -326,7 +326,7 @@ all of them.
 
 **gauge_adapter:**
 
-Name of the parser that interpreters the output of the benchmark harness.
+Name of the parser that interprets the output of the benchmark harness.
 For a list of supported options see the list of [extensions](extensions.md#available-harness-support).
 
 This key is mandatory.
