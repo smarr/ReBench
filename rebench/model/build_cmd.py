@@ -22,9 +22,15 @@
 class BuildCommand(object):
 
     @classmethod
-    def create(cls, cmd, build_commands, location):
-        if not cmd:
+    def create_commands(cls, commands, build_commands, location):
+        if not commands:
             return None
+
+        return [BuildCommand.create(cmd, build_commands, location) for cmd in commands]
+
+    @classmethod
+    def create(cls, cmd, build_commands, location):
+        assert cmd
 
         build_command = BuildCommand(cmd, location)
         if build_command in build_commands:

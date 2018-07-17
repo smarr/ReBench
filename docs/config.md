@@ -387,17 +387,27 @@ benchmark_suites:
 
 **build:**
 
-The given string is executed by the system's shell and can be used to
-build a benchmark suite. It is executed once before any benchmarks of the suite
-are executed. If `location` is set, it is used as working directory.
-Otherwise, it is the current working directory of ReBench.
+A list of commands/strings to be executed by the system's shell.
+They are intended to set up the system for benchmarking,
+typically to build binaries, compiled archives, etc.
+
+Each command is executed once before any benchmark that depend on it
+is executed. If the `location` of the suite is set, it is used as
+working directory. Otherwise, it is the current working directory of ReBench.
+
+This is a list of commands to allow multiple suites/VMs to depend on the
+same command without duplicate execution.
+
+Though, location and command have to be identical (based on simple
+string comparisons).
 
 Example:
 
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    build: ./build-suite.sh
+    build:
+      - ./build-suite.sh
 ```
 
 ---
@@ -638,19 +648,28 @@ virtual_machines:
 
 **build:**
 
-The given string is executed by the system's shell and can be used to
-build a VM. It is executed once before any benchmarks are executed with
-the VM. If `path` is set, it is used as working directory. Otherwise,
-it is the current working directory of ReBench.
+A list of commands/strings to be executed by the system's shell.
+They are intended to set up the system for benchmarking,
+typically to build binaries, compiled archives, etc.
+
+Each command is executed once before the VM is executed.
+If the `path` of the VM is set, it is used as
+working directory. Otherwise, it is the current working directory of ReBench.
+
+This is a list of commands to allow multiple suites/VMs to depend on the
+same command without duplicate execution.
+
+Though, location and command have to be identical (based on simple
+string comparisons).
 
 Example:
 
 ```yaml
 virtual_machines:
   MyBin1:
-    build: |
-      make clobber
-      make
+    build:
+      - make clobber
+      - make
 ```
 
 ---

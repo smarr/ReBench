@@ -34,7 +34,7 @@ class VirtualMachine(object):
         binary = vm.get('binary')
         args = vm.get('args')
 
-        build = BuildCommand.create(vm.get('build'), build_commands, path)
+        build = BuildCommand.create_commands(vm.get('build'), build_commands, path)
 
         description = vm.get('description')
         desc = vm.get('desc')

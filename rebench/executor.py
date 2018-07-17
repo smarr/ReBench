@@ -310,19 +310,24 @@ class Executor(object):
     def _build_vm_and_suite(self, run_id):
         name = "VM:" + run_id.benchmark.suite.vm.name
         build = run_id.benchmark.suite.vm.build
-        self._process_build(build, name, run_id)
+        self._process_builds(build, name, run_id)
 
         name = "S:" + run_id.benchmark.suite.name
         build = run_id.benchmark.suite.build
-        self._process_build(build, name, run_id)
+        self._process_builds(build, name, run_id)
 
-    def _process_build(self, build, name, run_id):
-        if not build or build.is_built:
+    def _process_builds(self, builds, name, run_id):
+        if not builds:
             return
-        if build.is_failed_build:
-            run_id.fail_immediately()
-            raise FailedBuilding(name, build)
-        self._execute_build_cmd(build, name, run_id)
+
+        for build in builds:
+            if build.is_built:
+                continue
+
+            if build.is_failed_build:
+                run_id.fail_immediately()
+                raise FailedBuilding(name, build)
+            self._execute_build_cmd(build, name, run_id)
 
     def _execute_build_cmd(self, build_command, name, run_id):
         path = build_command.location

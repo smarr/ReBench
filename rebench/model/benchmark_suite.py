@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import os
+
 from .build_cmd import BuildCommand
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
@@ -29,9 +31,10 @@ class BenchmarkSuite(object):
         gauge_adapter = suite.get('gauge_adapter')
         command = suite.get('command')
 
-        # TODO: should the location be made absolute as the vm._path??
         location = suite.get('location', vm.path)
-        build = BuildCommand.create(suite.get('build'), build_commands, location)
+        if location:
+            location = os.path.abspath(location)
+        build = BuildCommand.create_commands(suite.get('build'), build_commands, location)
         benchmarks_config = suite.get('benchmarks')
 
         description = suite.get('description')

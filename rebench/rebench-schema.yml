@@ -119,6 +119,24 @@ schema;benchmark_type_map:
             This is useful to have a name different from the one relevant
             at the suite level.
 
+schema;build_type:
+  desc: |
+    A list of commands/strings to be executed by the system's shell.
+    They are intended to set up the system for benchmarking,
+    typically to build binaries, compiled archieves, etc.
+    Each command is executed once before any benchmark or VM that depend on it
+    is executed. If the `location` or `path` of a suite/VM is set, it is used as
+    working directory. Otherwise, it is the current working directory of ReBench.
+
+    This is a list of commands to allow multiple suites/VMs to depend on the
+    same command without duplicate execution.
+
+    Though, location and command have to be identical (based on simple
+    string comparisons).
+  type: seq
+  sequence:
+    - type: str
+
 schema;benchmark_suite_type:
   type: map
   mapping:
@@ -147,12 +165,7 @@ schema;benchmark_suite_type:
         The path to the benchmark harness. Execution use this location as
         working directory. It overrides the location/path of a VM.
     build:
-      desc: |
-        The given string is executed by the system's shell and can be used to
-        build a benchmark suite. It is executed once before any benchmarks are
-        executed. If `location` is set, it is used as working directory.
-        Otherwise, it is the current working directory of ReBench.
-      type: str
+      include: build_type
     benchmarks:
       type: seq
       required: yes
@@ -194,12 +207,7 @@ schema;vm_type:
     description:
       type: str
     build:
-      desc: |
-        The given string is executed by the system's shell and can be used to
-        build a VM. It is executed once before any benchmarks are executed with
-        the VM. If `path` is set, it is used as working directory. Otherwise,
-        it is the current working directory of ReBench.
-      type: str
+      include: build_type
 
 schema;exp_suite_type:
   desc: A list of suites
