@@ -217,7 +217,9 @@ class RunId(object):
                              'cores': self._cores,
                              'input': self._input_size,
                              'iterations': self.iterations,
+                             'suite': self._benchmark.suite.name,
                              'variable': self._var_value,
+                             'vm': self._benchmark.suite.vm.name,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)

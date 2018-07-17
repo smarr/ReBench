@@ -353,7 +353,9 @@ It supports various format variables, including:
  - cores (the number of cores to be used by the benchmark)
  - input (the input variable's value)
  - iterations (the number of iterations)
+ - suite (the name of the benchmark suite)
  - variable (another variable's value)
+ - vm (the virtual machine's name)
  - warmup (the number of iterations to be considered warmup)
 
 This key is mandatory.
