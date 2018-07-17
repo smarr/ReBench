@@ -24,7 +24,7 @@ addons:
       - time
 
 install:
-  - pip install coveralls humanfriendly pylint
+  - pip install coveralls pylint
   - pip install .
 
 # command to run tests
