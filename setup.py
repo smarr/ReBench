@@ -30,6 +30,7 @@ setup(name='ReBench',
       author_email='rebench@stefan-marr.de',
       url='https://github.com/smarr/ReBench',
       packages=find_packages(exclude=['*.tests']),
+      package_data={'rebench': ['rebench-schema.yml']},
       install_requires=[
           'PyYAML>=3.12',
           'pykwalify>=1.6.1',
