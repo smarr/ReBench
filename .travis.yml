@@ -24,12 +24,13 @@ addons:
       - time
 
 install:
-  - pip install coveralls humanfriendly pylint
+  - pip install coveralls pylint
   - pip install .
 
 # command to run tests
 script:
  - nosetests --with-coverage --cover-package=rebench
+ - (cd rebench && rebench -N ../rebench.conf vm:TestRunner2)
  - pylint rebench
 
 after_success:
