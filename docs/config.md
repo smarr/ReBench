@@ -353,7 +353,9 @@ It supports various format variables, including:
  - cores (the number of cores to be used by the benchmark)
  - input (the input variable's value)
  - iterations (the number of iterations)
+ - suite (the name of the benchmark suite)
  - variable (another variable's value)
+ - vm (the virtual machine's name)
  - warmup (the number of iterations to be considered warmup)
 
 This key is mandatory.
@@ -455,6 +457,9 @@ As well as:
 - cores
 - variable_values
 
+Run configurations are generated from the cross product of all `input_sizes`,
+`cores`, and `variable_values` for a benchmark.
+
 ## Benchmark
 
 A benchmark can be define simply as a name. However, some times one might want
@@ -510,6 +515,9 @@ way to adjust the amount of computation performed.
 `input_sizes` expects a list, either as in the list notation below, or
 in form of a sequence literal: `[small, large]`.
 
+Run configurations are generated from the cross product of all `input_sizes`,
+`cores`, and `variable_values` for a benchmark. 
+
 Example:
 
 ```yaml
@@ -526,7 +534,10 @@ Example:
 The number of cores to be used by the benchmark.
 At least that's the original motivation for the variable.
 In practice, it is more flexible and just another variable that can take
-any list of strings. 
+any list of strings.
+
+Run configurations are generated from the cross product of all `input_sizes`,
+`cores`, and `variable_values` for a benchmark.
 
 Example:
 
@@ -541,6 +552,9 @@ Example:
 
 Another dimension by which the benchmark execution can be varied.
 It takes a list of strings, or arbitrary values really.
+
+Run configurations are generated from the cross product of all `input_sizes`,
+`cores`, and `variable_values` for a benchmark.
 
 Example:
 
