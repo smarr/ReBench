@@ -200,6 +200,9 @@ The number of times a run is executed within a virtual machine
 invocation. This needs to be supported by a benchmark harness and
 ReBench passes this value on to the harness or benchmark.
 
+The iterations setting can be used e.g. for the command as in the benchmark suite
+in the example below.
+
 Default: `1`
 
 Example:
@@ -207,6 +210,10 @@ Example:
 ```yaml
 runs:
   iterations: 42
+
+benchmark_suites:
+  ExampleSuite:
+    command: Harness -i=%(iterations)s
 ```
 
 ---
@@ -216,6 +223,9 @@ runs:
 Consider the first N iterations as warmup and ignore them in ReBench's summary
 statistics. Note ,they are still persisted in the data file.
 
+The warmup setting can be used e.g. for the command as in the benchmark suite
+in the example below.
+
 Default: `0`
 
 Example:
@@ -223,6 +233,10 @@ Example:
 ```yaml
 runs:
   warmup: 330
+ 
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --warmup=%(warmup)s
 ```
 
 ---
@@ -527,14 +541,19 @@ in form of a sequence literal: `[small, large]`.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark. 
+The specific input size can be used in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    input_sizes:
-      - small
-      - large
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --size=%(input)s
+    benchmarks:
+        - Benchmark2:
+            input_sizes:
+              - small
+              - large
 ```
 
 ---
@@ -548,12 +567,17 @@ any list of strings.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark.
+The specific core setting can be used e.g. in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    cores: [1, 3, 4, 19]
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --cores=%(cores)s
+    benchmarks:
+        - Benchmark2:
+            cores: [1, 3, 4, 19]
 ```
 
 ---
@@ -565,15 +589,20 @@ It takes a list of strings, or arbitrary values really.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark.
+The specific variable value can be used e.g. in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    variable_values:
-      - Sequential
-      - Parallel
-      - Random
+benchmark_suites:
+  ExampleSuite:
+    command: Harness %(variable)s
+    benchmarks:
+        - Benchmark2:
+            variable_values:
+              - Sequential
+              - Parallel
+              - Random
 ```
 
 ---
