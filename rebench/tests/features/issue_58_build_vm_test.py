@@ -83,7 +83,7 @@ class Issue58BuildVM(ReBenchTestCase):
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n\n", log)
+            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n", log)
 
     def test_broken_build_prevents_experiments(self):
         self._cleanup_log()
@@ -107,7 +107,7 @@ class Issue58BuildVM(ReBenchTestCase):
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashC|STD:standard\nVM:BashC|ERR:error\n\n", log)
+            "VM:BashC|STD:standard\nVM:BashC|ERR:error\n", log)
 
     def test_build_is_run_only_once_for_same_command(self):
         self._cleanup_log()
@@ -125,4 +125,4 @@ class Issue58BuildVM(ReBenchTestCase):
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n\n", log)
+            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n", log)
