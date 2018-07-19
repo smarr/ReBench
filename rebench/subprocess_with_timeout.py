@@ -18,9 +18,9 @@ except NameError:
     IS_PY3 = False
 
 
-class SubprocessThread(Thread):
+class _SubprocessThread(Thread):
 
-    def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr):
+    def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr, stdin_input):
         Thread.__init__(self, name="Subprocess %s" % binary_name)
         self._args = args
         self._shell = shell
@@ -28,6 +28,7 @@ class SubprocessThread(Thread):
         self._verbose = verbose
         self._stdout = stdout
         self._stderr = stderr
+        self._stdin_input = stdin_input
 
         self._pid = None
         self._started_cv = Condition()
@@ -44,11 +45,16 @@ class SubprocessThread(Thread):
     def run(self):
         try:
             self._started_cv.acquire()
+            stdin = PIPE if self._stdin_input else None
             proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                         stdout=self._stdout, stderr=self._stderr)
+                         stdin=stdin, stdout=self._stdout, stderr=self._stderr)
             self._pid = proc.pid
             self._started_cv.notify()
             self._started_cv.release()
+
+            if self._stdin_input:
+                proc.stdin.write(self._stdin_input)
+                proc.stdin.flush()
 
             self.process_output(proc)
             self.returncode = proc.returncode
@@ -90,16 +96,21 @@ class SubprocessThread(Thread):
             self.stdout_result, self.stderr_result = proc.communicate()
 
 
+def _print_keep_alive(seconds_since_start):
+    print("Keep alive, current job runs for %dmin" % (seconds_since_start / 60))
+
+
 def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
-        verbose=False, stdout=PIPE, stderr=PIPE):
+        verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
+        keep_alive_output=_print_keep_alive):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
     """
     binary_name = args.split(' ')[0]
 
-    thread = SubprocessThread(binary_name, args, shell, cwd, verbose, stdout,
-                              stderr)
+    thread = _SubprocessThread(binary_name, args, shell, cwd, verbose, stdout,
+                               stderr, stdin_input)
     thread.start()
 
     if timeout == -1:
@@ -121,11 +132,11 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
                     break
                 diff = time() - start
                 if diff < timeout:
-                    print("Keep alive, current job runs for %dmin" % (diff / 60))
+                    keep_alive_output(diff)
 
     if timeout != -1 and thread.is_alive():
         assert thread.get_pid() is not None
-        return kill_process(thread.get_pid(), kill_tree, thread)
+        return _kill_process(thread.get_pid(), kill_tree, thread)
 
     if not thread.is_alive():
         exp = thread.exception
@@ -135,7 +146,7 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
 
-def kill_py2(proc_id):
+def _kill_py2(proc_id):
     try:
         kill(proc_id, SIGKILL)
     except IOError:
@@ -143,7 +154,7 @@ def kill_py2(proc_id):
         pass
 
 
-def kill_py3(proc_id):
+def _kill_py3(proc_id):
     try:
         kill(proc_id, SIGKILL)
     except ProcessLookupError:  # pylint: disable=undefined-variable
@@ -151,26 +162,26 @@ def kill_py3(proc_id):
         pass
 
 
-def kill_process(pid, recursively, thread):
+def _kill_process(pid, recursively, thread):
     pids = [pid]
     if recursively:
-        pids.extend(get_process_children(pid))
+        pids.extend(_get_process_children(pid))
 
     for proc_id in pids:
         if IS_PY3:
-            kill_py3(proc_id)
+            _kill_py3(proc_id)
         else:
-            kill_py2(proc_id)
+            _kill_py2(proc_id)
 
     thread.join()
 
     return -9, thread.stdout_result, thread.stderr_result
 
 
-def get_process_children(pid):
+def _get_process_children(pid):
     proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, _stderr = proc.communicate()
     result = [int(p) for p in stdout.split()]
     for child in result[:]:
-        result.extend(get_process_children(child))
+        result.extend(_get_process_children(child))
     return result

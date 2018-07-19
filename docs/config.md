@@ -200,6 +200,9 @@ The number of times a run is executed within a virtual machine
 invocation. This needs to be supported by a benchmark harness and
 ReBench passes this value on to the harness or benchmark.
 
+The iterations setting can be used e.g. for the command as in the benchmark suite
+in the example below.
+
 Default: `1`
 
 Example:
@@ -207,6 +210,10 @@ Example:
 ```yaml
 runs:
   iterations: 42
+
+benchmark_suites:
+  ExampleSuite:
+    command: Harness -i=%(iterations)s
 ```
 
 ---
@@ -214,7 +221,10 @@ runs:
 **warmup:**
 
 Consider the first N iterations as warmup and ignore them in ReBench's summary
-statistics. Note ,they are still persisted in the data file.
+statistics. Note, uithey are still persisted in the data file.
+
+The warmup setting can be used e.g. for the command as in the benchmark suite
+in the example below.
 
 Default: `0`
 
@@ -223,6 +233,10 @@ Example:
 ```yaml
 runs:
   warmup: 330
+ 
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --warmup=%(warmup)s
 ```
 
 ---
@@ -387,17 +401,27 @@ benchmark_suites:
 
 **build:**
 
-The given string is executed by the system's shell and can be used to
-build a benchmark suite. It is executed once before any benchmarks of the suite
-are executed. If `location` is set, it is used as working directory.
-Otherwise, it is the current working directory of ReBench.
+A list of commands/strings to be executed by the system's shell.
+They are intended to set up the system for benchmarking,
+typically to build binaries, compiled archives, etc.
+
+Each command is executed once before any benchmark that depend on it
+is executed. If the `location` of the suite is set, it is used as
+working directory. Otherwise, it is the current working directory of ReBench.
+
+This is a list of commands to allow multiple suites/VMs to depend on the
+same command without duplicate execution.
+
+Though, location and command have to be identical (based on simple
+string comparisons).
 
 Example:
 
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    build: ./build-suite.sh
+    build:
+      - ./build-suite.sh
 ```
 
 ---
@@ -517,14 +541,19 @@ in form of a sequence literal: `[small, large]`.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark. 
+The specific input size can be used in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    input_sizes:
-      - small
-      - large
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --size=%(input)s
+    benchmarks:
+        - Benchmark2:
+            input_sizes:
+              - small
+              - large
 ```
 
 ---
@@ -538,12 +567,17 @@ any list of strings.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark.
+The specific core setting can be used e.g. in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    cores: [1, 3, 4, 19]
+benchmark_suites:
+  ExampleSuite:
+    command: Harness --cores=%(cores)s
+    benchmarks:
+        - Benchmark2:
+            cores: [1, 3, 4, 19]
 ```
 
 ---
@@ -555,15 +589,20 @@ It takes a list of strings, or arbitrary values really.
 
 Run configurations are generated from the cross product of all `input_sizes`,
 `cores`, and `variable_values` for a benchmark.
+The specific variable value can be used e.g. in the command as in the example below.
 
 Example:
 
 ```yaml
-- Benchmark2:
-    variable_values:
-      - Sequential
-      - Parallel
-      - Random
+benchmark_suites:
+  ExampleSuite:
+    command: Harness %(variable)s
+    benchmarks:
+        - Benchmark2:
+            variable_values:
+              - Sequential
+              - Parallel
+              - Random
 ```
 
 ---
@@ -638,19 +677,28 @@ virtual_machines:
 
 **build:**
 
-The given string is executed by the system's shell and can be used to
-build a VM. It is executed once before any benchmarks are executed with
-the VM. If `path` is set, it is used as working directory. Otherwise,
-it is the current working directory of ReBench.
+A list of commands/strings to be executed by the system's shell.
+They are intended to set up the system for benchmarking,
+typically to build binaries, compiled archives, etc.
+
+Each command is executed once before the VM is executed.
+If the `path` of the VM is set, it is used as
+working directory. Otherwise, it is the current working directory of ReBench.
+
+This is a list of commands to allow multiple suites/VMs to depend on the
+same command without duplicate execution.
+
+Though, location and command have to be identical (based on simple
+string comparisons).
 
 Example:
 
 ```yaml
 virtual_machines:
   MyBin1:
-    build: |
-      make clobber
-      make
+    build:
+      - make clobber
+      - make
 ```
 
 ---

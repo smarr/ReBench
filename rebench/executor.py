@@ -28,7 +28,6 @@ import pkgutil
 import random
 import subprocess
 import sys
-from select import select
 from threading import Thread, RLock
 from time import time
 
@@ -310,19 +309,24 @@ class Executor(object):
     def _build_vm_and_suite(self, run_id):
         name = "VM:" + run_id.benchmark.suite.vm.name
         build = run_id.benchmark.suite.vm.build
-        self._process_build(build, name, run_id)
+        self._process_builds(build, name, run_id)
 
         name = "S:" + run_id.benchmark.suite.name
         build = run_id.benchmark.suite.build
-        self._process_build(build, name, run_id)
+        self._process_builds(build, name, run_id)
 
-    def _process_build(self, build, name, run_id):
-        if not build or build.is_built:
+    def _process_builds(self, builds, name, run_id):
+        if not builds:
             return
-        if build.is_failed_build:
-            run_id.fail_immediately()
-            raise FailedBuilding(name, build)
-        self._execute_build_cmd(build, name, run_id)
+
+        for build in builds:
+            if build.is_built:
+                continue
+
+            if build.is_failed_build:
+                run_id.fail_immediately()
+                raise FailedBuilding(name, build)
+            self._execute_build_cmd(build, name, run_id)
 
     def _execute_build_cmd(self, build_command, name, run_id):
         path = build_command.location
@@ -333,74 +337,47 @@ class Executor(object):
 
         self._ui.debug_output_info("Start build\n", None, script, path)
 
-        proc = subprocess.Popen('/bin/sh', stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=path)
-        proc.stdin.write(str.encode(script))
-        proc.stdin.close()
+        def _keep_alive(seconds):
+            self._ui.warning(
+                "Keep alive. current job runs since %dmin" % (seconds / 60), run_id, script, path)
+
+        return_code, stdout_result, stderr_result = subprocess_timeout.run(
+            '/bin/sh', path, False, True,
+            stdin_input=str.encode(script),
+            keep_alive_output=_keep_alive)
+
+        stdout_result = coerce_string(stdout_result.decode('utf-8'))
+        stderr_result = coerce_string(stderr_result.decode('utf-8'))
 
         if self._build_log:
-            output = self.process_output(name, proc)
+            self.process_output(name, stdout_result, stderr_result)
 
-        if proc.returncode != 0:
+        if return_code != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, proc.returncode, "Build of " + name + " failed.")
+                script, return_code, "Build of " + name + " failed.")
             self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
-            if output and output.strip():
-                lines = output.split('\n')
-                self._ui.error("{ind}Output:\n\n{ind}{ind}"
+            if stdout_result and stdout_result.strip():
+                lines = stdout_result.split('\n')
+                self._ui.error("{ind}stdout:\n\n{ind}{ind}"
+                               + "\n{ind}{ind}".join(lines) + "\n")
+            if stderr_result and stderr_result.strip():
+                lines = stderr_result.split('\n')
+                self._ui.error("{ind}stderr:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
         else:
             build_command.mark_succeeded()
 
-    def process_output(self, name, proc):
-        output = ""
+    def process_output(self, name, stdout_result, stderr_result):
         with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
-            while True:
-                reads = [proc.stdout.fileno(), proc.stderr.fileno()]
-                ret = select(reads, [], [])
-
-                for file_no in ret[0]:
-                    if file_no == proc.stdout.fileno():
-                        read = self._read(proc.stdout)
-                        if read:
-                            if self._debug:
-                                sys.stdout.write(read)
-                            log_file.write(name + '|STD:')
-                            log_file.write(read)
-                            output += read
-                    elif file_no == proc.stderr.fileno():
-                        read = self._read(proc.stderr)
-                        if read:
-                            if self._debug:
-                                sys.stderr.write(read)
-                            log_file.write(name + '|ERR:')
-                            log_file.write(read)
-                            output += read
-
-                if proc.poll() is not None:
-                    break
-            # read rest of pipes
-            while True:
-                read = self._read(proc.stdout)
-                if read == "":
-                    break
+            if stdout_result:
                 log_file.write(name + '|STD:')
-                log_file.write(read)
-                output += read
-            while True:
-                read = self._read(proc.stderr)
-                if not read:
-                    break
+                log_file.write(stdout_result)
+            if stderr_result:
                 log_file.write(name + '|ERR:')
-                log_file.write(read)
-                output += read
-
-            log_file.write('\n')
-        return output
+                log_file.write(stderr_result)
 
     def execute_run(self, run_id):
         termination_check = run_id.get_termination_check(self._ui)
@@ -458,10 +435,15 @@ class Executor(object):
         try:
             self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
+            def _keep_alive(seconds):
+                self._ui.warning(
+                    "Keep alive. current job runs since %dmin" % (seconds / 60), run_id, cmdline)
+
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
-                timeout=run_id.max_invocation_time)
+                timeout=run_id.max_invocation_time,
+                keep_alive_output=_keep_alive)
             output = output.decode('utf-8')
         except OSError as err:
             run_id.fail_immediately()
