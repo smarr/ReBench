@@ -341,10 +341,25 @@ class Executor(object):
             self._ui.warning(
                 "Keep alive. current job runs since %dmin" % (seconds / 60), run_id, script, path)
 
-        return_code, stdout_result, stderr_result = subprocess_timeout.run(
-            '/bin/sh', path, False, True,
-            stdin_input=str.encode(script),
-            keep_alive_output=_keep_alive)
+        try:
+            return_code, stdout_result, stderr_result = subprocess_timeout.run(
+                '/bin/sh', path, False, True,
+                stdin_input=str.encode(script),
+                keep_alive_output=_keep_alive)
+        except OSError as err:
+            build_command.mark_failed()
+            run_id.fail_immediately()
+            run_id.report_run_failed(
+                script, err.errno, "Build of " + name + " failed.")
+
+            if err.errno == 2:
+                msg = ("{ind}Build of %s failed.\n"
+                       + "{ind}{ind}It failed with: %s.\n"
+                       + "{ind}{ind}File name: %s\n") % (name, err.strerror, err.filename)
+            else:
+                msg = str(err)
+            self._ui.error(msg, run_id, script, path)
+            return
 
         stdout_result = coerce_string(stdout_result.decode('utf-8'))
         stderr_result = coerce_string(stderr_result.decode('utf-8'))
