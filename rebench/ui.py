@@ -98,7 +98,7 @@ class UI(object):
     def _output_detail_header(self, run_id, cmd, cwd):
         text = self._prepare_details(run_id, cmd, cwd)
         if text:
-            self._output(text, 'black')
+            self._output(text, None)
 
     @staticmethod
     def output(text, *args, **kw):
@@ -126,7 +126,7 @@ class UI(object):
     def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'black', faint=True, **kw)
+            self._output(text, None, faint=True, **kw)
 
     def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
@@ -136,7 +136,7 @@ class UI(object):
     def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'black', faint=True, **kw)
+            self._output(text, None, faint=True, **kw)
 
     def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
