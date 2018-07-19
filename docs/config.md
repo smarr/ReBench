@@ -221,7 +221,7 @@ benchmark_suites:
 **warmup:**
 
 Consider the first N iterations as warmup and ignore them in ReBench's summary
-statistics. Note ,they are still persisted in the data file.
+statistics. Note, uithey are still persisted in the data file.
 
 The warmup setting can be used e.g. for the command as in the benchmark suite
 in the example below.
