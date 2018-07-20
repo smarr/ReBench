@@ -463,7 +463,7 @@ class Executor(object):
                 msg = ("{ind}Error: Could not execute %s.\n"
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
-                           run_id.benchmark.vm.name, return_code)
+                           run_id.benchmark.suite.vm.name, return_code)
             elif return_code == -9:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"
