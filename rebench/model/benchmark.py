@@ -111,18 +111,18 @@ class Benchmark(object):
         return self._run_details.execute_exclusively
 
     def __str__(self):
-        return "%s, vm:%s, suite:%s, args:'%s'" % (
-            self._name, self._suite.vm.name, self._suite.name, self._extra_args or '')
+        return "%s, executor:%s, suite:%s, args:'%s'" % (
+            self._name, self._suite.executor.name, self._suite.name, self._extra_args or '')
 
     def as_simple_string(self):
         if self._extra_args:
-            return "%s (%s, %s, %s)"  % (self._name, self._suite.vm.name,
+            return "%s (%s, %s, %s)"  % (self._name, self._suite.executor.name,
                                          self._suite.name, self._extra_args)
         else:
-            return "%s (%s, %s)" % (self._name, self._suite.vm.name, self._suite.name)
+            return "%s (%s, %s)" % (self._name, self._suite.executor.name, self._suite.name)
 
     def as_str_list(self):
-        return [self._name, self._suite.vm.name, self._suite.name,
+        return [self._name, self._suite.executor.name, self._suite.name,
                 '' if self._extra_args is None else str(self._extra_args)]
 
     @classmethod

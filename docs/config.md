@@ -7,7 +7,7 @@ and the most up-to-date documentation is generally the
 # Basic Configuration
 
 The main elements of each configuration are
-[benchmarks suites](concepts.md#benchmark), [virtual machines (VMs)](concepts.md#vm),
+[benchmarks suites](concepts.md#benchmark), [executors](concepts.md#executor),
 and [experiments](concepts.md#experiment).
 
 Below is an example of a very basic configuration file:
@@ -29,15 +29,11 @@ benchmark_suites:
             - Bench1
             - Bench2
 
-# a set of binaries used for the benchmark execution
-virtual_machines:
+# a set of executables use for the benchmark execution
+executors:
     MyBin1:
         path: bin
-        binary: test-vm1.py %(cores)s
-        cores: [1]
-    MyBin2:
-        path: bin
-        binary: test-vm2.py
+        executable: test-vm2.py
 
 # combining benchmark suites and executions
 experiments:
@@ -60,24 +56,24 @@ case `example.data`.
 The `benchmark_suites` key is used to define collections of benchmarks.
 A suite is defined by its name, here `ExampleSuite`, and by:
 
-- a `gauge_adapter`, to interpret the output of the suite's benchmark harness;
-- a `command`, which is given to a virtual machine for execution;
-- possibly `input_sizes`, to compare the behavior of benchmarks based on different parameters;
-- and a list of `benchmarks`.
+- a `gauge_adapter` to interpret the output of the suite's benchmark harness;
+- a `command` which is given to an executor for execution;
+- possibly `input_sizes` to compare the behavior of benchmarks based on different parameters;
+- and a list of `benchmarks`
 
 The `command` uses Python format strings to compose the command line string.
 Since there are two benchmarks (`Bench1` and `Bench2`) and two input sizes (`2` and `10`),
 this configuration defines four different [runs](concepts.md#run), for which
 to record the data.
 
-**Virtual Machines.**
-The `virtual_machines` key defines the VMs to use for
-executing the runs defined by a benchmark suite. The `path` gives the relative
-or absolute path where to find the `binary`.
+**Executors.**
+The `executors` key defines the executors that will be used to
+execute the runs defined by a benchmark suite. The `path` gives the relative
+or absolute path where to find the `executable`.
 
 **Experiments.**
-The `experiments` then combine suites and VMs to executions.
-In this example the experiment is simply the name of the suite and the VM.
+The `experiments` then combine suites and executors to executions.
+In this example the experiment is simply a name for the suite and the executor.
 
 # Reference of the Configuration Format
 
@@ -91,7 +87,7 @@ For the remainder of this section, we detail all elements of the configuration f
 ## Priority of Configuration Elements
 
 Different configuration elements can define the same settings.
-For instance a benchmark, a suite, and a VM can define a setting for
+For instance a benchmark, a suite, and an executor can all define a setting for
 `input_sizes`. If this is the case, there is a priority for the different
 elements and the one with the highest priority will be chosen.
 
@@ -99,7 +95,7 @@ The priorities are, starting with highest:
 
 1. benchmark
 2. benchmark suites
-3. virtual machine
+3. executor
 4. experiment
 5. experiments
 6. runs (as defined by the [root element](#root-elements))
@@ -166,7 +162,7 @@ be used, and each contains structural elements further detailed below.
 - `runs`
 - `reporting`
 - `benchmark_suites`
-- `virtual_machines`
+- `executors`
 - `experiments`
 
 ---
@@ -187,12 +183,12 @@ Example:
 
 The `runs` key defines global run details for all experiments.
 All keys that can be used in the `runs` mapping can also be used for the
-definition of a benchmark, benchmark suite, VM, a concrete experiment, and
+definition of a benchmark, benchmark suite, executor, a concrete experiment, and
 the experiment in general.
 
 **invocations:**
 
-The number of times a virtual machine is executed for a given run.
+The number of times an executor is executed for a given run.
 
 Default: `1`
 
@@ -207,7 +203,7 @@ runs:
 
 **iterations:**
 
-The number of times a run is executed within a virtual machine
+The number of times a run is executed within an executor
 execution. This needs to be supported by a benchmark harness and
 ReBench passes this value on to the harness or benchmark.
 
@@ -371,7 +367,7 @@ benchmark_suites:
 **command:**
 
 The command for the benchmark harness. It will be combined with the
-VM's command line. Thus, it should instruct the VM which harness to use
+executor's command line. Thus, it should instruct the executor which harness to use
 and how to map the various parameters to the corresponding harness settings.
 
 It supports various format variables, including:
@@ -382,7 +378,7 @@ It supports various format variables, including:
  - iterations (the number of iterations)
  - suite (the name of the benchmark suite)
  - variable (another variable's value)
- - vm (the virtual machine's name)
+ - executor (the executor's name)
  - warmup (the number of iterations to be considered warmup iterations)
 
 This key is mandatory.
@@ -400,7 +396,7 @@ benchmark_suites:
 **location:**
 
 The path to the benchmark harness. Executions use this location as
-working directory. It overrides the location/path of a VM.
+working directory. It overrides the location/path of an executor.
 
 Example:
 
@@ -422,7 +418,7 @@ Each command is executed once before any benchmark that depends on it
 is executed. If the `location` of the suite is set, it is used as
 working directory. Otherwise, it is the current working directory of ReBench.
 
-This is a list of commands to allow multiple suites/VMs to depend on the
+This is a list of commands to allow multiple suites/executors to depend on the
 same command without duplicate execution.
 
 <!-- FIXME: I don't understand this sentence -->
@@ -627,47 +623,47 @@ A benchmark suite can additionally use the keys for [run details](#runs).
 
 ---
 
-## Virtual Machines
+## Executors
 
-The `virtual_machines` key defines the binaries and their settings to be used
-to execute benchmarks. Each VM is a named set of properties.
+The `executors` key defines the executables and their settings to be used
+to execute benchmarks. Each executor is a named set of properties.
 
 **path:**
 
-Path to the binary. If not given, it's up to the shell to find the binary.
+Path to the executable. If not given, it's up to the shell to find the executable.
 
 Example:
 
 ```yaml
-virtual_machines:
+executors:
   MyBin1:
     path: .
 ```
 
 ---
 
-**binary:**
+**executable:**
 
-The name of the binary to be used.
+The name of the executable to be used.
 
 Example:
 
 ```yaml
-virtual_machines:
+executors:
   MyBin1:
-    binary: my-vm
+    executable: my-vm
 ```
 
 ---
 
 **args:**
 
-The arguments given to the VM. They are given right after the binary.
+The arguments given to the executor. They are given right after the executable.
 
 Example:
 
 ```yaml
-virtual_machines:
+executors:
   MyBin1:
     args: --enable-assertions
 ```
@@ -677,12 +673,12 @@ virtual_machines:
 **description and desc:**
 
 The keys `description` and `desc` can be used to document the purpose of the
-VM specified.
+executor specified.
 
 Example:
 
 ```yaml
-virtual_machines:
+executors:
   MyBin1:
     desc: A simple example for testing.
 ```
@@ -695,11 +691,11 @@ A list of commands/strings to be executed by the system's shell.
 They are intended to set up the system for benchmarking,
 typically to build binaries, compiled archives, etc.
 
-Each command is executed once before the VM is executed.
-If the `path` of the VM is set, it is used as
+Each command is executed once before the executor is executed.
+If the `path` of the executor is set, it is used as
 working directory. Otherwise, it is the current working directory of ReBench.
 
-This is a list of commands to allow multiple suites/VMs to depend on the
+This is a list of commands to allow multiple suites/executors to depend on the
 same command without duplicate execution.
 
 <!-- FIXME: I don't understand this sentence -->
@@ -709,7 +705,7 @@ string comparisons).
 Example:
 
 ```yaml
-virtual_machines:
+executors:
   MyBin1:
     build:
       - make clobber
@@ -720,14 +716,14 @@ virtual_machines:
 
 **run details and variables:**
 
-A VM can additionally use the keys for [run details](#runs) and [variables](#benchmark)
+An executor can additionally use the keys for [run details](#runs) and [variables](#benchmark)
 (`input_sizes`, `cores`, `variable_values`).
 
 ## Experiments
 
-Experiments combine virtual machines and benchmark suites.
+Experiments combine executors and benchmark suites.
 They can be defined by listing suites to be used and executions.
-Executions can simply list VMs or also specify benchmark suites.
+Executions can simply list executors or also specify benchmark suites.
 This offers a lot of flexibility for defining the desired combinations.  
 
 **description and desc:**
@@ -793,11 +789,11 @@ experiments:
 
 **executions:**
 
-The VMs used for execution, possibly with specific suites assigned.
-Thus, `executions` takes a list of VM names, possibly with additional keys
+The executors used for execution, possibly with specific suites assigned.
+Thus, `executions` takes a list of executor names, possibly with additional keys
 to specify a suite and other details.
 
-Example, simple list of VM names:
+Example, simple list of executor names:
 
 ```yaml
 experiments:

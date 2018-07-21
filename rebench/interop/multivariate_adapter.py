@@ -27,7 +27,7 @@ from ..model.measurement import Measurement
 class MultivariateAdapter(GaugeAdapter):
     """Performance reader for multiple datapoints with multiple variables
 
-    In its simplest form compatible to TestVMPerformance.
+    In its simplest form compatible to TestExecutorPerformance.
     """
 
     variable_re = re.compile(r"(?:(\d+):)?RESULT-(\w+):(?:(\w+):)?\s*(\d+(\.\d+)?)")
@@ -70,7 +70,7 @@ class MultivariateAdapter(GaugeAdapter):
                 current.add_measurement(measure)
 
                 if cnt is None and measure.is_total():
-                    # compatibility for TestVMPerformance
+                    # compatibility for TestExecutorPerformance
                     data_points.append(current)
                     current = DataPoint(run_id)
                     iteration += 1

@@ -23,10 +23,10 @@ from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue57BinaryOnPath(ReBenchTestCase):
+class Issue57ExecutableOnPath(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue57BinaryOnPath, self).setUp()
+        super(Issue57ExecutableOnPath, self).setUp()
         self._set_path(__file__)
 
     def test_sleep_gives_results(self):

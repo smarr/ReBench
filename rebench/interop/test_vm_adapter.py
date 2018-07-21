@@ -24,7 +24,7 @@ from ..model.data_point  import DataPoint
 from ..model.measurement import Measurement
 
 
-class TestVMAdapter(GaugeAdapter):
+class TestExecutorAdapter(GaugeAdapter):
     """Performance reader for the test case and the definitions
        in test/test.conf
     """
@@ -32,7 +32,7 @@ class TestVMAdapter(GaugeAdapter):
     re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
 
     def __init__(self, include_faulty):
-        super(TestVMAdapter, self).__init__(include_faulty)
+        super(TestExecutorAdapter, self).__init__(include_faulty)
         self._other_error_definitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id, invocation):
@@ -45,7 +45,7 @@ class TestVMAdapter(GaugeAdapter):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
 
-            match = TestVMAdapter.re_time.match(line)
+            match = TestExecutorAdapter.re_time.match(line)
             if match:
                 measure = Measurement(invocation, iteration,
                                       float(match.group(2)), 'ms', run_id,

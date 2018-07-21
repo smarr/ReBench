@@ -24,36 +24,36 @@ from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
 
 
-class VirtualMachine(object):
+class Executor(object):
 
     @classmethod
-    def compile(cls, vm_name, vm, run_details, variables, build_commands):
-        path = vm.get('path')
+    def compile(cls, executor_name, executor, run_details, variables, build_commands):
+        path = executor.get('path')
         if path:
             path = os.path.abspath(path)
-        binary = vm.get('binary')
-        args = vm.get('args')
+        executable = executor.get('executable')
+        args = executor.get('args')
 
-        build = BuildCommand.create_commands(vm.get('build'), build_commands, path)
+        build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
 
-        description = vm.get('description')
-        desc = vm.get('desc')
+        description = executor.get('description')
+        desc = executor.get('desc')
 
-        run_details = ExpRunDetails.compile(vm, run_details)
-        variables = ExpVariables.compile(vm, variables)
+        run_details = ExpRunDetails.compile(executor, run_details)
+        variables = ExpVariables.compile(executor, variables)
 
-        return VirtualMachine(vm_name, path, binary, args, build, description or desc,
-                              run_details, variables)
+        return Executor(executor_name, path, executable, args, build, description or desc,
+                        run_details, variables)
 
-    def __init__(self, name, path, binary, args, build, description,
+    def __init__(self, name, path, executable, args, build, description,
                  run_details, variables):
-        """Specializing the VM details in the run definitions with the settings from
-           the VM definitions
+        """Specializing the executor details in the run definitions with the settings from
+           the executor definitions
         """
         self._name = name
 
         self._path = path
-        self._binary = binary
+        self._executable = executable
         self._args = args
 
         self._build = build
@@ -71,8 +71,8 @@ class VirtualMachine(object):
         return self._path
 
     @property
-    def binary(self):
-        return self._binary
+    def executable(self):
+        return self._executable
 
     @property
     def args(self):

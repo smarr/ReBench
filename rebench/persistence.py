@@ -62,8 +62,8 @@ class DataStore(object):
             self._run_ids[run] = run
             return run
 
-    def get_config(self, name, vm_name, suite_name, extra_args):
-        key = (name, vm_name, suite_name,
+    def get_config(self, name, executor_name, suite_name, extra_args):
+        key = (name, executor_name, suite_name,
                '' if extra_args is None else str(extra_args))
 
         if key not in self._bench_cfgs:

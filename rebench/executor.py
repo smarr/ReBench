@@ -39,7 +39,7 @@ from .statistics import StatisticProperties, mean
 
 
 class FailedBuilding(Exception):
-    """The exception to be raised when building of the VM or suite failed."""
+    """The exception to be raised when building of the executor or suite failed."""
     def __init__(self, name, build_command):
         super(FailedBuilding, self).__init__()
         self._name = name
@@ -306,9 +306,9 @@ class Executor(object):
         decoded = data.decode('utf-8')
         return coerce_string(decoded)
 
-    def _build_vm_and_suite(self, run_id):
-        name = "VM:" + run_id.benchmark.suite.vm.name
-        build = run_id.benchmark.suite.vm.build
+    def _build_executor_and_suite(self, run_id):
+        name = "Executor:" + run_id.benchmark.suite.executor.name
+        build = run_id.benchmark.suite.executor.build
         self._process_builds(build, name, run_id)
 
         name = "S:" + run_id.benchmark.suite.name
@@ -391,7 +391,7 @@ class Executor(object):
 
         terminate = self._check_termination_condition(run_id, termination_check)
         if not terminate and self._do_builds:
-            self._build_vm_and_suite(run_id)
+            self._build_executor_and_suite(run_id)
 
         # now start the actual execution
         if not terminate:
@@ -463,7 +463,7 @@ class Executor(object):
                 msg = ("{ind}Error: Could not execute %s.\n"
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
-                           run_id.benchmark.vm.name, return_code)
+                           run_id.benchmark.executor.name, return_code)
             elif return_code == -9:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"
