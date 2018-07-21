@@ -12,8 +12,8 @@ kinds of other applications and programs, too.
 The ReBench [configuration format][docs] is a text format based on [YAML](http://yaml.org/).
 A configuration file defines how to build and execute a set of *experiments*,
 i.e. benchmarks.
-It describe which binary was used, which parameters where given
-to the benchmarks, and the number of iterations to be used for obtaining 
+It describes which executable was used, which parameters were given
+to the benchmarks, and the number of iterations to be used to obtain 
 statistically reliable results.
 
 With this approach, the configuration contains all benchmark-specific
@@ -85,15 +85,15 @@ benchmark_suites:
             - Bench1
             - Bench2
 
-# a set of binaries used for the benchmark execution
-virtual_machines:
+# a set of executables use for the benchmark execution
+executors:
     MyBin1:
         path: bin
-        binary: test-vm1.py %(cores)s
+        executable: test-vm1.py %(cores)s
         cores: [1]
     MyBin2:
         path: bin
-        binary: test-vm2.py
+        executable: test-vm2.py
 
 # combining benchmark suites and executions
 experiments:

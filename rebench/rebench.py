@@ -1,12 +1,12 @@
 #!/usr/bin/env python2.7
-# ReBench is tool to run and document benchmarks.
+# ReBench is a tool to run and document benchmarks.
 #
 # It is inspired by JavaStats implemented by Andy Georges.
 # JavaStats can be found here: http://www.elis.ugent.be/en/JavaStats
 #
-# ReBench goes beyond the goals of JavaStats, no only by broaden the scope
+# ReBench goes beyond the goals of JavaStats, not only by broadening the scope
 # to not only Java VMs, but also by introducing facilities to evaluate
-# other runtime characteristics of a VM beside pure execution time.
+# other runtime characteristics of an executor beside pure execution time.
 #
 # Copyright (c) 2009-2014 Stefan Marr <http://www.stefan-marr.de/>
 #
@@ -54,7 +54,7 @@ class ReBench(object):
         return self._ui
 
     def shell_options(self):
-        usage = """%(prog)s [options] <config> [exp_name] [vm:$]* [s:$]*
+        usage = """%(prog)s [options] <config> [exp_name] [executor:$]* [s:$]*
         
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -63,12 +63,12 @@ Argument:
             If not provided, the configured default_experiment is used.
             If 'all' is given, all experiments will be executed.
 
-  vm:$      filter experiments to only include the named VM, example: vm:VM1 vm:VM3
+  executor:$      filter experiments to only include the named executor, example: executor:EXEC1 executor:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
             example: s:Suite1 s:Suite2:Bench3
 
             Note, filters are combined with `or` semantics in the same group,
-            i.e., vm or suite, and at least one filter needs to match per group.
+            i.e., executor or suite, and at least one filter needs to match per group.
 """
 
         parser = ArgumentParser(
@@ -93,11 +93,11 @@ Argument:
             'Execution Options', 'Adapt how ReBench executes benchmarks')
         execution.add_argument(
             '-in', '--invocations', action='store', dest='invocations',
-            help='The number of times a VM is started to execute a run.',
+            help='The number of times an executor is started to execute a run.',
             default=None, type=int)
         execution.add_argument(
             '-it', '--iterations', action='store', dest='iterations',
-            help='The number of times a benchmark is to be executed within a VM invocation.',
+            help='The number of times a benchmark is to be executed within an executor invocation.',
             default=None, type=int)
         execution.add_argument(
             '-q', '--quick', action='store_true', dest='quick',
@@ -109,7 +109,7 @@ Argument:
             default=True)
         execution.add_argument(
             '-B', '--without-building', action='store_false', dest='do_builds',
-            help='Disables execution of build commands for VMs and suites.',
+            help='Disables execution of build commands for executors and suites.',
             default=True)
         execution.add_argument(
             '-s', '--scheduler', action='store', dest='scheduler',
@@ -156,8 +156,7 @@ Argument:
         codespeed.add_argument('--executable', dest='executable',
                                default=None,
                                help='The executable name given to codespeed. '
-                                    'Default: The name used for the virtual '
-                                    'machine.')
+                                    'Default: The name used for the executor.')
         codespeed.add_argument('--project', dest='project',
                                default=None,
                                help='The project name given to codespeed. '
@@ -178,9 +177,9 @@ Argument:
     @staticmethod
     def determine_exp_name_and_filters(filters):
         exp_name = filters[0] if filters and (
-            not filters[0].startswith("vm:") and
+            not filters[0].startswith("executor:") and
             not filters[0].startswith("s:")) else "all"
-        exp_filter = [f for f in filters if (f.startswith("vm:") or
+        exp_filter = [f for f in filters if (f.startswith("executor:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
 

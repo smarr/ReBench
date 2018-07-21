@@ -23,7 +23,7 @@ from ...model.benchmark import Benchmark
 from ...model.benchmark_suite  import BenchmarkSuite
 from ...model.run_id           import RunId
 from ...model.exp_run_details  import ExpRunDetails
-from ...model.virtual_machine  import VirtualMachine
+from ...model.executor  import Executor
 from ...persistence            import DataStore
 from ...ui                     import TestDummyUI
 
@@ -35,9 +35,9 @@ class Issue4RunEquality(unittest.TestCase):
 
     @staticmethod
     def _create_template_run_id():
-        vm = VirtualMachine('MyVM', 'foo_bar_path', 'foo_bar_bin',
+        executor = Executor('MyVM', 'foo_bar_path', 'foo_bar_bin',
                             None, None, None, None, None)
-        suite = BenchmarkSuite("MySuite", vm, '', '%(benchmark)s %(cores)s %(input)s',
+        suite = BenchmarkSuite("MySuite", executor, '', '%(benchmark)s %(cores)s %(input)s',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
                               '3', ExpRunDetails.empty(), None, DataStore(TestDummyUI()))
@@ -45,9 +45,9 @@ class Issue4RunEquality(unittest.TestCase):
 
     @staticmethod
     def _create_hardcoded_run_id():
-        vm = VirtualMachine('MyVM', 'foo_bar_path', 'foo_bar_bin',
+        executor = Executor('MyVM', 'foo_bar_path', 'foo_bar_bin',
                             None, None, None, None, None)
-        suite = BenchmarkSuite('MySuite', vm, '', '%(benchmark)s %(cores)s 2 3',
+        suite = BenchmarkSuite('MySuite', executor, '', '%(benchmark)s %(cores)s 2 3',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite,
                               None, None, ExpRunDetails.empty(), None, DataStore(TestDummyUI()))

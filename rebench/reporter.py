@@ -113,7 +113,8 @@ class CliReporter(TextReporter):
     def report_job_completed(self, run_ids):
         self._ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
-            ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', '#Samples', 'Mean (ms)'],
+            ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
+             '#Samples', 'Mean (ms)'],
             vertical_bar=' '))
 
     def set_total_number_of_runs(self, num_runs):
@@ -190,7 +191,7 @@ class CodespeedReporter(Reporter):
         else:
             result['result_value'] = -1
 
-        result['executable'] = self._cfg.executable or run_id.benchmark.suite.vm.name
+        result['executable'] = self._cfg.executable or run_id.benchmark.suite.executor.name
 
         if run_id.benchmark.codespeed_name:
             name = run_id.benchmark.codespeed_name

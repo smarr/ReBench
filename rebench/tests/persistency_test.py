@@ -19,25 +19,25 @@
 # IN THE SOFTWARE.
 from .rebench_test_case import ReBenchTestCase
 
-from ..persistence  import DataStore
+from ..persistence import DataStore
 
 from ..configurator import Configurator, load_config
 from ..executor import Executor
 from ..model.benchmark import Benchmark
 from ..model.benchmark_suite import BenchmarkSuite
+from ..model.executor import Executor as ExecutorConf
 from ..model.exp_run_details import ExpRunDetails
-from ..model.measurement      import Measurement
-from ..model.run_id           import RunId
-from ..model.virtual_machine  import VirtualMachine
+from ..model.measurement import Measurement
+from ..model.run_id import RunId
 
 
 class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
         data_store = DataStore(self._ui)
-        vm = VirtualMachine("MyVM", '', '',
-                            None, None, None, None, None)
-        suite = BenchmarkSuite("MySuite", vm, '', '', None, None,
+        executor = ExecutorConf("MyVM", '', '',
+                                None, None, None, None, None)
+        suite = BenchmarkSuite("MySuite", executor, '', '', None, None,
                                None, None, None, None)
         benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
                               suite, None, None, ExpRunDetails.default(None, None),

@@ -59,7 +59,7 @@ class Experiment(object):
         self._persistence = self._data_store.get(data_file,
                                                  configurator.discard_old_data)
 
-        self._vms = self._compile_virtual_machines(executions, configurator)
+        self._executors = self._compile_executors(executions, configurator)
 
         self._suites = self._compile_benchmark_suites(
             executions, suites, configurator)
@@ -84,37 +84,37 @@ class Experiment(object):
                         run.add_persistence(self._persistence)
         return runs
 
-    def _compile_virtual_machines(self, executions, configurator):
-        vms = {}
+    def _compile_executors(self, executions, configurator):
+        executors = {}
 
-        for vm in executions:
-            vm_name, _ = value_with_optional_details(vm)
-            if not configurator.has_vm(vm_name):
-                raise ValueError("The VM '%s' requested in %s was not found."
-                                 % (vm, self._name))
+        for executor in executions:
+            executor_name, _ = value_with_optional_details(executor)
+            if not configurator.has_executor(executor_name):
+                raise ValueError("The executor '%s' requested in %s was not found."
+                                 % (executor, self._name))
 
-            vms[vm_name] = configurator.get_vm(vm_name)
+            executors[executor_name] = configurator.get_executor(executor_name)
 
-        return vms
+        return executors
 
     def _compile_benchmark_suites(self, executions, suites, configurator):
-        # for each VM, we now assemble the benchmark suites
+        # for each executor, we now assemble the benchmark suites
         results = []
-        for vm in executions:
-            vm_name, vm_details = value_with_optional_details(vm)
-            global_vm = self._vms[vm_name]
-            run_details = global_vm.run_details
-            variables = global_vm.variables
-            if vm_details:
-                run_details = ExpRunDetails.compile(vm_details, run_details)
-                variables = ExpVariables.compile(vm_details, variables)
-                suites_for_vm = vm_details.get('suites', suites)
+        for executor in executions:
+            executor_name, executor_details = value_with_optional_details(executor)
+            global_executor = self._executors[executor_name]
+            run_details = global_executor.run_details
+            variables = global_executor.variables
+            if executor_details:
+                run_details = ExpRunDetails.compile(executor_details, run_details)
+                variables = ExpVariables.compile(executor_details, variables)
+                suites_for_executor = executor_details.get('suites', suites)
             else:
-                suites_for_vm = suites
+                suites_for_executor = suites
 
-            for suite_name in suites_for_vm:
+            for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(
-                    suite_name, configurator.get_suite(suite_name), global_vm,
+                    suite_name, configurator.get_suite(suite_name), global_executor,
                     run_details, variables, configurator.build_commands)
                 results.append(suite)
 
