@@ -60,7 +60,7 @@ the following defines the basic concepts
     
     <dt id="invocation">invocation</dt>
     <dd>
-        The execution of a <a href="#run">run</a>. It may execute itself with multiple
+        The execution of a <a href="#run">run</a>. It may execute multiple
         <a href="#iteration">iterations</a> of a <a href="#benchmark">benchmark</a>.
     </dd>
     
