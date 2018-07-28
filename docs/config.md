@@ -41,7 +41,7 @@ experiments:
         suites:
           - ExampleSuite
         executions:
-            - MyBin1
+          - MyBin1
 ```
 
 This example shows the general structure of a ReBench configuration.
@@ -49,7 +49,7 @@ This example shows the general structure of a ReBench configuration.
 **General Settings.**
 The configuration can contain some general settings. The `default_experiment` key,
 for example, can be assigned the value `all` so that all experiments are going to be executed.
-Another generla setting is the name of the file in which the results will be stored, in this
+Another general setting is the name of the file in which the results will be stored, in this
 case `example.data`.
 
 **Benchmark Suites.**
@@ -101,7 +101,7 @@ The priorities are, starting with highest:
 6. runs (as defined by the [root element](#root-elements))
 
 So, in the case of the `input_sizes` example, the setting for `benchmark`
-overrides the other two settings.
+overrides the settings in a suite or executor.
 
 These priorities and the ability to define different benchmarks, suites, VMs, etc,
 hopefully provides sufficient flexibility to encode all desired experiments.
@@ -289,8 +289,6 @@ The problem with parallel executions is that they increase the noise observed
 in the results.
 ![Use not recommended](https://img.shields.io/badge/Use%20Not%20Recommended-Jun%202018-orange.svg)
 
-<!-- FIXME: What's the default? -->
-
 Example:
 
 ```yaml
@@ -418,12 +416,10 @@ Each command is executed once before any benchmark that depends on it
 is executed. If the `location` of the suite is set, it is used as
 working directory. Otherwise, it is the current working directory of ReBench.
 
-This is a list of commands to allow multiple suites/executors to depend on the
-same command without duplicate execution.
-
-<!-- FIXME: I don't understand this sentence -->
-Though, location and command have to be identical (based on simple
-string comparisons).
+`build:` is a list of commands to allow multiple suites and executors to depend on the
+same build command without executing it multiple times.
+For this purpose, build commands are considered the same when they have the
+same command and location (based on simple string comparisons).
 
 Example:
 
@@ -695,12 +691,11 @@ Each command is executed once before the executor is executed.
 If the `path` of the executor is set, it is used as
 working directory. Otherwise, it is the current working directory of ReBench.
 
-This is a list of commands to allow multiple suites/executors to depend on the
-same command without duplicate execution.
+`build:` is a list of commands to allow multiple suites and executors to depend on the
+same build command without executing it multiple times.
+For this purpose, build commands are considered the same when they have the
+same command and location (based on simple string comparisons).
 
-<!-- FIXME: I don't understand this sentence -->
-Though, location and command have to be identical (based on simple
-string comparisons).
 
 Example:
 
