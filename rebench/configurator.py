@@ -69,7 +69,7 @@ class _RunFilter(object):
 
         for run_filter in run_filters:
             parts = run_filter.split(":")
-            if parts[0] == "executor":
+            if parts[0] == "e":
                 self._executor_filters.append(_ExecutorFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 2:
                 self._suite_filters.append(_SuiteFilter(parts[1]))

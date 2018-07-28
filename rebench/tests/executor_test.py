@@ -164,8 +164,8 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_shell_options_with_executor_filter(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'executor:foo'])
-        self.assertEqual(args.exp_filter, ['executor:foo'])
+        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'e:foo'])
+        self.assertEqual(args.exp_filter, ['e:foo'])
 
     def test_determine_exp_name_and_filters_empty(self):
         empty = []
@@ -186,16 +186,16 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all_and_other(self):
-        filters = ['all', 'executor:bar', 's:b']
+        filters = ['all', 'e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['executor:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
     def test_determine_exp_name_and_filters_only_others(self):
-        filters = ['executor:bar', 's:b']
+        filters = ['e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['executor:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
 def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
