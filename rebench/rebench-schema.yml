@@ -128,11 +128,10 @@ schema;build_type:
     is executed. If the `location` or `path` of a suite/executor is set, it is used as
     working directory. Otherwise, it is the current working directory of ReBench.
 
-    This is a list of commands to allow multiple suites/executors to depend on the
-    same command without duplicate execution.
-
-    Though, location and command have to be identical (based on simple
-    string comparisons).
+    `build:` is a list of commands to allow multiple suites and executors to depend on the
+    same build command without executing it multiple times.
+    For this purpose, build commands are considered the same when they have the
+    same command and location (based on simple string comparisons).
   type: seq
   sequence:
     - type: str
@@ -155,8 +154,10 @@ schema;benchmark_suite_type:
         executor's command line. It supports various format variables, including:
          - benchmark (the benchmark's name)
          - cores (the number of cores to be used by the benchmark)
+         - executor (the executor's name)
          - input (the input variable's value)
          - iterations (the number of iterations)
+         - suite (the name of the benchmark suite)
          - variable (another variable's value)
          - warmup (the number of iterations to be considered warmup)
     location:

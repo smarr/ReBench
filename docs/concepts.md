@@ -29,7 +29,7 @@ the following defines the basic concepts
     
     <dt id="benchmark">benchmark</dt>
     <dd>
-      <p>A program to be executed by a <a href="#executor">executor</a>.</p>
+      <p>A program to be executed by an <a href="#executor">executor</a>.</p>
       
       <p>A benchmark can define a number of different <a href="#variable">variables</a>
       that can be varied, for instance, to change the input data set,

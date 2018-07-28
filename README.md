@@ -85,7 +85,7 @@ benchmark_suites:
             - Bench1
             - Bench2
 
-# a set of executables use for the benchmark execution
+# a set of executables for the benchmark execution
 executors:
     MyBin1:
         path: bin
