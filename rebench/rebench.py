@@ -142,7 +142,7 @@ Argument:
             'Reporting to Codespeed',
             'Some of these parameters are mandatory for reporting to Codespeed')
         codespeed.add_argument('--commit-id', dest='commit_id', default=None,
-                               help='MANDATORY: when codespeed reporting is '
+                               help='MANDATORY: when Codespeed reporting is '
                                     ' used, the commit-id has to be specified.')
         codespeed.add_argument('--environment', dest='environment',
                                default=None,
@@ -155,22 +155,22 @@ Argument:
                                     ' belongs. Default: HEAD')
         codespeed.add_argument('--executable', dest='executable',
                                default=None,
-                               help='The executable name given to codespeed. '
+                               help='The executable name given to Codespeed. '
                                     'Default: The name used for the executor.')
         codespeed.add_argument('--project', dest='project',
                                default=None,
-                               help='The project name given to codespeed. '
+                               help='The project name given to Codespeed. '
                                     'Default: Value given in the config file.')
         codespeed.add_argument('-I', '--disable-inc-report',
                                action='store_false', dest='report_incrementally',
-                               default=True, help='Does a final report at the '
+                               default=True, help='Creates a report at the '
                                                   'end instead of reporting '
                                                   'incrementally.')
         codespeed.add_argument('-S', '--disable-codespeed',
                                action='store_false', dest='use_codespeed',
                                default=True,
                                help='Override configuration and '
-                                    'disable reporting to codespeed.')
+                                    'disable reporting to Codespeed.')
 
         return parser
 
