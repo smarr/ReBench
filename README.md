@@ -26,8 +26,8 @@ continued at a later time.
 
 ReBench focuses on the execution aspect and does not provide advanced
 analysis facilities itself. Instead, the recorded results should be processed
-by dedicated tools such as scripts written in R, for statistical analysis, or
-[Codespeed][1], for continuous performance tracing.
+by dedicated tools such as scripts for statistical analysis in R, Python, etc,
+or [Codespeed][1], for continuous performance tracking.
 
 The documentation for ReBench is hosted at [http://rebench.readthedocs.io/][docs].
 
@@ -42,7 +42,7 @@ ReBench is designed to
  - enable the definition of complex sets of comparisons and their flexible execution;
  - report results to continuous performance monitoring systems, e.g., [Codespeed][1];
  - provide basic support for building/compiling benchmarks/experiments on demand;
- - provide extensible support for reading the output from benchmark harnesses.
+ - be extensible to parse output of custom benchmark harnesses.
 
 ## Non-Goals
 
