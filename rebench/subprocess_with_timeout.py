@@ -20,8 +20,8 @@ except NameError:
 
 class _SubprocessThread(Thread):
 
-    def __init__(self, binary_name, args, shell, cwd, verbose, stdout, stderr, stdin_input):
-        Thread.__init__(self, name="Subprocess %s" % binary_name)
+    def __init__(self, executable_name, args, shell, cwd, verbose, stdout, stderr, stdin_input):
+        Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
         self._cwd = cwd
@@ -107,9 +107,9 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
     Run a command with a timeout after which it will be forcibly
     killed.
     """
-    binary_name = args.split(' ')[0]
+    executable_name = args.split(' ')[0]
 
-    thread = _SubprocessThread(binary_name, args, shell, cwd, verbose, stdout,
+    thread = _SubprocessThread(executable_name, args, shell, cwd, verbose, stdout,
                                stderr, stdin_input)
     thread.start()
 

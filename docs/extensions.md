@@ -6,15 +6,15 @@ and store it in its own data files for later processing.
 
 ## Available Harness Support
 
-ReBench provides currently builtin support for the following benchmark harnesses:
+ReBench currently provides builtin support for the following benchmark harnesses:
 
 - `JMH`: [JMH](http://openjdk.java.net/projects/code-tools/jmh/), Java's mircobenchmark harness
 - `PlainSecondsLog`: a plain seconds log, i.e., a floating point number per line
 - `ReBenchLog`: the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
 - `SavinaLog`: the harness of the [Savina](https://github.com/shamsimam/savina) benchmarks
-- `Time`: a harness that use automatically `/usr/bin/time`
+- `Time`: a harness that uses `/usr/bin/time` automatically
 
-## Supporting other Benchmark Harness
+## Supporting other Benchmark Harnesses
 
 To add support for your own harness, check the `rebench.interop` module.
 In there, the `adapter` module contains the `GaugeAdapter` base class.

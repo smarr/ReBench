@@ -5,7 +5,7 @@ A basic help can be displayed with the `--help` argument:
 
 ```bash
 $ rebench --help
-Usage: rebench [options] <config> [exp_name] [vm:$]* [s:$]*
+Usage: rebench [options] <config> [exp_name] [e:$]* [s:$]*
 
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -14,15 +14,15 @@ Argument:
             If not provided, the configured default_experiment is used.
             If 'all' is given, all experiments will be executed.
 
-  vm:$      filter experiments to only include the named VM, example: vm:VM1 vm:VM3
+  e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
-            example: s:Suite1 s:Suite2:Bench3
+              example: s:Suite1 s:Suite2:Bench3
 
 ...
 ```
 
 [Configuration files](config.md) provide the setup for experiments by
-defining benchmarks, benchmark suites, their parameters, and virtual machines
+defining benchmarks, benchmark suites, their parameters, and executors
 to execute them.
 
 ### Basic Execution: Run Experiments
@@ -42,7 +42,7 @@ This basic execution can be customized in various ways as explained below.
 ### Partial Execution: Run Some of the Experiments
 
 Instead of executing the configured experiments, we can ask ReBench to only
-execute a subset of them, a specific experiment, only selected VMs, suites, and
+execute a subset of them, a specific experiment, only selected executors, suites, and
 benchmarks.
 
 The [configuration file](config.md) allows us to select a
@@ -54,23 +54,23 @@ $ rebench example.conf Example
 ```
 
 We can further restrict what is executed.
-To only execute the `MyBin1` virtual machine, we use:
+To only execute the `MyBin1` executor, we use:
 
 ```bash
-$ rebench example.conf Example vm:MyBin1
+$ rebench example.conf Example e:MyBin1
 ```
 
 To further limit the execution, we can also select a specific benchmark from a
 suite:
 
 ```bash
-$ rebench example.conf Example vm:MyBin1 s:ExampleSuite:Bench1
+$ rebench example.conf Example e:MyBin1 s:ExampleSuite:Bench1
 ```
 
-The filters are applied on the set of *runs* identified by a configuration and
+The filters are applied on the set of [runs](config.md#runs) identified by a configuration and
 the chosen experiments. Thus, the above says to execute only `MyBin1`, and no
-other virtual machine. For the resulting runs, we also want to execute only
-`Bench1` in the `ExampleSuite`. If we list additional VMs, they are all
+other executor. For the resulting runs, we also want to execute only
+`Bench1` in the `ExampleSuite`. If we list additional executors, they are all
 considered. Similarly, naming more benchmarks will include them all.
 
 ### Further Options
@@ -80,17 +80,17 @@ ReBench supports a range of other options to control execution.
 #### Quick Runs, Iterations, Invocations
 
 The [configuration](config.md#invocation) uses the notion of iteration
-and invocation to define how often a VM is started (invocation) and how many
-times a benchmark is executed in the same VM (iteration).
+and invocation to define how often an executor is started (invocation) and how many
+times a benchmark is executed in the same executor execution (iteration).
 
 We can override this setting with the following parameters:
 
 ```text
 -in INVOCATIONS, --invocations INVOCATIONS
-                 The number of times a VM is started to execute a run.
+                 The number of times an executor is started to execute a run.
 -it ITERATIONS, --iterations ITERATIONS
                  The number of times a benchmark is to be executed
-                 within a VM invocation.
+                 within an executor execution.
 
 -q, --quick      Execute quickly. Identical with --iterations=1 --invocations=1
 ```
@@ -104,7 +104,7 @@ might desire processing time, which can lead to noise in the measurements.
 To prevent such effects, it is recommended to run benchmarks with the highest
 possible priority. On Linux systems, this is typically achieved with
 the `nice` command and a niceness setting of `-20` (i.e., the process behaves
-very not-nice).
+very much not-nice).
 
 Typically, this requires admin/root rights.
 On Ubuntu, one can however allow a user to set negative niceness values
@@ -131,8 +131,8 @@ Some times, we may want to update some experiments and discard old data:
 #### Execution Order
 
 We may care for a different order for the benchmark execution.
-This could either be to get a quicker impression of the performance results.
-But possibly also to account for the complexity of benchmarking and ensure
+This could either be to get a quicker impression of the performance results,
+or possibly to account for the complexity of benchmarking and ensure
 that the order does not influence results. 
 
 For this purpose we use *schedulers* to determine the execution order.
@@ -152,7 +152,7 @@ needs to have the corresponding details.
 And, Codespeed needs details on the concrete execution:
 
 ```text
---commit-id=COMMIT_ID     MANDATORY: when codespeed reporting is  used, the
+--commit-id=COMMIT_ID     MANDATORY: when Codespeed reporting is  used, the
                           commit-id has to be specified.
 
 --environment=ENVIRONMENT MANDATORY: name the machine on which the results are
@@ -161,17 +161,17 @@ And, Codespeed needs details on the concrete execution:
 --branch=BRANCH           The branch for which the results have to be recorded,
                           i.e., to which the commit belongs. Default: HEAD
 
---executable=EXECUTABLE   The executable name given to codespeed. Default: The
-                          name used for the virtual machine.
+--executable=EXECUTABLE   The executable name given to Codespeed. Default: The
+                          name used for the executor.
 
---project=PROJECT         The project name given to codespeed. Default: Value
+--project=PROJECT         The project name given to Codespeed. Default: Value
                           given in the config file.
 
--I, --disable-inc-report  Does a final report at the end instead of reporting
+-I, --disable-inc-report  Creates a final report at the end instead of reporting
                           incrementally.
 
--S, --disable-codespeed   Override configuration and disable reporting to
-                          codespeed.
+-S, --disable-codespeed   Override the configuration and disable reporting to
+                          Codespeed.
 ```
 
 [1]: https://github.com/tobami/codespeed/

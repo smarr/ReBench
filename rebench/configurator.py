@@ -24,17 +24,17 @@ from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
-from .model.virtual_machine import VirtualMachine
+from .model.executor import Executor
 from .ui import UIError, escape_braces
 
 
-class _VMFilter(object):
+class _ExecutorFilter(object):
 
     def __init__(self, name):
         self._name = name
 
     def matches(self, bench):
-        return bench.suite.vm.name == self._name
+        return bench.suite.executor.name == self._name
 
 
 class _SuiteFilter(object):
@@ -61,7 +61,7 @@ class _BenchmarkFilter(_SuiteFilter):
 class _RunFilter(object):
 
     def __init__(self, run_filters):
-        self._vm_filters = []
+        self._executor_filters = []
         self._suite_filters = []
 
         if not run_filters:
@@ -69,8 +69,8 @@ class _RunFilter(object):
 
         for run_filter in run_filters:
             parts = run_filter.split(":")
-            if parts[0] == "vm":
-                self._vm_filters.append(_VMFilter(parts[1]))
+            if parts[0] == "e":
+                self._executor_filters.append(_ExecutorFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 2:
                 self._suite_filters.append(_SuiteFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 3:
@@ -79,7 +79,7 @@ class _RunFilter(object):
                 raise Exception("Unknown filter expression: " + run_filter)
 
     def applies(self, bench):
-        return (self._match(self._vm_filters, bench) and
+        return (self._match(self._executor_filters, bench) and
                 self._match(self._suite_filters, bench))
 
     @staticmethod
@@ -179,7 +179,7 @@ class Configurator(object):
 
         self._run_filter = _RunFilter(run_filter)
 
-        self._vms = self._compile_vms(raw_config.get('virtual_machines', {}))
+        self._executors = self._compile_executors(raw_config.get('executors', {}))
 
         self._suites_config = raw_config.get('benchmark_suites', {})
 
@@ -251,11 +251,11 @@ class Configurator(object):
     def data_store(self):
         return self._data_store
 
-    def has_vm(self, vm_name):
-        return vm_name in self._vms
+    def has_executor(self, executor_name):
+        return executor_name in self._executors
 
-    def get_vm(self, vm_name):
-        return self._vms[vm_name]
+    def get_executor(self, executor_name):
+        return self._executors[executor_name]
 
     def get_suite(self, suite_name):
         return self._suites_config[suite_name]
@@ -277,14 +277,14 @@ class Configurator(object):
             runs |= exp.get_runs()
         return runs
 
-    def _compile_vms(self, vms):
+    def _compile_executors(self, executors):
         result = {}
 
         variables = ExpVariables.empty()
 
-        for vm_name, details in vms.items():
-            result[vm_name] = VirtualMachine.compile(
-                vm_name, details, self._root_run_details, variables, self._build_commands)
+        for executor_name, details in executors.items():
+            result[executor_name] = Executor.compile(
+                executor_name, details, self._root_run_details, variables, self._build_commands)
 
         return result
 

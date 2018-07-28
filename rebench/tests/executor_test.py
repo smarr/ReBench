@@ -56,9 +56,9 @@ class ExecutorTest(ReBenchTestCase):
 
 # TODO: should test more details
 #        (mean, sdev, (interval, interval_percentage),
-#                (interval_t, interval_percentage_t)) = ex.result['test-vm']['test-bench']
+#                (interval_t, interval_percentage_t)) = ex.result['test-executor']['test-bench']
 #
-#        self.assertEqual(31, len(ex.benchmark_data['test-vm']['test-bench']))
+#        self.assertEqual(31, len(ex.benchmark_data['test-executor']['test-bench']))
 #        self.assertAlmostEqual(45870.4193548, mean)
 #        self.assertAlmostEqual(2.93778711485, sdev)
 #
@@ -162,10 +162,10 @@ class ExecutorTest(ReBenchTestCase):
         args = option_parser.parse_args(['-d', '-v', 'some.conf', 'exp_name'])
         self.assertEqual(args.exp_filter, ['exp_name'])
 
-    def test_shell_options_with_vm_filter(self):
+    def test_shell_options_with_executor_filter(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'vm:foo'])
-        self.assertEqual(args.exp_filter, ['vm:foo'])
+        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'e:foo'])
+        self.assertEqual(args.exp_filter, ['e:foo'])
 
     def test_determine_exp_name_and_filters_empty(self):
         empty = []
@@ -186,16 +186,16 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all_and_other(self):
-        filters = ['all', 'vm:bar', 's:b']
+        filters = ['all', 'e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
     def test_determine_exp_name_and_filters_only_others(self):
-        filters = ['vm:bar', 's:b']
+        filters = ['e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
 def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument

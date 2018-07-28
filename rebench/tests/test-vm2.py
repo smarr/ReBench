@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# simple script emulating a VM generating benchmark results
+# simple script emulating an executor generating benchmark results
 from __future__ import print_function
 import sys
 import random

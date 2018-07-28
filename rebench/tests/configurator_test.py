@@ -62,7 +62,7 @@ class ConfiguratorTest(ReBenchTestCase):
 
     # Support for running a selected experiment
     def test_only_running_test_runner2(self):
-        filter_args = ['vm:TestRunner2']
+        filter_args = ['e:TestRunner2']
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
                            self._ui, run_filter=filter_args)
         runs = cnf.get_runs()
@@ -77,7 +77,7 @@ class ConfiguratorTest(ReBenchTestCase):
         self.assertEqual(2 * 2, len(runs))
 
     def test_only_running_non_existing_stuff(self):
-        filter_args = ['s:non-existing', 'vm:non-existing']
+        filter_args = ['s:non-existing', 'e:non-existing']
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
                            self._ui, run_filter=filter_args)
 
@@ -85,7 +85,7 @@ class ConfiguratorTest(ReBenchTestCase):
         self.assertEqual(0, len(runs))
 
     def test_only_running_bench1_and_test_runner2(self):
-        filter_args = ['s:Suite:Bench1', 'vm:TestRunner2']
+        filter_args = ['s:Suite:Bench1', 'e:TestRunner2']
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
                            self._ui, run_filter=filter_args)
 
@@ -93,7 +93,7 @@ class ConfiguratorTest(ReBenchTestCase):
         self.assertEqual(2, len(runs))
 
     def test_only_running_bench1_or_bench2_and_test_runner2(self):
-        filter_args = ['s:Suite:Bench1', 's:Suite:Bench2', 'vm:TestRunner2']
+        filter_args = ['s:Suite:Bench1', 's:Suite:Bench2', 'e:TestRunner2']
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
                            self._ui, run_filter=filter_args)
 

@@ -26,10 +26,10 @@ from ...persistence      import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
-class Issue58BuildVM(ReBenchTestCase):
+class Issue58BuildExecutor(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue58BuildVM, self).setUp()
+        super(Issue58BuildExecutor, self).setUp()
         self._set_path(__file__)
 
     def _cleanup_log(self):
@@ -40,7 +40,7 @@ class Issue58BuildVM(ReBenchTestCase):
         with open(self._path + '/build.log', 'r') as log_file:
             return log_file.read()
 
-    def test_build_vm_simple_cmd(self):
+    def test_build_executor_simple_cmd(self):
         self._cleanup_log()
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
                            self._ui, data_file=self._tmp_file, exp_name='A')
@@ -57,7 +57,7 @@ class Issue58BuildVM(ReBenchTestCase):
         finally:
             os.remove(self._path + '/vm_58a.sh')
 
-    def test_build_vm_cmd_list(self):
+    def test_build_executor_cmd_list(self):
         self._cleanup_log()
 
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
@@ -78,12 +78,12 @@ class Issue58BuildVM(ReBenchTestCase):
     def test_build_output_in_log(self):
         self._cleanup_log()
 
-        self.test_build_vm_simple_cmd()
+        self.test_build_executor_simple_cmd()
 
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n", log)
+            "E:BashA|STD:standard\nE:BashA|ERR:error\n", log)
 
     def test_broken_build_prevents_experiments(self):
         self._cleanup_log()
@@ -107,7 +107,7 @@ class Issue58BuildVM(ReBenchTestCase):
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashC|STD:standard\nVM:BashC|ERR:error\n", log)
+            "E:BashC|STD:standard\nE:BashC|ERR:error\n", log)
 
     def test_build_is_run_only_once_for_same_command(self):
         self._cleanup_log()
@@ -125,4 +125,4 @@ class Issue58BuildVM(ReBenchTestCase):
         log = self._read_log()
 
         self.assertEqual(
-            "VM:BashA|STD:standard\nVM:BashA|ERR:error\n", log)
+            "E:BashA|STD:standard\nE:BashA|ERR:error\n", log)

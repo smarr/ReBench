@@ -27,11 +27,11 @@ from .exp_variables import ExpVariables
 class BenchmarkSuite(object):
 
     @classmethod
-    def compile(cls, suite_name, suite, vm, run_details, variables, build_commands):
+    def compile(cls, suite_name, suite, executor, run_details, variables, build_commands):
         gauge_adapter = suite.get('gauge_adapter')
         command = suite.get('command')
 
-        location = suite.get('location', vm.path)
+        location = suite.get('location', executor.path)
         if location:
             location = os.path.abspath(location)
         build = BuildCommand.create_commands(suite.get('build'), build_commands, location)
@@ -43,14 +43,14 @@ class BenchmarkSuite(object):
         run_details = ExpRunDetails.compile(suite, run_details)
         variables = ExpVariables.compile(suite, variables)
 
-        return BenchmarkSuite(suite_name, vm, gauge_adapter, command, location,
+        return BenchmarkSuite(suite_name, executor, gauge_adapter, command, location,
                               build, benchmarks_config, description or desc, run_details, variables)
 
-    def __init__(self, suite_name, vm, gauge_adapter, command, location, build,
+    def __init__(self, suite_name, executor, gauge_adapter, command, location, build,
                  benchmarks_config, desc, run_details, variables):
-        """Specialize the benchmark suite for the given VM"""
+        """Specialize the benchmark suite for the given executor"""
         self._name = suite_name
-        self._vm = vm
+        self._executor = executor
         self._gauge_adapter = gauge_adapter
         self._command = command
         self._location = location
@@ -77,8 +77,8 @@ class BenchmarkSuite(object):
         return self._build
 
     @property
-    def vm(self):
-        return self._vm
+    def executor(self):
+        return self._executor
 
     @property
     def benchmarks_config(self):

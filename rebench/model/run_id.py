@@ -215,11 +215,11 @@ class RunId(object):
         try:
             return string % {'benchmark': self._benchmark.command,
                              'cores': self._cores,
+                             'executor': self._benchmark.suite.executor.name,
                              'input': self._input_size,
                              'iterations': self.iterations,
                              'suite': self._benchmark.suite.name,
                              'variable': self._var_value,
-                             'vm': self._benchmark.suite.vm.name,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
@@ -238,11 +238,11 @@ class RunId(object):
             return self._cmdline
 
         cmdline = ""
-        if self._benchmark.suite.vm.path:
-            cmdline = "%s/" % (self._benchmark.suite.vm.path, )
+        if self._benchmark.suite.executor.path:
+            cmdline = "%s/" % (self._benchmark.suite.executor.path, )
 
-        cmdline += "%s %s" % (self._benchmark.suite.vm.binary,
-                              self._benchmark.suite.vm.args or '')
+        cmdline += "%s %s" % (self._benchmark.suite.executor.executable,
+                              self._benchmark.suite.executor.args or '')
 
         cmdline += self._benchmark.suite.command
 

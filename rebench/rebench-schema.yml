@@ -8,12 +8,12 @@ schema;runs_type:
       type: int
       # default: 1  #  can't specify this here, because the defaults override settings
       desc: |
-        The number of times a virtual machine is executed a run.
+        The number of times an executor is executed a run.
     iterations:
       type: int
       # default: 1 #  can't specify this here, because the defaults override settings
       desc: |
-        The number of times a run is executed within a virtual machine
+        The number of times a run is executed within an executor
         invocation. This needs to be supported by a benchmark harness and
         ReBench passes this value on to the harness or benchmark.
     warmup:
@@ -124,15 +124,14 @@ schema;build_type:
     A list of commands/strings to be executed by the system's shell.
     They are intended to set up the system for benchmarking,
     typically to build binaries, compiled archieves, etc.
-    Each command is executed once before any benchmark or VM that depend on it
-    is executed. If the `location` or `path` of a suite/VM is set, it is used as
+    Each command is executed once before any benchmark or executor that depend on it
+    is executed. If the `location` or `path` of a suite/executor is set, it is used as
     working directory. Otherwise, it is the current working directory of ReBench.
 
-    This is a list of commands to allow multiple suites/VMs to depend on the
-    same command without duplicate execution.
-
-    Though, location and command have to be identical (based on simple
-    string comparisons).
+    `build:` is a list of commands to allow multiple suites and executors to depend on the
+    same build command without executing it multiple times.
+    For this purpose, build commands are considered the same when they have the
+    same command and location (based on simple string comparisons).
   type: seq
   sequence:
     - type: str
@@ -152,18 +151,20 @@ schema;benchmark_suite_type:
       required: yes
       desc: |
         The command for the benchmark harness. It's going to be combined with the
-        VM's command line. It supports various format variables, including:
+        executor's command line. It supports various format variables, including:
          - benchmark (the benchmark's name)
          - cores (the number of cores to be used by the benchmark)
+         - executor (the executor's name)
          - input (the input variable's value)
          - iterations (the number of iterations)
+         - suite (the name of the benchmark suite)
          - variable (another variable's value)
          - warmup (the number of iterations to be considered warmup)
     location:
       type: str
       desc: |
         The path to the benchmark harness. Execution use this location as
-        working directory. It overrides the location/path of a VM.
+        working directory. It overrides the location/path of an executor.
     build:
       include: build_type
     benchmarks:
@@ -180,7 +181,7 @@ schema;benchmark_suite_type:
       type: str
       desc: A description of the benchmark suite.
 
-schema;vm_type:
+schema;executor_type:
   type: map
   mapping:
     <<: *EXP_RUN_DETAILS
@@ -189,12 +190,12 @@ schema;vm_type:
       type: str
       required: no
       desc: |
-        Path to the binary.
-        If not given, it's up to the shell to find the binary
-    binary:
+        Path to the executable.
+        If not given, it's up to the shell to find the executable
+    executable:
       type: str
       required: yes
-      desc: the name of the binary to be used
+      desc: the name of the executable to be used
     args:
       type: str
       # default: '' # causes issue in pykwalify
@@ -216,7 +217,7 @@ schema;exp_suite_type:
     - type: str
 
 schema;exp_exec_type:
-  desc: A VM and a set of benchmarks
+  desc: An executor and a set of benchmarks
   type: map
   mapping:
     regex;(.+):
@@ -228,7 +229,7 @@ schema;exp_exec_type:
           include: exp_suite_type
 
 schema;experiment_type:
-  desc: Defined an experiment for a specific VM
+  desc: Defined an experiment for a specific executor
   type: map
   mapping:
     <<: *EXP_RUN_DETAILS
@@ -248,7 +249,7 @@ schema;experiment_type:
     executions:
       type: seq
       desc: |
-        The VMs used for execution, possibly with specific suites assigned
+        The executors used for execution, possibly with specific suites assigned
       sequence:
         - type: str
         - include: exp_exec_type
@@ -279,11 +280,11 @@ mapping:
     mapping:
       regex;(.+):
         include: benchmark_suite_type
-  virtual_machines:
+  executors:
     type: map
     mapping:
       regex;(.+):
-        include: vm_type
+        include: executor_type
   experiments:
     type: map
     mapping:
