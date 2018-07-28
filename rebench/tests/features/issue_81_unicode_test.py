@@ -59,10 +59,10 @@ class Issue81UnicodeSuite(ReBenchTestCase):
             unicode_char = chr(22234)
 
         self.assertGreaterEqual(15, log.find(unicode_char))  # Executor:VM1|STD:
-        self.assertGreaterEqual(log.find(unicode_char, 16), 38)  # Executor:VM1|ERR:
+        self.assertGreaterEqual(log.find(unicode_char, 16), 36)  # Executor:VM1|ERR:
 
-        self.assertGreaterEqual(log.find(unicode_char, 42), 63)  # S:Suite1|STD:
-        self.assertGreaterEqual(log.find(unicode_char, 70), 88)  # S:Suite1|ERR:
+        self.assertGreaterEqual(log.find(unicode_char, 42), 61)  # S:Suite1|STD:
+        self.assertGreaterEqual(log.find(unicode_char, 70), 86)  # S:Suite1|ERR:
 
         if os.path.exists(self._path + '/build.log'):
             os.remove(self._path + '/build.log')

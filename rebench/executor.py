@@ -307,7 +307,7 @@ class Executor(object):
         return coerce_string(decoded)
 
     def _build_executor_and_suite(self, run_id):
-        name = "Executor:" + run_id.benchmark.suite.executor.name
+        name = "E:" + run_id.benchmark.suite.executor.name
         build = run_id.benchmark.suite.executor.build
         self._process_builds(build, name, run_id)
 

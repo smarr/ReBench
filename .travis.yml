@@ -30,7 +30,7 @@ install:
 # command to run tests
 script:
  - nosetests --with-coverage --cover-package=rebench
- - (cd rebench && rebench -N ../rebench.conf executor:TestRunner2)
+ - (cd rebench && rebench -N ../rebench.conf e:TestRunner2)
  - pylint rebench
 
 after_success:

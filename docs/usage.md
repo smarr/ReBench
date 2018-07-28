@@ -5,17 +5,17 @@ A basic help can be displayed with the `--help` argument:
 
 ```bash
 $ rebench --help
-Usage: rebench [options] <config> [exp_name] [executor:$]* [s:$]*
+Usage: rebench [options] <config> [exp_name] [e:$]* [s:$]*
 
 Argument:
-  config      required argument, file containing the experiment to be executed
-  exp_name    optional argument, the name of an experiment definition
-              from the config file
-              If not provided, the configured default_experiment is used.
-              If 'all' is given, all experiments will be executed.
+  config    required argument, file containing the experiment to be executed
+  exp_name  optional argument, the name of an experiment definition
+            from the config file
+            If not provided, the configured default_experiment is used.
+            If 'all' is given, all experiments will be executed.
 
-  executor:$  filter experiments to only include the named executor, example: executor:EXEC1 executor:EXEC3
-  s:$         filter experiments to only include the named suite and possibly benchmark
+  e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
+  s:$       filter experiments to only include the named suite and possibly benchmark
               example: s:Suite1 s:Suite2:Bench3
 
 ...
@@ -57,14 +57,14 @@ We can further restrict what is executed.
 To only execute the `MyBin1` executor, we use:
 
 ```bash
-$ rebench example.conf Example executor:MyBin1
+$ rebench example.conf Example e:MyBin1
 ```
 
 To further limit the execution, we can also select a specific benchmark from a
 suite:
 
 ```bash
-$ rebench example.conf Example executor:MyBin1 s:ExampleSuite:Bench1
+$ rebench example.conf Example e:MyBin1 s:ExampleSuite:Bench1
 ```
 
 The filters are applied on the set of [runs](config.md#runs) identified by a configuration and

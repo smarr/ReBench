@@ -215,11 +215,11 @@ class RunId(object):
         try:
             return string % {'benchmark': self._benchmark.command,
                              'cores': self._cores,
+                             'executor': self._benchmark.suite.executor.name,
                              'input': self._input_size,
                              'iterations': self.iterations,
                              'suite': self._benchmark.suite.name,
                              'variable': self._var_value,
-                             'executor': self._benchmark.suite.executor.name,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)

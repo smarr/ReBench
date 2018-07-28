@@ -54,7 +54,7 @@ class ReBench(object):
         return self._ui
 
     def shell_options(self):
-        usage = """%(prog)s [options] <config> [exp_name] [executor:$]* [s:$]*
+        usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]*
         
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -63,7 +63,7 @@ Argument:
             If not provided, the configured default_experiment is used.
             If 'all' is given, all experiments will be executed.
 
-  executor:$      filter experiments to only include the named executor, example: executor:EXEC1 executor:EXEC3
+  e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
             example: s:Suite1 s:Suite2:Bench3
 
@@ -177,9 +177,9 @@ Argument:
     @staticmethod
     def determine_exp_name_and_filters(filters):
         exp_name = filters[0] if filters and (
-            not filters[0].startswith("executor:") and
+            not filters[0].startswith("e:") and
             not filters[0].startswith("s:")) else "all"
-        exp_filter = [f for f in filters if (f.startswith("executor:") or
+        exp_filter = [f for f in filters if (f.startswith("e:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
 
