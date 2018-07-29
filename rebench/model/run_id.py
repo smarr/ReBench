@@ -240,18 +240,22 @@ class RunId(object):
     def cmdline(self):
         if self._cmdline:
             return self._cmdline
+        return self._construct_cmdline()
 
+    def _construct_cmdline(self):
         cmdline = ""
         if self._benchmark.suite.executor.path:
-            cmdline = "%s/" % (self._benchmark.suite.executor.path, )
+            cmdline = self._benchmark.suite.executor.path + "/"
 
-        cmdline += "%s %s" % (self._benchmark.suite.executor.executable,
-                              self._benchmark.suite.executor.args or '')
+        cmdline += self._benchmark.suite.executor.executable
 
-        cmdline += self._benchmark.suite.command
+        if self._benchmark.suite.executor.args:
+            cmdline += " " + str(self._benchmark.suite.executor.args)
 
-        if self._benchmark.extra_args is not None:
-            cmdline += " %s" % self._benchmark.extra_args
+        cmdline += " " + self._benchmark.suite.command
+
+        if self._benchmark.extra_args:
+            cmdline += " " + str(self._benchmark.extra_args)
 
         cmdline = self._expand_vars(cmdline)
 
