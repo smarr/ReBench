@@ -35,7 +35,6 @@ class RunId(object):
 
         self._reporters = set()
         self._persistence = set()
-        self._data_points = []
         self._statistics = StatisticProperties()
         self._total_unit = None
 
@@ -172,14 +171,12 @@ class RunId(object):
 
     def loaded_data_point(self, data_point):
         self._new_data_point(data_point)
-        self._data_points.append(data_point)
         self._statistics.add_sample(data_point.get_total_value())
 
     def add_data_point(self, data_point, warmup):
         self._new_data_point(data_point)
 
         if not warmup:
-            self._data_points.append(data_point)
             self._statistics.add_sample(data_point.get_total_value())
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
@@ -192,13 +189,6 @@ class RunId(object):
 
     def get_statistics(self):
         return self._statistics
-
-    def get_data_points(self):
-        return self._data_points
-
-    def discard_data_points(self):
-        self._data_points = []
-        self._max_invocation = 0
 
     def get_total_unit(self):
         return self._total_unit
@@ -216,7 +206,7 @@ class RunId(object):
     def run_failed(self):
         return (self._termination_check.fails_consecutively() or
                 self._termination_check.has_too_many_failures(
-                    len(self._data_points)))
+                    len(self.get_number_of_data_points())))
 
     def __hash__(self):
         return hash(self.cmdline())
