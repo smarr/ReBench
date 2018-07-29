@@ -21,6 +21,7 @@ import unittest
 import subprocess
 import os
 
+from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
 from ..executor          import Executor
@@ -79,10 +80,16 @@ class ExecutorTest(ReBenchTestCase):
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+
+        runs = cnf.get_runs()
+        persistence = TestPersistence()
+        for run in runs:
+            run.add_persistence(persistence)
+
+        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
-            data_points = run.get_data_points()
+            data_points = persistence.get_data_points(run)
             self.assertEqual(10, len(data_points))
             for data_point in data_points:
                 measurements = data_point.get_measurements()

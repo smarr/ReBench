@@ -22,6 +22,7 @@ from __future__ import print_function
 from ...configurator           import Configurator, load_config
 from ...executor               import Executor
 from ...persistence            import DataStore
+from ..persistence import TestPersistence
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -38,12 +39,17 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/issue_31.conf'), DataStore(self._ui),
                            self._ui, exp_name=exp_name,
                            data_file=self._tmp_file)
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        runs = cnf.get_runs()
+        persistence = TestPersistence()
+        for run in runs:
+            run.add_persistence(persistence)
+
+        ex = Executor(runs, False, False, self._ui)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
         run = next(iter(cnf.get_runs()))
-        self.assertEqual(num_data_points, len(run.get_data_points()))
-        return run.get_data_points()
+        self.assertEqual(num_data_points, run.get_number_of_data_points())
+        return persistence.get_data_points()
 
     def test_records_multiple_data_points_from_single_execution_10(self):
         self._records_data_points('Test1', 10)

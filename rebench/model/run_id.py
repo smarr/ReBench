@@ -206,7 +206,7 @@ class RunId(object):
     def run_failed(self):
         return (self._termination_check.fails_consecutively() or
                 self._termination_check.has_too_many_failures(
-                    len(self.get_number_of_data_points())))
+                    self.get_number_of_data_points()))
 
     def __hash__(self):
         return hash(self.cmdline())
