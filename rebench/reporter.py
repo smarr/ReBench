@@ -20,6 +20,7 @@
 from __future__ import with_statement
 
 from time import time
+from operator import itemgetter
 import json
 import re
 
@@ -88,7 +89,7 @@ class TextReporter(Reporter):
                 out.append(int(round(stats.mean, 0)))
             rows.append(out)
 
-        return rows
+        return sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7))
 
 
 class CliReporter(TextReporter):
