@@ -21,11 +21,12 @@ import sys
 
 from os import getcwd
 
-from humanfriendly import erase_line_code, Spinner
+from humanfriendly import Spinner
 from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 
 _DETAIL_INDENT = "    "
+_ERASE_LINE = '\r\x1b[2K'
 
 
 def escape_braces(string):
@@ -59,7 +60,8 @@ class UI(object):
     def step_spinner(self, completed_runs, label=None):
         assert self._progress_spinner
         self._progress_spinner.step(completed_runs, label)
-        self._need_to_erase_spinner = True
+        self._progress_spinner.stream.flush()
+        self._need_to_erase_spinner = self._progress_spinner.interactive
 
     def _prepare_details(self, run_id, cmd, cwd):
         if not run_id and not cmd:
@@ -100,20 +102,25 @@ class UI(object):
         if text:
             self._output(text, None)
 
-    @staticmethod
-    def output(text, *args, **kw):
-        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
-
-    def _output(self, text, color, *args, **kw):
+    def _erase_spinner(self):
         if self._need_to_erase_spinner:
             if self._progress_spinner and self._progress_spinner.interactive:
-                sys.stdout.write(erase_line_code)
+                sys.stdout.write(_ERASE_LINE)
             self._need_to_erase_spinner = False
+
+    def output(self, text, *args, **kw):
+        self._erase_spinner()
+        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
+        sys.stdout.flush()
+
+    def _output(self, text, color, *args, **kw):
+        self._erase_spinner()
 
         text = coerce_string(text)
         if terminal_supports_colors(sys.stdout):
             text = ansi_wrap(text, color=color)
         auto_encode(sys.stdout, text, ind=_DETAIL_INDENT, *args, **kw)
+        sys.stdout.flush()
 
     def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
         self._output_detail_header(run_id, cmd, cwd)
