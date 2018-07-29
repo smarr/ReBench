@@ -59,6 +59,7 @@ class UI(object):
     def step_spinner(self, completed_runs, label=None):
         assert self._progress_spinner
         self._progress_spinner.step(completed_runs, label)
+        self._progress_spinner.stream.flush()
         self._need_to_erase_spinner = self._progress_spinner.interactive
 
     def _prepare_details(self, run_id, cmd, cwd):
@@ -109,6 +110,7 @@ class UI(object):
     def output(self, text, *args, **kw):
         self._erase_spinner()
         auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
+        sys.stdout.flush()
 
     def _output(self, text, color, *args, **kw):
         self._erase_spinner()
@@ -117,6 +119,7 @@ class UI(object):
         if terminal_supports_colors(sys.stdout):
             text = ansi_wrap(text, color=color)
         auto_encode(sys.stdout, text, ind=_DETAIL_INDENT, *args, **kw)
+        sys.stdout.flush()
 
     def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
         self._output_detail_header(run_id, cmd, cwd)
