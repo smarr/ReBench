@@ -39,7 +39,6 @@ setup(name='ReBench',
       entry_points = {
           'console_scripts' : ['rebench = rebench.rebench:main_func']
       },
-      tests_require = ['scipy>=0.8.0'],
       test_suite = 'rebench.tests',
       license = 'MIT'
 )

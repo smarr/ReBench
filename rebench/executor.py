@@ -35,7 +35,6 @@ from humanfriendly.compat import coerce_string
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
-from .statistics import StatisticProperties, mean
 
 
 class FailedBuilding(Exception):
@@ -83,14 +82,10 @@ class RunScheduler(object):
         if not self._ui.spinner_initialized():
             return
 
-        totals = run.get_total_values()
         if completed_task:
             self._runs_completed += 1
 
-        if totals:
-            art_mean = mean(run.get_total_values())
-        else:
-            art_mean = 0
+        art_mean = run.get_mean_of_totals()
 
         hour, minute, sec = self._estimate_time_left()
 
@@ -419,15 +414,15 @@ class Executor(object):
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
 
-        stats = StatisticProperties(run_id.get_total_values())
+        mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
-            run_id.report_run_completed(stats, cmdline)
+            run_id.report_run_completed(cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
-                    and stats.mean < run_id.min_iteration_time):
+                    and mean_of_totals < run_id.min_iteration_time):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
-                    % (stats.mean, run_id.min_iteration_time), run_id, cmdline)
+                    % (mean_of_totals, run_id.min_iteration_time), run_id, cmdline)
 
         return terminate
 

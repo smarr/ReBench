@@ -57,4 +57,3 @@ class Issue15WarmUpSupportTest(ReBenchTestCase):
         ex.execute()
 
         self.assertEqual(runs[0].get_number_of_data_points(), 10)
-        self.assertLessEqual(runs[0].get_total_values()[0], 850)
