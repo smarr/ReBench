@@ -59,7 +59,7 @@ class UI(object):
     def step_spinner(self, completed_runs, label=None):
         assert self._progress_spinner
         self._progress_spinner.step(completed_runs, label)
-        self._need_to_erase_spinner = True
+        self._need_to_erase_spinner = self._progress_spinner.interactive
 
     def _prepare_details(self, run_id, cmd, cwd):
         if not run_id and not cmd:
@@ -100,15 +100,18 @@ class UI(object):
         if text:
             self._output(text, None)
 
-    @staticmethod
-    def output(text, *args, **kw):
-        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
-
-    def _output(self, text, color, *args, **kw):
+    def _erase_spinner(self):
         if self._need_to_erase_spinner:
             if self._progress_spinner and self._progress_spinner.interactive:
                 sys.stdout.write(erase_line_code)
             self._need_to_erase_spinner = False
+
+    def output(self, text, *args, **kw):
+        self._erase_spinner()
+        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
+
+    def _output(self, text, color, *args, **kw):
+        self._erase_spinner()
 
         text = coerce_string(text)
         if terminal_supports_colors(sys.stdout):
