@@ -54,19 +54,6 @@ class ExecutorTest(ReBenchTestCase):
         finally:
             subprocess.Popen = old_popen
 
-# TODO: should test more details
-#        (mean, sdev, (interval, interval_percentage),
-#                (interval_t, interval_percentage_t)) = ex.result['test-executor']['test-bench']
-#
-#        self.assertEqual(31, len(ex.benchmark_data['test-executor']['test-bench']))
-#        self.assertAlmostEqual(45870.4193548, mean)
-#        self.assertAlmostEqual(2.93778711485, sdev)
-#
-#        (i_low, i_high) = interval
-#        self.assertAlmostEqual(45869.385195243565, i_low)
-#        self.assertAlmostEqual(45871.453514433859, i_high)
-#        self.assertAlmostEqual(0.00450904792104, interval_percentage)
-
     def test_broken_command_format_with_ValueError(self):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])

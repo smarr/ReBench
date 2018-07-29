@@ -203,22 +203,16 @@ Argument:
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
 
-        data_store.load_data()
-        return self.execute_experiment()
+        runs = self._config.get_runs()
+        data_store.load_data(runs, self._config.options.do_rerun)
+        return self.execute_experiment(runs)
 
-    def execute_experiment(self):
+    def execute_experiment(self, runs):
         self._ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
-
-        # first load old data if available
-        if self._config.options.clean:
-            pass
 
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
                            'random':      RandomScheduler}.get(self._config.options.scheduler)
-        runs = self._config.get_runs()
-        if self._config.options.do_rerun:
-            DataStore.discard_data_of_runs(runs, self._ui)
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._ui,
