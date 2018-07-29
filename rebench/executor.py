@@ -98,6 +98,11 @@ class RunScheduler(object):
                 % (run.as_simple_string(), art_mean, hour, minute, sec)
         self._ui.step_spinner(self._runs_completed, label)
 
+    def indicate_build(self, run_id):
+        run_id_names = run_id.as_str_list()
+        self._ui.step_spinner(
+            self._runs_completed, "Run build for %s %s" % (run_id_names[1], run_id_names[2]))
+
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
         runs = self._filter_out_completed_runs(self._executor.runs, self._ui)
@@ -335,6 +340,7 @@ class Executor(object):
 
         script = build_command.command
 
+        self._scheduler.indicate_build(run_id)
         self._ui.debug_output_info("Start build\n", None, script, path)
 
         def _keep_alive(seconds):
