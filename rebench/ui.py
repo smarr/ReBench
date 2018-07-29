@@ -21,11 +21,12 @@ import sys
 
 from os import getcwd
 
-from humanfriendly import erase_line_code, Spinner
+from humanfriendly import Spinner
 from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 
 _DETAIL_INDENT = "    "
+_ERASE_LINE = '\r\x1b[2K'
 
 
 def escape_braces(string):
@@ -104,7 +105,7 @@ class UI(object):
     def _erase_spinner(self):
         if self._need_to_erase_spinner:
             if self._progress_spinner and self._progress_spinner.interactive:
-                sys.stdout.write(erase_line_code)
+                sys.stdout.write(_ERASE_LINE)
             self._need_to_erase_spinner = False
 
     def output(self, text, *args, **kw):
