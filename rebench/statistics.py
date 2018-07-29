@@ -17,81 +17,64 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import copy
 import math
-import operator
-from functools import reduce # pylint: disable=redefined-builtin
-
-
-def mean(values):
-    return sum(values) / float(len(values))
-
-
-def median(values):
-    values_ = sorted(copy.deepcopy(values))
-    index = int(len(values_) / 2)
-    if len(values_) % 2 == 0:
-        return float(values_[index] + values_[index - 1]) / 2
-    else:
-        return values_[index]
-
-
-def geo_mean(values):
-    product = reduce(operator.mul, values, 1)
-    return product ** (1.0 / len(values))
-
-
-def variance(values):
-    avg = mean(values)
-    var = [(x - avg) ** 2 for x in values]
-    return mean(var)
-
-
-def stddev(values):
-    return math.sqrt(variance(values))
 
 
 class StatisticProperties(object):
     """
-    The statistics class calculates the statistic
-    properties of a given set of data samples, i.e., the chosen values
-    from a set of data points
+    The class maintains running statistics for the added data points.
+    Data points can be added one by one, or as lists of values.
     """
 
-    def __init__(self, data_samples):
-        self._data_samples = data_samples
-
-        self.mean = 0
-        self.geom_mean = 0
-        self.median = 0
-        self.std_dev = 0
+    def __init__(self):
         self.num_samples = 0
+
+        self.mean = 0.0
+        self.geom_mean = 0.0
+        self.std_dev = 0.0
         self.min = 0
         self.max = 0
 
-        if self._data_samples:
-            self.num_samples = len(self._data_samples)
-            self._calc_basic_statistics()
+        # used to calculate std_dev
+        # Variance (sigma^2) * num_samples
+        self._variance_times_num_samples = 0
+        # used to calculate geomean
+        self._product_of_samples = 1.0
+
+    def add(self, samples):
+        for sample in samples:
+            self.add_sample(sample)
+
+    def add_sample(self, sample):
+        if self.num_samples == 0:
+            self.mean = float(sample)
+            self.geom_mean = float(sample)
+            self._product_of_samples = float(sample)
+
+            self.min = sample
+            self.max = sample
+            self.num_samples = 1
         else:
-            self.num_samples = 0
+            self.num_samples += 1
+            prev_mean = self.mean
+            self.mean = prev_mean + ((sample - prev_mean) / self.num_samples)
 
-    def _calc_basic_statistics(self):
-        """This function determines the mean and the standard deviation
-           of the data sample.
-           Furthermore, several other simple properties are determined.
-        """
-        self.mean = mean(self._data_samples)
-        self.geom_mean = geo_mean(self._data_samples)
-        self.median = median(self._data_samples)
-        self.std_dev = stddev(self._data_samples)
+            self._product_of_samples = self._product_of_samples * float(sample)
+            self.geom_mean = self._product_of_samples ** (1/float(self.num_samples))
 
-        self.min = min(self._data_samples)
-        self.max = max(self._data_samples)
+            self._variance_times_num_samples = (self._variance_times_num_samples +
+                                                ((sample - prev_mean) * (sample - self.mean)))
+            self.std_dev = math.sqrt(self._variance_times_num_samples / self.num_samples)
+
+            if self.min > sample:
+                self.min = sample
+
+            if self.max < sample:
+                self.max = sample
 
     def as_tuple(self):
         return (self.mean,
                 self.geom_mean,
-                self.median,
                 self.std_dev,
                 self.num_samples,
                 self.min,
@@ -99,5 +82,5 @@ class StatisticProperties(object):
 
     @classmethod
     def tuple_mapping(cls):
-        return ('arithmetic mean', 'geometric mean', 'median', 'stdDev',
+        return ('arithmetic mean', 'geometric mean', 'stdDev',
                 '#samples', 'min', 'max')

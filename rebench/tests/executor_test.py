@@ -21,6 +21,7 @@ import unittest
 import subprocess
 import os
 
+from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
 from ..executor          import Executor
@@ -54,19 +55,6 @@ class ExecutorTest(ReBenchTestCase):
         finally:
             subprocess.Popen = old_popen
 
-# TODO: should test more details
-#        (mean, sdev, (interval, interval_percentage),
-#                (interval_t, interval_percentage_t)) = ex.result['test-executor']['test-bench']
-#
-#        self.assertEqual(31, len(ex.benchmark_data['test-executor']['test-bench']))
-#        self.assertAlmostEqual(45870.4193548, mean)
-#        self.assertAlmostEqual(2.93778711485, sdev)
-#
-#        (i_low, i_high) = interval
-#        self.assertAlmostEqual(45869.385195243565, i_low)
-#        self.assertAlmostEqual(45871.453514433859, i_high)
-#        self.assertAlmostEqual(0.00450904792104, interval_percentage)
-
     def test_broken_command_format_with_ValueError(self):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
@@ -92,10 +80,16 @@ class ExecutorTest(ReBenchTestCase):
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+
+        runs = cnf.get_runs()
+        persistence = TestPersistence()
+        for run in runs:
+            run.add_persistence(persistence)
+
+        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
-            data_points = run.get_data_points()
+            data_points = persistence.get_data_points(run)
             self.assertEqual(10, len(data_points))
             for data_point in data_points:
                 measurements = data_point.get_measurements()

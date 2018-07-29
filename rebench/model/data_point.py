@@ -28,6 +28,10 @@ class DataPoint(object):
         self._invocation = -1
 
     @property
+    def run_id(self):
+        return self._run_id
+
+    @property
     def invocation(self):
         return self._invocation
 

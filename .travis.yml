@@ -3,13 +3,6 @@ language: python
 matrix:
   include:
     - python: "2.7"
-      virtualenv:
-        system_site_packages: true
-      addons:
-        apt:
-          packages:
-            - python-scipy
-
     - python: "3.6"
     # PyPy versions
     - python: pypy

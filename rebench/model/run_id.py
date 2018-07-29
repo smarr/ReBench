@@ -21,6 +21,7 @@ import re
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
+from ..statistics import StatisticProperties
 from ..ui import UIError
 
 
@@ -34,7 +35,8 @@ class RunId(object):
 
         self._reporters = set()
         self._persistence = set()
-        self._data_points = []
+        self._statistics = StatisticProperties()
+        self._total_unit = None
 
         self._termination_check = None
         self._cmdline = None
@@ -136,9 +138,9 @@ class RunId(object):
         for reporter in self._reporters:
             reporter.run_failed(self, cmdline, return_code, output)
 
-    def report_run_completed(self, statistics, cmdline):
+    def report_run_completed(self, cmdline):
         for reporter in self._reporters:
-            reporter.run_completed(self, statistics, cmdline)
+            reporter.run_completed(self, self._statistics, cmdline)
 
     def report_job_completed(self, run_ids):
         for reporter in self._reporters:
@@ -152,6 +154,9 @@ class RunId(object):
         for reporter in self._reporters:
             reporter.start_run(self)
 
+    def is_persisted_by(self, persistence):
+        return persistence in self._persistence
+
     def add_persistence(self, persistence):
         self._persistence.add(persistence)
 
@@ -159,35 +164,34 @@ class RunId(object):
         for persistence in self._persistence:
             persistence.close()
 
-    def loaded_data_point(self, data_point):
+    def _new_data_point(self, data_point):
         self._max_invocation = max(self._max_invocation, data_point.invocation)
-        self._data_points.append(data_point)
+        if self._total_unit is None:
+            self._total_unit = data_point.get_total_unit()
+
+    def loaded_data_point(self, data_point):
+        self._new_data_point(data_point)
+        self._statistics.add_sample(data_point.get_total_value())
 
     def add_data_point(self, data_point, warmup):
-        self._max_invocation = max(self._max_invocation, data_point.invocation)
+        self._new_data_point(data_point)
 
         if not warmup:
-            self._data_points.append(data_point)
+            self._statistics.add_sample(data_point.get_total_value())
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
 
     def get_number_of_data_points(self):
-        return len(self._data_points)
+        return self._statistics.num_samples
 
-    def get_data_points(self):
-        return self._data_points
+    def get_mean_of_totals(self):
+        return self._statistics.mean
 
-    def discard_data_points(self):
-        self._data_points = []
-        self._max_invocation = 0
-
-    def get_total_values(self):
-        return [dp.get_total_value() for dp in self._data_points]
+    def get_statistics(self):
+        return self._statistics
 
     def get_total_unit(self):
-        if not self._data_points:
-            return None
-        return self._data_points[0].get_total_unit()
+        return self._total_unit
 
     def get_termination_check(self, ui):
         if self._termination_check is None:
@@ -202,7 +206,7 @@ class RunId(object):
     def run_failed(self):
         return (self._termination_check.fails_consecutively() or
                 self._termination_check.has_too_many_failures(
-                    len(self._data_points)))
+                    self.get_number_of_data_points()))
 
     def __hash__(self):
         return hash(self.cmdline())
@@ -236,18 +240,22 @@ class RunId(object):
     def cmdline(self):
         if self._cmdline:
             return self._cmdline
+        return self._construct_cmdline()
 
+    def _construct_cmdline(self):
         cmdline = ""
         if self._benchmark.suite.executor.path:
-            cmdline = "%s/" % (self._benchmark.suite.executor.path, )
+            cmdline = self._benchmark.suite.executor.path + "/"
 
-        cmdline += "%s %s" % (self._benchmark.suite.executor.executable,
-                              self._benchmark.suite.executor.args or '')
+        cmdline += self._benchmark.suite.executor.executable
 
-        cmdline += self._benchmark.suite.command
+        if self._benchmark.suite.executor.args:
+            cmdline += " " + str(self._benchmark.suite.executor.args)
 
-        if self._benchmark.extra_args is not None:
-            cmdline += " %s" % self._benchmark.extra_args
+        cmdline += " " + self._benchmark.suite.command
+
+        if self._benchmark.extra_args:
+            cmdline += " " + str(self._benchmark.extra_args)
 
         cmdline = self._expand_vars(cmdline)
 

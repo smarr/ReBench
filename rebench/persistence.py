@@ -18,9 +18,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime
+from tempfile import NamedTemporaryFile
 from threading import Lock
 
 from .model.data_point  import DataPoint
@@ -36,9 +38,9 @@ class DataStore(object):
         self._bench_cfgs = {}
         self._ui = ui
 
-    def load_data(self):
+    def load_data(self, runs, discard_run_data):
         for persistence in list(self._files.values()):
-            persistence._load_data()
+            persistence.load_data(runs, discard_run_data)
 
     def get(self, filename, discard_old_data):
         if filename not in self._files:
@@ -81,41 +83,6 @@ class DataStore(object):
             self._bench_cfgs[key] = cfg
         return cfg
 
-    @classmethod
-    def get_by_file(cls, runs):
-        by_file = {}
-        for run in runs:
-            points = run.get_data_points()
-            run.discard_data_points()
-            for point in points:
-                measurements = point.get_measurements()
-                for measure in measurements:
-                    if measure.filename in by_file:
-                        by_file[measure.filename].append(measure)
-                    else:
-                        by_file[measure.filename] = [measure]
-        return by_file
-
-    @classmethod
-    def discard_data_of_runs(cls, runs, ui):
-        by_file = cls.get_by_file(runs)
-        for filename, measures in by_file.items():
-            try:
-                with open(filename, 'r') as data_file:
-                    lines = data_file.readlines()
-            except IOError:
-                ui.debug_error_info(
-                    "Tried to discard old data, but file does not seem to exist: %s\n" % filename)
-                continue
-
-            for measure in measures:
-                lines[measure.line_number] = None
-
-            lines = filter(None, lines)
-
-            with open(filename, 'w') as data_file:
-                data_file.writelines(lines)
-
 
 class _DataPointPersistence(object):
 
@@ -141,18 +108,30 @@ class _DataPointPersistence(object):
         with open(filename, 'w'):
             pass
 
-    def _load_data(self):
+    def load_data(self, runs, discard_run_data):
         """
         Loads the data from the configured data file
         """
+        if discard_run_data:
+            current_runs = {run for run in runs if run.is_persisted_by(self)}
+        else:
+            current_runs = None
+
         try:
-            with open(self._data_filename, 'r') as data_file:
-                self._process_lines(data_file)
+            if current_runs:
+                with NamedTemporaryFile('w', delete=False) as target:
+                    with open(self._data_filename, 'r') as data_file:
+                        self._process_lines(data_file, current_runs, target)
+                    os.unlink(self._data_filename)
+                    shutil.move(target.name, self._data_filename)
+            else:
+                with open(self._data_filename, 'r') as data_file:
+                    self._process_lines(data_file, current_runs, None)
         except IOError:
             self._ui.debug_error_info("No data loaded, since %s does not exist.\n"
                                       % self._data_filename)
 
-    def _process_lines(self, data_file):
+    def _process_lines(self, data_file, runs, filtered_data_file):
         """
          The most important assumptions we make here is that the total
          measurement is always the last one serialized for a data point.
@@ -165,6 +144,8 @@ class _DataPointPersistence(object):
         for line in data_file:
             if line.startswith('#'):  # skip comments, and shebang lines
                 line_number += 1
+                if filtered_data_file:
+                    filtered_data_file.write(line)
                 continue
 
             try:
@@ -173,6 +154,13 @@ class _DataPointPersistence(object):
                     line_number, self._data_filename)
 
                 run_id = measurement.run_id
+                if filtered_data_file and runs and run_id in runs:
+                    continue
+
+                # these are all the measurements that are not filtered out
+                if filtered_data_file:
+                    filtered_data_file.write(line)
+
                 if previous_run_id is not run_id:
                     data_point = DataPoint(run_id)
                     previous_run_id = run_id

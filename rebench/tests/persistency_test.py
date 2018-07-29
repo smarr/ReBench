@@ -66,11 +66,11 @@ class PersistencyTest(ReBenchTestCase):
         self.assertEqual(num_invocations, run.completed_invocations)
 
     def test_iteration_invocation_semantics(self):
-        ## Executes first time
+        # Executes first time
         ds = DataStore(self._ui)
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
                            ds, self._ui, data_file=self._tmp_file)
-        ds.load_data()
+        ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
 
@@ -79,16 +79,44 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf, 1, 10, 10)
 
-        ## Execute a second time, should not add any data points,
-        ## because goal is already reached
+        # Execute a second time, should not add any data points,
+        # because goal is already reached
         ds2 = DataStore(self._ui)
         cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
                             ds2, self._ui, data_file=self._tmp_file)
-        ds2.load_data()
+        ds2.load_data(None, False)
 
         self._assert_runs(cnf2, 1, 10, 10)
 
         ex2 = Executor(cnf2.get_runs(), False, False, self._ui)
+        ex2.execute()
+
+        self._assert_runs(cnf2, 1, 10, 10)
+
+    def test_data_discarding(self):
+        # Executes first time
+        ds = DataStore(self._ui)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'),
+                           ds, self._ui, data_file=self._tmp_file)
+        ds.load_data(None, False)
+
+        self._assert_runs(cnf, 1, 0, 0)
+
+        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex.execute()
+
+        self._assert_runs(cnf, 1, 10, 10)
+
+        # Execute a second time, this time, discard the data first, and then rerun
+        ds2 = DataStore(self._ui)
+        cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
+                            ds2, self._ui, data_file=self._tmp_file)
+        run2 = cnf2.get_runs()
+        ds2.load_data(run2, True)
+
+        self._assert_runs(cnf2, 1, 0, 0)
+
+        ex2 = Executor(run2, False, False, self._ui)
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
