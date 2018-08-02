@@ -23,9 +23,14 @@
 from setuptools import setup, find_packages
 from rebench import __version__ as rebench_version
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(name='ReBench',
       version=rebench_version,
       description='Execute and document benchmarks reproducibly.',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       author='Stefan Marr',
       author_email='rebench@stefan-marr.de',
       url='https://github.com/smarr/ReBench',
