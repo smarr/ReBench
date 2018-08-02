@@ -3,10 +3,19 @@ language: python
 matrix:
   include:
     - python: "2.7"
+      before_install:
+        - pip install coveralls pylint
+      env: COVERAGE="--with-coverage --cover-package=rebench"
+      after_success:
+        coveralls
     - python: "3.6"
+      before_install:
+        - pip install coveralls pylint
     # PyPy versions
     - python: pypy
+      env: DO_LINT="echo On PyPy, we won't "
     - python: pypy3
+      env: DO_LINT="echo On PyPy, we won't "
 
 dist: trusty
 sudo: false
@@ -17,14 +26,10 @@ addons:
       - time
 
 install:
-  - pip install coveralls pylint
   - pip install .
 
 # command to run tests
 script:
- - nosetests --with-coverage --cover-package=rebench
+ - nosetests ${COVERAGE}
  - (cd rebench && rebench -N ../rebench.conf e:TestRunner2)
- - pylint rebench
-
-after_success:
-  coveralls
+ - ${DO_LINT} pylint rebench
