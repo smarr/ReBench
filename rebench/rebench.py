@@ -116,6 +116,11 @@ Argument:
             default='batch',
             help='execution order of benchmarks: '
                  'batch, round-robin, random [default: %(default)s]')
+        execution.add_argument(
+            '-E', '--no-execution', action='store_true', dest='no_execution',
+            default=False,
+            help='Disables execution.'
+                 ' It allows to verify the configuration file and other parameters.')
 
         data = parser.add_argument_group(
             'Data and Reporting',
@@ -220,7 +225,11 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log)
-        return executor.execute()
+
+        if self._config.options.no_execution:
+            return True
+        else:
+            return executor.execute()
 
 
 def main_func():
