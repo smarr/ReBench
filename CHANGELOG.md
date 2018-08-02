@@ -2,25 +2,37 @@
 
 ## [Unreleased]
 
- - 
+ -
+
+## [1.0rc1] - 2018-08-02
+
+ - made user interface more consistent and concise (#83, #85, #92, #101, #102)
+ - added concept of iterations/invocations (#82, #87)
+ - added executor and suite name as command variables (#95, #101)
+ - added and improved support for building suites before execution (#59, #78, #84, #96)
+ - revised configuration format to me more consistent and add schema (#74, #82, #66, #94, #101)
+ - fixed memory usage, avoid running out of memory for large experiments (#103)
+ - added support to verify parameter and config file (#104)
+ - added [documentation][docs] (#66, #101)
+ - use PyLint (#79)
 
 ## [0.10.1] - 2018-06-08
 
- - fix experiment filters and reporting on codespeed submission errors (#77)
+ - fixed experiment filters and reporting on codespeed submission errors (#77)
 
 ## [0.10.0] - 2018-06-08
 
- - restructure command-line options in help, and use argparse (#73)
- - add support for Python 3 and PyPy (#65)
- - add support for extra criteria (things beside run time) (#64)
- - add support for path names in ReBenchLog benchmark names
+ - restructured command-line options in help, and use argparse (#73)
+ - added support for Python 3 and PyPy (#65)
+ - added support for extra criteria (things beside run time) (#64)
+ - added support for path names in ReBenchLog benchmark names
 
 ## [0.9.1] - 2017-12-21
 
- - fix time-left reporting of invalid times (#60)
+ - fixed time-left reporting of invalid times (#60)
  - take the number of data points per run into account for estimated time left (#62)
  - obtain process output on timeout to enable results of partial runs
- - fix incompatibility with latest setuptools
+ - fixed incompatibility with latest setuptools
 
 ## [0.9.0] - 2017-04-23
 
@@ -60,7 +72,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0rc1...HEAD
+[1.0rc1]: https://github.com/smarr/ReBench/compare/v0.10.1...v1.0rc1
 [0.10.1]: https://github.com/smarr/ReBench/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/smarr/ReBench/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/smarr/ReBench/compare/v0.9.0...v0.9.1
@@ -73,3 +86,4 @@
 [0.7.1]: https://github.com/smarr/ReBench/compare/v0.6.0...v0.7.1
 [0.6.0]: https://github.com/smarr/ReBench/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/smarr/ReBench/compare/05dfc4b...v0.5.0
+[docs]: http://rebench.readthedocs.io/
