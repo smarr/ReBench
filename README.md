@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/smarr/ReBench.svg?branch=master)](https://travis-ci.org/smarr/ReBench)
 [![Documentation](https://readthedocs.org/projects/rebench/badge/?version=latest)](https://rebench.readthedocs.io/)
 [![Codacy Quality](https://api.codacy.com/project/badge/Grade/2f7210b65b414100be03f64fe6702d66)](https://www.codacy.com/app/smarr/ReBench)
+[![Coverage](https://coveralls.io/repos/github/smarr/ReBench/badge.svg?branch=master)](https://coveralls.io/github/smarr/ReBench?branch=master)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1311762.svg)](https://doi.org/10.5281/zenodo.1311762)
 
 ReBench is a tool to run and document benchmark experiments.
 Currently, it is mostly used for benchmarking language implementations,
@@ -123,6 +125,31 @@ For contributions, we use the [normal Github flow](https://guides.github.com/int
 of pull requests, discussion, and revisions. For larger contributions,
 it is likely useful to discuss them upfront in an issue first.
 
+## Use in Academia
+
+If you use ReBench for research and in academic publications, please consider
+citing it.
+
+The preferred citation is:
+
+```bibtex
+@misc{ReBench:2018,
+  author = {Marr, Stefan},
+  doi = {10.5281/zenodo.1311762},
+  month = {August},
+  note = {Version 1.0},
+  publisher = {GitHub},
+  title = {ReBench: Execute and Document Benchmarks Reproducibly},
+  year = 2018
+}
+```
+
+Some publications that have been using ReBench include:
+
+ - [Fully Reflective Execution Environments: Virtual Machines for More Flexible Software](https://doi.org/10.1109%2fTSE.2018.2812715), G. Chari et al.
+ - [Cross-Language Compiler Benchmarking---Are We Fast Yet?](http://stefan-marr.de/papers/dls-marr-et-al-cross-language-compiler-benchmarking-are-we-fast-yet/), S. Marr et al.
+ - [Tracing vs. Partial Evaluation: Comparing Meta-Compilation Approaches for Self-Optimizing Interpreters](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation/), S. Marr, S. Ducasse
+ - [Zero-Overhead Metaprogramming: Reflection and Metaobject Protocols Fast and without Compromises](http://stefan-marr.de/papers/pldi-marr-et-al-zero-overhead-metaprogramming/), S. Marr et al.
 
 [1]: https://github.com/tobami/codespeed/
 [docs]: http://rebench.readthedocs.io/
