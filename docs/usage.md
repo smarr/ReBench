@@ -143,6 +143,17 @@ For this purpose we use *schedulers* to determine the execution order.
                         random [default: batch]
 ```
 
+#### Prevent Execution to Verify Configuration
+
+To check whether a configuration is correct, it can be useful to avoid
+execution altogether. For such *testing* or *dry run*, we have the following
+option:
+
+```text
+-E, --no-execution    Disables execution. It allows to verify the
+                      configuration file and other parameters.
+```  
+
 #### Continuous Performance Tracking
 
 ReBench supports [Codespeed][1] as platform for continuous performance
