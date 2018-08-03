@@ -146,10 +146,19 @@ The preferred citation is:
 
 Some publications that have been using ReBench include:
 
- - [Fully Reflective Execution Environments: Virtual Machines for More Flexible Software](https://doi.org/10.1109%2fTSE.2018.2812715), G. Chari et al.
- - [Cross-Language Compiler Benchmarking---Are We Fast Yet?](http://stefan-marr.de/papers/dls-marr-et-al-cross-language-compiler-benchmarking-are-we-fast-yet/), S. Marr et al.
- - [Tracing vs. Partial Evaluation: Comparing Meta-Compilation Approaches for Self-Optimizing Interpreters](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation/), S. Marr, S. Ducasse
- - [Zero-Overhead Metaprogramming: Reflection and Metaobject Protocols Fast and without Compromises](http://stefan-marr.de/papers/pldi-marr-et-al-zero-overhead-metaprogramming/), S. Marr et al.
+ - [Fully Reflective Execution Environments: Virtual Machines for More Flexible Software](https://doi.org/10.1109%2fTSE.2018.2812715), G. Chari et al. 2018.
+ - [Building efficient and highly run-time adaptable virtual machines](http://lafhis.dc.uba.ar/sites/default/files/papers/buildingEfficientReflectiveVMs.pdf), G. Chari et al. 2017.
+ - [Improving live debugging of concurrent threads through thread histories](https://doi.org/10.1016/j.scico.2017.10.005), M. Leske et al. 2017.
+ - [Adaptive Just-in-time Value Class Optimization for Lowering Memory Consumption and Improving Execution Time Performance](https://arxiv.org/pdf/1606.06726) T. Pape et al. 2016
+ - [Cross-Language Compiler Benchmarking---Are We Fast Yet?](http://stefan-marr.de/papers/dls-marr-et-al-cross-language-compiler-benchmarking-are-we-fast-yet/), S. Marr et al. 2016.
+ - [Tracing vs. Partial Evaluation: Comparing Meta-Compilation Approaches for Self-Optimizing Interpreters](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation/), S. Marr, S. Ducasse. 2015.
+ - [Zero-Overhead Metaprogramming: Reflection and Metaobject Protocols Fast and without Compromises](http://stefan-marr.de/papers/pldi-marr-et-al-zero-overhead-metaprogramming/), S. Marr et al. 2015.
+ - [Pycket: a tracing JIT for a functional language](https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/BaumanBolzHirschfeldKirilichevPapeSiekTobinHochstadt_2015_PycketATracingJitForAFunctionalLanguage_AcmDL.pdf), S. Bauman et al. 2015.
+ - [Adaptive just-in-time value class optimization: transparent data structure inlining for fast execution](http://hpi.uni-potsdam.de/hirschfeld/publications/media/PapeBolzHirschfeld_2015_AdaptiveJustInTimeValueClassOptimization_AcmDL.pdf), T. Pape et al. 2015. 
+ - [Meta-tracing makes a fast Racket](https://www.hpi.uni-potsdam.de/hirschfeld/publications/media/BolzPapeSiekTobinHochstadt_2014_MetaTracingMakesAFastRacket_AuthorsVersion.pdf), C. F. Bolz et al. 2014.
+ - [Cloud PARTE: Elastic Complex Event Processing based on Mobile Actors](http://soft.vub.ac.be/~smarr/downloads/agere13-swalens-et-al-cloud-parte-elastic-complex-event-processing-based-on-mobile-actors.pdf), J. Swalens et al. 2013.
+ - [Identifying A Unifying Mechanism for the Implementation of Concurrency Abstractions on Multi-Language Virtual Machines](http://www.stefan-marr.de/downloads/tools12-smarr-dhondt-identifying-a-unifying-mechanism-for-the-implementation-of-concurrency-abstractions-on-multi-language-virtual-machines.pdf), S. Marr, T. D'Hondt. 2012.
+ - [Insertion Tree Phasers: Efficient and Scalable Barrier Synchronization for Fine-grained Parallelism](http://www.stefan-marr.de/downloads/hpcc2010-marr-etal-insertion-tree-phasers.pdf), S. Marr et al. 2011.
 
 [1]: https://github.com/tobami/codespeed/
 [docs]: http://rebench.readthedocs.io/
