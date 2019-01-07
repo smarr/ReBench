@@ -25,13 +25,20 @@ from ..model.measurement import Measurement
 
 
 class MultivariateAdapter(GaugeAdapter):
-    """Performance reader for multiple datapoints with multiple variables
+    """
+    Performance reader for multiple datapoints with multiple variables
 
-    In its simplest form compatible to TestExecutorPerformance.
+    Supported output is in the form of
+        %d:RESULT-bar:ms:   %d.%d
+        %d:RESULT-total:    %d.%d
+        %d:RESULT-baz:kbyte:   %d
+        %d:RESULT-foo:kerf: %d.%d
+
+    See :class:`tests.features.Issue31MultivariateDataPointsTest`
     """
 
     variable_re = re.compile(r"(?:(\d+):)?RESULT-(\w+):(?:(\w+):)?\s*(\d+(\.\d+)?)")
-    # optional datapoint counter, mandantory variable, optional unit, mandantory int-or-float
+    # optional datapoint counter, mandatory variable, optional unit, mandatory int-or-float
 
     def __init__(self, include_faulty):
         super(MultivariateAdapter, self).__init__(include_faulty)
@@ -70,7 +77,6 @@ class MultivariateAdapter(GaugeAdapter):
                 current.add_measurement(measure)
 
                 if cnt is None and measure.is_total():
-                    # compatibility for TestExecutorPerformance
                     data_points.append(current)
                     current = DataPoint(run_id)
                     iteration += 1
