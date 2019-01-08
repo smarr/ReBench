@@ -35,6 +35,7 @@ from humanfriendly.compat import coerce_string
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
+from .ui import escape_braces
 
 
 class FailedBuilding(Exception):
@@ -64,7 +65,6 @@ class RunScheduler(object):
 
     def _process_remaining_runs(self, runs):
         """Abstract, to be implemented"""
-        pass
 
     def _estimate_time_left(self):
         if self._runs_completed == 0:
@@ -375,11 +375,11 @@ class Executor(object):
                 script, return_code, "Build of " + name + " failed.")
             self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
-                lines = stdout_result.split('\n')
+                lines = escape_braces(stdout_result).split('\n')
                 self._ui.error("{ind}stdout:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             if stderr_result and stderr_result.strip():
-                lines = stderr_result.split('\n')
+                lines = escape_braces(stderr_result).split('\n')
                 self._ui.error("{ind}stderr:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
@@ -491,7 +491,7 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
 
             if output and output.strip():
-                lines = output.split('\n')
+                lines = escape_braces(output).split('\n')
                 self._ui.error("{ind}Output:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
         else:
