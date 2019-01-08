@@ -65,7 +65,6 @@ class RunScheduler(object):
 
     def _process_remaining_runs(self, runs):
         """Abstract, to be implemented"""
-        pass
 
     def _estimate_time_left(self):
         if self._runs_completed == 0:
