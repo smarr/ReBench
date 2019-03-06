@@ -47,6 +47,15 @@ schema;runs_type:
         TODO: probably needs to be removed, not sure. parallel exec of
         benchmarks introduced a lot of noise
 
+    retries_after_failure:
+      type: int
+      # default: 0 #  can't specify this here, because the defaults override settings
+      desc: |
+        Some experiments may fail non-deterministically. For these, it may be
+        convenient to simply retry them a few times.
+        This value indicates how often execution should be retried on failure.
+
+
 schema;reporting_type:
   type: map
   mapping:

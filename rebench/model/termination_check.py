@@ -39,7 +39,8 @@ class TerminationCheck(object):
 
     def fails_consecutively(self):
         return (self._fail_immediately or
-                self._consecutive_erroneous_executions >= 3)
+                (self._consecutive_erroneous_executions > 0 and
+                 self._consecutive_erroneous_executions >= self._run_id.retries_after_failure))
 
     def has_too_many_failures(self, number_of_data_points):
         return (self._fail_immediately or
