@@ -214,7 +214,8 @@ class UiSpinner(Spinner):
         label = label or self.label
         if not label:
             raise Exception("No label set for spinner!")
-        elif self.total:
+
+        if self.total:
             label = "%s: %.2f%%\n" % (label, progress / (self.total / 100.0))
         elif self.timer and self.timer.elapsed_time > 2:
             label = "%s (%s)\n" % (label, self.timer.rounded)

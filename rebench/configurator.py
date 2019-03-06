@@ -140,8 +140,7 @@ def load_config(file_name):
             assert err.strerror == "No such file or directory"
             raise UIError("The requested config file (%s) could not be opened. %s.\n"
                           % (file_name, err.strerror), err)
-        else:
-            raise UIError(str(err) + "\n", err)
+        raise UIError(str(err) + "\n", err)
     except yaml.YAMLError as err:
         raise UIError("Parsing of the config file "
                       + file_name + " failed.\nError " + str(err) + "\n", err)

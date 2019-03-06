@@ -79,8 +79,7 @@ class DataStore(object):
         if key in self._bench_cfgs:
             raise ValueError("Two identical BenchmarkConfig tried to " +
                              "register. This seems to be wrong: " + str(key))
-        else:
-            self._bench_cfgs[key] = cfg
+        self._bench_cfgs[key] = cfg
         return cfg
 
 
