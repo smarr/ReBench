@@ -38,21 +38,26 @@ class ExpRunDetails(object):
         execute_exclusively = none_or_bool(config.get('execute_exclusively',
                                                       defaults.execute_exclusively))
 
+        retries_after_failure = none_or_int(config.get('retries_after_failure',
+                                                       defaults.retries_after_failure))
+
         return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
                              max_invocation_time, parallel_interference_factor, execute_exclusively,
+                             retries_after_failure,
                              defaults.invocations_override, defaults.iterations_override)
 
     @classmethod
     def empty(cls):
-        return ExpRunDetails(None, None, None, None, None, None, None, None, None)
+        return ExpRunDetails(None, None, None, None, None, None, None, None, None, None)
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, True,
+        return ExpRunDetails(1, 1, None, 50, -1, None, True, 0,
                              invocations_override, iterations_override)
 
     def __init__(self, invocations, iterations, warmup, min_iteration_time,
                  max_invocation_time, parallel_interference_factor, execute_exclusively,
+                 retries_after_failure,
                  invocations_override, iterations_override):
         self._invocations = invocations
         self._iterations = iterations
@@ -62,6 +67,7 @@ class ExpRunDetails(object):
         self._max_invocation_time = max_invocation_time
         self._parallel_interference_factor = parallel_interference_factor
         self._execute_exclusively = execute_exclusively
+        self._retries_after_failure = retries_after_failure
 
         self._invocations_override = invocations_override
         self._iterations_override = iterations_override
@@ -101,3 +107,7 @@ class ExpRunDetails(object):
     @property
     def execute_exclusively(self):
         return self._execute_exclusively
+
+    @property
+    def retries_after_failure(self):
+        return self._retries_after_failure

@@ -97,7 +97,7 @@ class _SubprocessThread(Thread):
 
 
 def _print_keep_alive(seconds_since_start):
-    print("Keep alive, current job runs for %dmin" % (seconds_since_start / 60))
+    print("Keep alive, current job runs for %dmin\n" % (seconds_since_start / 60))
 
 
 def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,

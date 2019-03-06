@@ -234,8 +234,7 @@ class ParallelScheduler(RunScheduler):
         if exceptions:
             if len(exceptions) == 1:
                 raise exceptions[0]
-            else:
-                raise BenchmarkThreadExceptions(exceptions)
+            raise BenchmarkThreadExceptions(exceptions)
 
     def _determine_num_work_items_to_take(self):
         # use a simple and naive scheduling strategy that still allows for
@@ -383,8 +382,8 @@ class Executor(object):
                 self._ui.error("{ind}stderr:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
-        else:
-            build_command.mark_succeeded()
+
+        build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
         with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:

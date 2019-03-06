@@ -57,6 +57,10 @@ class RunId(object):
         return self._benchmark.run_details.max_invocation_time
 
     @property
+    def retries_after_failure(self):
+        return self._benchmark.run_details.retries_after_failure
+
+    @property
     def iterations(self):
         run_details = self._benchmark.run_details
         if run_details.iterations_override is not None:

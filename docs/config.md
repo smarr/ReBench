@@ -316,6 +316,23 @@ runs:
   execute_exclusively: false
 ```
 
+---
+
+**retries_after_failure:**
+
+Some experiments may fail non-deterministically. For these, it may be
+convenient to simply retry them a few times.
+This setting indicates how often execution should be retried on failure.
+
+Default: `0`
+
+Example:
+
+```yaml
+runs:
+  retries_after_failure: 3
+```
+
 ## Reporting
 
 Currently, [Codespeed] is the only supported system for continuous
@@ -480,6 +497,7 @@ Thus, one can use:
 - `max_invocation_time`
 - `parallel_interference_factor`
 - `execute_exclusively`
+- `retries_after_failure`
 
 As well as:
 
