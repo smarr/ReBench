@@ -59,9 +59,7 @@ class Experiment(object):
         self._persistence = self._data_store.get(data_file,
                                                  configurator.discard_old_data)
 
-        self._executors = self._compile_executors(executions, configurator)
-
-        self._suites = self._compile_benchmark_suites(
+        self._suites = self._compile_executors_and_benchmark_suites(
             executions, suites, configurator)
         self._benchmarks = self._compile_benchmarks()
         self._runs = self._compile_runs(configurator)
@@ -84,27 +82,15 @@ class Experiment(object):
                         run.add_persistence(self._persistence)
         return runs
 
-    def _compile_executors(self, executions, configurator):
-        executors = {}
-
-        for executor in executions:
-            executor_name, _ = value_with_optional_details(executor)
-            if not configurator.has_executor(executor_name):
-                raise ValueError("The executor '%s' requested in %s was not found."
-                                 % (executor, self._name))
-
-            executors[executor_name] = configurator.get_executor(executor_name)
-
-        return executors
-
-    def _compile_benchmark_suites(self, executions, suites, configurator):
-        # for each executor, we now assemble the benchmark suites
+    def _compile_executors_and_benchmark_suites(self, executions, suites, configurator):
+        # we now assemble the executors and the benchmark suites
         results = []
-        for executor in executions:
-            executor_name, executor_details = value_with_optional_details(executor)
-            global_executor = self._executors[executor_name]
-            run_details = global_executor.run_details
-            variables = global_executor.variables
+        for executor_cfg in executions:
+            executor_name, executor_details = value_with_optional_details(executor_cfg)
+
+            run_details = self._run_details
+            variables = self._variables
+
             if executor_details:
                 run_details = ExpRunDetails.compile(executor_details, run_details)
                 variables = ExpVariables.compile(executor_details, variables)
@@ -112,10 +98,12 @@ class Experiment(object):
             else:
                 suites_for_executor = suites
 
+            executor = configurator.get_executor(executor_name, run_details, variables)
+
             for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(
-                    suite_name, configurator.get_suite(suite_name), global_executor,
-                    run_details, variables, configurator.build_commands)
+                    suite_name, configurator.get_suite(suite_name), executor,
+                    configurator.build_commands)
                 results.append(suite)
 
         return results

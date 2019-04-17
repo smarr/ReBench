@@ -45,3 +45,18 @@ class ReBenchTestCase(TestCase):
     def tearDown(self):
         os.remove(self._tmp_file)
         sys.exit = self._sys_exit
+
+    def _assert_runs(self, cnf, num_runs, num_dps, num_invocations):
+        """
+        :param cnf: Configurator
+        :param num_runs: expected number of runs
+        :param num_dps: expected number of data points
+        :param num_invocations: expected number of invocations
+        :return:
+        """
+        runs = cnf.get_runs()
+        self.assertEqual(num_runs, len(runs))
+        run = list(runs)[0]
+
+        self.assertEqual(num_dps, run.get_number_of_data_points())
+        self.assertEqual(num_invocations, run.completed_invocations)

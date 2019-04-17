@@ -22,7 +22,6 @@ from os.path import dirname
 
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
-from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.executor import Executor
 from .ui import UIError, escape_braces
@@ -178,8 +177,7 @@ class Configurator(object):
 
         self._run_filter = _RunFilter(run_filter)
 
-        self._executors = self._compile_executors(raw_config.get('executors', {}))
-
+        self._executors = raw_config.get('executors', {})
         self._suites_config = raw_config.get('benchmark_suites', {})
 
         experiments = raw_config.get('experiments', {})
@@ -253,8 +251,11 @@ class Configurator(object):
     def has_executor(self, executor_name):
         return executor_name in self._executors
 
-    def get_executor(self, executor_name):
-        return self._executors[executor_name]
+    def get_executor(self, executor_name, run_details, variables):
+        executor = Executor.compile(
+            executor_name, self._executors[executor_name],
+            run_details, variables, self._build_commands)
+        return executor
 
     def get_suite(self, suite_name):
         return self._suites_config[suite_name]
@@ -275,17 +276,6 @@ class Configurator(object):
         for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
         return runs
-
-    def _compile_executors(self, executors):
-        result = {}
-
-        variables = ExpVariables.empty()
-
-        for executor_name, details in executors.items():
-            result[executor_name] = Executor.compile(
-                executor_name, details, self._root_run_details, variables, self._build_commands)
-
-        return result
 
     def _compile_experiments(self, experiments):
         results = {}
