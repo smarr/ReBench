@@ -27,7 +27,7 @@ from .exp_variables import ExpVariables
 class BenchmarkSuite(object):
 
     @classmethod
-    def compile(cls, suite_name, suite, executor, run_details, variables, build_commands):
+    def compile(cls, suite_name, suite, executor, build_commands):
         gauge_adapter = suite.get('gauge_adapter')
         command = suite.get('command')
 
@@ -40,8 +40,8 @@ class BenchmarkSuite(object):
         description = suite.get('description')
         desc = suite.get('desc')
 
-        run_details = ExpRunDetails.compile(suite, run_details)
-        variables = ExpVariables.compile(suite, variables)
+        run_details = ExpRunDetails.compile(suite, executor.run_details)
+        variables = ExpVariables.compile(suite, executor.variables)
 
         return BenchmarkSuite(suite_name, executor, gauge_adapter, command, location,
                               build, benchmarks_config, description or desc, run_details, variables)
