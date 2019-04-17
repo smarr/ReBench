@@ -57,14 +57,6 @@ class PersistencyTest(ReBenchTestCase):
 
         self.assertEqual(deserialized.run_id, measurement.run_id)
 
-    def _assert_runs(self, cnf, num_runs, num_dps, num_invocations):
-        runs = cnf.get_runs()
-        self.assertEqual(num_runs, len(runs))
-        run = list(runs)[0]
-
-        self.assertEqual(num_dps, run.get_number_of_data_points())
-        self.assertEqual(num_invocations, run.completed_invocations)
-
     def test_iteration_invocation_semantics(self):
         # Executes first time
         ds = DataStore(self._ui)
