@@ -3,7 +3,7 @@ site_description: ReBench Project documentation
 site_author: ReBench contributors
 
 pages:
-  - 'ReBench: Execute and Document Benchmarks Reproducibly': index.md
+  - Home:           index.md
   - Basic Concepts: concepts.md
   - Usage:          usage.md
   - Configuration:  config.md
