@@ -1,6 +1,6 @@
 site_name: 'ReBench: Execute and Document Benchmarks Reproducibly'
-site_description: ReBench Project documentation
-site_author: ReBench contributors
+site_description: ReBench documentation
+site_author: 'ReBench contributors, see AUTHORS.md'
 
 pages:
   - Home:           index.md
