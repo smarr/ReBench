@@ -116,6 +116,16 @@ class RunId(object):
             return None
         return self._expand_vars(self._benchmark.suite.location)
 
+    def build_commands(self):
+        commands = set()
+        builds = self._benchmark.suite.executor.build
+        if builds:
+            commands.update(builds)
+        builds = self._benchmark.suite.build
+        if builds:
+            commands.update(builds)
+        return commands
+
     def requires_warmup(self):
         return self._benchmark.run_details.warmup > 0
 
