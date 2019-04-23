@@ -167,7 +167,9 @@ class _DataPointPersistence(object):
                 data_point.add_measurement(measurement)
 
                 if measurement.is_total():
-                    run_id.loaded_data_point(data_point)
+                    run_id.loaded_data_point(data_point,
+                                             (measurement.iteration <= run_id.warmup_iterations
+                                              if run_id.warmup_iterations else False))
                     data_point = DataPoint(run_id)
 
             except ValueError as err:

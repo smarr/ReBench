@@ -43,12 +43,12 @@ class RunsConfigTestCase(ReBenchTestCase):
         for i in range(1, 10):
             dp = DataPoint(self._run)
             dp.add_measurement(Measurement(i, 1, 0, 'ms', self._run))
-            self._run.loaded_data_point(dp)
+            self._run.loaded_data_point(dp, False)
         self.assertFalse(check.should_terminate(0))
 
         dp = DataPoint(self._run)
         dp.add_measurement(Measurement(10, 1, 0, 'ms', self._run))
-        self._run.loaded_data_point(dp)
+        self._run.loaded_data_point(dp, False)
         self.assertTrue(check.should_terminate(0))
 
     def test_terminate_not_determine_by_number_of_data_points(self):
