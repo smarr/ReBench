@@ -158,9 +158,10 @@ class Configurator(object):
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None
         iterations = cli_options.iterations if cli_options else None
-        if cli_options and cli_options.quick:
-            invocations = 1
-            iterations = 1
+        if cli_options:
+            if cli_options.setup_only or cli_options.quick:
+                invocations = 1
+                iterations = 1
 
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default(
@@ -275,6 +276,18 @@ class Configurator(object):
         runs = set()
         for exp in list(self._experiments.values()):
             runs |= exp.get_runs()
+
+        if self._options and self._options.setup_only:
+            # filter out runs we don't need to trigger a build
+            runs_with_builds = set()
+            build_commands = set()
+
+            for run in runs:
+                commands = run.build_commands()
+                if not build_commands >= commands:
+                    runs_with_builds.add(run)
+                    build_commands.update(commands)
+            runs = runs_with_builds
         return runs
 
     def _compile_experiments(self, experiments):

@@ -77,7 +77,7 @@ considered. Similarly, naming more benchmarks will include them all.
 
 ReBench supports a range of other options to control execution.
 
-#### Quick Runs, Iterations, Invocations
+#### Quick Runs, Iterations, Invocations, Building
 
 The [configuration](config.md#invocation) uses the notion of iteration
 and invocation to define how often an executor is started (invocation) and how many
@@ -93,6 +93,13 @@ We can override this setting with the following parameters:
                  within an executor execution.
 
 -q, --quick      Execute quickly. Identical with --iterations=1 --invocations=1
+
+--setup-only     Build all executors and suites, and run one benchmark for each executor.
+                 This ensures executors and suites are built.
+                 It Implies --iterations=1 --invocations=1.
+
+-B, --without-building
+                 Disables execution of build commands for executors and suites.
 ```
 
 #### Niceness

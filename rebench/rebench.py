@@ -92,6 +92,10 @@ Argument:
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
         execution.add_argument(
+            '-N', '--without-nice', action='store_false', dest='use_nice',
+            help='Used for debugging and environments without the tool nice.',
+            default=True)
+        execution.add_argument(
             '-in', '--invocations', action='store', dest='invocations',
             help='The number of times an executor is started to execute a run.',
             default=None, type=int)
@@ -104,9 +108,11 @@ Argument:
             help='Execute quickly. Identical with --iterations=1 --invocations=1',
             default=False)
         execution.add_argument(
-            '-N', '--without-nice', action='store_false', dest='use_nice',
-            help='Used for debugging and environments without the tool nice.',
-            default=True)
+            '--setup-only', action='store_true', dest='setup_only',
+            help=('Build all executors and suites, and run one benchmark for each executor. ' +
+                  'This ensures executors and suites are built. ' +
+                  ' It Implies --iterations=1 --invocations=1.'),
+            default=False)
         execution.add_argument(
             '-B', '--without-building', action='store_false', dest='do_builds',
             help='Disables execution of build commands for executors and suites.',

@@ -31,6 +31,10 @@ class Issue58BuildExecutor(ReBenchTestCase):
     def setUp(self):
         super(Issue58BuildExecutor, self).setUp()
         self._set_path(__file__)
+        self._cleanup_log()
+
+    def tearDown(self):
+        self._cleanup_log()
 
     def _cleanup_log(self):
         if os.path.isfile(self._path + '/build.log'):
@@ -41,7 +45,6 @@ class Issue58BuildExecutor(ReBenchTestCase):
             return log_file.read()
 
     def test_build_executor_simple_cmd(self):
-        self._cleanup_log()
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
                            self._ui, data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
@@ -58,8 +61,6 @@ class Issue58BuildExecutor(ReBenchTestCase):
             os.remove(self._path + '/vm_58a.sh')
 
     def test_build_executor_cmd_list(self):
-        self._cleanup_log()
-
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
                            self._ui, data_file=self._tmp_file, exp_name='B')
         runs = list(cnf.get_runs())
@@ -76,8 +77,6 @@ class Issue58BuildExecutor(ReBenchTestCase):
             os.remove(self._path + '/vm_58b.sh')
 
     def test_build_output_in_log(self):
-        self._cleanup_log()
-
         self.test_build_executor_simple_cmd()
 
         log = self._read_log()
@@ -86,8 +85,6 @@ class Issue58BuildExecutor(ReBenchTestCase):
             "E:BashA|STD:standard\nE:BashA|ERR:error\n", log)
 
     def test_broken_build_prevents_experiments(self):
-        self._cleanup_log()
-
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
                            self._ui, data_file=self._tmp_file,
                            exp_name='C')
@@ -110,7 +107,6 @@ class Issue58BuildExecutor(ReBenchTestCase):
             "E:BashC|STD:standard\nE:BashC|ERR:error\n", log)
 
     def test_build_is_run_only_once_for_same_command(self):
-        self._cleanup_log()
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
                            self._ui, data_file=self._tmp_file,
                            exp_name='AandAA')

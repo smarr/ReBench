@@ -55,7 +55,7 @@ class TerminationCheck(object):
             msg = "{ind}Execution has failed, benchmark is aborted.\n"
             if self._consecutive_erroneous_executions > 0:
                 msg += "{ind}{ind}The benchmark failed "
-                msg += str(self._consecutive_erroneous_executions) + " times in a row."
+                msg += str(self._consecutive_erroneous_executions) + " times in a row.\n"
             self._ui.warning(msg, self._run_id)
             return True
         elif self.has_too_many_failures(number_of_data_points):

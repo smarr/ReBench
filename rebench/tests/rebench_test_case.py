@@ -55,8 +55,8 @@ class ReBenchTestCase(TestCase):
         :return:
         """
         runs = cnf.get_runs()
-        self.assertEqual(num_runs, len(runs))
+        self.assertEqual(num_runs, len(runs), "incorrect number of runs")
         run = list(runs)[0]
 
-        self.assertEqual(num_dps, run.get_number_of_data_points())
-        self.assertEqual(num_invocations, run.completed_invocations)
+        self.assertEqual(num_dps, run.get_number_of_data_points(), "incorrect num of data points")
+        self.assertEqual(num_invocations, run.completed_invocations, "incorrect num of invocations")
