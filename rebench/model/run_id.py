@@ -178,20 +178,19 @@ class RunId(object):
         for persistence in self._persistence:
             persistence.close()
 
-    def _new_data_point(self, data_point):
+    def _new_data_point(self, data_point, warmup):
         self._max_invocation = max(self._max_invocation, data_point.invocation)
         if self._total_unit is None:
             self._total_unit = data_point.get_total_unit()
-
-    def loaded_data_point(self, data_point):
-        self._new_data_point(data_point)
-        self._statistics.add_sample(data_point.get_total_value())
-
-    def add_data_point(self, data_point, warmup):
-        self._new_data_point(data_point)
-
         if not warmup:
             self._statistics.add_sample(data_point.get_total_value())
+
+    def loaded_data_point(self, data_point, warmup):
+        self._new_data_point(data_point, warmup)
+
+    def add_data_point(self, data_point, warmup):
+        self._new_data_point(data_point, warmup)
+
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
 
