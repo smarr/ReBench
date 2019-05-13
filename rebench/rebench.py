@@ -189,7 +189,7 @@ Argument:
     def determine_exp_name_and_filters(filters):
         exp_name = filters[0] if filters and (
             not filters[0].startswith("e:") and
-            not filters[0].startswith("s:")) else "all"
+            not filters[0].startswith("s:")) else None
         exp_filter = [f for f in filters if (f.startswith("e:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
