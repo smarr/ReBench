@@ -70,7 +70,7 @@ class Experiment(object):
         for bench in self._benchmarks:
             if not configurator.run_filter.applies(bench):
                 continue
-            variables = bench.suite.variables
+            variables = bench.variables
             for cores in variables.cores:
                 for input_size in variables.input_sizes:
                     for var_val in variables.variable_values:
