@@ -471,7 +471,8 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
             return True
 
-        if return_code != 0 and not self._include_faulty:
+        if return_code != 0 and not self._include_faulty and not (
+                return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:

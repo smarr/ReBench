@@ -135,7 +135,7 @@ Some times, we may want to update some experiments and discard old data:
 -r, --rerun   Rerun selected experiments, and discard old data from data file.
 ```
 
-[Runs](concepts.md#run) may fail for a variety reasons. A benchmark might be
+[Runs](concepts.md#run) may fail for a variety of reasons. A benchmark might be
 buggy, the executor may be faulty or unavailable, or the run reaches the
 [`max_invocation_time`](config.md#max_invocation_time).
 To include all data generated for the benchmark until it failed,

@@ -270,6 +270,7 @@ runs:
 
 Time in seconds after which an invocation is terminated.
 The value -1 indicates that there invocations should never be terminated.
+See also [`ignore_timeouts`](#ignore_timeouts).
 
 Default: `-1`
 
@@ -278,6 +279,25 @@ Example:
 ```yaml
 runs:
   max_invocation_time: 600
+```
+
+---
+
+**ignore_timeouts:**
+
+<a id="ignore_timeouts"></a>
+
+In complex benchmark setups, some benchmarks may take too long
+and the additional data points of longer execution might
+add only minimal additional confidence. For these cases,
+timeouts of executions that take longer than
+[`max_invocation_time`](#max_invocation_time) might be reasonably ignored.
+
+Default: `false`
+
+```yaml
+runs:
+  ignore_timeouts: true
 ```
 
 ---

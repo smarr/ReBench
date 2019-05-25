@@ -34,6 +34,13 @@ schema;runs_type:
         Time in second after which an invocation is terminated.
         The value -1 indicates that there is no timeout intended.
       # default: -1 #  can't specify this here, because the defaults override settings
+    ignore_timeouts:
+      type: bool
+      desc: |
+        When max_invocation_time is reached, do not report an error.
+        Instead, accept the data and disregard the timeout.
+        Benchmark setups that are confirmed to be working, for which errors
+        or warnings may confuse users.
     parallel_interference_factor:
       type: float
       desc: |

@@ -57,6 +57,10 @@ class RunId(object):
         return self._benchmark.run_details.max_invocation_time
 
     @property
+    def ignore_timeouts(self):
+        return self._benchmark.run_details.ignore_timeouts
+
+    @property
     def retries_after_failure(self):
         return self._benchmark.run_details.retries_after_failure
 
