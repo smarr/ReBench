@@ -479,7 +479,7 @@ class Executor(object):
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
                            run_id.benchmark.suite.executor.name, return_code)
-            elif return_code == -9:
+            elif return_code == subprocess_timeout.E_TIMEOUT:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"
                        + "{ind}{ind}max_invocation_time: %s\n") % (

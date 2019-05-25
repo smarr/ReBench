@@ -17,6 +17,9 @@ try:
 except NameError:
     IS_PY3 = False
 
+# Indicate timeout with standard exit code
+E_TIMEOUT = -9
+
 
 class _SubprocessThread(Thread):
 
@@ -175,7 +178,7 @@ def _kill_process(pid, recursively, thread):
 
     thread.join()
 
-    return -9, thread.stdout_result, thread.stderr_result
+    return E_TIMEOUT, thread.stdout_result, thread.stderr_result
 
 
 def _get_process_children(pid):
