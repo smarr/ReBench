@@ -1,7 +1,7 @@
 # Usage
 
 ReBench is a command-line tool. In the following, we will discuss its usage.
-A basic help can be displayed with the `--help` argument:
+The complete set of options can be displayed with the `--help` argument:
 
 ```bash
 $ rebench --help
@@ -121,7 +121,7 @@ by adding the following line in `/etc/security/limits.conf`:
 user_executing_benchmarks    -       nice            -20
 ```
 
-#### Discarding Data, Rerunning Experiments
+#### Discarding Data, Rerunning Experiments, and Faulty Runs
 
 ReBench's normal execution mode will assume that it should accumulate all data
 until a complete data set is reached.
@@ -133,6 +133,16 @@ Some times, we may want to update some experiments and discard old data:
 ```text
 -c, --clean   Discard old data from the data file (configured in the run description).
 -r, --rerun   Rerun selected experiments, and discard old data from data file.
+```
+
+[Runs](concepts.md#run) may fail for a variety reasons. A benchmark might be
+buggy, the executor may be faulty or unavailable, or the run reaches the
+[`max_invocation_time`](config.md#max_invocation_time).
+To include all data generated for the benchmark until it failed,
+we can use the `-f` option: 
+
+```text
+-f, --faulty  Include results of faulty or failing runs
 ```
 
 #### Execution Order
