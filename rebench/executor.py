@@ -471,7 +471,8 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
             return True
 
-        if return_code != 0 and not self._include_faulty:
+        if return_code != 0 and not self._include_faulty and not (
+                return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
@@ -479,7 +480,7 @@ class Executor(object):
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
                            run_id.benchmark.suite.executor.name, return_code)
-            elif return_code == -9:
+            elif return_code == subprocess_timeout.E_TIMEOUT:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"
                        + "{ind}{ind}max_invocation_time: %s\n") % (

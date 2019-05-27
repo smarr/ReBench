@@ -32,6 +32,8 @@ class ExpRunDetails(object):
                                                     defaults.min_iteration_time))
         max_invocation_time = none_or_int(config.get('max_invocation_time',
                                                      defaults.max_invocation_time))
+        ignore_timeouts = none_or_bool(config.get('ignore_timeouts',
+                                                  defaults.ignore_timeouts))
 
         parallel_interference_factor = none_or_float(config.get(
             'parallel_interference_factor', defaults.parallel_interference_factor))
@@ -42,22 +44,22 @@ class ExpRunDetails(object):
                                                        defaults.retries_after_failure))
 
         return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
-                             max_invocation_time, parallel_interference_factor, execute_exclusively,
-                             retries_after_failure,
+                             max_invocation_time, ignore_timeouts, parallel_interference_factor,
+                             execute_exclusively, retries_after_failure,
                              defaults.invocations_override, defaults.iterations_override)
 
     @classmethod
     def empty(cls):
-        return ExpRunDetails(None, None, None, None, None, None, None, None, None, None)
+        return ExpRunDetails(None, None, None, None, None, None, None, None, None, None, None)
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, True, 0,
+        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0,
                              invocations_override, iterations_override)
 
     def __init__(self, invocations, iterations, warmup, min_iteration_time,
-                 max_invocation_time, parallel_interference_factor, execute_exclusively,
-                 retries_after_failure,
+                 max_invocation_time, ignore_timeouts, parallel_interference_factor,
+                 execute_exclusively, retries_after_failure,
                  invocations_override, iterations_override):
         self._invocations = invocations
         self._iterations = iterations
@@ -65,6 +67,7 @@ class ExpRunDetails(object):
 
         self._min_iteration_time = min_iteration_time
         self._max_invocation_time = max_invocation_time
+        self._ignore_timeouts = ignore_timeouts
         self._parallel_interference_factor = parallel_interference_factor
         self._execute_exclusively = execute_exclusively
         self._retries_after_failure = retries_after_failure
@@ -99,6 +102,10 @@ class ExpRunDetails(object):
     @property
     def max_invocation_time(self):
         return self._max_invocation_time
+
+    @property
+    def ignore_timeouts(self):
+        return self._ignore_timeouts
 
     @property
     def parallel_interference_factor(self):
