@@ -2,7 +2,18 @@
 
 ## [Unreleased]
 
- -
+ - 
+
+## [1.0rc2] - 2019-06-09
+
+ - added `--setup-only` option, to run one benchmark for each setup (#110, #115)
+ - added `ignore_timeout` setting to accept known timeouts without error (#118)
+ - added `retries_after_failure` setting (#107, #108)
+ 
+ - fixed data loading, which ignored warmup setting (#111, #116)
+ - fixed how settings are inherited for follow documentation (#112, #113)
+ - fixed message for consecutive failures (#109)
+ - fixed some reporting issues (#106)
 
 ## [1.0rc1] - 2018-08-02
 
@@ -72,7 +83,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0rc1...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0rc2...HEAD
+[1.0rc2]: https://github.com/smarr/ReBench/compare/v1.0rc1...v1.0rc2
 [1.0rc1]: https://github.com/smarr/ReBench/compare/v0.10.1...v1.0rc1
 [0.10.1]: https://github.com/smarr/ReBench/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/smarr/ReBench/compare/v0.9.1...v0.10.0
