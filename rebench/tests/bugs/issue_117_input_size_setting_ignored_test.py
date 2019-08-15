@@ -21,38 +21,35 @@ from ..rebench_test_case import ReBenchTestCase
 
 from ...persistence import DataStore
 from ...configurator import Configurator, load_config
-from ...executor import Executor
 
 
-class Issue112Test(ReBenchTestCase):
+class Issue117Test(ReBenchTestCase):
 
     def setUp(self):
-        super(Issue112Test, self).setUp()
+        super(Issue117Test, self).setUp()
         self._set_path(__file__)
 
-    def _test(self, exp_name, exp_result):
+    def _test(self, exp_name, num_runs, exp_input_sizes):
         # Executes first time
         ds = DataStore(self._ui)
-        cnf = Configurator(load_config(self._path + '/issue_112.conf'),
+        cnf = Configurator(load_config(self._path + '/issue_117.conf'),
                            ds, self._ui, exp_name=exp_name, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         # Has not executed yet, check that there is simply
-        self._assert_runs(cnf, 1, 0, 0)
+        self._assert_runs(cnf, num_runs, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
-        ex.execute()
+        runs = list(cnf.get_runs())
+        runs = sorted(runs, key=lambda e: e.cmdline())
+        for i in range(num_runs):
+            self.assertEqual(exp_input_sizes[i], runs[i].input_size,
+                             "expected input_size at idx %d" % i)
 
-        self._assert_runs(cnf, 1, exp_result, exp_result)
+    def test_input_size_setting_on_experiment(self):
+        self._test('ExpSetting', 6, [0, 10, 1, 2, 3, 4])
 
-    def test_invocation_setting_on_experiment(self):
-        self._test('ExpSetting', 10)
+    def test_input_size_setting_on_experiment_execution_detail(self):
+        self._test('ExecSetting', 6, [0, 10, 1, 2, 5, 6])
 
-    def test_invocation_setting_on_experiment_execution_detail(self):
-        self._test('ExecSetting', 7)
-
-    def test_invocation_setting_for_global_run_details(self):
-        self._test('GlobalSetting', 5)
-
-    def test_invocation_setting_in_suite(self):
-        self._test('SuiteSetting', 3)
+    def test_input_size_setting_on_benchmark(self):
+        self._test('BaseSetting', 5, [0, 10, 1, 2, None])

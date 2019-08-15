@@ -164,7 +164,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_determine_exp_name_and_filters_empty(self):
         empty = []
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(empty)
-        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all(self):
@@ -188,7 +188,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_determine_exp_name_and_filters_only_others(self):
         filters = ['e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
-        self.assertEqual(exp_name, "all")
+        self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
