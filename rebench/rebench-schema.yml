@@ -119,8 +119,7 @@ schema;benchmark_type_map:
     regex;(.+):
       type: map
       mapping:
-        <<: *EXP_RUN_DETAILS
-        <<: *EXP_VARIABLES
+        <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
         extra_args:
           type: scalar
           desc: This extra argument is appended to the benchmark's command line.
@@ -155,8 +154,7 @@ schema;build_type:
 schema;benchmark_suite_type:
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     gauge_adapter:
       type: str
       required: yes
@@ -200,8 +198,7 @@ schema;benchmark_suite_type:
 schema;executor_type:
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     path:
       type: str
       required: no
@@ -239,8 +236,7 @@ schema;exp_exec_type:
     regex;(.+):
       type: map
       mapping:
-        <<: *EXP_RUN_DETAILS
-        <<: *EXP_VARIABLES
+        <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
         suites:
           include: exp_suite_type
 
@@ -248,8 +244,7 @@ schema;experiment_type:
   desc: Defined an experiment for a specific executor
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     description:
       type: str
       desc: Description of the experiment
