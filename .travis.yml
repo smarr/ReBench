@@ -15,6 +15,11 @@ matrix:
       dist: xenial
       before_install:
         - pip install pylint
+    - python: "3.7-dev"
+      dist: xenial
+      before_install:
+        - pip install pylint
+        - pip install ruamel.yaml
     # PyPy versions
     - python: pypy
       env: DO_LINT="echo On PyPy, we won't "

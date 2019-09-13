@@ -119,8 +119,7 @@ schema;benchmark_type_map:
     regex;(.+):
       type: map
       mapping:
-        <<: *EXP_RUN_DETAILS
-        <<: *EXP_VARIABLES
+        <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
         extra_args:
           type: scalar
           desc: This extra argument is appended to the benchmark's command line.
@@ -155,16 +154,15 @@ schema;build_type:
 schema;benchmark_suite_type:
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     gauge_adapter:
       type: str
-      required: yes
+      required: true
       desc: |
         Name of the parser that interpreters the output of the benchmark harness
     command:
       type: str
-      required: yes
+      required: true
       desc: |
         The command for the benchmark harness. It's going to be combined with the
         executor's command line. It supports various format variables, including:
@@ -185,7 +183,7 @@ schema;benchmark_suite_type:
       include: build_type
     benchmarks:
       type: seq
-      required: yes
+      required: true
       matching: any
       sequence:
         - include: benchmark_type_str
@@ -200,17 +198,16 @@ schema;benchmark_suite_type:
 schema;executor_type:
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     path:
       type: str
-      required: no
+      required: false
       desc: |
         Path to the executable.
         If not given, it's up to the shell to find the executable
     executable:
       type: str
-      required: yes
+      required: true
       desc: the name of the executable to be used
     args:
       type: str
@@ -239,8 +236,7 @@ schema;exp_exec_type:
     regex;(.+):
       type: map
       mapping:
-        <<: *EXP_RUN_DETAILS
-        <<: *EXP_VARIABLES
+        <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
         suites:
           include: exp_suite_type
 
@@ -248,8 +244,7 @@ schema;experiment_type:
   desc: Defined an experiment for a specific executor
   type: map
   mapping:
-    <<: *EXP_RUN_DETAILS
-    <<: *EXP_VARIABLES
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     description:
       type: str
       desc: Description of the experiment
