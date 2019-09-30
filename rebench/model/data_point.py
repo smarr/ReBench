@@ -53,7 +53,22 @@ class DataPoint(object):
                                  "'total' measurement.")
             self._total = measurement
 
+    def _get_measurements_reordered(self):
+        # re-order so that total is last.
+        out = [m for m in self._measurements if not m.is_total()]
+        def _find_total(measurements):
+            for measurement in measurements:
+                if measurement.is_total():
+                    return measurement # Highlander
+            return None
+        total = _find_total(self._measurements)
+        if total is not None:
+            out.append(total)
+        return out
+
     def get_measurements(self):
+        if self._measurements and not self._measurements[-1].is_total():
+            return self._get_measurements_reordered()
         return self._measurements
 
     def get_total_value(self):
