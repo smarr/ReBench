@@ -195,7 +195,7 @@ class ParallelScheduler(RunScheduler):
     def _number_of_threads(self):
         # TODO: read the configuration elements!
         non_interference_factor = float(2.5)
-        return int(floor(cpu_count() / non_interference_factor))
+        return max(int(floor(cpu_count() / non_interference_factor)), cpu_count() - 20)
 
     @staticmethod
     def _split_runs(runs):
