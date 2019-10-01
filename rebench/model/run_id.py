@@ -18,6 +18,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import re
+import sys
+from threading import Thread
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
@@ -317,6 +323,13 @@ class RunId(object):
         return data_store.create_run_id(
             benchmark, str_list[-3], str_list[-2], str_list[-1])
 
+    @staticmethod
+    def make(benchmark, cores, input_size, var_value):
+        if _should_parallelize(benchmark):
+            return _RunIdParallel(benchmark, cores, input_size, var_value)
+        return RunId(benchmark, cores, input_size, var_value)
+
+
     def __str__(self):
         return "RunId(%s, %s, %s, %s, %s, %d)" % (self._benchmark.name,
                                                   self._cores,
@@ -324,3 +337,69 @@ class RunId(object):
                                                   self._input_size or '',
                                                   self._var_value  or '',
                                                   self._benchmark.run_details.warmup or 0)
+
+
+
+def _should_parallelize(bench_cfg):
+    # memoize cpu count, detemination is potentially expensive
+    if not hasattr(_should_parallelize, 'cpus'):
+        from multiprocessing import cpu_count
+        _should_parallelize.cpus = cpu_count()
+    return (not bench_cfg.run_details.execute_exclusively and
+            _should_parallelize.cpus > 1)
+
+class _RunIdParallel(RunId):
+    """
+    Like RunId, but add_data_point queues the actual
+    act of adding the point to the persistance.
+    This is not really possible on persistence side, since
+    we do not know there whether we should parallelize.
+    
+    Using the queue avoids multiple threads accessing the same
+    file. While there are locks, things get messy and out of order
+    nonetheless.
+    """
+    common_persist_queue = Queue()
+    consumer = None
+
+    def __init__(self, benchmark, cores, input_size, var_value):
+        super(_RunIdParallel, self).__init__(benchmark, cores, input_size, var_value)
+        self._persist_queue, self._consumer = type(self)._ensure_running()
+
+    def add_data_point(self, data_point, warmup):
+        self._persist_queue.put((self, data_point, warmup))
+
+    @classmethod
+    def _ensure_running(cls):
+        if cls.consumer is None:
+            cls.consumer = Thread(target=cls.process_data_points,
+                                  name="DataPoint persister")
+            cls.consumer.daemon = True
+            cls._register_shutdown()
+            cls.consumer.start()
+        return cls.common_persist_queue, cls.consumer
+
+    @classmethod
+    def _ensure_stopped(cls):
+        if cls.consumer and cls.consumer.is_alive():
+            cls.common_persist_queue.put(None) # stop marker
+            cls.consumer.join()
+            cls.consumer = None
+
+    @classmethod
+    def _register_shutdown(cls):
+        import atexit, signal
+        atexit.register(cls._ensure_stopped)
+
+    @classmethod
+    def process_data_points(cls):
+        q = cls.common_persist_queue
+        while True:
+            item = q.get()
+            if item is None: # end marker
+                q.task_done() # drain
+                break
+            self, data_point, warmup = item
+            RunId.add_data_point(self, data_point, warmup)
+            q.task_done()
+

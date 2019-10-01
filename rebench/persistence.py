@@ -58,7 +58,7 @@ class DataStore(object):
         if var_value == '':
             var_value = None
 
-        run = RunId(benchmark, cores, input_size, var_value)
+        run = RunId.make(benchmark, cores, input_size, var_value)
         if run in self._run_ids:
             return self._run_ids[run]
         else:
