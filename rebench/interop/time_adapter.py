@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-import subprocess
+import subprocess32 as subprocess
 from .adapter            import GaugeAdapter, OutputNotParseable
 from ..model.data_point  import DataPoint
 from ..model.measurement import Measurement
