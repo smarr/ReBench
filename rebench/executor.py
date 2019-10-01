@@ -23,6 +23,9 @@ from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
+from threading import Thread, RLock, Event
+from time import time
+
 import os
 import pkgutil
 import random
@@ -114,7 +117,7 @@ class RunScheduler(object):
     def number_of_uncompleted_runs(runs, ui):
         return len(RunScheduler._filter_out_completed_runs(runs, ui))
 
-    def _process_remaining_runs(self, runs):
+    def _process_remaining_runs(self, runs, stop_signalled=None):
         """Abstract, to be implemented"""
 
     def _estimate_time_left(self):
@@ -162,23 +165,27 @@ class RunScheduler(object):
 
 class BatchScheduler(RunScheduler):
 
-    def _process_remaining_runs(self, runs):
+    def _process_remaining_runs(self, runs, stop_signalled=None):
         for run_id in runs:
             try:
                 completed = False
-                while not completed:
+                while not completed and \
+                        (stop_signalled is None or not stop_signalled.is_set()):
                     completed = self._executor.execute_run(run_id)
                     self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
+            if stop_signalled is not None and stop_signalled.is_set():
+                break
 
 
 class RoundRobinScheduler(RunScheduler):
 
-    def _process_remaining_runs(self, runs):
+    def _process_remaining_runs(self, runs, stop_signalled=None):
         task_list = deque(runs)
 
-        while task_list:
+        while task_list and \
+                (stop_signalled is None or not stop_signalled.is_set()):
             try:
                 run = task_list.popleft()
                 completed = self._executor.execute_run(run)
@@ -194,7 +201,8 @@ class RandomScheduler(RunScheduler):
     def _process_remaining_runs(self, runs):
         task_list = list(runs)
 
-        while task_list:
+        while task_list and \
+                (stop_signalled is None or not stop_signalled.is_set()):
             run = random.choice(task_list)
             try:
                 completed = self._executor.execute_run(run)
@@ -207,23 +215,27 @@ class RandomScheduler(RunScheduler):
 
 class BenchmarkThread(Thread):
 
-    def __init__(self, par_scheduler, num):
+    def __init__(self, par_scheduler, num, exceptions):
         Thread.__init__(self, name="BenchmarkThread %d" % num)
         self._par_scheduler = par_scheduler
         self._id = num
-        self.exception = None
+        self.exceptions = exceptions
+        self.should_stop = Event()
+
+    def tell_stop(self):
+        self.should_stop.set()
 
     def run(self):
         try:
             scheduler = self._par_scheduler.get_local_scheduler()
 
-            while True:
+            while not self.should_stop.is_set():
                 work = self._par_scheduler.acquire_work()
                 if work is None:
                     return
-                scheduler._process_remaining_runs(work)
+                scheduler._process_remaining_runs(work, stop_signalled=self.should_stop)
         except BaseException as exp:
-            self.exception = exp
+            self.exceptions.append(exp)
 
 
 class BenchmarkThreadExceptions(Exception):
@@ -269,23 +281,32 @@ class ParallelScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
         self._remaining_work = self._process_sequential_runs(runs)
-
-        self._worker_threads = [BenchmarkThread(self, i)
+        exceptions = deque() # shared
+        self._worker_threads = [BenchmarkThread(self, i, exceptions)
                                 for i in range(self._num_worker_threads)]
 
         for thread in self._worker_threads:
             thread.start()
 
-        exceptions = []
-        for thread in self._worker_threads:
-            thread.join()
-            if thread.exception is not None:
-                exceptions.append(thread.exception)
+        try:
+            #this is to work around python2.7 Thread.join
+            # https://stackoverflow.com/a/53560721/1197440
+            threads = self._worker_threads[:]
+            while threads:
+                threads[-1].join(1)  # allow KeyboardInterrup once per second
+                if not threads[-1].is_alive():  # reap dead Threads
+                    threads.pop()
+        except KeyboardInterrupt as intr:
+            self._ui.debug_error_info("Waiting for cleanup\n")
+            for thread in self._worker_threads:
+                thread.tell_stop()
+            terminate_processes()
+            raise
 
         if exceptions:
             if len(exceptions) == 1:
                 raise exceptions[0]
-            raise BenchmarkThreadExceptions(exceptions)
+            raise BenchmarkThreadExceptions(list(exceptions))
 
     def _determine_num_work_items_to_take(self):
         # use a simple and naive scheduling strategy that still allows for
