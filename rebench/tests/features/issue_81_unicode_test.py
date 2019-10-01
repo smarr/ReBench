@@ -21,6 +21,7 @@ from __future__ import print_function
 import os
 
 from codecs import open as open_with_enc
+from humanfriendly.compat import unichr
 
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
@@ -53,10 +54,7 @@ class Issue81UnicodeSuite(ReBenchTestCase):
         with open_with_enc(self._path + '/build.log', 'r', encoding='utf8') as build_file:
             log = build_file.read()
 
-        try:
-            unicode_char = unichr(22234)
-        except NameError:
-            unicode_char = chr(22234)
+        unicode_char = unichr(22234)
 
         self.assertGreaterEqual(15, log.find(unicode_char))  # Executor:VM1|STD:
         self.assertGreaterEqual(log.find(unicode_char, 16), 36)  # Executor:VM1|ERR:
