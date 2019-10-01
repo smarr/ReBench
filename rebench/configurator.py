@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import logging
-import subprocess
+import subprocess32 as subprocess
 from os.path import dirname
 import yaml
 from pykwalify.core import Core

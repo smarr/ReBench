@@ -36,7 +36,8 @@ setup(name='ReBench',
           'pykwalify>=1.6.1',
           'humanfriendly>=4.12',
           'py-cpuinfo>=5.0.0',
-          'psutil>=5.6.7'
+          'psutil>=5.6.7',
+          'subprocess32>=3.5.0'
       ],
       entry_points = {
           'console_scripts' : ['rebench = rebench.rebench:main_func']

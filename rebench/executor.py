@@ -26,14 +26,65 @@ from multiprocessing import cpu_count
 import os
 import pkgutil
 import random
-import subprocess
 import sys
-from threading import Thread, RLock
-from time import time
+import errno
+import subprocess32 as subprocess
 
-from humanfriendly.compat import coerce_string
 
-from . import subprocess_with_timeout as subprocess_timeout
+def make_subprocess_runner():
+    # subprocess.run is superb, but we do not have access
+    # to the processes objects in case we need to kill them...
+    # (stripped to whats needed here)
+
+    meta = (set(), RLock()) # poor man's closure
+    def _put(what):
+        with meta[1]:#lock
+            meta[0].add(what)#set
+    def _pop(what):
+        with meta[1]:#lock
+            meta[0].discard(what) #set
+    def _walk(fun, *args, **kwargs):
+        with meta[1]:#lock
+            fun(meta[0], *args, **kwargs)#set
+    def _run(*args, **kwargs):
+        input = kwargs.pop('input', None)
+        timeout = kwargs.pop('timeout', None)
+        if input is not None:
+            assert not 'stdin' in kwargs
+            kwargs['stdin'] = subprocess.PIPE
+        with subprocess.Popen(*args, **kwargs) as process:
+            try:
+                _put(process)
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+                raise subprocess.TimeoutExpired(process.args, timeout, output=stdout,
+                                     stderr=stderr)
+            except:
+                process.kill()
+                process.wait()
+                raise
+            finally:
+                _pop(process)
+            retcode = process.poll()
+        return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
+    return _run, _walk
+subprocess_run, walk_processes = make_subprocess_runner()
+
+def terminate_processes():
+    def _signal(procs):
+        for proc in procs:
+            if proc is not None and proc.poll() is None:
+                proc.kill()
+    walk_processes(_signal)
+
+from humanfriendly.compat import coerce_string, is_unicode
+def _maybe_decode(what):
+    if not is_unicode(what):
+        return coerce_string(what.decode('utf-8'))
+    return what
+
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
 
@@ -337,15 +388,11 @@ class Executor(object):
         self._scheduler.indicate_build(run_id)
         self._ui.debug_output_info("Start build\n", None, script, path)
 
-        def _keep_alive(seconds):
-            self._ui.warning(
-                "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, script, path)
-
         try:
-            return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                '/bin/sh', path, False, True,
-                stdin_input=str.encode(script),
-                keep_alive_output=_keep_alive)
+            result = subprocess_run('/bin/sh',
+                cwd=path,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                shell=False, input=script.encode('utf-8'))
         except OSError as err:
             build_command.mark_failed()
             run_id.fail_immediately()
@@ -361,17 +408,17 @@ class Executor(object):
             self._ui.error(msg, run_id, script, path)
             return
 
-        stdout_result = coerce_string(stdout_result.decode('utf-8'))
-        stderr_result = coerce_string(stderr_result.decode('utf-8'))
+        stdout_result = _maybe_decode(result.stdout)
+        stderr_result = _maybe_decode(result.stderr)
 
         if self._build_log:
             self.process_output(name, stdout_result, stderr_result)
 
-        if return_code != 0:
+        if result.returncode != 0:
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, return_code, "Build of " + name + " failed.")
+                script, result.returncode, "Build of " + name + " failed.")
             self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
                 lines = escape_braces(stdout_result).split('\n')
@@ -446,20 +493,16 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
-
+        timed_out = False
         try:
             self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
-
-            def _keep_alive(seconds):
-                self._ui.warning(
-                    "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
-
-            (return_code, output, _) = subprocess_timeout.run(
+            result = subprocess_run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
-                timeout=run_id.max_invocation_time,
-                keep_alive_output=_keep_alive)
-            output = output.decode('utf-8')
+                stderr=subprocess.STDOUT,
+                shell=True, timeout=run_id.max_invocation_time,
+                start_new_session=True)
+            output = _maybe_decode(result.stdout)
+            return_code = result.returncode
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:
@@ -470,6 +513,10 @@ class Executor(object):
                 msg = str(err)
             self._ui.error(msg, run_id, cmdline)
             return True
+        except subprocess.TimeoutExpired as expired:
+            timed_out = True
+            output = _maybe_decode(expired.stdout)
+            return_code = errno.ETIME
 
         if return_code == 127:
             msg = ("{ind}Error: Could not execute %s.\n"
@@ -480,7 +527,7 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
             return True
         elif return_code != 0 and not self._include_faulty and not (
-                return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
+                timed_out and run_id.ignore_timeouts):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
@@ -488,7 +535,7 @@ class Executor(object):
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
                            run_id.benchmark.suite.executor.name, return_code)
-            elif return_code == subprocess_timeout.E_TIMEOUT:
+            elif timed_out:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"
                        + "{ind}{ind}max_invocation_time: %s\n") % (

@@ -21,8 +21,9 @@ import json
 import getpass
 import os
 import shutil
-import subprocess
 import sys
+import subprocess32 as subprocess
+
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from threading import Lock

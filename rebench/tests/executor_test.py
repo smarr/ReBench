@@ -18,8 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import unittest
-import subprocess
 import os
+import sys
+import subprocess32 as subprocess
 
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
@@ -192,7 +193,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
+def Popen_override(cmdline, *args, **kwargs):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
