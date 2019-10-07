@@ -224,7 +224,7 @@ Argument:
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
                            'random':      RandomScheduler,
-                           'pulling':     PulingScheduler,}.get(self._config.options.scheduler)
+                           'pulling':     PullingScheduler,}.get(self._config.options.scheduler)
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._ui,
