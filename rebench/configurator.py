@@ -17,7 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import subprocess
+import subprocess32 as subprocess
+
 from os.path import dirname
 
 from .model.experiment import Experiment
@@ -105,6 +106,15 @@ def can_set_niceness():
     else:
         return True
 
+def cpu_count():
+    # memoize cpu count, detemination is potentially expensive
+    if not hasattr(cpu_count, 'count'):
+        import multiprocessing
+        cpu_count.count = multiprocessing.cpu_count()
+    return cpu_count.count
+
+def can_parallelize():
+    return cpu_count() > 1
 
 def load_config(file_name):
     """

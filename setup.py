@@ -34,7 +34,8 @@ setup(name='ReBench',
       install_requires=[
           'PyYAML>=3.12',
           'pykwalify>=1.6.1',
-          'humanfriendly>=4.12'
+          'humanfriendly>=4.12',
+          'subprocess32>=3.5.0'
       ],
       entry_points = {
           'console_scripts' : ['rebench = rebench.rebench:main_func']

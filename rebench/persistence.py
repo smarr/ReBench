@@ -19,8 +19,9 @@
 # IN THE SOFTWARE.
 import os
 import shutil
-import subprocess
 import sys
+import subprocess32 as subprocess
+
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from threading import Lock
@@ -57,7 +58,7 @@ class DataStore(object):
         if var_value == '':
             var_value = None
 
-        run = RunId(benchmark, cores, input_size, var_value)
+        run = RunId.make(benchmark, cores, input_size, var_value)
         if run in self._run_ids:
             return self._run_ids[run]
         else:
@@ -229,6 +230,7 @@ class _DataPointPersistence(object):
             self._file = open(self._data_filename, 'a+')
 
     def close(self):
-        if self._file:
-            self._file.close()
-            self._file = None
+        with self._lock:
+            if self._file:
+                self._file.close()
+                self._file = None

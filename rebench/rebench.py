@@ -33,7 +33,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 
 from . import __version__ as rebench_version
 from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
-                            RandomScheduler
+                            RandomScheduler, PullingScheduler
 from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
@@ -121,7 +121,7 @@ Argument:
             '-s', '--scheduler', action='store', dest='scheduler',
             default='batch',
             help='execution order of benchmarks: '
-                 'batch, round-robin, random [default: %(default)s]')
+                 'batch, round-robin, random, pulling [default: %(default)s]')
         execution.add_argument(
             '-E', '--no-execution', action='store_true', dest='no_execution',
             default=False,
@@ -223,7 +223,8 @@ Argument:
 
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
-                           'random':      RandomScheduler}.get(self._config.options.scheduler)
+                           'random':      RandomScheduler,
+                           'pulling':     PullingScheduler,}.get(self._config.options.scheduler)
 
         executor = Executor(runs, self._config.use_nice, self._config.do_builds,
                             self._ui,

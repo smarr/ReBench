@@ -18,8 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import unittest
-import subprocess
 import os
+import sys
+import subprocess32 as subprocess
 
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
@@ -77,7 +78,7 @@ class ExecutorTest(ReBenchTestCase):
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
-    def _basic_execution(self, cnf):
+    def _basic_execution(self, cnf, *args, **kwargs):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
 
@@ -86,7 +87,7 @@ class ExecutorTest(ReBenchTestCase):
         for run in runs:
             run.add_persistence(persistence)
 
-        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI())
+        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI(), *args, **kwargs)
         ex.execute()
         for run in runs:
             data_points = persistence.get_data_points(run)
@@ -146,6 +147,20 @@ class ExecutorTest(ReBenchTestCase):
 
         self.assertEqual(2, run.get_number_of_data_points())
 
+    def test_basic_execution_with_pulling_sequential(self):
+        from ..executor import PullingScheduler
+        cnf = Configurator(load_config(self._path + '/small-for-pull.conf'),
+                           DataStore(self._ui), self._ui, None,
+                           exp_name='TestSeq', data_file=self._tmp_file)
+        self._basic_execution(cnf, scheduler=PullingScheduler)
+
+    def test_basic_execution_with_pulling_parallel(self):
+        from ..executor import PullingScheduler
+        cnf = Configurator(load_config(self._path + '/small-for-pull.conf'),
+                           DataStore(self._ui), self._ui, None,
+                           exp_name='TestPar', data_file=self._tmp_file)
+        self._basic_execution(cnf, scheduler=PullingScheduler)
+        
     def test_shell_options_without_filters(self):
         option_parser = ReBench().shell_options()
         args = option_parser.parse_args(['-d', '-v', 'some.conf'])
@@ -192,7 +207,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
+def Popen_override(cmdline, *args, **kwargs):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
