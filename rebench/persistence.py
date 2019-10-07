@@ -230,6 +230,7 @@ class _DataPointPersistence(object):
             self._file = open(self._data_filename, 'a+')
 
     def close(self):
-        if self._file:
-            self._file.close()
-            self._file = None
+        with self._lock:
+            if self._file:
+                self._file.close()
+                self._file = None

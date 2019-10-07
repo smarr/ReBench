@@ -29,7 +29,7 @@ from .benchmark import Benchmark
 from .termination_check import TerminationCheck
 from ..statistics import StatisticProperties
 from ..ui import UIError
-
+from ..configurator import can_parallelize
 
 class RunId(object):
 
@@ -325,7 +325,7 @@ class RunId(object):
 
     @staticmethod
     def make(benchmark, cores, input_size, var_value):
-        if _should_parallelize(benchmark):
+        if not benchmark.run_details.execute_exclusively and can_parallelize():
             return _RunIdParallel(benchmark, cores, input_size, var_value)
         return RunId(benchmark, cores, input_size, var_value)
 
@@ -337,16 +337,6 @@ class RunId(object):
                                                   self._input_size or '',
                                                   self._var_value  or '',
                                                   self._benchmark.run_details.warmup or 0)
-
-
-
-def _should_parallelize(bench_cfg):
-    # memoize cpu count, detemination is potentially expensive
-    if not hasattr(_should_parallelize, 'cpus'):
-        from multiprocessing import cpu_count
-        _should_parallelize.cpus = cpu_count()
-    return (not bench_cfg.run_details.execute_exclusively and
-            _should_parallelize.cpus > 1)
 
 class _RunIdParallel(RunId):
     """

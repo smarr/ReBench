@@ -157,7 +157,7 @@ For this purpose we use *schedulers* to determine the execution order.
 ```text
 -s SCHEDULER, --scheduler=SCHEDULER
                         execution order of benchmarks: batch, round-robin,
-                        random [default: batch]
+                        random, pulling [default: batch]
 ```
 
 #### Prevent Execution to Verify Configuration

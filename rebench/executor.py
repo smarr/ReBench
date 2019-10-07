@@ -22,16 +22,19 @@ from __future__ import with_statement
 from codecs import open as open_with_enc
 from collections import deque
 from math import floor
-from multiprocessing import cpu_count
 from threading import Thread, RLock, Event
-from time import time
 
+import time
 import os
 import pkgutil
 import random
 import sys
 import errno
 import subprocess32 as subprocess
+
+from .interop.adapter import ExecutionDeliveredNoResults
+from .ui import escape_braces
+from .configurator import cpu_count, can_parallelize
 
 
 def make_subprocess_runner():
@@ -88,8 +91,6 @@ def _maybe_decode(what):
         return coerce_string(what.decode('utf-8'))
     return what
 
-from .interop.adapter import ExecutionDeliveredNoResults
-from .ui import escape_braces
 
 
 class FailedBuilding(Exception):
@@ -106,7 +107,7 @@ class RunScheduler(object):
         self._executor = executor
         self._ui = ui
         self._runs_completed = 0
-        self._start_time = time()
+        self._start_time = time.time()
         self._total_num_runs = 0
 
     @staticmethod
@@ -118,13 +119,13 @@ class RunScheduler(object):
         return len(RunScheduler._filter_out_completed_runs(runs, ui))
 
     def _process_remaining_runs(self, runs):
-        """Abstract, to be implemented"""
+        raise NotImplementedError("abstract base class")
 
     def _estimate_time_left(self):
         if self._runs_completed == 0:
             return 0, 0, 0
 
-        current = time()
+        current = time.time()
         time_per_invocation = ((current - self._start_time) / self._runs_completed)
         etl = time_per_invocation * (self._total_num_runs - self._runs_completed)
         sec = etl % 60
@@ -162,6 +163,13 @@ class RunScheduler(object):
             self._ui.step_spinner(completed_runs)
             self._process_remaining_runs(runs)
 
+    @classmethod
+    def as_sequential(cls, executor, ui):
+        return cls(executor, ui)
+
+    @classmethod
+    def as_parallel(cls, executor, ui):
+        return ParallelScheduler(executor, cls, ui)
 
 class BatchScheduler(RunScheduler):
 
@@ -235,25 +243,20 @@ class BenchmarkThreadExceptions(Exception):
         super(BenchmarkThreadExceptions, self).__init__()
         self.exceptions = exceptions
 
+class BaseParallelScheduler(RunScheduler):
+    def __init__(self, executor, ui):
+        super(BaseParallelScheduler, self).__init__(executor, ui)
+        self._worker_count = self._number_of_threads()
 
-class ParallelScheduler(RunScheduler):
-
-    def __init__(self, executor, seq_scheduler_class, ui):
-        RunScheduler.__init__(self, executor, ui)
-        self._seq_scheduler_class = seq_scheduler_class
-        self._lock = RLock()
-        self._num_worker_threads = self._number_of_threads()
-        self._remaining_work = None
-        self._worker_threads = None
-
-    def _number_of_threads(self):
+    @classmethod
+    def _number_of_threads(cls):
         # TODO: read the configuration elements!
         non_interference_factor = float(2.5)
         # make sure we have at least one thread
         return max(1, int(floor(cpu_count() / non_interference_factor)))
 
-    @staticmethod
-    def _split_runs(runs):
+    @classmethod
+    def _split_runs(cls, runs):
         seq_runs = []
         par_runs = []
         for run in runs:
@@ -263,19 +266,36 @@ class ParallelScheduler(RunScheduler):
                 par_runs.append(run)
         return seq_runs, par_runs
 
-    def _process_sequential_runs(self, runs):
+    def _process_remaining_runs(self, runs):
         seq_runs, par_runs = self._split_runs(runs)
+        self._process_sequential_runs(seq_runs)
+        self._process_parallel_runs(par_runs)
 
+    def _process_sequential_runs(self, seq_runs):
+        raise NotImplementedError("abstract base class")
+    def _process_parallel_runs(self, seq_runs):
+        raise NotImplementedError("abstract base class")
+
+
+class ParallelScheduler(BaseParallelScheduler):
+
+    def __init__(self, executor, seq_scheduler_class, ui):
+        super(ParallelScheduler, self).__init__(executor, ui)
+        self._seq_scheduler_class = seq_scheduler_class
+        self._lock = RLock()
+        self._remaining_work = None
+        self._worker_threads = None
+
+
+    def _process_sequential_runs(self, seq_runs):
         scheduler = self._seq_scheduler_class(self._executor, self._ui)
         scheduler._process_remaining_runs(seq_runs)
 
-        return par_runs
-
-    def _process_remaining_runs(self, runs):
-        self._remaining_work = self._process_sequential_runs(runs)
+    def _process_parallel_runs(self, par_runs):
+        self._remaining_work = self.par_runs
 
         self._worker_threads = [BenchmarkThread(self, i)
-                                for i in range(self._num_worker_threads)]
+                                for i in range(self._worker_count)]
 
         for thread in self._worker_threads:
             thread.start()
@@ -295,7 +315,7 @@ class ParallelScheduler(RunScheduler):
         # use a simple and naive scheduling strategy that still allows for
         # different running times, without causing too much scheduling overhead
         k = len(self._remaining_work)
-        per_thread = int(floor(float(k) / float(self._num_worker_threads)))
+        per_thread = int(floor(float(k) / float(self._worker_count)))
         per_thread = max(1, per_thread)  # take at least 1 run
         return per_thread
 
@@ -314,6 +334,99 @@ class ParallelScheduler(RunScheduler):
                 work.append(self._remaining_work.pop())
             return work
 
+class PullingScheduler(BatchScheduler):
+    # same as superclass, but different parallel counterpart
+    @classmethod
+    def as_parallel(cls, executor, ui):
+        return PullingParallelScheduler(executor, ui)
+
+class PullingParallelScheduler(BaseParallelScheduler):
+
+    def __init__(self, executor, ui):
+        super(PullingParallelScheduler, self).__init__(executor, ui)
+        self._work = self._new_queue()
+        self._should_stop = Event()
+
+    def _new_queue(self):
+        try:
+            import Queue as queue
+        except ImportError:
+            import queue
+        return queue.Queue()
+
+    def _process_sequential_runs(self, seq_runs):
+        scheduler = self.as_sequential(self._executor, self._ui)
+        scheduler._process_remaining_runs(seq_runs)
+
+    def _execute_one_run(self, run_id):
+        completed = False
+        try:
+            completed = self._executor.execute_run(run_id)
+            self._indicate_progress(completed, run_id)
+        except FailedBuilding:
+            pass
+        return completed
+
+    def _pull_and_execute(self, exceptions):
+        while not self._should_stop.is_set():
+            completed = False
+            run_id = self._work.get()
+            try:
+                if run_id is None:
+                    return
+                completed = self._execute_one_run(run_id)
+                if not completed:
+                    self._work.put(run_id)
+            except BaseException as exp:
+                exceptions.append(exp)
+            finally:
+                self._work.task_done()
+
+
+    def _process_parallel_runs(self, par_runs):
+        for run in par_runs:
+            self._work.put(run)
+        exceptions = []
+        self._process_work(exceptions)
+        if exceptions:
+            raise (exceptions[0] if len(exceptions) == 1 \
+                   else BenchmarkThreadExceptions(exceptions))
+
+    def _2_process_work(self, exceptions):
+        workers = [Thread(target=self._pull_and_execute, args=(exceptions,))
+                   for _ in range(self._worker_count)]
+        for worker in workers:
+            worker.daemon = True
+            worker.start()
+        try:
+            self._work.join()
+        except KeyboardInterrupt:
+            self._should_stop.set()
+            raise
+        for _ in range(self._worker_count): self._work.put(None)
+
+
+
+    def _3_process_work(self, exceptions):
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=self._worker_count) as executor:
+            for _ in range(self._worker_count):
+                executor.submit(self._pull_and_execute, exceptions)
+            try:
+                self._work.join()
+            except KeyboardInterrupt:
+                self._should_stop.set()
+                raise
+            for _ in range(self._worker_count): self._work.put(None)
+
+    if sys.version_info < (3, 3):
+        _process_work =  _2_process_work
+    else:
+        _process_work =  _3_process_work
+
+    @classmethod
+    def as_sequential(cls, executor, ui):
+        return PullingScheduler(executor, ui)
 
 class Executor(object):
 
@@ -334,15 +447,10 @@ class Executor(object):
 
     def _create_scheduler(self, scheduler):
         # figure out whether to use parallel scheduler
-        if cpu_count() > 1:
-            i = 0
-            for run in self._runs:
-                if not run.execute_exclusively:
-                    i += 1
-            if i > 1:
-                return ParallelScheduler(self, scheduler, self._ui)
-
-        return scheduler(self, self._ui)
+        if (can_parallelize() and
+            any(not run.execute_exclusively for run in self._runs)):
+            return scheduler.as_parallel(self, self._ui)
+        return scheduler.as_sequential(self, self._ui)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
