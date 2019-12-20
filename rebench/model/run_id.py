@@ -159,6 +159,8 @@ class RunId(object):
     def report_run_completed(self, cmdline):
         for reporter in self._reporters:
             reporter.run_completed(self, self._statistics, cmdline)
+        for persistence in self._persistence:
+            persistence.run_completed()
 
     def report_job_completed(self, run_ids):
         for reporter in self._reporters:
@@ -190,6 +192,8 @@ class RunId(object):
             self._statistics.add_sample(data_point.get_total_value())
 
     def loaded_data_point(self, data_point, warmup):
+        for persistence in self._persistence:
+            persistence.loaded_data_point(data_point)
         self._new_data_point(data_point, warmup)
 
     def add_data_point(self, data_point, warmup):
@@ -309,6 +313,17 @@ class RunId(object):
         result.append(self.input_size_as_str)
         result.append(self.var_value_as_str)
 
+        return result
+
+    def as_dict(self):
+        result = dict()
+        result['benchmark'] = self._benchmark.as_dict()
+        result['cores'] = self._cores
+        result['inputSize'] = self._input_size
+        result['varValue'] = self._var_value
+        result['extraArgs'] = str(self._benchmark.extra_args)
+        result['cmdline'] = self.cmdline()
+        result['location'] = self.location
         return result
 
     @classmethod

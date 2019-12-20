@@ -183,6 +183,17 @@ Argument:
                                help='Override configuration and '
                                     'disable reporting to Codespeed.')
 
+        rebench_db = parser.add_argument_group(
+            'Reporting to ReBenchDB',
+            'To interact with ReBenchDB, and provide environment information.')
+        rebench_db.add_argument('--send', dest='send_to_rebench_db',
+                                help='Send already recorded data to ReBenchDB',
+                                action='store_true', default=False)
+        rebench_db.add_argument('--db-server', dest='db_server',
+                                default=None,
+                                help='Set address of ReBenchDB server, overriding config file. '
+                                     'Example: http://localhost:33333/rebenchdb/results')
+
         return parser
 
     @staticmethod

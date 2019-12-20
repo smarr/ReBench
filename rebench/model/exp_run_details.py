@@ -118,3 +118,10 @@ class ExpRunDetails(object):
     @property
     def retries_after_failure(self):
         return self._retries_after_failure
+
+    def as_dict(self):
+        result = dict()
+        result['warmup'] = self._warmup
+        result['minIterationTime'] = self._min_iteration_time
+        result['maxInvocationTime'] = self._max_invocation_time
+        return result

@@ -75,3 +75,9 @@ class BuildCommand(object):
 
     def __hash__(self):
         return hash((self._cmd, self._location))
+
+    def as_dict(self):
+        result = dict()
+        result['cmd'] = self._cmd
+        result['location'] = self._location
+        return result

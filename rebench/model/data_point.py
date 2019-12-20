@@ -61,3 +61,26 @@ class DataPoint(object):
 
     def get_total_unit(self):
         return self._total.unit
+
+    def measurements_as_dict(self, criteria):
+        data = []
+        iteration = -1
+        invocation = -1
+        for m in self._measurements:
+            if iteration == -1:
+                iteration = m.iteration
+                invocation = m.invocation
+            else:
+                assert iteration == m.iteration
+                assert invocation == m.invocation
+            criterion = (m.criterion, m.unit)
+            if criterion not in criteria:
+                criteria[criterion] = len(criteria)
+            data.append({'v': m.value, 'c': criteria[criterion]})
+        assert self._invocation == invocation
+
+        return {
+            'in': invocation,
+            'it': iteration,
+            'm': data
+        }

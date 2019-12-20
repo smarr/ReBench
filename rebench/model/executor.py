@@ -93,3 +93,11 @@ class Executor(object):
     @property
     def variables(self):
         return self._variables
+
+    def as_dict(self):
+        result = dict()
+        result['name'] = self._name
+        if self._build:
+            result['build'] = [b.as_dict() for b in self._build]
+        result['desc'] = self._description
+        return result

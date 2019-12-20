@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import json
+import getpass
 import os
 import shutil
 import subprocess
@@ -24,10 +26,36 @@ import sys
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from threading import Lock
+from time import time
 
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
+
+
+try:
+    from http.client import HTTPException
+    from urllib.request import urlopen, Request as PutRequest
+    from urllib.parse import urlencode, urlparse
+except ImportError:
+    # Python 2.7
+    from httplib import HTTPException
+    from urllib import urlencode # pylint: disable=ungrouped-imports
+    from urllib2 import urlopen, Request
+    from urlparse import urlparse
+
+
+    class PutRequest(Request):
+        def __init__(self, *args, **kwargs):
+            if 'method' in kwargs:
+                del kwargs['method']
+            Request.__init__(self, *args, **kwargs)
+
+        def get_method(self, *args, **kwargs):
+            return 'PUT'
+
+
+_START_TIME_LINE = "# Execution Start: "
 
 
 class DataStore(object):
@@ -42,11 +70,14 @@ class DataStore(object):
         for persistence in list(self._files.values()):
             persistence.load_data(runs, discard_run_data)
 
-    def get(self, filename, discard_old_data):
+    def get(self, filename, configurator):
         if filename not in self._files:
-            self._files[filename] = _DataPointPersistence(filename, self,
-                                                          discard_old_data,
-                                                          self._ui)
+            p = _DataPointPersistence(filename, self, configurator.discard_old_data, self._ui)
+            self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
+            if configurator.use_rebench_db:
+                db = _ReBenchDB(configurator.rebench_db['db_url'], self, self._ui)
+                p = _CompositePersistence(p, db)
+            self._files[filename] = p
         return self._files[filename]
 
     def create_run_id(self, benchmark, cores, input_size, var_value):
@@ -83,10 +114,71 @@ class DataStore(object):
         return cfg
 
 
-class _DataPointPersistence(object):
+class _AbstractPersistence(object):
+
+    def load_data(self, runs, discard_run_data):
+        """
+        Needs to be implemented by subclass.
+        It is expected to return the start time of the recording.
+        The _CompositePersistence is using it then for _ReBenchDBPresistence.
+        """
+        pass
+
+    def loaded_data_point(self, data_point):
+        """Needs to be implemented by subclass"""
+        pass
+
+    def persist_data_point(self, data_point):
+        """Needs to be implemented by subclass"""
+        pass
+
+    def run_completed(self):
+        """Needs to be implemented by subclass"""
+        pass
+
+    def close(self):
+        """Needs to be implemented by subclass"""
+        pass
+
+
+class _CompositePersistence(_AbstractPersistence):
+
+    def __init__(self, file, rebench_db):
+        self._file = file
+        self._rebench_db = rebench_db
+        self._closed = False
+
+    def load_data(self, runs, discard_run_data):
+        start_time = self._file.load_data(runs, discard_run_data)
+        # TODO: if load data into ReBenchDB
+        self._rebench_db.set_start_time(start_time)
+        self._rebench_db.send_data()
+        return start_time
+
+    def loaded_data_point(self, data_point):
+        # TODO: if load data into ReBenchDB
+        self._rebench_db.persist_data_point(data_point)
+
+    def persist_data_point(self, data_point):
+        self._file.persist_data_point(data_point)
+        self._rebench_db.persist_data_point(data_point)
+
+    def run_completed(self):
+        self._rebench_db.send_data()
+
+    def close(self):
+        if not self._closed:
+            self._file.close()
+            self._rebench_db.close()
+            self._closed = True
+
+
+class _DataPointPersistence(_AbstractPersistence):
 
     def __init__(self, data_filename, data_store, discard_old_data, ui):
         self._data_store = data_store
+        self._start_time = None
+
         self._ui = ui
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
@@ -129,6 +221,7 @@ class _DataPointPersistence(object):
         except IOError:
             self._ui.debug_error_info("No data loaded, since %s does not exist.\n"
                                       % self._data_filename)
+        return self._start_time
 
     def _process_lines(self, data_file, runs, filtered_data_file):
         """
@@ -142,6 +235,11 @@ class _DataPointPersistence(object):
         line_number = 0
         for line in data_file:
             if line.startswith('#'):  # skip comments, and shebang lines
+                if line.startswith(_START_TIME_LINE):
+                    start_time = line[len(_START_TIME_LINE):].strip()
+                    if self._start_time is None or self._start_time > start_time:
+                        self._start_time = start_time
+
                 line_number += 1
                 if filtered_data_file:
                     filtered_data_file.write(line)
@@ -189,7 +287,9 @@ class _DataPointPersistence(object):
         But more importantly also records execution metadata to reproduce the data.
         """
         shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
-        shebang_line += "# Execution Start: " + datetime.now().strftime("%Y-%m-%dT%H:%M:%S\n")
+        if not self._start_time:
+            self._start_time = datetime.utcnow().isoformat() + "+00:00"
+            shebang_line += _START_TIME_LINE + self._start_time + "\n"
 
         try:
             # if file doesn't exist, just create it
@@ -224,6 +324,10 @@ class _DataPointPersistence(object):
 
             self._file.flush()
 
+    def run_completed(self):
+        """Nothing to be done."""
+        pass
+
     def _open_file_to_add_new_data(self):
         if not self._file:
             self._file = open(self._data_filename, 'a+')
@@ -232,3 +336,166 @@ class _DataPointPersistence(object):
         if self._file:
             self._file.close()
             self._file = None
+
+
+class _ReBenchDB(_AbstractPersistence):
+
+    def __init__(self, server_url, data_store, ui):
+        # TODO: extract common code, possibly
+        self._data_store = data_store
+        self._ui = ui
+
+        if not server_url:
+            raise ValueError("ReBenchDB expected server address, but got: %s" % server_url)
+
+        self._ui.debug_output_info('ReBench will report all measurements to {url}\n', url=server_url)
+        self._server_url = server_url
+        self._lock = Lock()
+
+        self._cache_for_seconds = 30
+        self._cache = {}
+        self._last_send = time()
+        self._environment = self._determine_environment()
+        self._source = self._determine_source_details()
+        self._start_time = None
+
+    def set_start_time(self, start_time):
+        assert(self._start_time is None)
+        self._start_time = start_time
+
+    def _determine_environment(self):
+        result = dict()
+        result['userName'] = getpass.getuser()
+        result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
+
+        uname = os.uname()
+        result['hostName'] = uname[1]
+        result['osType'] = uname[0]
+        result['software'] = []
+        result['software'].append({'name': 'kernel', 'version': uname[3]})
+        result['software'].append({'name': 'kernel-release', 'version': uname[2]})
+        result['software'].append({'name': 'architecture', 'version': uname[4]})
+        return result
+
+    def _encode_str(self, out):
+        as_string = out.decode('utf-8')
+        if as_string[-1] == '\n':
+            as_string = as_string[:-1]
+        return as_string
+
+    def _exec(self, cmd):
+        out = subprocess.check_output(cmd)
+        return self._encode_str(out)
+
+    def _determine_source_details(self):
+        result = dict()
+        repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
+
+        parsed = urlparse(repo_url)
+        password_removed = parsed._replace(
+            netloc="{}@{}".format(parsed.username, parsed.hostname))
+        result['repoURL'] = self._encode_str(password_removed.geturl())
+
+        result['branchOrTag'] = self._exec(['git', 'show', '-s', '--format=%D', 'HEAD'])
+        result['commitId'] = self._exec(['git', 'rev-parse', 'HEAD'])
+        result['commitMsg'] = self._exec(['git', 'show', '-s', '--format=%B', 'HEAD'])
+        result['authorName'] = self._exec(['git', 'show', '-s', '--format=%aN', 'HEAD'])
+        result['committerName'] = self._exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
+        result['authorEmail'] = self._exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
+        result['committerEmail'] = self._exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
+        return result
+
+    def load_data(self, runs, discard_run_data):
+        raise Exception("Does not yet support data loading from ReBenchDB")
+
+    def persist_data_point(self, data_point):
+        with self._lock:
+            if data_point.run_id not in self._cache:
+                self._cache[data_point.run_id] = []
+            self._cache[data_point.run_id].append(data_point)
+
+    def send_data(self):
+        current_time = time()
+        time_past = current_time - self._last_send
+        self._ui.debug_output_info(
+            "ReBenchDB: data last send {seconds}s ago\n",
+            seconds=round(time_past, 2))
+        if time_past >= self._cache_for_seconds:
+            self._send_data_and_empty_cache()
+            self._last_send = time()
+
+    def _send_data_and_empty_cache(self):
+        if self._cache:
+            if self._send_data(self._cache):
+                self._cache = {}
+
+    def _send_data(self, cache):
+        self._ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
+        num_measurements = 0
+        all_data = []
+        criteria = {}
+        last_run_id = None
+        for run_id, data_points in cache.items():
+            last_run_id = run_id
+            dp_data = []
+            for dp in data_points:
+                measurements = dp.measurements_as_dict(criteria)
+                num_measurements += len(measurements['m'])
+                dp_data.append(measurements)
+            data = dict()
+            data['runId'] = run_id.as_dict()
+            data['d'] = dp_data
+            all_data.append(data)
+
+        criteria_index = []
+        for c, idx in criteria.items():
+            criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+
+        self._ui.debug_output_info(
+            "ReBenchDB: Send {num_m} measures. startTime: {st}\n",
+            num_m=num_measurements, st=self._start_time)
+        return self._send_to_rebench_db({
+            'data': all_data,
+            'criteria': criteria_index,
+            'env': self._environment,
+            'startTime': self._start_time,
+            'source': self._source}, last_run_id, num_measurements)
+
+    def close(self):
+        with self._lock:
+            self._send_data_and_empty_cache()
+
+    def _send_payload(self, payload):
+        req = PutRequest(self._server_url, payload,
+                         {'Content-Type': 'application/json'}, method='PUT')
+        socket = urlopen(req)
+        response = socket.read()
+        socket.close()
+        return response
+
+    def _send_to_rebench_db(self, results, run_id, num_measurements):
+        payload = json.dumps(results, separators=(',', ':'), ensure_ascii=True)
+
+        # self._ui.output("Saving JSON Payload of size: %d\n" % len(payload))
+        with open("payload.json", "w") as text_file:
+            text_file.write(payload)
+
+        try:
+            response = self._send_payload(payload)
+            self._ui.verbose_output_info(
+                "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
+                num_m=num_measurements, resp=response)
+            return True
+        except (IOError, HTTPException) as e:
+            # sometimes Codespeed fails to accept a request because something
+            # is not yet properly initialized, let's try again for those cases
+            try:
+                response = self._send_payload(payload)
+                self._ui.verbose_output_info(
+                    "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
+                    num_m=num_measurements, resp=response)
+                return True
+            except (IOError, HTTPException) as error:
+                self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                               + "{ind}{ind}" + str(error) + "\n")
+        return False
