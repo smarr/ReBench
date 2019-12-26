@@ -193,6 +193,13 @@ Argument:
                                 default=None,
                                 help='Set address of ReBenchDB server, overriding config file. '
                                      'Example: http://localhost:33333/rebenchdb/results')
+        rebench_db.add_argument('-exp', '--experiment', dest='experiment_name',
+                                default=None,
+                                help='MANDATORY: name this experiment to uniquely identify the data'
+                                     ' and be able to know what it was for'
+                                     ' and possibly in which context it was recorded'
+                                     ', perhaps relating to a specific CI job'
+                                     ' or confirming some hypothesis.')
 
         return parser
 

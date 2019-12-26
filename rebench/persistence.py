@@ -28,6 +28,10 @@ from tempfile import NamedTemporaryFile
 from threading import Lock
 from time import time
 
+from cpuinfo import get_cpu_info
+from psutil import virtual_memory
+
+from .configuration_error import ConfigurationError
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
@@ -72,11 +76,33 @@ class DataStore(object):
 
     def get(self, filename, configurator):
         if filename not in self._files:
-            p = _DataPointPersistence(filename, self, configurator.discard_old_data, self._ui)
+            if configurator.use_rebench_db and 'repo_url' in configurator.rebench_db:
+                _source['repoURL'] = configurator.rebench_db['repo_url']
+
+            p = _FilePersistence(filename, self, configurator.discard_old_data, self._ui)
             self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
+
             if configurator.use_rebench_db:
-                db = _ReBenchDB(configurator.rebench_db['db_url'], self, self._ui)
+                if 'project_name' not in configurator.rebench_db:
+                    raise ConfigurationError(
+                        "No project_name defined in configuration file under reporting.rebenchdb.")
+
+                if not configurator.options.experiment_name:
+                    raise ConfigurationError(
+                        "The experiment was not named, which is mandatory. "
+                        "This is needed to identify the data uniquely. "
+                        "It should also help to remember in which context it "
+                        "was recorded, perhaps relating to a specific CI job "
+                        "or confirming some hypothesis."
+                        "\n\n"
+                        "Use the --experiment option to set the name.")
+
+                db = _ReBenchDB(configurator.rebench_db['db_url'],
+                                configurator.rebench_db['project_name'],
+                                configurator.options.experiment_name,
+                                self, self._ui)
                 p = _CompositePersistence(p, db)
+
             self._files[filename] = p
         return self._files[filename]
 
@@ -114,6 +140,62 @@ class DataStore(object):
         return cfg
 
 
+def _encode_str(out):
+    as_string = out.decode('utf-8')
+    if as_string[-1] == '\n':
+        as_string = as_string[:-1]
+    return as_string
+
+
+def _exec(cmd):
+    out = subprocess.check_output(cmd)
+    return _encode_str(out)
+
+
+def _determine_source_details():
+    result = dict()
+    repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
+
+    parsed = urlparse(repo_url)
+    if parsed.password:
+        # remove password
+        parsed = parsed._replace(
+            netloc="{}@{}".format(parsed.username, parsed.hostname))
+    result['repoURL'] = _encode_str(parsed.geturl())
+
+    result['branchOrTag'] = _exec(['git', 'show', '-s', '--format=%D', 'HEAD'])
+    result['commitId'] = _exec(['git', 'rev-parse', 'HEAD'])
+    result['commitMsg'] = _exec(['git', 'show', '-s', '--format=%B', 'HEAD'])
+    result['authorName'] = _exec(['git', 'show', '-s', '--format=%aN', 'HEAD'])
+    result['committerName'] = _exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
+    result['authorEmail'] = _exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
+    result['committerEmail'] = _exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
+    return result
+
+
+def _determine_environment():
+    result = dict()
+    result['userName'] = getpass.getuser()
+    result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
+
+    u_name = os.uname()
+    result['hostName'] = u_name[1]
+    result['osType'] = u_name[0]
+    cpu_info = get_cpu_info()
+    result['cpu'] = cpu_info['brand']
+    result['clockSpeed'] = cpu_info['hz_advertised_raw'][0] * (10 ** cpu_info['hz_advertised_raw'][1])
+    result['memory'] = virtual_memory().total
+    result['software'] = []
+    result['software'].append({'name': 'kernel', 'version': u_name[3]})
+    result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
+    result['software'].append({'name': 'architecture', 'version': u_name[4]})
+    return result
+
+
+_environment = _determine_environment()
+_source = _determine_source_details()
+
+
 class _AbstractPersistence(object):
 
     def load_data(self, runs, discard_run_data):
@@ -139,6 +221,14 @@ class _AbstractPersistence(object):
     def close(self):
         """Needs to be implemented by subclass"""
         pass
+
+
+class _ConcretePersistence(_AbstractPersistence):
+
+    def __init__(self, data_store, ui):
+        self._data_store = data_store
+        self._start_time = None
+        self._ui = ui
 
 
 class _CompositePersistence(_AbstractPersistence):
@@ -173,13 +263,10 @@ class _CompositePersistence(_AbstractPersistence):
             self._closed = True
 
 
-class _DataPointPersistence(_AbstractPersistence):
+class _FilePersistence(_ConcretePersistence):
 
     def __init__(self, data_filename, data_store, discard_old_data, ui):
-        self._data_store = data_store
-        self._start_time = None
-
-        self._ui = ui
+        super(_FilePersistence, self).__init__(data_store, ui)
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
                              "for data_filename, but got: %s" % data_filename)
@@ -290,6 +377,8 @@ class _DataPointPersistence(_AbstractPersistence):
         if not self._start_time:
             self._start_time = datetime.utcnow().isoformat() + "+00:00"
             shebang_line += _START_TIME_LINE + self._start_time + "\n"
+        shebang_line += "# Environment: " + json.dumps(_environment) + "\n"
+        shebang_line += "# Source: " + json.dumps(_source) + "\n"
 
         try:
             # if file doesn't exist, just create it
@@ -338,72 +427,27 @@ class _DataPointPersistence(_AbstractPersistence):
             self._file = None
 
 
-class _ReBenchDB(_AbstractPersistence):
+class _ReBenchDB(_ConcretePersistence):
 
-    def __init__(self, server_url, data_store, ui):
+    def __init__(self, server_url, project_name, experiment_name, data_store, ui):
+        super(_ReBenchDB, self).__init__(data_store, ui)
         # TODO: extract common code, possibly
-        self._data_store = data_store
-        self._ui = ui
-
         if not server_url:
             raise ValueError("ReBenchDB expected server address, but got: %s" % server_url)
 
         self._ui.debug_output_info('ReBench will report all measurements to {url}\n', url=server_url)
         self._server_url = server_url
+        self._project_name = project_name
+        self._experiment_name = experiment_name
         self._lock = Lock()
 
         self._cache_for_seconds = 30
         self._cache = {}
         self._last_send = time()
-        self._environment = self._determine_environment()
-        self._source = self._determine_source_details()
-        self._start_time = None
 
     def set_start_time(self, start_time):
         assert(self._start_time is None)
         self._start_time = start_time
-
-    def _determine_environment(self):
-        result = dict()
-        result['userName'] = getpass.getuser()
-        result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
-
-        uname = os.uname()
-        result['hostName'] = uname[1]
-        result['osType'] = uname[0]
-        result['software'] = []
-        result['software'].append({'name': 'kernel', 'version': uname[3]})
-        result['software'].append({'name': 'kernel-release', 'version': uname[2]})
-        result['software'].append({'name': 'architecture', 'version': uname[4]})
-        return result
-
-    def _encode_str(self, out):
-        as_string = out.decode('utf-8')
-        if as_string[-1] == '\n':
-            as_string = as_string[:-1]
-        return as_string
-
-    def _exec(self, cmd):
-        out = subprocess.check_output(cmd)
-        return self._encode_str(out)
-
-    def _determine_source_details(self):
-        result = dict()
-        repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
-
-        parsed = urlparse(repo_url)
-        password_removed = parsed._replace(
-            netloc="{}@{}".format(parsed.username, parsed.hostname))
-        result['repoURL'] = self._encode_str(password_removed.geturl())
-
-        result['branchOrTag'] = self._exec(['git', 'show', '-s', '--format=%D', 'HEAD'])
-        result['commitId'] = self._exec(['git', 'rev-parse', 'HEAD'])
-        result['commitMsg'] = self._exec(['git', 'show', '-s', '--format=%B', 'HEAD'])
-        result['authorName'] = self._exec(['git', 'show', '-s', '--format=%aN', 'HEAD'])
-        result['committerName'] = self._exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
-        result['authorEmail'] = self._exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
-        result['committerEmail'] = self._exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
-        return result
 
     def load_data(self, runs, discard_run_data):
         raise Exception("Does not yet support data loading from ReBenchDB")
@@ -457,9 +501,11 @@ class _ReBenchDB(_AbstractPersistence):
         return self._send_to_rebench_db({
             'data': all_data,
             'criteria': criteria_index,
-            'env': self._environment,
+            'env': _environment,
             'startTime': self._start_time,
-            'source': self._source}, last_run_id, num_measurements)
+            'projectName': self._project_name,
+            'experimentName': self._experiment_name,
+            'source': _source}, last_run_id, num_measurements)
 
     def close(self):
         with self._lock:
@@ -486,6 +532,9 @@ class _ReBenchDB(_AbstractPersistence):
                 "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
                 num_m=num_measurements, resp=response)
             return True
+        except TypeError as te:
+            self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                           + "{ind}{ind}" + str(te) + "\n")
         except (IOError, HTTPException) as e:
             # sometimes Codespeed fails to accept a request because something
             # is not yet properly initialized, let's try again for those cases
