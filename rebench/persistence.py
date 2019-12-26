@@ -40,11 +40,10 @@ from .model.run_id      import RunId
 try:
     from http.client import HTTPException
     from urllib.request import urlopen, Request as PutRequest
-    from urllib.parse import urlencode, urlparse
+    from urllib.parse import urlparse
 except ImportError:
     # Python 2.7
     from httplib import HTTPException
-    from urllib import urlencode # pylint: disable=ungrouped-imports
     from urllib2 import urlopen, Request
     from urlparse import urlparse
 
@@ -55,7 +54,7 @@ except ImportError:
                 del kwargs['method']
             Request.__init__(self, *args, **kwargs)
 
-        def get_method(self, *args, **kwargs):
+        def get_method(self, *_args, **_kwargs):  # pylint: disable=arguments-differ
             return 'PUT'
 
 
@@ -183,7 +182,8 @@ def _determine_environment():
     result['osType'] = u_name[0]
     cpu_info = get_cpu_info()
     result['cpu'] = cpu_info['brand']
-    result['clockSpeed'] = cpu_info['hz_advertised_raw'][0] * (10 ** cpu_info['hz_advertised_raw'][1])
+    result['clockSpeed'] = (cpu_info['hz_advertised_raw'][0]
+                            * (10 ** cpu_info['hz_advertised_raw'][1]))
     result['memory'] = virtual_memory().total
     result['software'] = []
     result['software'].append({'name': 'kernel', 'version': u_name[3]})
@@ -204,23 +204,18 @@ class _AbstractPersistence(object):
         It is expected to return the start time of the recording.
         The _CompositePersistence is using it then for _ReBenchDBPresistence.
         """
-        pass
 
     def loaded_data_point(self, data_point):
         """Needs to be implemented by subclass"""
-        pass
 
     def persist_data_point(self, data_point):
         """Needs to be implemented by subclass"""
-        pass
 
     def run_completed(self):
         """Needs to be implemented by subclass"""
-        pass
 
     def close(self):
         """Needs to be implemented by subclass"""
-        pass
 
 
 class _ConcretePersistence(_AbstractPersistence):
@@ -233,8 +228,8 @@ class _ConcretePersistence(_AbstractPersistence):
 
 class _CompositePersistence(_AbstractPersistence):
 
-    def __init__(self, file, rebench_db):
-        self._file = file
+    def __init__(self, file_pers, rebench_db):
+        self._file = file_pers
         self._rebench_db = rebench_db
         self._closed = False
 
@@ -415,7 +410,6 @@ class _FilePersistence(_ConcretePersistence):
 
     def run_completed(self):
         """Nothing to be done."""
-        pass
 
     def _open_file_to_add_new_data(self):
         if not self._file:
@@ -435,7 +429,8 @@ class _ReBenchDB(_ConcretePersistence):
         if not server_url:
             raise ValueError("ReBenchDB expected server address, but got: %s" % server_url)
 
-        self._ui.debug_output_info('ReBench will report all measurements to {url}\n', url=server_url)
+        self._ui.debug_output_info(
+            'ReBench will report all measurements to {url}\n', url=server_url)
         self._server_url = server_url
         self._project_name = project_name
         self._experiment_name = experiment_name
@@ -446,7 +441,7 @@ class _ReBenchDB(_ConcretePersistence):
         self._last_send = time()
 
     def set_start_time(self, start_time):
-        assert(self._start_time is None)
+        assert self._start_time is None
         self._start_time = start_time
 
     def load_data(self, runs, discard_run_data):
@@ -478,9 +473,7 @@ class _ReBenchDB(_ConcretePersistence):
         num_measurements = 0
         all_data = []
         criteria = {}
-        last_run_id = None
         for run_id, data_points in cache.items():
-            last_run_id = run_id
             dp_data = []
             for dp in data_points:
                 measurements = dp.measurements_as_dict(criteria)
@@ -505,7 +498,7 @@ class _ReBenchDB(_ConcretePersistence):
             'startTime': self._start_time,
             'projectName': self._project_name,
             'experimentName': self._experiment_name,
-            'source': _source}, last_run_id, num_measurements)
+            'source': _source}, num_measurements)
 
     def close(self):
         with self._lock:
@@ -519,7 +512,7 @@ class _ReBenchDB(_ConcretePersistence):
         socket.close()
         return response
 
-    def _send_to_rebench_db(self, results, run_id, num_measurements):
+    def _send_to_rebench_db(self, results, num_measurements):
         payload = json.dumps(results, separators=(',', ':'), ensure_ascii=True)
 
         # self._ui.output("Saving JSON Payload of size: %d\n" % len(payload))
@@ -535,7 +528,7 @@ class _ReBenchDB(_ConcretePersistence):
         except TypeError as te:
             self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                            + "{ind}{ind}" + str(te) + "\n")
-        except (IOError, HTTPException) as e:
+        except (IOError, HTTPException):
             # sometimes Codespeed fails to accept a request because something
             # is not yet properly initialized, let's try again for those cases
             try:
