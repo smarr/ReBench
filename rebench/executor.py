@@ -404,7 +404,7 @@ class Executor(object):
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 
-        terminate = self._check_termination_condition(run_id, termination_check)
+        terminate = self._check_termination_condition(run_id, termination_check, cmdline)
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)
 
@@ -497,7 +497,7 @@ class Executor(object):
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
-        return self._check_termination_condition(run_id, termination_check)
+        return self._check_termination_condition(run_id, termination_check, cmdline)
 
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
@@ -532,9 +532,9 @@ class Executor(object):
             run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
-    def _check_termination_condition(run_id, termination_check):
+    def _check_termination_condition(run_id, termination_check, cmd):
         return termination_check.should_terminate(
-            run_id.get_number_of_data_points())
+            run_id.get_number_of_data_points(), cmd)
 
     def execute(self):
         try:

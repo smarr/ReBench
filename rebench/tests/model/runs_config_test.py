@@ -37,45 +37,45 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def test_termination_check_basic(self):
         check = TerminationCheck(self._run, self._ui)
-        self.assertFalse(check.should_terminate(0))
+        self.assertFalse(check.should_terminate(0, None))
 
         # start 9 times, but expect to be done only after 10
         for i in range(1, 10):
             dp = DataPoint(self._run)
             dp.add_measurement(Measurement(i, 1, 0, 'ms', self._run))
             self._run.loaded_data_point(dp, False)
-        self.assertFalse(check.should_terminate(0))
+        self.assertFalse(check.should_terminate(0, None))
 
         dp = DataPoint(self._run)
         dp.add_measurement(Measurement(10, 1, 0, 'ms', self._run))
         self._run.loaded_data_point(dp, False)
-        self.assertTrue(check.should_terminate(0))
+        self.assertTrue(check.should_terminate(0, None))
 
     def test_terminate_not_determine_by_number_of_data_points(self):
         check = TerminationCheck(self._run, self._ui)
-        self.assertFalse(check.should_terminate(0))
-        self.assertFalse(check.should_terminate(10))
-        self.assertFalse(check.should_terminate(10000))
+        self.assertFalse(check.should_terminate(0, None))
+        self.assertFalse(check.should_terminate(10, None))
+        self.assertFalse(check.should_terminate(10000, None))
 
     def test_consecutive_fails(self):
         check = TerminationCheck(self._run, self._ui)
-        self.assertFalse(check.should_terminate(0))
+        self.assertFalse(check.should_terminate(0, None))
 
         for _ in range(0, 2):
             check.indicate_failed_execution()
-            self.assertFalse(check.should_terminate(0))
+            self.assertFalse(check.should_terminate(0, None))
 
         check.indicate_failed_execution()
-        self.assertTrue(check.should_terminate(0))
+        self.assertTrue(check.should_terminate(0, None))
 
     def test_too_many_fails(self):
         check = TerminationCheck(self._run, self._ui)
-        self.assertFalse(check.should_terminate(0))
+        self.assertFalse(check.should_terminate(0, None))
 
         for _ in range(0, 6):
             check.indicate_failed_execution()
             check.indicate_successful_execution()
-            self.assertFalse(check.should_terminate(0))
+            self.assertFalse(check.should_terminate(0, None))
 
         check.indicate_failed_execution()
-        self.assertTrue(check.should_terminate(0))
+        self.assertTrue(check.should_terminate(0, None))
