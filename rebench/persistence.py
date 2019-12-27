@@ -96,6 +96,9 @@ class DataStore(object):
                         "\n\n"
                         "Use the --experiment option to set the name.")
 
+                if configurator.options.branch:
+                    _source['branchOrTag'] = configurator.options.branch
+
                 db = _ReBenchDB(configurator.rebench_db['db_url'],
                                 configurator.rebench_db['project_name'],
                                 configurator.options.experiment_name,
