@@ -520,7 +520,8 @@ class _ReBenchDB(_ConcretePersistence):
             text_file.write(payload)
 
         try:
-            response = self._send_payload(payload)
+            data = payload.encode('utf-8')
+            response = self._send_payload(data)
             self._ui.verbose_output_info(
                 "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
                 num_m=num_measurements, resp=response)
