@@ -471,7 +471,15 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
             return True
 
-        if return_code != 0 and not self._include_faulty and not (
+        if return_code == 127:
+            msg = ("{ind}Error: Could not execute %s.\n"
+                   + "{ind}{ind}The command was not found.\n"
+                   + "{ind}Return code: %d\n"
+                   + "{ind}{ind}%s.\n") % (
+                      run_id.benchmark.suite.executor.name, return_code, output.strip())
+            self._ui.error(msg, run_id, cmdline)
+            return True
+        elif return_code != 0 and not self._include_faulty and not (
                 return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
