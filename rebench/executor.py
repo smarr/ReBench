@@ -476,7 +476,7 @@ class Executor(object):
                    + "{ind}{ind}The command was not found.\n"
                    + "{ind}Return code: %d\n"
                    + "{ind}{ind}%s.\n") % (
-                      run_id.benchmark.suite.executor.name, return_code, output.strip())
+                       run_id.benchmark.suite.executor.name, return_code, output.strip())
             self._ui.error(msg, run_id, cmdline)
             return True
         elif return_code != 0 and not self._include_faulty and not (
