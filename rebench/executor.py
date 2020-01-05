@@ -27,8 +27,10 @@ import os
 import pkgutil
 import random
 import sys
+from threading import Thread, RLock
 import errno
 import subprocess32 as subprocess
+from time import time
 
 
 def make_subprocess_runner():
