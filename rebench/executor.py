@@ -23,14 +23,18 @@ from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
+import errno
 import os
 import pkgutil
 import random
 import sys
 from threading import Thread, RLock
-import errno
-import subprocess32 as subprocess
 from time import time
+import subprocess32 as subprocess
+from humanfriendly.compat import coerce_string, is_unicode
+
+from .interop.adapter import ExecutionDeliveredNoResults
+from .ui import escape_braces
 
 
 def make_subprocess_runner():
@@ -62,7 +66,7 @@ def make_subprocess_runner():
                 process.kill()
                 stdout, stderr = process.communicate()
                 raise subprocess.TimeoutExpired(process.args, timeout, output=stdout,
-                                     stderr=stderr)
+                                                stderr=stderr)
             except:
                 process.kill()
                 process.wait()
@@ -72,7 +76,10 @@ def make_subprocess_runner():
             retcode = process.poll()
         return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
     return _run, _walk
+
+
 subprocess_run, walk_processes = make_subprocess_runner()
+
 
 def terminate_processes():
     def _signal(procs):
@@ -81,14 +88,11 @@ def terminate_processes():
                 proc.kill()
     walk_processes(_signal)
 
-from humanfriendly.compat import coerce_string, is_unicode
+
 def _maybe_decode(what):
     if not is_unicode(what):
         return coerce_string(what.decode('utf-8'))
     return what
-
-from .interop.adapter import ExecutionDeliveredNoResults
-from .ui import escape_braces
 
 
 class FailedBuilding(Exception):
@@ -392,8 +396,8 @@ class Executor(object):
         self._ui.debug_output_info("Start build\n", None, script, path)
 
         try:
-            result = subprocess_run('/bin/sh',
-                cwd=path,
+            result = subprocess_run(
+                '/bin/sh', cwd=path,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=False, input=script.encode('utf-8'))
         except OSError as err:

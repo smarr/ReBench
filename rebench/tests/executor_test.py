@@ -19,7 +19,6 @@
 # IN THE SOFTWARE.
 import unittest
 import os
-import sys
 import subprocess32 as subprocess
 
 from .persistence import TestPersistence

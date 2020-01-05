@@ -20,14 +20,13 @@
 import json
 import getpass
 import os
+from datetime import datetime
 import shutil
 import sys
-import subprocess32 as subprocess
-
-from datetime import datetime
 from tempfile import NamedTemporaryFile
 from threading import Lock
 from time import time
+import subprocess32 as subprocess
 
 from cpuinfo import get_cpu_info
 from psutil import virtual_memory
