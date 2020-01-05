@@ -243,10 +243,12 @@ def main_func():
         rebench = ReBench()
         return 0 if rebench.run() else -1
     except KeyboardInterrupt:
-        rebench.ui.debug_error_info("Aborted by user request\n")
+        ui = UI()
+        ui.debug_error_info("Aborted by user request\n")
         return -1
     except UIError as err:
-        rebench.ui.error(err.message)
+        ui = UI()
+        ui.error("\n" + err.message)
         return -1
 
 

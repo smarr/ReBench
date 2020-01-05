@@ -48,19 +48,19 @@ class TerminationCheck(object):
                     number_of_data_points > 10 and (
                         self._failed_execution_count > number_of_data_points / 2)))
 
-    def should_terminate(self, number_of_data_points):
+    def should_terminate(self, number_of_data_points, cmd):
         if self._fail_immediately:
-            self._ui.warning("{ind}Marked to fail immediately.\n", self._run_id)
+            self._ui.warning("{ind}Marked to fail immediately.\n", self._run_id, cmd)
         if self.fails_consecutively():
             msg = "{ind}Execution has failed, benchmark is aborted.\n"
             if self._consecutive_erroneous_executions > 0:
                 msg += "{ind}{ind}The benchmark failed "
                 msg += str(self._consecutive_erroneous_executions) + " times in a row.\n"
-            self._ui.warning(msg, self._run_id)
+            self._ui.warning(msg, self._run_id, cmd)
             return True
         elif self.has_too_many_failures(number_of_data_points):
             self._ui.warning(
-                "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id)
+                "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id, cmd)
             return True
         elif self._run_id.completed_invocations >= self._run_id.invocations:
             return True

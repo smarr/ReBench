@@ -17,14 +17,22 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import logging
 import subprocess
 from os.path import dirname
+import yaml
+from pykwalify.core import Core
+from pykwalify.errors import SchemaError
 
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
 from .model.executor import Executor
 from .ui import UIError, escape_braces
+
+# Disable most logging for pykwalify
+logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
+logging.getLogger('pykwalify').addHandler(logging.NullHandler())
 
 
 class _ExecutorFilter(object):
@@ -111,15 +119,6 @@ def load_config(file_name):
     Load the file, verify that it conforms to the schema,
     and return the configuration.
     """
-    import yaml
-    from pykwalify.core import Core
-    from pykwalify.errors import SchemaError
-
-    # Disable most logging for pykwalify
-    import logging
-    logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
-    logging.getLogger('pykwalify').addHandler(logging.NullHandler())
-
     try:
         with open(file_name, 'r') as conf_file:
             data = yaml.safe_load(conf_file)

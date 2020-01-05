@@ -218,7 +218,7 @@ class RunId(object):
     def is_completed(self, ui):
         """ Check whether the termination condition is satisfied. """
         return self.get_termination_check(ui).should_terminate(
-            self.get_number_of_data_points())
+            self.get_number_of_data_points(), None)
 
     def run_failed(self):
         return (self._termination_check.fails_consecutively() or

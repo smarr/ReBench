@@ -404,7 +404,7 @@ class Executor(object):
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 
-        terminate = self._check_termination_condition(run_id, termination_check)
+        terminate = self._check_termination_condition(run_id, termination_check, cmdline)
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)
 
@@ -471,7 +471,15 @@ class Executor(object):
             self._ui.error(msg, run_id, cmdline)
             return True
 
-        if return_code != 0 and not self._include_faulty and not (
+        if return_code == 127:
+            msg = ("{ind}Error: Could not execute %s.\n"
+                   + "{ind}{ind}The command was not found.\n"
+                   + "{ind}Return code: %d\n"
+                   + "{ind}{ind}%s.\n") % (
+                       run_id.benchmark.suite.executor.name, return_code, output.strip())
+            self._ui.error(msg, run_id, cmdline)
+            return True
+        elif return_code != 0 and not self._include_faulty and not (
                 return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
@@ -497,7 +505,7 @@ class Executor(object):
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
-        return self._check_termination_condition(run_id, termination_check)
+        return self._check_termination_condition(run_id, termination_check, cmdline)
 
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
@@ -532,9 +540,9 @@ class Executor(object):
             run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
-    def _check_termination_condition(run_id, termination_check):
+    def _check_termination_condition(run_id, termination_check, cmd):
         return termination_check.should_terminate(
-            run_id.get_number_of_data_points())
+            run_id.get_number_of_data_points(), cmd)
 
     def execute(self):
         try:
