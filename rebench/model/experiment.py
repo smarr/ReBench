@@ -56,8 +56,7 @@ class Experiment(object):
         self._reporting = reporting
 
         self._data_store = configurator.data_store
-        self._persistence = self._data_store.get(data_file,
-                                                 configurator.discard_old_data)
+        self._persistence = self._data_store.get(data_file, configurator)
 
         self._suites = self._compile_executors_and_benchmark_suites(
             executions, suites, configurator)

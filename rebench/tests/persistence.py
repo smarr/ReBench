@@ -13,3 +13,6 @@ class TestPersistence(object):
 
     def close(self):
         pass
+
+    def run_completed(self):
+        pass

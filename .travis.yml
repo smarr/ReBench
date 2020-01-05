@@ -2,28 +2,35 @@ language: python
 
 matrix:
   include:
-    - python: "2.7"
+    - name: Python 2.7
+      python: "2.7"
       before_install:
         - pip install coveralls pylint
       env: COVERAGE="--with-coverage --cover-package=rebench"
       after_success:
         coveralls
-    - python: "3.6"
+    - name: Python 3.7
+      dist: bionic
+      python: "3.7"
       before_install:
         - pip install coveralls pylint
-    - python: "3.7-dev"
+    - name: Python 3.8-dev (normal)
+      python: "3.8-dev"
       dist: xenial
       before_install:
         - pip install pylint
-    - python: "3.7-dev"
+    - name: Python 3.8-dev (ruamel.yaml)
+      python: "3.8-dev"
       dist: xenial
       before_install:
         - pip install pylint
         - pip install ruamel.yaml
     # PyPy versions
-    - python: pypy
+    - name: PyPy 2.7
+      python: pypy
       env: DO_LINT="echo On PyPy, we won't "
-    - python: pypy3
+    - name: PyPy 3.x
+      python: pypy3
       env: DO_LINT="echo On PyPy, we won't "
 
 dist: trusty

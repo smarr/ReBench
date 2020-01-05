@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
 
 from ..persistence import DataStore
@@ -29,6 +30,7 @@ from ..model.executor import Executor as ExecutorConf
 from ..model.exp_run_details import ExpRunDetails
 from ..model.measurement import Measurement
 from ..model.run_id import RunId
+from ..rebench import ReBench
 
 
 class PersistencyTest(ReBenchTestCase):
@@ -112,3 +114,36 @@ class PersistencyTest(ReBenchTestCase):
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
+
+    def test_rebench_db(self):
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['--experiment=Test', '-S', 'persistency.conf'])
+
+        server = MockHTTPServer()
+        port = server.get_free_port()
+
+        server.start()
+
+        ds = DataStore(self._ui)
+        raw_config = load_config(self._path + '/persistency.conf')
+        raw_config['reporting']['rebenchdb'] = {
+            'db_url': 'http://localhost:' + str(port),
+            'repo_url': 'http://repo.git',
+            'project_name': 'Persistency Test',
+            'send_to_rebench_db': True,
+            'record_all': True}
+
+        cnf = Configurator(raw_config, ds, self._ui, cmd_config, data_file=self._tmp_file)
+
+        ds.load_data(None, False)
+
+        self._assert_runs(cnf, 1, 0, 0)
+
+        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex.execute()
+        run = list(cnf.get_runs())[0]
+        run.close_files()
+
+        self.assertEqual(1, server.get_number_of_put_requests())
+
+        server.shutdown()

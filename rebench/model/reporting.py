@@ -29,6 +29,9 @@ class Reporting(object):
             codespeed = CodespeedReporting(reporting, options, ui).get_reporter()
         else:
             codespeed = root_reporting.codespeed_reporter
+        # We ignore the entry for ReBenchDB here,
+        # because the configuration format does not reflect the implementation details.
+        # ReBenchDB is implemented as a persistence backend to capture all measurements.
 
         cli_reporter = root_reporting.cli_reporter
         return Reporting(codespeed, cli_reporter)

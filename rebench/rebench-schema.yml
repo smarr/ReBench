@@ -66,6 +66,25 @@ schema;runs_type:
 schema;reporting_type:
   type: map
   mapping:
+    rebenchdb:
+      type: map
+      desc: Store results in ReBenchDB
+      mapping:
+        db_url:
+          type: str
+          desc: URL for the ReBenchDB instance to use.
+        repo_url:
+          type: str
+          desc: URL of the main repo for this project.
+        project_name:
+          type: str
+          desc: Project name to be used by ReBenchDB.
+        repo_base_branch:
+          type: str
+          desc: The name of the base branch for comparisons.
+        record_all:
+          type: bool
+          desc: All experiments should be stored in the ReBenchDB
     codespeed:
       type: map
       desc: Send results to Codespeed for continuous performance tracking.

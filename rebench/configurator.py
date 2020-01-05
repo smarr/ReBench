@@ -168,6 +168,19 @@ class Configurator(object):
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
+        # Construct ReBenchDB config
+        rdb_cfg = raw_config.get('reporting', None)
+        if rdb_cfg:
+            rdb_cfg = rdb_cfg.get('rebenchdb', None)
+        if rdb_cfg:
+            self._rebench_db = rdb_cfg
+        else:
+            self._rebench_db = {}
+        if cli_options:
+            if cli_options.db_server:
+                self._rebench_db['db_url'] = cli_options.db_server
+            self._rebench_db['send_to_rebench_db'] = cli_options.send_to_rebench_db
+
         self._options = cli_options
         self._ui = ui
         self._data_store = data_store
@@ -190,6 +203,15 @@ class Configurator(object):
     @property
     def build_log(self):
         return self._build_log
+
+    @property
+    def rebench_db(self):
+        return self._rebench_db
+
+    @property
+    def use_rebench_db(self):
+        return self._rebench_db and (self._rebench_db.get('send_to_rebench_db', False)
+                                     or self._rebench_db.get('record_all', False))
 
     def _process_cli_options(self):
         if self._options is None:

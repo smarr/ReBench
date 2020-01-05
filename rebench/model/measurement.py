@@ -90,3 +90,12 @@ class Measurement(object):
 
         return Measurement(invocation, iteration, value, unit, run_id,
                            criterion, line_number, filename)
+
+    def as_dict(self):
+        result = dict()
+        result['c'] = self._criterion
+        result['in'] = self._invocation
+        result['it'] = self._iteration
+        result['u'] = self._unit
+        result['v'] = self._value
+        return result

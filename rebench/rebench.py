@@ -159,11 +159,6 @@ Argument:
                                default=None,
                                help='MANDATORY: name the machine on which the '
                                     'results are obtained.')
-        codespeed.add_argument('--branch', dest='branch',
-                               default='HEAD',
-                               help='The branch for which the results have to '
-                                    'be recorded, i.e., to which the commit'
-                                    ' belongs. Default: HEAD')
         codespeed.add_argument('--executable', dest='executable',
                                default=None,
                                help='The executable name given to Codespeed. '
@@ -182,6 +177,31 @@ Argument:
                                default=True,
                                help='Override configuration and '
                                     'disable reporting to Codespeed.')
+
+        rebench_db = parser.add_argument_group(
+            'Reporting to ReBenchDB',
+            'To interact with ReBenchDB, and provide environment information.')
+        rebench_db.add_argument('--send', dest='send_to_rebench_db',
+                                help='Send already recorded data to ReBenchDB',
+                                action='store_true', default=False)
+        rebench_db.add_argument('--db-server', dest='db_server',
+                                default=None,
+                                help='Set address of ReBenchDB server, overriding config file. '
+                                     'Example: http://localhost:33333/rebenchdb/results')
+        rebench_db.add_argument('-exp', '--experiment', dest='experiment_name',
+                                default=None,
+                                help='MANDATORY: name this experiment to uniquely identify the data'
+                                     ' and be able to know what it was for'
+                                     ' and possibly in which context it was recorded'
+                                     ', perhaps relating to a specific CI job'
+                                     ' or confirming some hypothesis.')
+        rebench_db.add_argument('--branch', dest='branch',
+                                default=None,
+                                help='The branch for which the results have to '
+                                     'be recorded, i.e., to which the commit'
+                                     ' belongs. If not provided, ReBench will try to get'
+                                     ' the name from git.')
+
 
         return parser
 
