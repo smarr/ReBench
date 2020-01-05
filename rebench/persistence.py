@@ -73,6 +73,9 @@ class DataStore(object):
             if configurator.use_rebench_db and 'repo_url' in configurator.rebench_db:
                 _source['repoURL'] = configurator.rebench_db['repo_url']
 
+            if configurator.options and configurator.options.branch:
+                _source['branchOrTag'] = configurator.options.branch
+
             p = _FilePersistence(filename, self, configurator.discard_old_data, self._ui)
             self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
 
@@ -90,9 +93,6 @@ class DataStore(object):
                         "or confirming some hypothesis."
                         "\n\n"
                         "Use the --experiment option to set the name.")
-
-                if configurator.options.branch:
-                    _source['branchOrTag'] = configurator.options.branch
 
                 db = _ReBenchDB(configurator.rebench_db['db_url'],
                                 configurator.rebench_db['project_name'],
