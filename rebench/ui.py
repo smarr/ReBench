@@ -21,9 +21,9 @@ import sys
 
 from os import getcwd
 
-from humanfriendly import Spinner
 from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
+from humanfriendly.terminal.spinners import Spinner
 
 _DETAIL_INDENT = "    "
 _ERASE_LINE = '\r\x1b[2K'
@@ -54,7 +54,8 @@ class UI(object):
         return self._progress_spinner is not None
 
     def init_spinner(self, total):
-        self._progress_spinner = UiSpinner("Running Benchmarks", total, sys.stdout)
+        self._progress_spinner = UiSpinner(label="Running Benchmarks",
+                                           total=total, stream=sys.stdout)
         return self._progress_spinner
 
     def step_spinner(self, completed_runs, label=None):
