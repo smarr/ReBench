@@ -34,7 +34,7 @@ setup(name='ReBench',
       install_requires=[
           'PyYAML>=3.12',
           'pykwalify>=1.6.1',
-          'humanfriendly>=4.12',
+          'humanfriendly>=8.0',
           'py-cpuinfo>=5.0.0',
           'psutil>=5.6.7'
       ],
