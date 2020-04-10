@@ -21,7 +21,10 @@ def _encode_str(out):
 
 
 def _exec(cmd):
-    out = subprocess.check_output(cmd)
+    try:
+        out = subprocess.check_output(cmd)
+    except subprocess.CalledProcessError:
+        return None
     return _encode_str(out)
 
 
