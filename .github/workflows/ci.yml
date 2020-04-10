@@ -1,0 +1,62 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '2.7', '3.7', '3.8-dev', 'pypy3' ]
+        yaml-parser: ['', 'ruamel']
+        include:
+          - python-version: 2.7
+            coverage: "--with-coverage --cover-package=rebench"
+        exclude:
+          - python-version: 2.7
+            yaml-parser: ruamel
+          - python-version: '3.8-dev'
+            yaml-parser: ruamel
+          - python-version: pypy3
+            yaml-parser: ruamel
+    name: Python ${{ matrix.python-version }} ${{ matrix.yaml-parser }}
+    steps:
+      - name: Checkout ReBench
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install nose
+        run: pip install nose
+
+      - name: Install ruamel.yaml
+        run: pip install ruamel.yaml
+        if: matrix.yaml-parser == 'ruamel'
+
+      - name: Install coverage and coveralls
+        run: pip install coverage coveralls
+        if: matrix.coverage
+
+      - name: Install ReBench dependencies
+        run: pip install .
+
+      - name: Run tests
+        run: |
+          nosetests ${{ matrix.coverage }}
+          (cd rebench && rebench -N ../rebench.conf e:TestRunner2)
+
+      - name: Install and run pylint
+        run: |
+          pip install pylint
+          pylint rebench
+        if: startsWith(matrix.python-version, 'pypy') == false
+
+      - name: Upload coverage results to Coveralls
+        run: coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        if: matrix.coverage
