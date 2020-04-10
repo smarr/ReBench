@@ -1,6 +1,6 @@
 # ReBench: Execute and Document Benchmarks Reproducibly
 
-[![Build Status](https://travis-ci.org/smarr/ReBench.svg?branch=master)](https://travis-ci.org/smarr/ReBench)
+[![Build Status](https://github.com/smarr/ReBench/workflows/CI/badge.svg)](https://github.com/smarr/ReBench/actions)
 [![Documentation](https://readthedocs.org/projects/rebench/badge/?version=latest)](https://rebench.readthedocs.io/)
 [![Codacy Quality](https://api.codacy.com/project/badge/Grade/2f7210b65b414100be03f64fe6702d66)](https://www.codacy.com/app/smarr/ReBench)
 [![Coverage](https://coveralls.io/repos/github/smarr/ReBench/badge.svg?branch=master)](https://coveralls.io/github/smarr/ReBench?branch=master)
