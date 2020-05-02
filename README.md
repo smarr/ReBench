@@ -1,7 +1,9 @@
 # ReBench: Execute and Document Benchmarks Reproducibly
 
 [![Build Status](https://github.com/smarr/ReBench/workflows/CI/badge.svg)](https://github.com/smarr/ReBench/actions)
+[![PyPI version](https://badge.fury.io/py/ReBench.svg)](https://badge.fury.io/py/ReBench)
 [![Documentation](https://readthedocs.org/projects/rebench/badge/?version=latest)](https://rebench.readthedocs.io/)
+[![Downloads](https://pepy.tech/badge/rebench)](https://pepy.tech/project/rebench)
 [![Codacy Quality](https://api.codacy.com/project/badge/Grade/2f7210b65b414100be03f64fe6702d66)](https://www.codacy.com/app/smarr/ReBench)
 [![Coverage](https://coveralls.io/repos/github/smarr/ReBench/badge.svg?branch=master)](https://coveralls.io/github/smarr/ReBench?branch=master)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1311762.svg)](https://doi.org/10.5281/zenodo.1311762)
@@ -50,7 +52,7 @@ ReBench is designed to
 
 ReBench isn't
 
- - a framework for microbenchmarks.
+ - a framework for (micro)benchmarks.
    Instead, it relies on existing harnesses and can be extended to parse their
    output.
  - a performance analysis tool. It is meant to execute experiments and
