@@ -2,7 +2,68 @@
 
 ## [Unreleased]
 
- - 
+ -
+
+## [1.0.0] Foundations - 2020-05-02
+
+This is the first official release of ReBench as a "feature-complete" product.
+Feature-complete here means, it is a tried and tested tool for benchmark
+execution. It is highly 
+[configurable](https://rebench.readthedocs.io/en/latest/config/),
+[documented](https://rebench.readthedocs.io/en/latest/),
+and [successfully used](https://github.com/smarr/ReBench#use-in-academia).
+
+This 1.0 release does not signify any new major features, but instead marks a
+point where ReBench has been stable and relieable for a long time.
+
+ReBench is designed to
+
+ - enable reproduction of experiments;
+ - document all benchmark parameters;
+ - provide a flexible execution model,
+   with support for interrupting and continuing benchmarking;
+ - enable the definition of complex sets of comparisons
+   and their flexible execution;
+ - report results to continuous performance monitoring systems,
+   e.g., Codespeed or ReBenchDB;
+ - provide basic support for building/compiling benchmarks/experiments
+   on demand;
+ - be extensible to parse output of custom benchmark harnesses.
+
+ReBench isn't
+
+ - a framework for microbenchmarks.
+   Instead, it relies on existing harnesses and can be extended to parse their
+   output.
+ - a performance analysis tool. It is meant to execute experiments and
+   record the corresponding measurements.
+ - a data analysis tool. It provides only a bare minimum of statistics,
+   but has an easily parseable data format that can be processed, e.g., with R.
+
+To use ReBench, install it with Python's pip:
+
+```bash
+pip install rebench
+```
+
+### Acknowledgements
+
+ReBench has been used by a number of people over the years, and their feedback
+and [contributions](https://github.com/smarr/ReBench/graphs/contributors)
+made it what it is today. Not all of these contributions are recorded,
+but I'd still like to thank everyone, from the annoymous reviewer of artifacts,
+to the students who had to wade through bugs and missing documentation.
+Thank you!
+
+### Changes Since 1.0rc2
+
+ - moved CI to use GitHub Actions (#134)
+ - added testing of Python 3.7 (#121) and ruamel.yaml (#123)
+ - ensure config is YAML 1.2 compliant (#123)
+ - added support for ReBenchDB (#129, #130)
+ 
+ - fixed issues with error reporting (#128)
+ - fixed handling of input size configuration (#117)
 
 ## [1.0rc2] - 2019-06-09
 
@@ -83,7 +144,8 @@
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0rc2...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0.0...HEAD
+[1.0.0]:  https://github.com/smarr/ReBench/compare/v1.0rc2...v1.0.0
 [1.0rc2]: https://github.com/smarr/ReBench/compare/v1.0rc1...v1.0rc2
 [1.0rc1]: https://github.com/smarr/ReBench/compare/v0.10.1...v1.0rc1
 [0.10.1]: https://github.com/smarr/ReBench/compare/v0.10.0...v0.10.1
