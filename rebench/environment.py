@@ -61,9 +61,9 @@ def determine_environment():
     result['hostName'] = u_name[1]
     result['osType'] = u_name[0]
     cpu_info = get_cpu_info()
-    result['cpu'] = cpu_info['brand']
-    result['clockSpeed'] = (cpu_info['hz_advertised_raw'][0]
-                            * (10 ** cpu_info['hz_advertised_raw'][1]))
+    result['cpu'] = cpu_info['brand_raw']
+    result['clockSpeed'] = (cpu_info['hz_advertised'][0]
+                            * (10 ** cpu_info['hz_advertised'][1]))
     result['memory'] = virtual_memory().total
     result['software'] = []
     result['software'].append({'name': 'kernel', 'version': u_name[3]})
