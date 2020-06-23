@@ -4,6 +4,13 @@
 
  -
 
+## [1.0.1] - 2020-06-23
+
+This is a bug fix release.
+
+ - adopt py-cpuinfo 6.0.0 and pin version to avoid issues with changing APIs (#138)
+   Thanks to @tobega for the fix!
+
 ## [1.0.0] Foundations - 2020-05-02
 
 This is the first official release of ReBench as a "feature-complete" product.
