@@ -44,7 +44,10 @@ setup(name='ReBench',
           'psutil>=5.6.7'
       ],
       entry_points = {
-          'console_scripts' : ['rebench = rebench.rebench:main_func']
+          'console_scripts' : [
+              'rebench = rebench.rebench:main_func',
+              'rebench-denoise = rebench.denoise:main_func'
+          ]
       },
       test_suite = 'rebench.tests',
       license = 'MIT'

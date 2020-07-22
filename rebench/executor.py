@@ -23,6 +23,8 @@ from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
+import getpass
+import json
 import os
 import pkgutil
 import random
@@ -34,6 +36,13 @@ from time import time
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
+
+
+def output_as_str(string_like):
+    if type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
+        return string_like.decode('utf-8')
+    else:
+        return string_like
 
 
 class FailedBuilding(Exception):
@@ -532,8 +541,69 @@ class Executor(object):
         return termination_check.should_terminate(
             run_id.get_number_of_data_points(), cmd)
 
-    def execute(self):
+    def _minimize_noise(self):
         try:
+            output = output_as_str(subprocess.check_output(
+                ['sudo', '-n', 'rebench-denoise', '--json', 'minimize'],
+                stderr=subprocess.STDOUT))
+            success = True
+        except subprocess.CalledProcessError as e:
+            output = output_as_str(e.output)
+            success = False
+
+        msg = ''
+        result = {}
+        if not success:
+            msg = 'Minimizing noise with rebench-denoise failed.\n'
+            if 'password is required' in output:
+                try:
+                    denoise_cmd = subprocess.check_output('which rebench-denoise',
+                                                          shell=True)
+                except subprocess.CalledProcessError:
+                    denoise_cmd = '$PATH_TO/rebench-denoise'
+
+                msg += '{ind}Please make sure `sudo rebench-denoise`'\
+                       + ' can be used without password.\n'
+                msg += '{ind}To be able to run rebench-denoise without password,\n'
+                msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
+                msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD: '\
+                       + denoise_cmd + '\n'
+            elif 'command not found' in output:
+                msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
+            else:
+                result = json.loads(output)
+                msg += '{ind}Failed to set:\n'
+
+                for k, value in result.items():
+                    if value == "failed":
+                        msg += '{ind}{ind} - ' + k
+
+            self._ui.warning(msg)
+        return success, result, msg
+
+    def _restore_noise(self, denoise_result):
+        success, result, msg = denoise_result
+
+        vals = set(result.values())
+        if len(vals) == 1 and "failed" in vals:
+            # don't need to try to restore things
+            pass
+        else:
+            try:
+                subprocess.check_output(
+                    ['sudo', '-n', 'rebench-denoise', '--json', 'restore'],
+                    stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError:
+                pass
+
+        if not success:
+            # warn a second time at the end of the execution
+            self._ui.error(msg)
+
+    def execute(self):
+        denoise_result = None
+        try:
+            denoise_result = self._minimize_noise()
             self._scheduler.execute()
             successful = True
             for run in self._runs:
@@ -544,6 +614,7 @@ class Executor(object):
         finally:
             for run in self._runs:
                 run.close_files()
+            self._restore_noise(denoise_result)
 
     @property
     def runs(self):

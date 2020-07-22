@@ -6,6 +6,7 @@ pages:
   - Home:           index.md
   - Basic Concepts: concepts.md
   - Usage:          usage.md
+  - Denoise:        denoise.md
   - Configuration:  config.md
   - Development:
      - Extensions:    extensions.md
