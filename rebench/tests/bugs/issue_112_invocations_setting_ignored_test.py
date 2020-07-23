@@ -40,7 +40,7 @@ class Issue112Test(ReBenchTestCase):
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, exp_result, exp_result)

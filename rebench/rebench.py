@@ -92,10 +92,6 @@ Argument:
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
         execution.add_argument(
-            '-N', '--without-nice', action='store_false', dest='use_nice',
-            help='Used for debugging and environments without the tool nice.',
-            default=True)
-        execution.add_argument(
             '-in', '--invocations', action='store', dest='invocations',
             help='The number of times an executor is started to execute a run.',
             default=None, type=int)
@@ -245,7 +241,7 @@ Argument:
                            'round-robin': RoundRobinScheduler,
                            'random':      RandomScheduler}.get(self._config.options.scheduler)
 
-        executor = Executor(runs, self._config.use_nice, self._config.do_builds,
+        executor = Executor(runs, self._config.do_builds,
                             self._ui,
                             self._config.options.include_faulty,
                             self._config.options.debug,

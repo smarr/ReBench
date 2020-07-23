@@ -40,7 +40,7 @@ class Issue111Test(ReBenchTestCase):
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 7, 1)
@@ -68,7 +68,7 @@ class Issue111Test(ReBenchTestCase):
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 9, 1)

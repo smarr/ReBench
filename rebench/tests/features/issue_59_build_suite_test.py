@@ -38,7 +38,7 @@ class Issue59BuildSuite(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -54,7 +54,7 @@ class Issue59BuildSuite(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         try:

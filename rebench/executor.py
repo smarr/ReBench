@@ -34,15 +34,9 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
+from .denoise import output_as_str
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
-
-
-def output_as_str(string_like):
-    if type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode('utf-8')
-    else:
-        return string_like
 
 
 class FailedBuilding(Exception):
@@ -269,10 +263,13 @@ class ParallelScheduler(RunScheduler):
 
 class Executor(object):
 
-    def __init__(self, runs, use_nice, do_builds, ui, include_faulty=False,
+    def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None):
         self._runs = runs
-        self._use_nice = use_nice
+
+        self._use_nice = None
+        self._use_shielding = None
+
         self._do_builds = do_builds
         self._ui = ui
         self._include_faulty = include_faulty
@@ -299,8 +296,14 @@ class Executor(object):
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
 
-        if self._use_nice:
-            cmdline += "nice -n-20 "
+        use_denoise = self._use_nice or self._use_shielding
+        if use_denoise:
+            cmdline += "sudo rebench-denoise "
+            if not self._use_nice:
+                cmdline += "--without-nice "
+            if not self._use_shielding:
+                cmdline += "--without-shielding "
+            cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
 
@@ -555,6 +558,7 @@ class Executor(object):
         result = {}
         if not success:
             msg = 'Minimizing noise with rebench-denoise failed.\n'
+            msg += '{ind}This may mean that the benchmark results are not stable.\n\n'
             if 'password is required' in output:
                 try:
                     denoise_cmd = subprocess.check_output('which rebench-denoise',
@@ -579,6 +583,21 @@ class Executor(object):
                         msg += '{ind}{ind} - ' + k
 
             self._ui.warning(msg)
+
+        self._use_nice = result.get("can_set_nice", False)
+        self._use_shielding = result.get("shielding", False)
+
+        if not self._use_nice:
+            self._ui.error("Process niceness can not be set by `rebench-denoise`.\n"
+                           + "{ind}`nice` is used to elevate the priority of the benchmark,\n"
+                           + "{ind}without it, other processes my interfere with it"
+                           + " nondeterministically.\n")
+        if not self._use_shielding:
+            self._ui.error("Core shielding could not be set up by `rebench-denoise`.\n"
+                           + "{ind}Shielding is used to restrict the use of cores to"
+                           + " benchmarking.\n"
+                           + "{ind}Without it, there my be more nondeterministic interference.\n")
+
         return success, result, msg
 
     def _restore_noise(self, denoise_result):
@@ -590,9 +609,12 @@ class Executor(object):
             pass
         else:
             try:
-                subprocess.check_output(
-                    ['sudo', '-n', 'rebench-denoise', '--json', 'restore'],
-                    stderr=subprocess.STDOUT)
+                cmd = ['sudo', '-n', 'rebench-denoise', '--json']
+                if not self._use_shielding:
+                    cmd += ['--without-shielding']
+                if not self._use_nice:
+                    cmd += ['--without-nice']
+                subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError:
                 pass
 
@@ -601,7 +623,7 @@ class Executor(object):
             self._ui.error(msg)
 
     def execute(self):
-        denoise_result = None
+        denoise_result = False, {}, ""
         try:
             denoise_result = self._minimize_noise()
             self._scheduler.execute()

@@ -36,7 +36,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, self._ui, False)
+        ex = Executor(runs, False, self._ui, False)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)
@@ -62,7 +62,7 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, self._ui, True)
+        ex = Executor(runs, False, self._ui, True)
         ex.execute()
 
         self.assertEqual("error-code", runs[0].benchmark.name)

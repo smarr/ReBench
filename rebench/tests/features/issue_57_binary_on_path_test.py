@@ -36,7 +36,7 @@ class Issue57ExecutableOnPath(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, False, self._ui, False)
+        ex = Executor(runs, False, self._ui, False)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

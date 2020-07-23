@@ -50,7 +50,7 @@ class ExecutorTest(ReBenchTestCase):
                                self._ui, options,
                                None, 'Test', data_file=self._tmp_file)
 
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
             ex.execute()
         finally:
             subprocess.Popen = old_popen
@@ -62,7 +62,7 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
@@ -73,7 +73,7 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat2',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
@@ -86,7 +86,7 @@ class ExecutorTest(ReBenchTestCase):
         for run in runs:
             run.add_persistence(persistence)
 
-        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI())
+        ex = Executor(runs, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
             data_points = persistence.get_data_points(run)
@@ -122,7 +122,7 @@ class ExecutorTest(ReBenchTestCase):
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
         run = list(runs)[0]
 
@@ -140,7 +140,7 @@ class ExecutorTest(ReBenchTestCase):
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
         run = list(runs)[0]
 

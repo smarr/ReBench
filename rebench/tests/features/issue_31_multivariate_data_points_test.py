@@ -44,7 +44,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         for run in runs:
             run.add_persistence(persistence)
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
         run = next(iter(cnf.get_runs()))

@@ -1,10 +1,12 @@
 from __future__ import print_function
 
 import json
+import os
+import subprocess
 import sys
 
 from argparse import ArgumentParser
-from enum import Enum
+from math import log, floor
 from cpuinfo import get_cpu_info
 
 try:
@@ -13,16 +15,68 @@ except ValueError:
     rebench_version = "unknown"
 
 
-class ScalingGovernors(Enum):
-    """For intel_pstate systems, there's only powersave and performance"""
-    POWERSAVE = "powersave"
-    PERFORMANCE = "performance"
+def output_as_str(string_like):
+    if type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
+        return string_like.decode('utf-8')
+    else:
+        return string_like
 
 
-def set_scaling_governor(governor):
-    cpu_info = get_cpu_info()
-    num_cores = cpu_info["count"]
-    assert governor in (ScalingGovernors.POWERSAVE, ScalingGovernors.PERFORMANCE),\
+def _can_set_niceness():
+    """
+    Check whether we can ask the operating system to influence the priority of
+    our benchmarks.
+    """
+    try:
+        output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
+                                         stderr=subprocess.STDOUT)
+        output = output_as_str(output)
+    except OSError:
+        return False
+
+    if "cannot set niceness" in output or "Permission denied" in output:
+        return False
+    else:
+        return True
+
+
+def _activate_shielding(num_cores):
+    min_cores = floor(log(num_cores))
+    max_cores = num_cores - 1
+    core_spec = "%d-%d" % (min_cores, max_cores)
+    try:
+        output = subprocess.check_output(["cset", "shield", "-c", core_spec, "-k", "on"],
+                                         stderr=subprocess.STDOUT)
+        output = output_as_str(output)
+    except OSError:
+        return False
+
+    if "Permission denied" in output:
+        return False
+
+    if "kthread shield activated" in output:
+        return True
+
+    return False
+
+
+def _reset_shielding():
+    try:
+        output = subprocess.check_output(["cset", "shield", "-r"],
+                                         stderr=subprocess.STDOUT)
+        output = output_as_str(output)
+        return "cset: done" in output
+    except OSError:
+        return False
+
+
+# For intel_pstate systems, there's only powersave and performance
+SCALING_GOVERNOR_POWERSAVE = "powersave"
+SCALING_GOVERNOR_PERFORMANCE = "performance"
+
+
+def _set_scaling_governor(governor, num_cores):
+    assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE),\
         "The scaling governor is expected to be performance or powersave, but was " + governor
 
     try:
@@ -36,7 +90,7 @@ def set_scaling_governor(governor):
     return governor
 
 
-def set_no_turbo(with_no_turbo):
+def _set_no_turbo(with_no_turbo):
     if with_no_turbo:
         value = "1"
     else:
@@ -50,7 +104,7 @@ def set_no_turbo(with_no_turbo):
     return with_no_turbo
 
 
-def minimize_perf_sampling():
+def _minimize_perf_sampling():
     try:
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
             perc_file.write("1\n")
@@ -63,7 +117,7 @@ def minimize_perf_sampling():
     return "1"
 
 
-def restore_perf_sampling():
+def _restore_perf_sampling():
     try:
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
             perc_file.write("25\n")
@@ -72,22 +126,45 @@ def restore_perf_sampling():
     return "restored"
 
 
-def minimize_noise():
-    governor = set_scaling_governor(ScalingGovernors.PERFORMANCE)
-    no_turbo = set_no_turbo(True)
-    perf = minimize_perf_sampling()
+def _minimize_noise(num_cores, use_nice, use_shielding):
+    governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
+    no_turbo = _set_no_turbo(True)
+    perf = _minimize_perf_sampling()
+    can_nice = _can_set_niceness() if use_nice else False
+    shielding = _activate_shielding(num_cores) if use_shielding else False
+
     return {"scaling_governor": governor,
             "no_turbo": no_turbo,
-            "perf_event_max_sample_rate": perf}
+            "perf_event_max_sample_rate": perf,
+            "can_set_nice": can_nice,
+            "shielding": shielding}
 
 
-def restore_standard_settings():
-    governor = set_scaling_governor(ScalingGovernors.POWERSAVE)
-    no_turbo = set_no_turbo(False)
-    perf = restore_perf_sampling()
+def _restore_standard_settings(num_cores, use_shielding):
+    governor = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
+    no_turbo = _set_no_turbo(False)
+    perf = _restore_perf_sampling()
+
+    if use_shielding:
+        shielding = _reset_shielding()
+
     return {"scaling_governor": governor,
             "no_turbo": no_turbo,
-            "perf_event_max_sample_rate": perf}
+            "perf_event_max_sample_rate": perf,
+            "shielding": shielding}
+
+
+def _exec(use_nice, use_shielding, args):
+    cmdline = []
+    if use_shielding:
+        cmdline += ["cset", "shield", "--exec", "--"]
+    if use_nice:
+        cmdline += ["nice", "-n-20"]
+    cmdline += args
+
+    # the first element of cmdline is ignored as argument, since it's the file argument, too
+    cmd = cmdline[0]
+    os.execvp(cmd, cmdline)
 
 
 def shell_options():
@@ -96,21 +173,32 @@ def shell_options():
                         version="%(prog)s " + rebench_version)
     parser.add_argument('--json', action='store_true', default=False,
                         help='Output results as JSON for processing')
+    parser.add_argument('--without-nice', action='store_false', default=True,
+                        dest='use_nice', help="Don't try setting process niceness")
+    parser.add_argument('--without-shielding', action='store_false', default=True,
+                        dest='use_shielding', help="Don't try shielding cores")
     parser.add_argument('command',
-                        help=("Either set system to 'minimize' noise or 'restore' " +
-                              "the settings assumed to be the original ones"),
+                        help=("`minimize`|`restore`|`exec -- `: "
+                              "`minimize` sets system to reduce noise. "
+                              "`restore` sets system to the assumed original settings. " +
+                              "`exec -- ` executes the given arguments."),
                         default=None)
     return parser
 
 
 def main_func():
     arg_parser = shell_options()
-    args = arg_parser.parse_args()
+    args, remaining_args = arg_parser.parse_known_args()
+
+    cpu_info = get_cpu_info()
+    num_cores = cpu_info["count"]
 
     if args.command == 'minimize':
-        result = minimize_noise()
+        result = _minimize_noise(num_cores, args.use_nice, args.use_shielding)
     elif args.command == 'restore':
-        result = restore_standard_settings()
+        result = _restore_standard_settings(num_cores, args.use_shielding)
+    elif args.command == 'exec':
+        _exec(args.use_nice, args.use_shielding, remaining_args)
     else:
         arg_parser.print_help()
         return -1
@@ -121,6 +209,10 @@ def main_func():
         print("Setting scaling_governor:           ", result["scaling_governor"])
         print("Setting no_turbo:                   ", result["no_turbo"])
         print("Setting perf_event_max_sample_rate: ", result["perf_event_max_sample_rate"])
+        print("")
+        print("Enabled core shielding:             ", result.get("shielding", False))
+        print("")
+        print("Can set niceness:                   ", result.get("can_set_nice", False))
 
     if "failed" in result.values():
         return -1

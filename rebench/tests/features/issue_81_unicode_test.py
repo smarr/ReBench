@@ -42,7 +42,7 @@ class Issue81UnicodeSuite(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)
