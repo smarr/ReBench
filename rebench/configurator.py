@@ -20,9 +20,9 @@
 import logging
 import subprocess
 from os.path import dirname
-import yaml
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
+import yaml
 
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
