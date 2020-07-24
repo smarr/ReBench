@@ -31,8 +31,6 @@ import sys
 from threading import Thread, RLock
 from time import time
 
-from humanfriendly.compat import coerce_string
-
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
