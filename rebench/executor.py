@@ -23,8 +23,6 @@ from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
-import getpass
-import json
 import os
 import pkgutil
 import random
@@ -34,7 +32,7 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise import output_as_str
+from .denoise import minimize_noise, restore_noise
 from .environment import init_environment
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
@@ -548,89 +546,14 @@ class Executor(object):
         return termination_check.should_terminate(
             run_id.get_number_of_data_points(), cmd)
 
-    def _minimize_noise(self):
-        try:
-            output = output_as_str(subprocess.check_output(
-                ['sudo', '-n', 'rebench-denoise', '--json', 'minimize'],
-                stderr=subprocess.STDOUT))
-            success = True
-        except subprocess.CalledProcessError as e:
-            output = output_as_str(e.output)
-            success = False
-
-        msg = ''
-        result = {}
-        if not success and not self._artifact_review:
-            msg = 'Minimizing noise with rebench-denoise failed.\n'
-            msg += '{ind}This may mean that the benchmark results are not stable.\n\n'
-            if 'password is required' in output:
-                try:
-                    denoise_cmd = subprocess.check_output('which rebench-denoise',
-                                                          shell=True)
-                except subprocess.CalledProcessError:
-                    denoise_cmd = '$PATH_TO/rebench-denoise'
-
-                msg += '{ind}Please make sure `sudo rebench-denoise`'\
-                       + ' can be used without password.\n'
-                msg += '{ind}To be able to run rebench-denoise without password,\n'
-                msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
-                msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD: '\
-                       + denoise_cmd + '\n'
-            elif 'command not found' in output:
-                msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
-            else:
-                result = json.loads(output)
-                msg += '{ind}Failed to set:\n'
-
-                for k, value in result.items():
-                    if value == "failed":
-                        msg += '{ind}{ind} - ' + k
-
-            self._ui.warning(msg)
-
-        self._use_nice = result.get("can_set_nice", False)
-        self._use_shielding = result.get("shielding", False)
-
-        if not self._use_nice and not self._artifact_review:
-            self._ui.error("Process niceness can not be set by `rebench-denoise`.\n"
-                           + "{ind}`nice` is used to elevate the priority of the benchmark,\n"
-                           + "{ind}without it, other processes my interfere with it"
-                           + " nondeterministically.\n")
-        if not self._use_shielding and not self._artifact_review:
-            self._ui.error("Core shielding could not be set up by `rebench-denoise`.\n"
-                           + "{ind}Shielding is used to restrict the use of cores to"
-                           + " benchmarking.\n"
-                           + "{ind}Without it, there my be more nondeterministic interference.\n")
-
-        return success, result, msg
-
-    def _restore_noise(self, denoise_result):
-        success, result, msg = denoise_result
-
-        vals = set(result.values())
-        if len(vals) == 1 and "failed" in vals:
-            # don't need to try to restore things
-            pass
-        else:
-            try:
-                cmd = ['sudo', '-n', 'rebench-denoise', '--json']
-                if not self._use_shielding:
-                    cmd += ['--without-shielding']
-                if not self._use_nice:
-                    cmd += ['--without-nice']
-                subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError:
-                pass
-
-        if not success and not self._artifact_review:
-            # warn a second time at the end of the execution
-            self._ui.error(msg)
-
     def execute(self):
-        denoise_result = False, {}, ""
+        denoise_result = None
         try:
-            denoise_result = self._minimize_noise()
-            init_environment(denoise_result[1], self._ui)
+            denoise_result = minimize_noise(not self._artifact_review, self._ui)
+            self._use_nice = denoise_result.use_nice
+            self._use_shielding = denoise_result.use_shielding
+
+            init_environment(denoise_result, self._ui)
 
             self._scheduler.execute()
 
@@ -643,7 +566,7 @@ class Executor(object):
         finally:
             for run in self._runs:
                 run.close_files()
-            self._restore_noise(denoise_result)
+            restore_noise(denoise_result, not self._artifact_review, self._ui)
 
     @property
     def runs(self):

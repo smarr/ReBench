@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import getpass
 import json
 import os
 import subprocess
@@ -9,17 +10,123 @@ from argparse import ArgumentParser
 from math import log, floor
 from cpuinfo import get_cpu_info
 
+from .subprocess_with_timeout import output_as_str
+
 try:
     from . import __version__ as rebench_version
 except ValueError:
     rebench_version = "unknown"
 
 
-def output_as_str(string_like):
-    if type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode('utf-8')
+class DenoiseResult(object):
+
+    def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
+        self.succeeded = succeeded
+        self.warn_msg = warn_msg
+        self.use_nice = use_nice
+        self.use_shielding = use_shielding
+        self.details = details
+
+
+def minimize_noise(show_warnings, ui):
+    result = {}
+
+    try:
+        output = output_as_str(subprocess.check_output(
+            ['sudo', '-n', 'rebench-denoise', '--json', 'minimize'],
+            stderr=subprocess.STDOUT))
+        try:
+            result = json.loads(output)
+            got_json = True
+        except ValueError:
+            got_json = False
+    except subprocess.CalledProcessError as e:
+        output = output_as_str(e.output)
+        got_json = False
+
+    msg = 'Minimizing noise with rebench-denoise failed\n'
+    msg += '{ind}possibly causing benchmark results to vary more.\n\n'
+
+    success = False
+    use_nice = False
+    use_shielding = False
+
+    if got_json:
+
+        failed = ''
+
+        for k, value in result.items():
+            if value == "failed":
+                failed += '{ind}{ind} - ' + k + '\n'
+
+        if failed:
+            msg += '{ind}Failed to set:\n' + failed + '\n'
+
+        use_nice = result.get("can_set_nice", False)
+        use_shielding = result.get("shielding", False)
+
+        if not use_nice and show_warnings:
+            msg += ("{ind}Process niceness could not be set.\n"
+                    + "{ind}{ind}`nice` is used to elevate the priority of the benchmark,\n"
+                    + "{ind}{ind}without it, other processes my interfere with it"
+                    + " nondeterministically.\n")
+
+        if not use_shielding and show_warnings:
+            msg += ("{ind}Core shielding could not be set up.\n"
+                    + "{ind}{ind}Shielding is used to restrict the use of cores to"
+                    + " benchmarking.\n"
+                    + "{ind}{ind}Without it, there my be more nondeterministic interference.\n")
+
+        if use_nice and use_shielding and not failed:
+            success = True
     else:
-        return string_like
+        if 'password is required' in output:
+            try:
+                denoise_cmd = output_as_str(subprocess.check_output('which rebench-denoise',
+                                                                    shell=True))
+            except subprocess.CalledProcessError:
+                denoise_cmd = '$PATH_TO/rebench-denoise'
+
+            msg += '{ind}Please make sure `sudo rebench-denoise`'\
+                   + ' can be used without password.\n'
+            msg += '{ind}To be able to run rebench-denoise without password,\n'
+            msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
+            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD: '\
+                   + denoise_cmd + '\n'
+        elif 'command not found' in output:
+            msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
+        else:
+            msg += '{ind}Error: ' + output
+
+    if not success and show_warnings:
+        ui.warning(msg)
+
+    return DenoiseResult(success, msg, use_nice, use_shielding, result)
+
+
+def restore_noise(denoise_result, show_warning, ui):
+    if not denoise_result:
+        # likely has failed completely. And without details, just no-op
+        return
+
+    values = set(denoise_result.details.values())
+    if len(values) == 1 and "failed" in values:
+        # everything failed, don't need to try to restore things
+        pass
+    else:
+        try:
+            cmd = ['sudo', '-n', 'rebench-denoise', '--json']
+            if not denoise_result.use_shielding:
+                cmd += ['--without-shielding']
+            if not denoise_result.use_nice:
+                cmd += ['--without-nice']
+            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            pass
+
+    if not denoise_result.succeeded and show_warning:
+        # warn a second time at the end of the execution
+        ui.error(denoise_result.warn_msg)
 
 
 def _can_set_niceness():
@@ -55,7 +162,7 @@ def _activate_shielding(num_cores):
         return False
 
     if "kthread shield activated" in output:
-        return True
+        return core_spec
 
     return False
 
@@ -67,6 +174,8 @@ def _reset_shielding():
         output = output_as_str(output)
         return "cset: done" in output
     except OSError:
+        return False
+    except subprocess.CalledProcessError:
         return False
 
 
@@ -144,9 +253,7 @@ def _restore_standard_settings(num_cores, use_shielding):
     governor = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
     no_turbo = _set_no_turbo(False)
     perf = _restore_perf_sampling()
-
-    if use_shielding:
-        shielding = _reset_shielding()
+    shielding = _reset_shielding() if use_shielding else False
 
     return {"scaling_governor": governor,
             "no_turbo": no_turbo,
@@ -167,7 +274,7 @@ def _exec(use_nice, use_shielding, args):
     os.execvp(cmd, cmdline)
 
 
-def shell_options():
+def _shell_options():
     parser = ArgumentParser()
     parser.add_argument('--version', action='version',
                         version="%(prog)s " + rebench_version)
@@ -187,7 +294,7 @@ def shell_options():
 
 
 def main_func():
-    arg_parser = shell_options()
+    arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
 
     cpu_info = get_cpu_info()

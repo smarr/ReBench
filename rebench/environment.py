@@ -33,7 +33,7 @@ _source = None
 
 
 def determine_source_details():
-    global _source
+    global _source  # pylint: disable=global-statement
     if _source:
         return _source
 
@@ -66,7 +66,7 @@ def determine_source_details():
 _environment = None
 
 
-def init_environment(denoise, ui):
+def init_environment(denoise_result, ui):
     result = dict()
     result['userName'] = getpass.getuser()
     result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
@@ -77,7 +77,7 @@ def init_environment(denoise, ui):
 
     try:
         cpu_info = _get_cpu_info_internal()
-        if len(cpu_info):
+        if cpu_info:
             result['cpu'] = cpu_info['brand_raw']
             result['clockSpeed'] = (cpu_info['hz_advertised'][0]
                                     * (10 ** cpu_info['hz_advertised'][1]))
@@ -94,14 +94,14 @@ def init_environment(denoise, ui):
     result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
     result['software'].append({'name': 'architecture', 'version': u_name[4]})
 
-    result['denoise'] = denoise
+    result['denoise'] = denoise_result.details
 
-    global _environment
+    global _environment  # pylint: disable=global-statement
     _environment = result
 
 
 def determine_environment():
-    global _environment
+    global _environment  # pylint: disable=global-statement
     if _environment:
         return _environment
 
