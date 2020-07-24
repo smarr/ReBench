@@ -20,6 +20,19 @@ except NameError:
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
 
+if IS_PY3:
+    def output_as_str(string_like):
+        if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
+            return string_like.decode('utf-8')
+        else:
+            return string_like
+else:
+    def output_as_str(string_like):
+        if string_like is not None and type(string_like) == str:  # pylint: disable=unidiomatic-typecheck
+            return string_like.decode('utf-8')
+        else:
+            return string_like
+
 
 class _SubprocessThread(Thread):
 
@@ -85,18 +98,20 @@ class _SubprocessThread(Thread):
 
                 for file_no in ret[0]:
                     if file_no == proc.stdout.fileno():
-                        read = proc.stdout.readline()
+                        read = output_as_str(proc.stdout.readline())
                         sys.stdout.write(read)
                         self.stdout_result += read
                     if self._stderr == PIPE and file_no == proc.stderr.fileno():
-                        read = proc.stderr.readline()
+                        read = output_as_str(proc.stderr.readline())
                         sys.stderr.write(read)
                         self.stderr_result += read
 
                 if proc.poll() is not None:
                     break
         else:
-            self.stdout_result, self.stderr_result = proc.communicate()
+            stdout_r, stderr_r = proc.communicate()
+            self.stdout_result = output_as_str(stdout_r)
+            self.stderr_result = output_as_str(stderr_r)
 
 
 def _print_keep_alive(seconds_since_start):

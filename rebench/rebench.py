@@ -32,8 +32,8 @@ import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 
 from . import __version__ as rebench_version
-from .executor       import Executor, BatchScheduler, RoundRobinScheduler, \
-                            RandomScheduler
+from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
+    RandomScheduler, BenchmarkThreadExceptions
 from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
@@ -270,6 +270,10 @@ def main_func():
         ui = UI()
         ui.error("\n" + err.message)
         return -1
+    except BenchmarkThreadExceptions as exceptions:
+        ui = UI()
+        for ex in exceptions.exceptions:
+            ui.error(str(ex) + "\n")
 
 
 if __name__ == "__main__":

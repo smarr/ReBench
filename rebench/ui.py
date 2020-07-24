@@ -21,7 +21,6 @@ import sys
 
 from os import getcwd
 
-from humanfriendly.compat import coerce_string
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 from humanfriendly.terminal.spinners import Spinner
 
@@ -30,7 +29,6 @@ _ERASE_LINE = '\r\x1b[2K'
 
 
 def escape_braces(string):
-    string = coerce_string(string)
     return string.replace('{', '{{').replace('}', '}}')
 
 
@@ -111,13 +109,12 @@ class UI(object):
 
     def output(self, text, *args, **kw):
         self._erase_spinner()
-        auto_encode(sys.stdout, coerce_string(text) + '\n', *args, **kw)
+        auto_encode(sys.stdout, text + '\n', *args, **kw)
         sys.stdout.flush()
 
     def _output(self, text, color, *args, **kw):
         self._erase_spinner()
 
-        text = coerce_string(text)
         if terminal_supports_colors(sys.stdout):
             text = ansi_wrap(text, color=color)
         auto_encode(sys.stdout, text, ind=_DETAIL_INDENT, *args, **kw)

@@ -37,7 +37,6 @@ class SubprocessTimeoutTest(unittest.TestCase):
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=10)
 
-        output = output.decode('utf-8')
         self.assertEqual(0, return_code)
         self.assertEqual("Done\n", output)
         self.assertEqual(None, err)
@@ -49,7 +48,6 @@ class SubprocessTimeoutTest(unittest.TestCase):
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=1)
 
-        output = output.decode('utf-8')
         self.assertEqual(sub.E_TIMEOUT, return_code)
         self.assertEqual("", output)
         self.assertEqual(None, err)
@@ -61,7 +59,6 @@ class SubprocessTimeoutTest(unittest.TestCase):
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=5)
 
-        output = output.decode('utf-8')
         self.assertEqual(sub.E_TIMEOUT, return_code)
         self.assertEqual("", output)
         self.assertEqual(None, err)

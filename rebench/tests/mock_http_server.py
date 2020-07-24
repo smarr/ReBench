@@ -23,6 +23,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
         global _put_requests  # pylint: disable=global-statement
         _put_requests += 1
 
+    def log_request(self, code='-', size='-'):
+        pass
+
 
 class MockHTTPServer(object):
 

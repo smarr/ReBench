@@ -50,7 +50,7 @@ class Issue81UnicodeSuite(ReBenchTestCase):
 
         self.assertTrue(os.path.exists(self._path + '/build.log'))
 
-        with open_with_enc(self._path + '/build.log', 'r', encoding='utf8') as build_file:
+        with open_with_enc(self._path + '/build.log', 'r', encoding='utf-8') as build_file:
             log = build_file.read()
 
         try:

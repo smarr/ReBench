@@ -5,6 +5,7 @@ import subprocess
 from cpuinfo import get_cpu_info
 from psutil import virtual_memory
 
+from .subprocess_with_timeout import output_as_str
 
 try:
     from urllib.parse import urlparse
@@ -14,7 +15,7 @@ except ImportError:
 
 
 def _encode_str(out):
-    as_string = out.decode('utf-8')
+    as_string = output_as_str(out)
     if as_string and as_string[-1] == '\n':
         as_string = as_string[:-1]
     return as_string
