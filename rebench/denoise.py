@@ -114,7 +114,7 @@ def _minimize_perf_sampling():
     except IOError:
         return "failed"
 
-    return "1"
+    return 1
 
 
 def _restore_perf_sampling():

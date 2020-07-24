@@ -32,6 +32,7 @@ from .environment import determine_environment, determine_source_details
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
+from .ui                import UIError
 
 
 try:
@@ -70,11 +71,12 @@ class DataStore(object):
 
     def get(self, filename, configurator):
         if filename not in self._files:
+            source = determine_source_details()
             if configurator.use_rebench_db and 'repo_url' in configurator.rebench_db:
-                _source['repoURL'] = configurator.rebench_db['repo_url']
+                source['repoURL'] = configurator.rebench_db['repo_url']
 
             if configurator.options and configurator.options.branch:
-                _source['branchOrTag'] = configurator.options.branch
+                source['branchOrTag'] = configurator.options.branch
 
             p = _FilePersistence(filename, self, configurator.discard_old_data, self._ui)
             self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
@@ -135,10 +137,6 @@ class DataStore(object):
                              "register. This seems to be wrong: " + str(key))
         self._bench_cfgs[key] = cfg
         return cfg
-
-
-_environment = determine_environment()
-_source = determine_source_details()
 
 
 class _AbstractPersistence(object):
@@ -215,7 +213,6 @@ class _FilePersistence(_ConcretePersistence):
         self._file = None
         if discard_old_data:
             self._discard_old_data()
-        self._append_execution_comment()
         self._lock = Lock()
 
     def _discard_old_data(self):
@@ -307,7 +304,7 @@ class _FilePersistence(_ConcretePersistence):
                     self._ui.debug_error_info("{ind}" + msg + "\n")
                     errors.add(msg)
 
-    def _append_execution_comment(self):
+    def _open_file_and_append_execution_comment(self):
         """
         Append a shebang (#!/path/to/executable) to the data file.
         This allows it theoretically to be executable.
@@ -317,25 +314,17 @@ class _FilePersistence(_ConcretePersistence):
         if not self._start_time:
             self._start_time = datetime.utcnow().isoformat() + "+00:00"
             shebang_line += _START_TIME_LINE + self._start_time + "\n"
-        shebang_line += "# Environment: " + json.dumps(_environment) + "\n"
-        shebang_line += "# Source: " + json.dumps(_source) + "\n"
+        shebang_line += "# Environment: " + json.dumps(determine_environment()) + "\n"
+        shebang_line += "# Source: " + json.dumps(determine_source_details()) + "\n"
 
         try:
-            # if file doesn't exist, just create it
-            if not os.path.exists(self._data_filename):
-                with open(self._data_filename, 'w') as data_file:
-                    data_file.write(shebang_line)
-                    data_file.flush()
-                    data_file.close()
-                return
-
-            # otherwise, append the lines
-            with open(self._data_filename, 'a') as data_file:
-                data_file.write(shebang_line)
-                data_file.flush()
+            data_file = open(self._data_filename, 'a+')
+            data_file.write(shebang_line)
+            data_file.flush()
+            return data_file
         except Exception as err:  # pylint: disable=broad-except
-            self._ui.error(
-                "Error: While appending metadata to the data file.\n{ind}%s\n" % err)
+            raise UIError("Error: Was not able to open data file for writing.\n{ind}%s\n" % err,
+                          err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 
@@ -358,7 +347,7 @@ class _FilePersistence(_ConcretePersistence):
 
     def _open_file_to_add_new_data(self):
         if not self._file:
-            self._file = open(self._data_filename, 'a+')
+            self._file = self._open_file_and_append_execution_comment()
 
     def close(self):
         if self._file:
@@ -439,11 +428,11 @@ class _ReBenchDB(_ConcretePersistence):
         return self._send_to_rebench_db({
             'data': all_data,
             'criteria': criteria_index,
-            'env': _environment,
+            'env': determine_environment(),
             'startTime': self._start_time,
             'projectName': self._project_name,
             'experimentName': self._experiment_name,
-            'source': _source}, num_measurements)
+            'source': determine_source_details()}, num_measurements)
 
     def close(self):
         with self._lock:

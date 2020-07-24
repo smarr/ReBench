@@ -35,6 +35,7 @@ from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .denoise import output_as_str
+from .environment import init_environment
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
 
@@ -629,7 +630,10 @@ class Executor(object):
         denoise_result = False, {}, ""
         try:
             denoise_result = self._minimize_noise()
+            init_environment(denoise_result[1])
+
             self._scheduler.execute()
+
             successful = True
             for run in self._runs:
                 run.report_job_completed(self._runs)

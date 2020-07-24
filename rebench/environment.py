@@ -29,7 +29,14 @@ def _exec(cmd):
     return _encode_str(out)
 
 
+_source = None
+
+
 def determine_source_details():
+    global _source
+    if _source:
+        return _source
+
     result = dict()
     try:
         repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
@@ -50,10 +57,16 @@ def determine_source_details():
     result['committerName'] = _exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
     result['authorEmail'] = _exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
     result['committerEmail'] = _exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
+
+    _source = result
+
     return result
 
 
-def determine_environment():
+_environment = None
+
+
+def init_environment(denoise):
     result = dict()
     result['userName'] = getpass.getuser()
     result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
@@ -70,4 +83,16 @@ def determine_environment():
     result['software'].append({'name': 'kernel', 'version': u_name[3]})
     result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
     result['software'].append({'name': 'architecture', 'version': u_name[4]})
-    return result
+
+    result['denoise'] = denoise
+
+    global _environment
+    _environment = result
+
+
+def determine_environment():
+    global _environment
+    if _environment:
+        return _environment
+
+    raise Exception("Environment was not initialized before accessing it.")
