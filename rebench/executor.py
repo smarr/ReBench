@@ -630,7 +630,7 @@ class Executor(object):
         denoise_result = False, {}, ""
         try:
             denoise_result = self._minimize_noise()
-            init_environment(denoise_result[1])
+            init_environment(denoise_result[1], self._ui)
 
             self._scheduler.execute()
 
