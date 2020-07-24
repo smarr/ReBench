@@ -355,9 +355,6 @@ class Executor(object):
             self._ui.error(msg, run_id, script, path)
             return
 
-        stdout_result = coerce_string(stdout_result)
-        stderr_result = coerce_string(stderr_result)
-
         if self._build_log:
             self.process_output(name, stdout_result, stderr_result)
 
@@ -380,7 +377,7 @@ class Executor(object):
         build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
-        with open_with_enc(self._build_log, 'a', encoding='utf8') as log_file:
+        with open_with_enc(self._build_log, 'a', encoding='utf-8') as log_file:
             if stdout_result:
                 log_file.write(name + '|STD:')
                 log_file.write(stdout_result)

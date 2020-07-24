@@ -20,12 +20,18 @@ except NameError:
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
 
-
-def output_as_str(string_like):
-    if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode('utf-8')
-    else:
-        return string_like
+if IS_PY3:
+    def output_as_str(string_like):
+        if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
+            return string_like.decode('utf-8')
+        else:
+            return string_like
+else:
+    def output_as_str(string_like):
+        if string_like is not None and type(string_like) == str:  # pylint: disable=unidiomatic-typecheck
+            return string_like.decode('utf-8')
+        else:
+            return string_like
 
 
 class _SubprocessThread(Thread):
