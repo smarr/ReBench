@@ -137,6 +137,7 @@ class Configurator(object):
         self._build_log = build_log or raw_config.get('build_log', 'build.log')
         self._data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
         self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
+        self._artifact_review = raw_config.get('artifact_review', False)
 
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None
@@ -191,6 +192,10 @@ class Configurator(object):
     @property
     def rebench_db(self):
         return self._rebench_db
+
+    @property
+    def artifact_review(self):
+        return self._artifact_review
 
     @property
     def use_rebench_db(self):

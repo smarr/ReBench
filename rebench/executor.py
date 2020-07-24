@@ -264,7 +264,8 @@ class ParallelScheduler(RunScheduler):
 class Executor(object):
 
     def __init__(self, runs, do_builds, ui, include_faulty=False,
-                 debug=False, scheduler=BatchScheduler, build_log=None):
+                 debug=False, scheduler=BatchScheduler, build_log=None,
+                 artifact_review=False):
         self._runs = runs
 
         self._use_nice = None
@@ -276,6 +277,7 @@ class Executor(object):
         self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
+        self._artifact_review = artifact_review
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
         for run in runs:
@@ -418,7 +420,8 @@ class Executor(object):
         if terminate:
             run_id.report_run_completed(cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
-                    and mean_of_totals < run_id.min_iteration_time):
+                    and mean_of_totals < run_id.min_iteration_time
+                    and not self._artifact_review):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
@@ -556,7 +559,7 @@ class Executor(object):
 
         msg = ''
         result = {}
-        if not success:
+        if not success and not self._artifact_review:
             msg = 'Minimizing noise with rebench-denoise failed.\n'
             msg += '{ind}This may mean that the benchmark results are not stable.\n\n'
             if 'password is required' in output:
@@ -587,12 +590,12 @@ class Executor(object):
         self._use_nice = result.get("can_set_nice", False)
         self._use_shielding = result.get("shielding", False)
 
-        if not self._use_nice:
+        if not self._use_nice and not self._artifact_review:
             self._ui.error("Process niceness can not be set by `rebench-denoise`.\n"
                            + "{ind}`nice` is used to elevate the priority of the benchmark,\n"
                            + "{ind}without it, other processes my interfere with it"
                            + " nondeterministically.\n")
-        if not self._use_shielding:
+        if not self._use_shielding and not self._artifact_review:
             self._ui.error("Core shielding could not be set up by `rebench-denoise`.\n"
                            + "{ind}Shielding is used to restrict the use of cores to"
                            + " benchmarking.\n"
@@ -618,7 +621,7 @@ class Executor(object):
             except subprocess.CalledProcessError:
                 pass
 
-        if not success:
+        if not success and not self._artifact_review:
             # warn a second time at the end of the execution
             self._ui.error(msg)
 

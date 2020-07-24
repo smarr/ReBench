@@ -140,6 +140,24 @@ default_data_file: my-experiment.data
 
 ---
 
+**artifact_review:**
+
+Enable [artifact evaluation](https://www.artifact-eval.org/) mode.
+This mode does report less warnings and errors, but does not change
+how benchmarking is done. Experience shows that reviewers may misunderstand
+possibly chatty warnings and misinterpret them as a signs for an artifact of
+insufficient quality.
+
+Default: `false`
+
+Example:
+
+```yaml
+artifact_review: true
+```
+
+---
+
 **build_log:**
 
 Defines the file to be used for logging the output of build operations.

@@ -246,11 +246,14 @@ Argument:
                             self._config.options.include_faulty,
                             self._config.options.debug,
                             scheduler_class,
-                            self._config.build_log)
+                            self._config.build_log, self._config.artifact_review)
 
         if self._config.options.no_execution:
             return True
         else:
+            if self._config.artifact_review:
+                self._ui.output("Executing benchmarks for Artifact Review"
+                                + " using the reported settings.")
             return executor.execute()
 
 
