@@ -299,12 +299,6 @@ class Executor(object):
 
         return cmdline
 
-    @staticmethod
-    def _read(stream):
-        data = stream.readline()
-        decoded = data.decode('utf-8')
-        return coerce_string(decoded)
-
     def _build_executor_and_suite(self, run_id):
         name = "E:" + run_id.benchmark.suite.executor.name
         build = run_id.benchmark.suite.executor.build
@@ -361,8 +355,8 @@ class Executor(object):
             self._ui.error(msg, run_id, script, path)
             return
 
-        stdout_result = coerce_string(stdout_result.decode('utf-8'))
-        stderr_result = coerce_string(stderr_result.decode('utf-8'))
+        stdout_result = coerce_string(stdout_result)
+        stderr_result = coerce_string(stderr_result)
 
         if self._build_log:
             self.process_output(name, stdout_result, stderr_result)
@@ -459,7 +453,6 @@ class Executor(object):
                 stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive)
-            output = output.decode('utf-8')
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:

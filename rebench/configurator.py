@@ -28,6 +28,7 @@ from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
 from .model.executor import Executor
+from .subprocess_with_timeout import output_as_str
 from .ui import UIError, escape_braces
 
 # Disable most logging for pykwalify
@@ -106,8 +107,7 @@ def can_set_niceness():
     """
     output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
                                      stderr=subprocess.STDOUT)
-    if type(output) != str:  # pylint: disable=unidiomatic-typecheck
-        output = output.decode('utf-8')
+    output = output_as_str(output)
     if "cannot set niceness" in output or "Permission denied" in output:
         return False
     else:
