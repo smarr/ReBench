@@ -28,7 +28,7 @@ from ..executor          import Executor
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
-from ..ui import UIError, TestDummyUI
+from ..ui import UIError
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -39,9 +39,9 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_setup_and_run_benchmark(self):
         # before executing the benchmark,
-        # we override stuff in subprocess for testing
+        # we override Popen in subprocess for testing
         old_popen = subprocess.Popen
-        subprocess.Popen = Popen_override
+        subprocess.Popen = popen_override
 
         try:
             options = ReBench().shell_options().parse_args(['dummy'])
@@ -50,7 +50,7 @@ class ExecutorTest(ReBenchTestCase):
                                self._ui, options,
                                None, 'Test', data_file=self._tmp_file)
 
-            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
             ex.execute()
         finally:
             subprocess.Popen = old_popen
@@ -62,7 +62,7 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
@@ -73,7 +73,7 @@ class ExecutorTest(ReBenchTestCase):
                                DataStore(self._ui), self._ui, options,
                                None, 'TestBrokenCommandFormat2',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.do_builds, TestDummyUI())
+            ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
@@ -86,7 +86,7 @@ class ExecutorTest(ReBenchTestCase):
         for run in runs:
             run.add_persistence(persistence)
 
-        ex = Executor(runs, cnf.do_builds, TestDummyUI())
+        ex = Executor(runs, cnf.do_builds, self._ui)
         ex.execute()
         for run in runs:
             data_points = persistence.get_data_points(run)
@@ -192,7 +192,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
-def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
+def popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument
     class Popen(object):
         returncode = 0
 
