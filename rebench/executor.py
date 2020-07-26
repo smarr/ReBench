@@ -89,8 +89,9 @@ class RunScheduler(object):
 
         hour, minute, sec = self._estimate_time_left()
 
+        run_details = run.as_simple_string().replace(" None", "")
         label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
-                % (run.as_simple_string(), art_mean, hour, minute, sec)
+                % (run_details, art_mean, hour, minute, sec)
         self._ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
