@@ -8,6 +8,7 @@ import sys
 
 from argparse import ArgumentParser
 from math import log, floor
+from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
 from .subprocess_with_timeout import output_as_str
@@ -147,9 +148,17 @@ def _can_set_niceness():
         return True
 
 
+def _shield_lower_bound(num_cores):
+    return int(floor(log(num_cores)))
+
+
+def _shield_upper_bound(num_cores):
+    return num_cores - 1
+
+
 def _activate_shielding(num_cores):
-    min_cores = floor(log(num_cores))
-    max_cores = num_cores - 1
+    min_cores = _shield_lower_bound(num_cores)
+    max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
     try:
         output = subprocess.check_output(["cset", "shield", "-c", core_spec, "-k", "on"],
@@ -274,6 +283,35 @@ def _exec(use_nice, use_shielding, args):
     os.execvp(cmd, cmdline)
 
 
+def _calculate(core_id):
+    print("Started calculating: %d" % core_id)
+    try:
+        val = 0
+        for _ in range(1, 1000):
+            for i in range(1, 1000000):
+                val *= i * i / i + i - i
+    except KeyboardInterrupt:
+        pass
+    print("Finished calculating: %d" % core_id)
+
+
+def _test(num_cores):
+    lower = _shield_lower_bound(num_cores)
+    upper = _shield_upper_bound(num_cores)
+    core_cnt = upper - lower + 1
+    pool = Pool(core_cnt)
+
+    print("Test on %d cores" % core_cnt)
+    try:
+        pool.map(_calculate, range(0, core_cnt))
+    except KeyboardInterrupt:
+        pass
+
+    print("exit main")
+    pool.terminate()
+    print("Done testing on %d cores" % core_cnt)
+
+
 def _shell_options():
     parser = ArgumentParser()
     parser.add_argument('--version', action='version',
@@ -285,10 +323,12 @@ def _shell_options():
     parser.add_argument('--without-shielding', action='store_false', default=True,
                         dest='use_shielding', help="Don't try shielding cores")
     parser.add_argument('command',
-                        help=("`minimize`|`restore`|`exec -- `: "
+                        help=("`minimize`|`restore`|`exec -- `|`test`: "
                               "`minimize` sets system to reduce noise. "
                               "`restore` sets system to the assumed original settings. " +
-                              "`exec -- ` executes the given arguments."),
+                              "`exec -- ` executes the given arguments. " +
+                              "`test` executes a computation for 20 seconds in parallel. " +
+                              "it is only useful to test rebench-denoise itself."),
                         default=None)
     return parser
 
@@ -299,6 +339,7 @@ def main_func():
 
     cpu_info = get_cpu_info()
     num_cores = cpu_info["count"]
+    result = {}
 
     if args.command == 'minimize':
         result = _minimize_noise(num_cores, args.use_nice, args.use_shielding)
@@ -306,6 +347,8 @@ def main_func():
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
         _exec(args.use_nice, args.use_shielding, remaining_args)
+    elif args.command == 'test':
+        _test(num_cores)
     else:
         arg_parser.print_help()
         return -1
@@ -313,9 +356,10 @@ def main_func():
     if args.json:
         print(json.dumps(result))
     else:
-        print("Setting scaling_governor:           ", result["scaling_governor"])
-        print("Setting no_turbo:                   ", result["no_turbo"])
-        print("Setting perf_event_max_sample_rate: ", result["perf_event_max_sample_rate"])
+        print("Setting scaling_governor:           ", result.get("scaling_governor", None))
+        print("Setting no_turbo:                   ", result.get("no_turbo", False))
+        print("Setting perf_event_max_sample_rate: ",
+              result.get("perf_event_max_sample_rate", None))
         print("")
         print("Enabled core shielding:             ", result.get("shielding", False))
         print("")
