@@ -24,6 +24,7 @@ from os.path  import dirname, realpath
 import sys
 from unittest import TestCase
 from tempfile import mkstemp
+from ..environment import init_env_for_test
 from ..ui  import TestDummyUI
 
 
@@ -32,6 +33,7 @@ class ReBenchTestCase(TestCase):
     def _set_path(self, path):
         self._path = dirname(realpath(path))
         os.chdir(self._path)
+        init_env_for_test()
 
     def setUp(self):
         logging.getLogger('pykwalify').addHandler(logging.NullHandler())

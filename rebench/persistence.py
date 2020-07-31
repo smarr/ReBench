@@ -214,6 +214,9 @@ class _FilePersistence(_ConcretePersistence):
         if discard_old_data:
             self._discard_old_data()
         self._lock = Lock()
+        self._read_start_time()
+        if not self._start_time:
+            self._start_time = datetime.utcnow().isoformat() + "+00:00"
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -222,6 +225,23 @@ class _FilePersistence(_ConcretePersistence):
     def _truncate_file(filename):
         with open(filename, 'w'):
             pass
+
+    def _read_start_time(self):
+        if not os.path.exists(self._data_filename):
+            self._start_time = None
+            return
+        with open(self._data_filename, 'r') as data_file:
+            self._start_time = self._read_first_meta_block(data_file)
+
+    @staticmethod
+    def _read_first_meta_block(data_file):
+        for line in data_file:
+            if not line.startswith('#'):
+                # really only read the first set of commented lines, i.e. the first meta block
+                return None
+            if line.startswith(_START_TIME_LINE):
+                return line[len(_START_TIME_LINE):].strip()
+        return None
 
     def load_data(self, runs, discard_run_data):
         """
@@ -259,11 +279,6 @@ class _FilePersistence(_ConcretePersistence):
         line_number = 0
         for line in data_file:
             if line.startswith('#'):  # skip comments, and shebang lines
-                if line.startswith(_START_TIME_LINE):
-                    start_time = line[len(_START_TIME_LINE):].strip()
-                    if self._start_time is None or self._start_time > start_time:
-                        self._start_time = start_time
-
                 line_number += 1
                 if filtered_data_file:
                     filtered_data_file.write(line)
@@ -311,9 +326,7 @@ class _FilePersistence(_ConcretePersistence):
         But more importantly also records execution metadata to reproduce the data.
         """
         shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
-        if not self._start_time:
-            self._start_time = datetime.utcnow().isoformat() + "+00:00"
-            shebang_line += _START_TIME_LINE + self._start_time + "\n"
+        shebang_line += _START_TIME_LINE + self._start_time + "\n"
         shebang_line += "# Environment: " + json.dumps(determine_environment()) + "\n"
         shebang_line += "# Source: " + json.dumps(determine_source_details()) + "\n"
 
@@ -323,8 +336,10 @@ class _FilePersistence(_ConcretePersistence):
             data_file.flush()
             return data_file
         except Exception as err:  # pylint: disable=broad-except
-            raise UIError("Error: Was not able to open data file for writing.\n{ind}%s\n" % err,
-                          err)
+            raise UIError(
+                "Error: Was not able to open data file for writing.\n{ind}%s\n%s\n" % (
+                    os.getcwd(), err),
+                err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 

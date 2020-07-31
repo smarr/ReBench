@@ -66,6 +66,13 @@ def determine_source_details():
 _environment = None
 
 
+def init_env_for_test():
+    global _environment  # pylint: disable=global-statement
+    _environment = dict()
+    _environment['hostName'] = 'test'
+    _environment['userName'] = 'test'
+
+
 def init_environment(denoise_result, ui):
     result = dict()
     result['userName'] = getpass.getuser()

@@ -1,6 +1,8 @@
 from unittest import TestCase
 
-from ..environment import determine_source_details, determine_environment
+from ..denoise import DenoiseResult
+from ..environment import determine_source_details, determine_environment, init_environment
+from ..ui import TestDummyUI
 
 
 class ReBenchTestCase(TestCase):
@@ -19,6 +21,7 @@ class ReBenchTestCase(TestCase):
         self.assertGreaterEqual(len(details['repoURL']), 0)
 
     def test_environment(self):
+        init_environment(DenoiseResult(True, "", False, False, {}), TestDummyUI())
         env = determine_environment()
 
         self.assertGreater(len(env['userName']), 0)

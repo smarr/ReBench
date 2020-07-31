@@ -32,8 +32,6 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise import minimize_noise, restore_noise
-from .environment import init_environment
 from .interop.adapter import ExecutionDeliveredNoResults
 from .ui import escape_braces
 
@@ -265,11 +263,11 @@ class Executor(object):
 
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
-                 artifact_review=False):
+                 artifact_review=False, use_nice=False, use_shielding=False):
         self._runs = runs
 
-        self._use_nice = None
-        self._use_shielding = None
+        self._use_nice = use_nice
+        self._use_shielding = use_shielding
 
         self._do_builds = do_builds
         self._ui = ui
@@ -548,14 +546,7 @@ class Executor(object):
             run_id.get_number_of_data_points(), cmd)
 
     def execute(self):
-        denoise_result = None
         try:
-            denoise_result = minimize_noise(not self._artifact_review, self._ui)
-            self._use_nice = denoise_result.use_nice
-            self._use_shielding = denoise_result.use_shielding
-
-            init_environment(denoise_result, self._ui)
-
             self._scheduler.execute()
 
             successful = True
@@ -567,7 +558,6 @@ class Executor(object):
         finally:
             for run in self._runs:
                 run.close_files()
-            restore_noise(denoise_result, not self._artifact_review, self._ui)
 
     @property
     def runs(self):
