@@ -164,6 +164,9 @@ class UIError(Exception):
     def source_exception(self):
         return self._exception
 
+    def __str__(self):
+        return self._message
+
 
 class TestDummyUI(object):
 
