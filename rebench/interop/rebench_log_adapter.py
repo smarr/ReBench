@@ -34,7 +34,7 @@ class RebenchLogAdapter(GaugeAdapter):
     re_log_line = re.compile(
         r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
     re_extra_criterion_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+): ([^:]+):\s*([0-9]+)(\w+)")
+        r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")

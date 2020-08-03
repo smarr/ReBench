@@ -47,7 +47,7 @@ jobs:
       - name: Run tests
         run: |
           nosetests ${{ matrix.coverage }}
-          (cd rebench && rebench -N ../rebench.conf e:TestRunner2)
+          (cd rebench && rebench ../rebench.conf e:TestRunner2)
 
       - name: Install and run pylint
         run: |

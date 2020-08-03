@@ -26,6 +26,10 @@ from .rebench_test_case import ReBenchTestCase
 
 class ConfiguratorTest(ReBenchTestCase):
 
+    def setUp(self):
+        super(ConfiguratorTest, self).setUp()
+        self._set_path(__file__)
+
     def test_experiment_name_from_cli(self):
         cnf = Configurator(load_config(self._path + '/test.conf'),
                            DataStore(self._ui), self._ui, None, 'Test')

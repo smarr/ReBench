@@ -23,7 +23,7 @@ class ReporterTest(ReBenchTestCase):
 
         self._runs = cnf.get_runs()  # pylint: disable=attribute-defined-outside-init
 
-        ex = Executor(self._runs, False, False, self._ui)
+        ex = Executor(self._runs, False, self._ui)
         ex.execute()
         reporter = cnf.reporting.codespeed_reporter
         reporter.report_job_completed(self._runs)

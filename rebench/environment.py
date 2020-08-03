@@ -2,7 +2,7 @@ import getpass
 import os
 import subprocess
 
-from cpuinfo import get_cpu_info
+from cpuinfo.cpuinfo import _get_cpu_info_internal
 from psutil import virtual_memory
 
 from .subprocess_with_timeout import output_as_str
@@ -29,7 +29,14 @@ def _exec(cmd):
     return _encode_str(out)
 
 
+_source = None
+
+
 def determine_source_details():
+    global _source  # pylint: disable=global-statement
+    if _source:
+        return _source
+
     result = dict()
     try:
         repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
@@ -50,10 +57,23 @@ def determine_source_details():
     result['committerName'] = _exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
     result['authorEmail'] = _exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
     result['committerEmail'] = _exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
+
+    _source = result
+
     return result
 
 
-def determine_environment():
+_environment = None
+
+
+def init_env_for_test():
+    global _environment  # pylint: disable=global-statement
+    _environment = dict()
+    _environment['hostName'] = 'test'
+    _environment['userName'] = 'test'
+
+
+def init_environment(denoise_result, ui):
     result = dict()
     result['userName'] = getpass.getuser()
     result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
@@ -61,13 +81,35 @@ def determine_environment():
     u_name = os.uname()
     result['hostName'] = u_name[1]
     result['osType'] = u_name[0]
-    cpu_info = get_cpu_info()
-    result['cpu'] = cpu_info['brand_raw']
-    result['clockSpeed'] = (cpu_info['hz_advertised'][0]
-                            * (10 ** cpu_info['hz_advertised'][1]))
+
+    try:
+        cpu_info = _get_cpu_info_internal()
+        if cpu_info:
+            result['cpu'] = cpu_info['brand_raw']
+            result['clockSpeed'] = (cpu_info['hz_advertised'][0]
+                                    * (10 ** cpu_info['hz_advertised'][1]))
+    except ValueError:
+        pass
+
+    if 'cpu' not in result:
+        ui.warning('Was not able to determine the type of CPU used and its clock speed.'
+                   + ' Thus, these details will not be recorded with the data.')
+
     result['memory'] = virtual_memory().total
     result['software'] = []
     result['software'].append({'name': 'kernel', 'version': u_name[3]})
     result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
     result['software'].append({'name': 'architecture', 'version': u_name[4]})
-    return result
+
+    result['denoise'] = denoise_result.details
+
+    global _environment  # pylint: disable=global-statement
+    _environment = result
+
+
+def determine_environment():
+    global _environment  # pylint: disable=global-statement
+    if _environment:
+        return _environment
+
+    raise Exception("Environment was not initialized before accessing it.")

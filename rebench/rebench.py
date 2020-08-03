@@ -34,6 +34,8 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 from . import __version__ as rebench_version
 from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
     RandomScheduler, BenchmarkThreadExceptions
+from .denoise import minimize_noise, restore_noise
+from .environment import init_environment
 from .persistence    import DataStore
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
@@ -91,10 +93,6 @@ Argument:
 
         execution = parser.add_argument_group(
             'Execution Options', 'Adapt how ReBench executes benchmarks')
-        execution.add_argument(
-            '-N', '--without-nice', action='store_false', dest='use_nice',
-            help='Used for debugging and environments without the tool nice.',
-            default=True)
         execution.add_argument(
             '-in', '--invocations', action='store', dest='invocations',
             help='The number of times an executor is started to execute a run.',
@@ -235,26 +233,42 @@ Argument:
             raise UIError(exc.message + "\n", exc)
 
         runs = self._config.get_runs()
-        data_store.load_data(runs, self._config.options.do_rerun)
-        return self.execute_experiment(runs)
 
-    def execute_experiment(self, runs):
+        denoise_result = None
+        try:
+            denoise_result = minimize_noise(not self._config.artifact_review, self._ui)
+            init_environment(denoise_result, self._ui)
+
+            data_store.load_data(runs, self._config.options.do_rerun)
+
+            use_nice = denoise_result.use_nice
+            use_shielding = denoise_result.use_shielding
+
+            return self.execute_experiment(runs, use_nice, use_shielding)
+        finally:
+            restore_noise(denoise_result, not self._config.artifact_review, self._ui)
+
+    def execute_experiment(self, runs, use_nice, use_shielding):
         self._ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
 
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
                            'random':      RandomScheduler}.get(self._config.options.scheduler)
 
-        executor = Executor(runs, self._config.use_nice, self._config.do_builds,
+        executor = Executor(runs, self._config.do_builds,
                             self._ui,
                             self._config.options.include_faulty,
                             self._config.options.debug,
                             scheduler_class,
-                            self._config.build_log)
+                            self._config.build_log, self._config.artifact_review,
+                            use_nice, use_shielding)
 
         if self._config.options.no_execution:
             return True
         else:
+            if self._config.artifact_review:
+                self._ui.output("Executing benchmarks for Artifact Review"
+                                + " using the reported settings.")
             return executor.execute()
 
 

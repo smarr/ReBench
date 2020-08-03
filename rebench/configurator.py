@@ -18,7 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import logging
-import subprocess
 from os.path import dirname
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
@@ -28,7 +27,6 @@ from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
 from .model.executor import Executor
-from .subprocess_with_timeout import output_as_str
 from .ui import UIError, escape_braces
 
 # Disable most logging for pykwalify
@@ -100,20 +98,6 @@ class _RunFilter(object):
         return False
 
 
-def can_set_niceness():
-    """
-    Check whether we can ask the operating system to influence the priority of
-    our benchmarks.
-    """
-    output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
-                                     stderr=subprocess.STDOUT)
-    output = output_as_str(output)
-    if "cannot set niceness" in output or "Permission denied" in output:
-        return False
-    else:
-        return True
-
-
 def load_config(file_name):
     """
     Load the file, verify that it conforms to the schema,
@@ -153,6 +137,7 @@ class Configurator(object):
         self._build_log = build_log or raw_config.get('build_log', 'build.log')
         self._data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
         self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
+        self._artifact_review = raw_config.get('artifact_review', False)
 
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None
@@ -209,6 +194,10 @@ class Configurator(object):
         return self._rebench_db
 
     @property
+    def artifact_review(self):
+        return self._artifact_review
+
+    @property
     def use_rebench_db(self):
         return self._rebench_db and (self._rebench_db.get('send_to_rebench_db', False)
                                      or self._rebench_db.get('record_all', False))
@@ -218,17 +207,6 @@ class Configurator(object):
             return
 
         self._ui.init(self._options.verbose, self._options.debug)
-
-        if self._options.use_nice and not can_set_niceness():
-            self._ui.error("Error: Process niceness can not be set.\n"
-                           + "{ind}To execute benchmarks with highest priority,\n"
-                           + "{ind}you might need root/admin rights.\n"
-                           + "{ind}Deactivated usage of nice command.\n")
-            self._options.use_nice = False
-
-    @property
-    def use_nice(self):
-        return self._options is not None and self._options.use_nice
 
     @property
     def do_builds(self):

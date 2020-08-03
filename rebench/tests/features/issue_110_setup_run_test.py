@@ -67,7 +67,7 @@ class Issue110Test(ReBenchTestCase):
                              "incorrect num of invocations")
 
     def _execute(self, cnf):
-        ex = Executor(cnf.get_runs(), False, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(cnf.get_runs(), True, self._ui, build_log=cnf.build_log)
         ex.execute()
 
     def test_complete(self):

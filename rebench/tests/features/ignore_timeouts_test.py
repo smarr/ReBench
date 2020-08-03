@@ -57,7 +57,7 @@ class IgnoreTimeoutsTest(ReBenchTestCase):
         _, cnf, runs = self._init('Exec')
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, False, self._ui)
+        ex = Executor(runs, False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 1)

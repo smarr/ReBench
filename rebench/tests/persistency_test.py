@@ -68,7 +68,7 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 10)
@@ -82,7 +82,7 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf2, 1, 10, 10)
 
-        ex2 = Executor(cnf2.get_runs(), False, False, self._ui)
+        ex2 = Executor(cnf2.get_runs(), False, self._ui)
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
@@ -96,7 +96,7 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self._ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 10)
@@ -110,7 +110,7 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf2, 1, 0, 0)
 
-        ex2 = Executor(run2, False, False, self._ui)
+        ex2 = Executor(run2, False, self._ui)
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
@@ -139,7 +139,7 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self._ui)
         ex.execute()
         run = list(cnf.get_runs())[0]
         run.close_files()

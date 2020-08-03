@@ -298,6 +298,15 @@ mapping:
   default_data_file:
     type:     str
     default:  rebench.data
+  artifact_review:
+    desc: |
+      Avoid outputting warnings and errors,
+      but do not change how benchmarking is done.
+      Experience shows that reviewers may misunderstand possibly chatty warnings
+      and misinterpret them as a signs for an artifact of insufficient quality.
+      For context on artifact evaluation, see: https://www.artifact-eval.org/
+    type: bool
+    default: false
   build_log:
     type:     str
     default:  build.log

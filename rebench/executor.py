@@ -87,8 +87,9 @@ class RunScheduler(object):
 
         hour, minute, sec = self._estimate_time_left()
 
+        run_details = run.as_simple_string().replace(" None", "")
         label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
-                % (run.as_simple_string(), art_mean, hour, minute, sec)
+                % (run_details, art_mean, hour, minute, sec)
         self._ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
@@ -260,16 +261,21 @@ class ParallelScheduler(RunScheduler):
 
 class Executor(object):
 
-    def __init__(self, runs, use_nice, do_builds, ui, include_faulty=False,
-                 debug=False, scheduler=BatchScheduler, build_log=None):
+    def __init__(self, runs, do_builds, ui, include_faulty=False,
+                 debug=False, scheduler=BatchScheduler, build_log=None,
+                 artifact_review=False, use_nice=False, use_shielding=False):
         self._runs = runs
+
         self._use_nice = use_nice
+        self._use_shielding = use_shielding
+
         self._do_builds = do_builds
         self._ui = ui
         self._include_faulty = include_faulty
         self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self._build_log = build_log
+        self._artifact_review = artifact_review
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
         for run in runs:
@@ -290,8 +296,14 @@ class Executor(object):
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
 
-        if self._use_nice:
-            cmdline += "nice -n-20 "
+        use_denoise = self._use_nice or self._use_shielding
+        if use_denoise:
+            cmdline += "sudo rebench-denoise "
+            if not self._use_nice:
+                cmdline += "--without-nice "
+            if not self._use_shielding:
+                cmdline += "--without-shielding "
+            cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id.cmdline())
 
@@ -406,7 +418,8 @@ class Executor(object):
         if terminate:
             run_id.report_run_completed(cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
-                    and mean_of_totals < run_id.min_iteration_time):
+                    and mean_of_totals < run_id.min_iteration_time
+                    and not self._artifact_review):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
@@ -535,6 +548,7 @@ class Executor(object):
     def execute(self):
         try:
             self._scheduler.execute()
+
             successful = True
             for run in self._runs:
                 run.report_job_completed(self._runs)
