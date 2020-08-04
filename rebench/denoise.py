@@ -270,7 +270,7 @@ def _restore_standard_settings(num_cores, use_shielding):
             "shielding": shielding}
 
 
-def _exec(use_nice, use_shielding, args):
+def _exec(num_cores, use_nice, use_shielding, args):
     cmdline = []
     if use_shielding:
         cmdline += ["cset", "shield", "--exec", "--"]
@@ -280,7 +280,15 @@ def _exec(use_nice, use_shielding, args):
 
     # the first element of cmdline is ignored as argument, since it's the file argument, too
     cmd = cmdline[0]
-    os.execvp(cmd, cmdline)
+
+    # communicate the used core spec to executed command as part of its environment
+    env = os.environ.copy()
+    min_cores = _shield_lower_bound(num_cores)
+    max_cores = _shield_upper_bound(num_cores)
+    core_spec = "%d-%d" % (min_cores, max_cores)
+    env['REBENCH_DENOISE_CORE_SET'] = core_spec
+
+    os.execvpe(cmd, cmdline, env)
 
 
 def _calculate(core_id):
@@ -302,6 +310,14 @@ def _test(num_cores):
     pool = Pool(core_cnt)
 
     print("Test on %d cores" % core_cnt)
+
+    core_spec = "%d-%d" % (lower, upper)
+    env_spec = os.environ.get('REBENCH_DENOISE_CORE_SET', None)
+    if core_spec != env_spec:
+        print("Core Spec set by denoise was: ", env_spec)
+        print("Locally determined one was: ", core_spec)
+        print("The specs did not match!")
+
     try:
         pool.map(_calculate, range(0, core_cnt))
     except KeyboardInterrupt:
@@ -346,7 +362,7 @@ def main_func():
     elif args.command == 'restore':
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
-        _exec(args.use_nice, args.use_shielding, remaining_args)
+        _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
     elif args.command == 'test':
         _test(num_cores)
     else:
