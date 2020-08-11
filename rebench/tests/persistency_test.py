@@ -117,15 +117,36 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_rebench_db(self):
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['--experiment=Test', '-S', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
 
         server = MockHTTPServer()
+
+        try:
+            self._exec_rebench_db(cmd_config, server)
+            self.assertEqual(1, server.get_number_of_put_requests())
+        finally:
+            server.shutdown()
+
+    def test_disabled_rebench_db(self):
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['--experiment=Test', '-R', 'persistency.conf'])
+
+        server = MockHTTPServer()
+
+        try:
+            self._exec_rebench_db(cmd_config, server)
+            self.assertEqual(0, server.get_number_of_put_requests())
+        finally:
+            server.shutdown()
+
+    def _exec_rebench_db(self, cmd_config, server):
         port = server.get_free_port()
 
         server.start()
-
         ds = DataStore(self._ui)
+
         raw_config = load_config(self._path + '/persistency.conf')
+        del raw_config['reporting']['codespeed']
         raw_config['reporting']['rebenchdb'] = {
             'db_url': 'http://localhost:' + str(port),
             'repo_url': 'http://repo.git',
@@ -134,16 +155,12 @@ class PersistencyTest(ReBenchTestCase):
             'record_all': True}
 
         cnf = Configurator(raw_config, ds, self._ui, cmd_config, data_file=self._tmp_file)
-
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
 
         ex = Executor(cnf.get_runs(), False, self._ui)
         ex.execute()
+
         run = list(cnf.get_runs())[0]
         run.close_files()
-
-        self.assertEqual(1, server.get_number_of_put_requests())
-
-        server.shutdown()

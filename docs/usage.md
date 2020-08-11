@@ -198,8 +198,8 @@ And, Codespeed needs details on the concrete execution:
 -I, --disable-inc-report  Creates a final report at the end instead of reporting
                           incrementally.
 
--S, --disable-codespeed   Override the configuration and disable reporting to
-                          Codespeed.
+-R, --disable-data-reporting Override the configuration and disable any reporting
+                          to Codespeed and ReBenchDB.
 ```
 
 [1]: https://github.com/tobami/codespeed/

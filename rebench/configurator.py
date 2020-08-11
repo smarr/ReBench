@@ -199,8 +199,10 @@ class Configurator(object):
 
     @property
     def use_rebench_db(self):
-        return self._rebench_db and (self._rebench_db.get('send_to_rebench_db', False)
-                                     or self._rebench_db.get('record_all', False))
+        report_results = self._options is None or self._options.use_data_reporting
+        return report_results and self._rebench_db and (
+            self._rebench_db.get('send_to_rebench_db', False)
+            or self._rebench_db.get('record_all', False))
 
     def _process_cli_options(self):
         if self._options is None:
