@@ -148,7 +148,7 @@ Argument:
                                'This overrides the configuration\'s setting.')
 
         codespeed = parser.add_argument_group(
-            'Reporting to Codespeed',
+            'Reporting to Result Trackers',
             'Some of these parameters are mandatory for reporting to Codespeed')
         codespeed.add_argument('--commit-id', dest='commit_id', default=None,
                                help='MANDATORY: when Codespeed reporting is '
@@ -170,11 +170,11 @@ Argument:
                                default=True, help='Creates a report at the '
                                                   'end instead of reporting '
                                                   'incrementally.')
-        codespeed.add_argument('-S', '--disable-codespeed',
-                               action='store_false', dest='use_codespeed',
+        codespeed.add_argument('-R', '--disable-data-reporting',
+                               action='store_false', dest='use_data_reporting',
                                default=True,
                                help='Override configuration and '
-                                    'disable reporting to Codespeed.')
+                                    'disable any reporting to Codespeed and ReBenchDB.')
 
         rebench_db = parser.add_argument_group(
             'Reporting to ReBenchDB',
@@ -199,7 +199,6 @@ Argument:
                                      'be recorded, i.e., to which the commit'
                                      ' belongs. If not provided, ReBench will try to get'
                                      ' the name from git.')
-
 
         return parser
 

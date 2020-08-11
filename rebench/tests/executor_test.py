@@ -105,7 +105,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_execution_with_quick_set(self):
         self._set_path(__file__)
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['-S', '-q', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(['-R', '-q', 'persistency.conf'])
         self.assertTrue(cmd_config.quick)
 
         cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
@@ -122,7 +122,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_execution_with_invocation_and_iteration_set(self):
         self._set_path(__file__)
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['-S', '-in=2', '-it=2', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(['-R', '-in=2', '-it=2', 'persistency.conf'])
         self.assertEqual(2, cmd_config.invocations)
         self.assertEqual(2, cmd_config.iterations)
 

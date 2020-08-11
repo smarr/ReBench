@@ -25,7 +25,7 @@ class Reporting(object):
 
     @classmethod
     def compile(cls, reporting, root_reporting, options, ui):
-        if "codespeed" in reporting and options and options.use_codespeed:
+        if "codespeed" in reporting and options and options.use_data_reporting:
             codespeed = CodespeedReporting(reporting, options, ui).get_reporter()
         else:
             codespeed = root_reporting.codespeed_reporter
