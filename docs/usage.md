@@ -102,25 +102,6 @@ We can override this setting with the following parameters:
                  Disables execution of build commands for executors and suites.
 ```
 
-#### Niceness
-
-It is highly recommended to run benchmarks on an idle machine with all
-unnecessary services disabled.
-However, even if the machine is idle, it can happen that other processes
-might desire processing time, which can lead to noise in the measurements.
-To prevent such effects, it is recommended to run benchmarks with the highest
-possible priority. On Linux systems, this is typically achieved with
-the `nice` command and a niceness setting of `-20` (i.e., the process behaves
-very much not-nice).
-
-Typically, this requires admin/root rights.
-On Ubuntu, one can however allow a user to set negative niceness values
-by adding the following line in `/etc/security/limits.conf`:
-
-```text
-user_executing_benchmarks    -       nice            -20
-```
-
 #### Discarding Data, Rerunning Experiments, and Faulty Runs
 
 ReBench's normal execution mode will assume that it should accumulate all data
