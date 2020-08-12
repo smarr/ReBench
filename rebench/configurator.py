@@ -23,10 +23,12 @@ from pykwalify.core import Core
 from pykwalify.errors import SchemaError
 import yaml
 
+from .configuration_error import ConfigurationError
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
 from .model.executor import Executor
+from .rebenchdb import ReBenchDB
 from .ui import UIError, escape_braces
 
 # Disable most logging for pykwalify
@@ -139,6 +141,8 @@ class Configurator(object):
         self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
         self._artifact_review = raw_config.get('artifact_review', False)
 
+        self._rebench_db_connector = None
+
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None
         iterations = cli_options.iterations if cli_options else None
@@ -203,6 +207,31 @@ class Configurator(object):
         return report_results and self._rebench_db and (
             self._rebench_db.get('send_to_rebench_db', False)
             or self._rebench_db.get('record_all', False))
+
+    def get_rebench_db_connector(self):
+        if not self.use_rebench_db:
+            return None
+        if self._rebench_db_connector:
+            return self._rebench_db_connector
+
+        if 'project_name' not in self._rebench_db:
+            raise ConfigurationError(
+                "No project_name defined in configuration file under reporting.rebenchdb.")
+
+        if not self._options.experiment_name:
+            raise ConfigurationError(
+                "The experiment was not named, which is mandatory. "
+                "This is needed to identify the data uniquely. "
+                "It should also help to remember in which context it "
+                "was recorded, perhaps relating to a specific CI job "
+                "or confirming some hypothesis."
+                "\n\n"
+                "Use the --experiment option to set the name.")
+
+        self._rebench_db_connector = ReBenchDB(
+            self._rebench_db['db_url'], self._rebench_db['project_name'],
+            self._options.experiment_name, self._ui)
+        return self._rebench_db_connector
 
     def _process_cli_options(self):
         if self._options is None:

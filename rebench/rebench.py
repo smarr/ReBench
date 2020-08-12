@@ -37,6 +37,7 @@ from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
 from .denoise import minimize_noise, restore_noise
 from .environment import init_environment
 from .persistence    import DataStore
+from .rebenchdb      import get_current_time
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
@@ -199,6 +200,9 @@ Argument:
                                      'be recorded, i.e., to which the commit'
                                      ' belongs. If not provided, ReBench will try to get'
                                      ' the name from git.')
+        rebench_db.add_argument('--report-completion', dest='report_completion',
+                                default=None, action='store_true',
+                                help='Report the completion of the name experiment to ReBenchDB.')
 
         return parser
 
@@ -210,6 +214,11 @@ Argument:
         exp_filter = [f for f in filters if (f.startswith("e:") or
                                              f.startswith("s:"))]
         return exp_name, exp_filter
+
+    def _report_completion(self):
+        rebench_db = self._config.get_rebench_db_connector()
+        success, _ = rebench_db.send_completion(get_current_time())
+        return success
 
     def run(self, argv=None):
         if argv is None:
@@ -230,6 +239,9 @@ Argument:
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
+
+        if args.report_completion:
+            return self._report_completion()
 
         runs = self._config.get_runs()
 
