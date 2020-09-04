@@ -30,14 +30,21 @@ class JMHAdapter(GaugeAdapter):
     """
     An adapter for parsing logs produced by JMH, a Java benchmarking harness.
     """
-    re_result_line = re.compile(r"^Iteration\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
+    # we need to capture both measurement iterations and warmup iterations
+    re_result_line = re.compile(r"^(Iteration|# Warmup Iteration)\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
     re_bench = re.compile(r"^# Benchmark: (.+)")
+    re_complete = re.compile("Run complete")
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
         data_points = []
 
         for line in data.split("\n"):
+            # Early exit for completed runs. JMH will print out some info after 'Run complete'
+            # that include an error column, which will be considered as an error by check_for_error() heuristics.
+            if self.re_complete.search(line):
+                return data_points
+
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
                     "Output of bench program indicated error.")
@@ -56,8 +63,8 @@ class JMHAdapter(GaugeAdapter):
             # now we are sure that we parse for a benchmark and can collect data
             match = self.re_result_line.match(line)
             if match:
-                value = float(match.group(2))
-                unit = match.group(3)
+                value = float(match.group(3))
+                unit = match.group(4)
                 criterion = "total"
 
                 point = DataPoint(run_id)
