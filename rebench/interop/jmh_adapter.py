@@ -31,7 +31,8 @@ class JMHAdapter(GaugeAdapter):
     An adapter for parsing logs produced by JMH, a Java benchmarking harness.
     """
     # we need to capture both measurement iterations and warmup iterations
-    re_result_line = re.compile(r"^(Iteration|# Warmup Iteration)\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
+    re_result_line = re.compile(
+        r"^(Iteration|# Warmup Iteration)\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
     re_bench = re.compile(r"^# Benchmark: (.+)")
     re_complete = re.compile("Run complete")
 
@@ -41,7 +42,8 @@ class JMHAdapter(GaugeAdapter):
 
         for line in data.split("\n"):
             # Early exit for completed runs. JMH will print out some info after 'Run complete'
-            # that include an error column, which will be considered as an error by check_for_error() heuristics.
+            # that include an error column, which will be considered as an error
+            # by check_for_error() heuristics.
             if self.re_complete.search(line):
                 return data_points
 
