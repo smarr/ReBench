@@ -22,37 +22,16 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime
 from tempfile import NamedTemporaryFile
 from threading import Lock
 from time import time
 
-from .configuration_error import ConfigurationError
 from .environment import determine_environment, determine_source_details
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.run_id      import RunId
+from .rebenchdb         import get_current_time
 from .ui                import UIError
-
-
-try:
-    from http.client import HTTPException
-    from urllib.request import urlopen, Request as PutRequest
-except ImportError:
-    # Python 2.7
-    from httplib import HTTPException
-    from urllib2 import urlopen, Request
-
-
-    class PutRequest(Request):
-        def __init__(self, *args, **kwargs):
-            if 'method' in kwargs:
-                del kwargs['method']
-            Request.__init__(self, *args, **kwargs)
-
-        def get_method(self, *_args, **_kwargs):  # pylint: disable=arguments-differ
-            return 'PUT'
-
 
 _START_TIME_LINE = "# Execution Start: "
 
@@ -82,24 +61,7 @@ class DataStore(object):
             self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
 
             if configurator.use_rebench_db:
-                if 'project_name' not in configurator.rebench_db:
-                    raise ConfigurationError(
-                        "No project_name defined in configuration file under reporting.rebenchdb.")
-
-                if not configurator.options.experiment_name:
-                    raise ConfigurationError(
-                        "The experiment was not named, which is mandatory. "
-                        "This is needed to identify the data uniquely. "
-                        "It should also help to remember in which context it "
-                        "was recorded, perhaps relating to a specific CI job "
-                        "or confirming some hypothesis."
-                        "\n\n"
-                        "Use the --experiment option to set the name.")
-
-                db = _ReBenchDB(configurator.rebench_db['db_url'],
-                                configurator.rebench_db['project_name'],
-                                configurator.options.experiment_name,
-                                self, self._ui)
+                db = _ReBenchDB(configurator.get_rebench_db_connector(), self, self._ui)
                 p = _CompositePersistence(p, db)
 
             self._files[filename] = p
@@ -216,7 +178,7 @@ class _FilePersistence(_ConcretePersistence):
         self._lock = Lock()
         self._read_start_time()
         if not self._start_time:
-            self._start_time = datetime.utcnow().isoformat() + "+00:00"
+            self._start_time = get_current_time()
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -372,17 +334,11 @@ class _FilePersistence(_ConcretePersistence):
 
 class _ReBenchDB(_ConcretePersistence):
 
-    def __init__(self, server_url, project_name, experiment_name, data_store, ui):
+    def __init__(self, rebench_db, data_store, ui):
         super(_ReBenchDB, self).__init__(data_store, ui)
         # TODO: extract common code, possibly
-        if not server_url:
-            raise ValueError("ReBenchDB expected server address, but got: %s" % server_url)
+        self._rebench_db = rebench_db
 
-        self._ui.debug_output_info(
-            'ReBench will report all measurements to {url}\n', url=server_url)
-        self._server_url = server_url
-        self._project_name = project_name
-        self._experiment_name = experiment_name
         self._lock = Lock()
 
         self._cache_for_seconds = 30
@@ -440,54 +396,13 @@ class _ReBenchDB(_ConcretePersistence):
         self._ui.debug_output_info(
             "ReBenchDB: Send {num_m} measures. startTime: {st}\n",
             num_m=num_measurements, st=self._start_time)
-        return self._send_to_rebench_db({
+        return self._rebench_db.send_results({
             'data': all_data,
             'criteria': criteria_index,
             'env': determine_environment(),
             'startTime': self._start_time,
-            'projectName': self._project_name,
-            'experimentName': self._experiment_name,
             'source': determine_source_details()}, num_measurements)
 
     def close(self):
         with self._lock:
             self._send_data_and_empty_cache()
-
-    def _send_payload(self, payload):
-        req = PutRequest(self._server_url, payload,
-                         {'Content-Type': 'application/json'}, method='PUT')
-        socket = urlopen(req)
-        response = socket.read()
-        socket.close()
-        return response
-
-    def _send_to_rebench_db(self, results, num_measurements):
-        payload = json.dumps(results, separators=(',', ':'), ensure_ascii=True)
-
-        # self._ui.output("Saving JSON Payload of size: %d\n" % len(payload))
-        with open("payload.json", "w") as text_file:
-            text_file.write(payload)
-
-        try:
-            data = payload.encode('utf-8')
-            response = self._send_payload(data)
-            self._ui.verbose_output_info(
-                "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
-                num_m=num_measurements, resp=response)
-            return True
-        except TypeError as te:
-            self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                           + "{ind}{ind}" + str(te) + "\n")
-        except (IOError, HTTPException):
-            # sometimes Codespeed fails to accept a request because something
-            # is not yet properly initialized, let's try again for those cases
-            try:
-                response = self._send_payload(payload)
-                self._ui.verbose_output_info(
-                    "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
-                    num_m=num_measurements, resp=response)
-                return True
-            except (IOError, HTTPException) as error:
-                self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                               + "{ind}{ind}" + str(error) + "\n")
-        return False
