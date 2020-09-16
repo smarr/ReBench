@@ -4,6 +4,47 @@
 
  -
 
+## [1.1.0] Denoise - 2020-09-17
+
+This release focuses on reducing the noise from the system  (#143, #144).
+For this purpose, it introduces the `rebench-denoise` tool, which will adapt
+system parameters to:
+
+- change CPU governor to the performance setting
+- disables turbo boost
+- reduces the sampling frequency allowed by the kernel
+- execute benchmarks with CPU shielding and `nice -n-20`
+
+`rebench-denoise` can also be used as stand-alone tool, is documented here:
+https://rebench.readthedocs.io/en/latest/denoise/
+
+The use of `rebench-denoise` will require root rights.
+
+Other new features include:
+
+ - add support for configurating environment variables (#174)
+ - add support for recording profiling information (#190)
+ - add support for printing the execution plan without running it (#171)
+ - add marker in configuration to make setting important, which overrides
+   previous settings, giving more flexibility in composing
+   configuration values (#170)
+ - add support for filtering experiments by machines (#161)
+
+Thanks to @tobega, @qinsoon, @OctaveLarose, and @raehik for their contributions.
+
+Other notable improvements:
+
+ - `-R` now disables data reporting, replacing the previous `-S` (#145)
+ - added support to report experiment completion to ReBenchDB (#149)
+ - fixed JMH support (#147)
+ - fixed string/byte encoding issues between Python 2 and 3 (#142)
+ - updated py-cpuinfo (#137, #138, #141)
+ - allow the use of float values in the ReBenchLogAdapter parser (#201)
+ - make gauge adapter names in configurations case-insensitive (#202)
+ - improve documentation (#197, #198)
+ - use PyTest for unit tests (#192)
+ 
+
 ## [1.0.1] - 2020-06-23
 
 This is a bug fix release.
@@ -151,7 +192,9 @@ Thank you!
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.1.0...HEAD
+[1.1.0]:  https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
+[1.0.1]:  https://github.com/smarr/ReBench/compare/v1.0.0...v1.0.1
 [1.0.0]:  https://github.com/smarr/ReBench/compare/v1.0rc2...v1.0.0
 [1.0rc2]: https://github.com/smarr/ReBench/compare/v1.0rc1...v1.0rc2
 [1.0rc1]: https://github.com/smarr/ReBench/compare/v0.10.1...v1.0rc1
