@@ -23,8 +23,8 @@ def _encode_str(out):
 
 def _exec(cmd):
     try:
-        with open(os.devnull, 'w') as fnull:
-            out = subprocess.check_output(cmd, stderr=fnull)
+        with open(os.devnull, 'w') as dev_null_f:
+            out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
     return _encode_str(out)
@@ -39,7 +39,21 @@ def determine_source_details():
         return _source
 
     result = dict()
-    repo_url = _exec(['git', 'ls-remote', '--get-url'])
+
+    is_git_repo = _exec(['git', 'rev-parse']) is not None
+    if not is_git_repo:
+        result['repoURL'] = None
+        result['branchOrTag'] = None
+        result['commitId'] = None
+        result['commitMsg'] = None
+        result['authorName'] = None
+        result['committerName'] = None
+        result['authorEmail'] = None
+        result['committerEmail'] = None
+        _source = result
+        return result
+
+    repo_url = _exec(['git', 'ls-remote', '--get-url']) if is_git_repo else None
     if repo_url is None:
         repo_url = ''
 
@@ -59,7 +73,6 @@ def determine_source_details():
     result['committerEmail'] = _exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
 
     _source = result
-
     return result
 
 
