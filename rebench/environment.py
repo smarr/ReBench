@@ -23,7 +23,8 @@ def _encode_str(out):
 
 def _exec(cmd):
     try:
-        out = subprocess.check_output(cmd)
+        with open(os.devnull, 'w') as fnull:
+            out = subprocess.check_output(cmd, stderr=fnull)
     except subprocess.CalledProcessError:
         return None
     return _encode_str(out)
@@ -39,9 +40,7 @@ def determine_source_details():
 
     result = dict()
     try:
-        cmd = ['git', 'ls-remote', '--get-url']
-        completed_proc = subprocess.run(cmd, check=True, capture_output=True)
-        repo_url = completed_proc.stdout.decode()
+        repo_url = _exec(['git', 'ls-remote', '--get-url'])
     except subprocess.CalledProcessError:
         repo_url = ''
 
