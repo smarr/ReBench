@@ -39,7 +39,9 @@ def determine_source_details():
 
     result = dict()
     try:
-        repo_url = subprocess.check_output(['git', 'ls-remote', '--get-url'])
+        cmd = ['git', 'ls-remote', '--get-url']
+        completed_proc = subprocess.run(cmd, check=True, capture_output=True)
+        repo_url = completed_proc.stdout.decode()
     except subprocess.CalledProcessError:
         repo_url = ''
 
