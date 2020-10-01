@@ -39,9 +39,8 @@ def determine_source_details():
         return _source
 
     result = dict()
-    try:
-        repo_url = _exec(['git', 'ls-remote', '--get-url'])
-    except subprocess.CalledProcessError:
+    repo_url = _exec(['git', 'ls-remote', '--get-url'])
+    if repo_url is None:
         repo_url = ''
 
     parsed = urlparse(repo_url)
