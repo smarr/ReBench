@@ -239,12 +239,12 @@ class RunId(object):
     def _expand_vars(self, string):
         try:
             return string % {'benchmark': self._benchmark.command,
-                             'cores': self._cores,
+                             'cores': self.cores_as_str,
                              'executor': self._benchmark.suite.executor.name,
-                             'input': self._input_size,
+                             'input': self.input_size_as_str,
                              'iterations': self.iterations,
                              'suite': self._benchmark.suite.name,
-                             'variable': self._var_value,
+                             'variable': self.var_value_as_str,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
