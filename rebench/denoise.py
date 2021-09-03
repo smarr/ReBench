@@ -11,6 +11,7 @@ from math import log, floor
 from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
+from .ui import escape_braces
 from .subprocess_with_timeout import output_as_str
 
 try:
@@ -97,7 +98,7 @@ def minimize_noise(show_warnings, ui):
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
         else:
-            msg += '{ind}Error: ' + output
+            msg += '{ind}Error: ' + escape_braces(output)
 
     if not success and show_warnings:
         ui.warning(msg)
