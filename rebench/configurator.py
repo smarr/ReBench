@@ -175,7 +175,7 @@ class Configurator(object):
         self._data_store = data_store
         self._process_cli_options()
 
-        self._build_commands = dict()
+        self._build_commands = {}
 
         self._run_filter = _RunFilter(run_filter)
 

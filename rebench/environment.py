@@ -38,7 +38,7 @@ def determine_source_details():
     if _source:
         return _source
 
-    result = dict()
+    result = {}
 
     is_git_repo = _exec(['git', 'rev-parse']) is not None
     if not is_git_repo:
@@ -81,19 +81,22 @@ _environment = None
 
 def init_env_for_test():
     global _environment  # pylint: disable=global-statement
-    _environment = dict()
-    _environment['hostName'] = 'test'
-    _environment['userName'] = 'test'
+    _environment = {
+        'hostName': 'test',
+        'userName': 'test'
+    }
 
 
 def init_environment(denoise_result, ui):
-    result = dict()
-    result['userName'] = getpass.getuser()
-    result['manualRun'] = not ('CI' in os.environ and os.environ['CI'] == 'true')
-
     u_name = os.uname()
-    result['hostName'] = u_name[1]
-    result['osType'] = u_name[0]
+    result = {
+        'userName': getpass.getuser(),
+        'manualRun': not ('CI' in os.environ and os.environ['CI'] == 'true'),
+        'hostName': u_name[1],
+        'osType': u_name[0],
+        'memory': virtual_memory().total,
+        'denoise': denoise_result.details
+    }
 
     try:
         cpu_info = _get_cpu_info_internal()
@@ -108,13 +111,10 @@ def init_environment(denoise_result, ui):
         ui.warning('Was not able to determine the type of CPU used and its clock speed.'
                    + ' Thus, these details will not be recorded with the data.')
 
-    result['memory'] = virtual_memory().total
     result['software'] = []
     result['software'].append({'name': 'kernel', 'version': u_name[3]})
     result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
     result['software'].append({'name': 'architecture', 'version': u_name[4]})
-
-    result['denoise'] = denoise_result.details
 
     global _environment  # pylint: disable=global-statement
     _environment = result

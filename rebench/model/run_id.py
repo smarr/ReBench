@@ -316,15 +316,15 @@ class RunId(object):
         return result
 
     def as_dict(self):
-        result = dict()
-        result['benchmark'] = self._benchmark.as_dict()
-        result['cores'] = self._cores
-        result['inputSize'] = self._input_size
-        result['varValue'] = self._var_value
-        result['extraArgs'] = str(self._benchmark.extra_args)
-        result['cmdline'] = self.cmdline()
-        result['location'] = self.location
-        return result
+        return {
+            'benchmark': self._benchmark.as_dict(),
+            'cores': self._cores,
+            'inputSize': self._input_size,
+            'varValue': self._var_value,
+            'extraArgs': str(self._benchmark.extra_args),
+            'cmdline': self.cmdline(),
+            'location': self.location
+        }
 
     @classmethod
     def from_str_list(cls, data_store, str_list):

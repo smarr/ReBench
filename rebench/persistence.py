@@ -389,10 +389,10 @@ class _ReBenchDB(_ConcretePersistence):
                 measurements = dp.measurements_as_dict(criteria)
                 num_measurements += len(measurements['m'])
                 dp_data.append(measurements)
-            data = dict()
-            data['runId'] = run_id.as_dict()
-            data['d'] = dp_data
-            all_data.append(data)
+            all_data.append({
+                'runId': run_id.as_dict(),
+                'd': dp_data
+            })
 
         criteria_index = []
         for c, idx in criteria.items():
