@@ -312,7 +312,7 @@ def _test(num_cores):
     lower = _shield_lower_bound(num_cores)
     upper = _shield_upper_bound(num_cores)
     core_cnt = upper - lower + 1
-    pool = Pool(core_cnt)
+    pool = Pool(core_cnt)  # pylint: disable=consider-using-with
 
     print("Test on %d cores" % core_cnt)
 
