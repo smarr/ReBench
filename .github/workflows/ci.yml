@@ -54,7 +54,7 @@ jobs:
         run: |
           pip install pylint
           pylint rebench
-        if: startsWith(matrix.python-version, 'pypy') == false
+        if: startsWith(matrix.python-version, '3.')
 
       - name: Upload coverage results to Coveralls
         run: coveralls
