@@ -19,12 +19,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import sys
 
 from setuptools import setup, find_packages
 from rebench import __version__ as rebench_version
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+if sys.version_info[0] < 3:
+    pykwalify_version = 'pykwalify==1.7.0'
+else:
+    pykwalify_version = 'pykwalify>=1.8.0'
 
 setup(name='ReBench',
       version=rebench_version,
@@ -38,7 +44,7 @@ setup(name='ReBench',
       package_data={'rebench': ['rebench-schema.yml']},
       install_requires=[
           'PyYAML>=3.12',
-          'pykwalify>=1.6.1',
+          pykwalify_version,
           'humanfriendly>=8.0',
           'py-cpuinfo==7.0.0',
           'psutil>=5.6.7'
