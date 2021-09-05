@@ -104,10 +104,11 @@ class BenchmarkSuite(object):
         return "Suite(%s, %s)" % (self._name, self._command)
 
     def as_dict(self):
-        result = dict()
-        result['name'] = self._name
-        result['executor'] = self._executor.as_dict()
+        result = {
+            'name': self._name,
+            'executor': self._executor.as_dict(),
+            'desc': self._desc
+        }
         if self._build:
             result['build'] = [b.as_dict() for b in self._build]
-        result['desc'] = self._desc
         return result

@@ -126,11 +126,11 @@ class Benchmark(object):
                 '' if self._extra_args is None else str(self._extra_args)]
 
     def as_dict(self):
-        result = dict()
-        result['name'] = self._name
-        result['runDetails'] = self._run_details.as_dict()
-        result['suite'] = self._suite.as_dict()
-        return result
+        return {
+            'name': self._name,
+            'runDetails': self._run_details.as_dict(),
+            'suite': self._suite.as_dict()
+        }
 
     @classmethod
     def from_str_list(cls, data_store, str_list):

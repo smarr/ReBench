@@ -11,6 +11,7 @@ from math import log, floor
 from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
+from .ui import escape_braces
 from .subprocess_with_timeout import output_as_str
 
 try:
@@ -97,7 +98,7 @@ def minimize_noise(show_warnings, ui):
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
         else:
-            msg += '{ind}Error: ' + output
+            msg += '{ind}Error: ' + escape_braces(output)
 
     if not success and show_warnings:
         ui.warning(msg)
@@ -200,7 +201,7 @@ def _set_scaling_governor(governor, num_cores):
     try:
         for cpu_i in range(num_cores):
             filename = "/sys/devices/system/cpu/cpu" + str(cpu_i) + "/cpufreq/scaling_governor"
-            with open(filename, "w") as gov_file:
+            with open(filename, "w") as gov_file:  # pylint: disable=unspecified-encoding
                 gov_file.write(governor + "\n")
     except IOError:
         return "failed"
@@ -215,6 +216,7 @@ def _set_no_turbo(with_no_turbo):
         value = "0"
 
     try:
+        # pylint: disable-next=unspecified-encoding
         with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "w") as nt_file:
             nt_file.write(value + "\n")
     except IOError:
@@ -224,9 +226,11 @@ def _set_no_turbo(with_no_turbo):
 
 def _minimize_perf_sampling():
     try:
+        # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
             perc_file.write("1\n")
 
+        # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_event_max_sample_rate", "w") as sample_file:
             sample_file.write("1\n")
     except IOError:
@@ -237,6 +241,7 @@ def _minimize_perf_sampling():
 
 def _restore_perf_sampling():
     try:
+        # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
             perc_file.write("25\n")
     except IOError:
@@ -307,7 +312,7 @@ def _test(num_cores):
     lower = _shield_lower_bound(num_cores)
     upper = _shield_upper_bound(num_cores)
     core_cnt = upper - lower + 1
-    pool = Pool(core_cnt)
+    pool = Pool(core_cnt)  # pylint: disable=consider-using-with
 
     print("Test on %d cores" % core_cnt)
 

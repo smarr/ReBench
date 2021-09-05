@@ -95,9 +95,10 @@ class Executor(object):
         return self._variables
 
     def as_dict(self):
-        result = dict()
-        result['name'] = self._name
+        result = {
+            'name': self._name,
+            'desc': self._description
+        }
         if self._build:
             result['build'] = [b.as_dict() for b in self._build]
-        result['desc'] = self._description
         return result

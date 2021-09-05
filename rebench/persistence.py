@@ -185,6 +185,7 @@ class _FilePersistence(_ConcretePersistence):
 
     @staticmethod
     def _truncate_file(filename):
+        # pylint: disable-next=unspecified-encoding
         with open(filename, 'w'):
             pass
 
@@ -192,6 +193,7 @@ class _FilePersistence(_ConcretePersistence):
         if not os.path.exists(self._data_filename):
             self._start_time = None
             return
+        # pylint: disable-next=unspecified-encoding
         with open(self._data_filename, 'r') as data_file:
             self._start_time = self._read_first_meta_block(data_file)
 
@@ -217,11 +219,13 @@ class _FilePersistence(_ConcretePersistence):
         try:
             if current_runs:
                 with NamedTemporaryFile('w', delete=False) as target:
+                    # pylint: disable-next=unspecified-encoding
                     with open(self._data_filename, 'r') as data_file:
                         self._process_lines(data_file, current_runs, target)
                     os.unlink(self._data_filename)
                     shutil.move(target.name, self._data_filename)
             else:
+                # pylint: disable-next=unspecified-encoding
                 with open(self._data_filename, 'r') as data_file:
                     self._process_lines(data_file, current_runs, None)
         except IOError:
@@ -293,6 +297,7 @@ class _FilePersistence(_ConcretePersistence):
         shebang_line += "# Source: " + json.dumps(determine_source_details()) + "\n"
 
         try:
+            # pylint: disable-next=unspecified-encoding,consider-using-with
             data_file = open(self._data_filename, 'a+')
             data_file.write(shebang_line)
             data_file.flush()
@@ -384,10 +389,10 @@ class _ReBenchDB(_ConcretePersistence):
                 measurements = dp.measurements_as_dict(criteria)
                 num_measurements += len(measurements['m'])
                 dp_data.append(measurements)
-            data = dict()
-            data['runId'] = run_id.as_dict()
-            data['d'] = dp_data
-            all_data.append(data)
+            all_data.append({
+                'runId': run_id.as_dict(),
+                'd': dp_data
+            })
 
         criteria_index = []
         for c, idx in criteria.items():

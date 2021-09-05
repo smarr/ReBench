@@ -61,6 +61,7 @@ class Issue59BuildSuite(ReBenchTestCase):
             self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(2, runs[0].get_number_of_data_points())
             self.assertTrue(os.path.isfile(self._path + '/issue_59_cnt'))
+            # pylint: disable-next=unspecified-encoding
             with open(self._path + '/issue_59_cnt', 'r') as build_cnt:
                 content = build_cnt.read()
             self.assertEqual("I\n", content)

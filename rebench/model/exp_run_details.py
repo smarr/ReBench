@@ -120,8 +120,8 @@ class ExpRunDetails(object):
         return self._retries_after_failure
 
     def as_dict(self):
-        result = dict()
-        result['warmup'] = self._warmup
-        result['minIterationTime'] = self._min_iteration_time
-        result['maxInvocationTime'] = self._max_invocation_time
-        return result
+        return {
+            'warmup': self._warmup,
+            'minIterationTime': self._min_iteration_time,
+            'maxInvocationTime': self._max_invocation_time
+        }

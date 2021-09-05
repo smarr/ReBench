@@ -41,6 +41,7 @@ class Issue58BuildExecutor(ReBenchTestCase):
             os.remove(self._path + '/build.log')
 
     def _read_log(self):
+        # pylint: disable-next=unspecified-encoding
         with open(self._path + '/build.log', 'r') as log_file:
             return log_file.read()
 
