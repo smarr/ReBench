@@ -66,11 +66,8 @@ class StatisticProperties(object):
                                                 ((sample - prev_mean) * (sample - self.mean)))
             self.std_dev = math.sqrt(self._variance_times_num_samples / self.num_samples)
 
-            if self.min > sample:
-                self.min = sample
-
-            if self.max < sample:
-                self.max = sample
+            self.min = min(self.min, sample)
+            self.max = max(self.max, sample)
 
     def as_tuple(self):
         return (self.mean,
