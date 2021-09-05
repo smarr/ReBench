@@ -89,7 +89,7 @@ class ReBenchDB(object):
         payload = json.dumps(payload_data, separators=(',', ':'), ensure_ascii=True)
 
         # self._ui.output("Saving JSON Payload of size: %d\n" % len(payload))
-        with open("payload.json", "w") as text_file:
+        with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding
             text_file.write(payload)
 
         try:

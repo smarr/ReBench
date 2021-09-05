@@ -62,6 +62,7 @@ class _SubprocessThread(Thread):
         try:
             self._started_cv.acquire()
             stdin = PIPE if self._stdin_input else None
+            # pylint: disable-next=consider-using-with
             proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
                          stdin=stdin, stdout=self._stdout, stderr=self._stderr)
             self._pid = proc.pid
@@ -197,6 +198,7 @@ def _kill_process(pid, recursively, thread):
 
 
 def _get_process_children(pid):
+    # pylint: disable-next=consider-using-with
     proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, _stderr = proc.communicate()
     result = [int(p) for p in stdout.split()]

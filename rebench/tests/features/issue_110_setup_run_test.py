@@ -51,6 +51,7 @@ class Issue110Test(ReBenchTestCase):
         file_name = 'build.log'
         file_path = self._path + '/' + file_name
         if os.path.isfile(file_path):
+            # pylint: disable-next=unspecified-encoding
             with open(file_path, 'r') as log_file:
                 lines = log_file.read().strip().split("\n")
                 return set(lines)

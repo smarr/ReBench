@@ -30,6 +30,7 @@ class Issue32JMHSupport(TestCase):
 
     def setUp(self):
         self._path = dirname(realpath(__file__))
+        # pylint: disable-next=unspecified-encoding
         with open(self._path + "/issue_32_jmh.data") as data_file:
             self._data = data_file.read()
 

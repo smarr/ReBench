@@ -106,7 +106,7 @@ def load_config(file_name):
     and return the configuration.
     """
     try:
-        with open(file_name, 'r') as conf_file:
+        with open(file_name, 'r') as conf_file:  # pylint: disable=unspecified-encoding
             data = yaml.safe_load(conf_file)
             validator = Core(
                 source_data=data,

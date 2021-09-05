@@ -23,7 +23,7 @@ def _encode_str(out):
 
 def _exec(cmd):
     try:
-        with open(os.devnull, 'w') as dev_null_f:
+        with open(os.devnull, 'w') as dev_null_f:  # pylint: disable=unspecified-encoding
             out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
