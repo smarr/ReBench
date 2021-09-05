@@ -299,6 +299,7 @@ def main_func():
         ui = UI()
         for ex in exceptions.exceptions:
             ui.error(str(ex) + "\n")
+        return -1
 
 
 if __name__ == "__main__":
