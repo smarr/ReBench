@@ -248,8 +248,10 @@ class RunId(object):
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
+            return None
         except TypeError as err:
             self._report_format_issue_and_exit(string, err)
+            return None
         except KeyError as err:
             msg = ("The configuration of %s contains improper Python format strings.\n"
                    + "{ind}The command line configured is: %s\n"
