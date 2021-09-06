@@ -51,6 +51,8 @@ class _SuiteFilter(object):
         self._name = name
 
     def matches(self, bench):
+        if self._name == "*":
+            return True
         return bench.suite.name == self._name
 
 

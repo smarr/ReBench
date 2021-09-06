@@ -16,8 +16,8 @@ Argument:
 
   e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
-              example: s:Suite1 s:Suite2:Bench3
   m:$       filter experiments to only include the named machine, example: m:machine1 m:machine2
+              example: s:Suite1 s:*:Bench3
 ...
 ```
 

@@ -68,7 +68,7 @@ Argument:
 
   e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
-            example: s:Suite1 s:Suite2:Bench3
+            example: s:Suite1 s:*:Bench3
 
             Note, filters are combined with `or` semantics in the same group,
             i.e., executor or suite, and at least one filter needs to match per group.
