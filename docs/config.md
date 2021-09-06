@@ -544,13 +544,14 @@ As well as:
 - `input_sizes`
 - `cores`
 - `variable_values`
+- `machines`
 
 Run configurations are generated from the cross product of all `input_sizes`,
-`cores`, and `variable_values` for a benchmark.
+`cores`, `variable_values`, and `machines` for a benchmark.
 
 ## Benchmark
 
-A benchmark can simply be a name. However, some times one might want
+A benchmark can simply be a name. However, sometimes one might want
 to define extra properties.
 
 **extra_args:**
@@ -604,7 +605,7 @@ way to adjust the amount of computation performed.
 in form of a sequence literal: `[small, large]`.
 
 Run configurations are generated from the cross product of all `input_sizes`,
-`cores`, and `variable_values` for a benchmark. 
+`cores`, `variable_values` and `machines` for a benchmark. 
 The specific input size can be used, e.g., in the command as in the example below.
 
 Example:
@@ -630,7 +631,7 @@ In practice, it can be used more flexibly and as just another variable that can 
 any list of strings.
 
 Run configurations are generated from the cross product of all `input_sizes`,
-`cores`, and `variable_values` for a benchmark.
+`cores`, `variable_values`, and `machines` for a benchmark.
 The specific core setting can be used, e.g., in the command as in the example below.
 
 Example:
@@ -652,7 +653,7 @@ Another dimension by which the benchmark execution can be varied.
 It takes a list of strings, or arbitrary values really.
 
 Run configurations are generated from the cross product of all `input_sizes`,
-`cores`, and `variable_values` for a benchmark.
+`cores`, `variable_values`, and `machines` for a benchmark.
 The specific variable value can be used, e.g., in the command as in the example below.
 
 Example:
@@ -667,6 +668,40 @@ benchmark_suites:
               - Sequential
               - Parallel
               - Random
+```
+
+---
+
+**machines:**
+
+A dimension by which the benchmark execution can be varied.
+It takes a list of strings, or arbitrary values really.
+The typical use case is to name one or more machines on which the benchmark
+is to be executed.
+
+Run configurations are generated from the cross product of all `input_sizes`,
+`cores`, `variable_values`, and `machines` for a benchmark.
+The specific machine can be used, e.g., in the command, or often more useful
+as a filter when running `rebench`.
+
+Example:
+
+```yaml
+benchmark_suites:
+  ExampleSuite:
+    command: Harness %(machine)s
+    benchmarks:
+        - Benchmark2:
+            machines:
+              - machine1
+              - machine2
+```
+
+Example filter command line, which would execute only the benchmarks
+tagged with `machine1`:
+
+```shell
+rebench rebench.conf m:machine1
 ```
 
 ---
@@ -770,7 +805,7 @@ executors:
 **run details and variables:**
 
 An executor can additionally use the keys for [run details](#runs) and [variables](#benchmark)
-(`input_sizes`, `cores`, `variable_values`).
+(`input_sizes`, `cores`, `variable_values`, `machines`).
 
 ## Experiments
 
@@ -872,7 +907,7 @@ experiments:
 **run details and variables:**
 
 An experiment can additionally use the keys for [run details](#runs) and
-[variables](#benchmark) (`input_sizes`, `cores`, `variable_values`).
+[variables](#benchmark) (`input_sizes`, `cores`, `variable_values`, `machines`).
 Note, this is possible on the main experiment, but also separately for each
 of the defined executions.
 
