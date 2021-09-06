@@ -125,6 +125,12 @@ schema;variables:
       # default: ['']  # that's the semantics, but pykwalify does not support it
       sequence:
         - type: scalar
+    machines:
+      type: seq
+      desc: Another dimension by which the benchmark execution can be varied.
+      # default: ['']  # that's the semantics, but pykwalify does not support it
+      sequence:
+        - type: scalar
 
 schema;benchmark_type_str:
   type: str
