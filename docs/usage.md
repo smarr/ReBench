@@ -5,7 +5,7 @@ The complete set of options can be displayed with the `--help` argument:
 
 ```bash
 $ rebench --help
-Usage: rebench [options] <config> [exp_name] [e:$]* [s:$]*
+Usage: rebench [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
 
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -16,8 +16,8 @@ Argument:
 
   e:$       filter experiments to only include the named executor, example: e:EXEC1 e:EXEC3
   s:$       filter experiments to only include the named suite and possibly benchmark
-  m:$       filter experiments to only include the named machine, example: m:machine1 m:machine2
               example: s:Suite1 s:*:Bench3
+  m:$       filter experiments to only include the named machines, example: m:machine1 m:machine2
 ...
 ```
 

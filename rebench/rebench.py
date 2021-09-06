@@ -57,7 +57,7 @@ class ReBench(object):
         return self._ui
 
     def shell_options(self):
-        usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]*
+        usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
         
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -72,6 +72,8 @@ Argument:
 
             Note, filters are combined with `or` semantics in the same group,
             i.e., executor or suite, and at least one filter needs to match per group.
+            The suite name can also be given as * to match all possible suites.
+  m:$       filter experiments to only include the named machines, example: m:machine1 m:machine2
 """
 
         parser = ArgumentParser(
