@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from time import sleep
 
 from .ui import UIError
 
@@ -92,19 +93,32 @@ class ReBenchDB(object):
         with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding
             text_file.write(payload)
 
-        try:
-            data = payload.encode('utf-8')
-            response = self._send_payload(data, url)
-            return True, response
-        except TypeError as te:
-            self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                           + "{ind}{ind}" + str(te) + "\n")
-        except (IOError, HTTPException):
-            # network or server may have issues, let's try one more time
+        return self._send_with_retries(payload.encode('utf-8'), url)
+
+    def _send_with_retries(self, payload_bytes, url):
+        attempts = 4
+        wait_sec = 10
+        while True:
             try:
-                response = self._send_payload(payload, url)
+                response = self._send_payload(payload_bytes, url)
                 return True, response
-            except (IOError, HTTPException) as error:
+            except TypeError as te:
+                # can't handle this, just abort
                 self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                               + "{ind}{ind}" + str(error) + "\n")
-        return False, None
+                               + "{ind}{ind}" + str(te) + "\n")
+                return False, None
+            except (IOError, HTTPException) as error:
+                if attempts > 0:
+                    # let's retry, the benchmark server might just time out, as usual
+                    # but let it breath a little
+                    self._ui.verbose_output_info(
+                        "ReBenchDB: had issue reporting data. Trying again after "
+                        + str(wait_sec) + "seconds.\n"
+                        + "{ind}{ind}" + str(error) + "\n")
+                    attempts -= 1
+                    sleep(wait_sec)
+                    wait_sec *= 2
+                else:
+                    self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                                   + "{ind}{ind}" + str(error) + "\n")
+                    return False, None
