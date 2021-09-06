@@ -19,6 +19,11 @@ try:
 except ValueError:
     rebench_version = "unknown"
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 
 class DenoiseResult(object):
 
@@ -47,6 +52,9 @@ def minimize_noise(show_warnings, ui, for_profiling):
             got_json = False
     except subprocess.CalledProcessError as e:
         output = output_as_str(e.output)
+        got_json = False
+    except FileNotFoundError as e:
+        output = str(e)
         got_json = False
 
     msg = 'Minimizing noise with rebench-denoise failed\n'
@@ -100,6 +108,8 @@ def minimize_noise(show_warnings, ui, for_profiling):
                    + denoise_cmd + '\n'
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
+        elif "No such file or directory: 'sudo'" in output:
+            msg += '{ind}sudo is not available. Can\'t use rebench-denoise to manage the system.\n'
         else:
             msg += '{ind}Error: ' + escape_braces(output)
 
@@ -126,7 +136,7 @@ def restore_noise(denoise_result, show_warning, ui):
             if not denoise_result.use_nice:
                 cmd += ['--without-nice']
             subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 
     if not denoise_result.succeeded and show_warning:
