@@ -66,11 +66,21 @@ class _BenchmarkFilter(_SuiteFilter):
         return bench.name == self._benchmark_name
 
 
+class _MachineFilter(object):
+
+    def __init__(self, machine):
+        self._machine = machine
+
+    def matches(self, bench):
+        return bench.suite.machine == self._machine
+
+
 class _RunFilter(object):
 
     def __init__(self, run_filters):
         self._executor_filters = []
         self._suite_filters = []
+        self._machine_filters = []
 
         if not run_filters:
             return
@@ -83,6 +93,8 @@ class _RunFilter(object):
                 self._suite_filters.append(_SuiteFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 3:
                 self._suite_filters.append(_BenchmarkFilter(parts[1], parts[2]))
+            elif parts[0] == "m" and len(parts) == 2:
+                self._suite_filters.append(_MachineFilter(parts[1]))
             else:
                 raise Exception("Unknown filter expression: " + run_filter)
 

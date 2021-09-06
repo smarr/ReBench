@@ -73,12 +73,13 @@ class Experiment(object):
             for cores in variables.cores:
                 for input_size in variables.input_sizes:
                     for var_val in variables.variable_values:
-                        run = self._data_store.create_run_id(
-                            bench, cores, input_size, var_val)
-                        bench.add_run(run)
-                        runs.add(run)
-                        run.add_reporting(self._reporting)
-                        run.add_persistence(self._persistence)
+                        for machine in variables.machines:
+                            run = self._data_store.create_run_id(
+                                bench, cores, input_size, var_val, machine)
+                            bench.add_run(run)
+                            runs.add(run)
+                            run.add_reporting(self._reporting)
+                            run.add_persistence(self._persistence)
         return runs
 
     def _compile_executors_and_benchmark_suites(self, executions, suites, configurator):
