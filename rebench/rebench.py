@@ -212,9 +212,11 @@ Argument:
     def determine_exp_name_and_filters(filters):
         exp_name = filters[0] if filters and (
             not filters[0].startswith("e:") and
-            not filters[0].startswith("s:")) else None
+            not filters[0].startswith("s:") and
+            not filters[0].startswith("m:")) else None
         exp_filter = [f for f in filters if (f.startswith("e:") or
-                                             f.startswith("s:"))]
+                                             f.startswith("s:") or
+                                             f.startswith("m:"))]
         return exp_name, exp_filter
 
     def _report_completion(self):
