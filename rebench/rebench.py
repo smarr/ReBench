@@ -178,6 +178,10 @@ Argument:
                                default=True,
                                help='Override configuration and '
                                     'disable any reporting to Codespeed and ReBenchDB.')
+        codespeed.add_argument('--git-repo', dest='git_repo', default=None,
+                               help='Path to the git repository with the source for the ' +
+                                    'experiment. This is useful when the experiment is run ' +
+                                    'from a different location, for instance a RAM disk, or tmpfs.')
 
         rebench_db = parser.add_argument_group(
             'Reporting to ReBenchDB',

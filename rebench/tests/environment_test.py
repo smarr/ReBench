@@ -8,7 +8,7 @@ from ..ui import TestDummyUI
 class ReBenchTestCase(TestCase):
 
     def test_source_details(self):
-        details = determine_source_details()
+        details = determine_source_details(None)
         self.assertEqual(len(details['commitId']), 40)
         self.assertGreater(len(details['committerName']), 0)
         self.assertGreater(len(details['committerEmail']), 0)

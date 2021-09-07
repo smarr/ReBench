@@ -33,14 +33,17 @@ def _exec(cmd):
 _source = None
 
 
-def determine_source_details():
+def determine_source_details(configurator):
     global _source  # pylint: disable=global-statement
     if _source:
         return _source
 
     result = {}
+    git_cmd = ['git']
+    if configurator and configurator.options and configurator.options.git_repo:
+        git_cmd += ['-C', configurator.options.git_repo]
 
-    is_git_repo = _exec(['git', 'rev-parse']) is not None
+    is_git_repo = _exec(git_cmd + ['rev-parse']) is not None
     if not is_git_repo:
         result['repoURL'] = None
         result['branchOrTag'] = None
@@ -53,7 +56,7 @@ def determine_source_details():
         _source = result
         return result
 
-    repo_url = _exec(['git', 'ls-remote', '--get-url']) if is_git_repo else None
+    repo_url = _exec(git_cmd + ['ls-remote', '--get-url']) if is_git_repo else None
     if repo_url is None:
         repo_url = ''
 
@@ -64,13 +67,13 @@ def determine_source_details():
             netloc="{}@{}".format(parsed.username, parsed.hostname))
     result['repoURL'] = _encode_str(parsed.geturl())
 
-    result['branchOrTag'] = _exec(['git', 'show', '-s', '--format=%D', 'HEAD'])
-    result['commitId'] = _exec(['git', 'rev-parse', 'HEAD'])
-    result['commitMsg'] = _exec(['git', 'show', '-s', '--format=%B', 'HEAD'])
-    result['authorName'] = _exec(['git', 'show', '-s', '--format=%aN', 'HEAD'])
-    result['committerName'] = _exec(['git', 'show', '-s', '--format=%cN', 'HEAD'])
-    result['authorEmail'] = _exec(['git', 'show', '-s', '--format=%aE', 'HEAD'])
-    result['committerEmail'] = _exec(['git', 'show', '-s', '--format=%cE', 'HEAD'])
+    result['branchOrTag'] = _exec(git_cmd + ['show', '-s', '--format=%D', 'HEAD'])
+    result['commitId'] = _exec(git_cmd + ['rev-parse', 'HEAD'])
+    result['commitMsg'] = _exec(git_cmd + ['show', '-s', '--format=%B', 'HEAD'])
+    result['authorName'] = _exec(git_cmd + ['show', '-s', '--format=%aN', 'HEAD'])
+    result['committerName'] = _exec(git_cmd + ['show', '-s', '--format=%cN', 'HEAD'])
+    result['authorEmail'] = _exec(git_cmd + ['show', '-s', '--format=%aE', 'HEAD'])
+    result['committerEmail'] = _exec(git_cmd + ['show', '-s', '--format=%cE', 'HEAD'])
 
     _source = result
     return result
