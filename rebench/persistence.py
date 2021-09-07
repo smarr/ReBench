@@ -51,6 +51,11 @@ class DataStore(object):
     def get(self, filename, configurator):
         if filename not in self._files:
             source = determine_source_details()
+            if configurator.use_rebench_db and source['commitId'] is None:
+                raise UIError("Reporting to ReBenchDB is enabled, "
+                              + "but failed to obtain source details. "
+                              + "If ReBench is run outside of the relevant repo "
+                              + "set the path with --git-repo", None)
             if configurator.use_rebench_db and 'repo_url' in configurator.rebench_db:
                 source['repoURL'] = configurator.rebench_db['repo_url']
 
