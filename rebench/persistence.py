@@ -50,18 +50,23 @@ class DataStore(object):
 
     def get(self, filename, configurator):
         if filename not in self._files:
-            source = determine_source_details()
+            source = determine_source_details(configurator)
+            if configurator.use_rebench_db and source['commitId'] is None:
+                raise UIError("Reporting to ReBenchDB is enabled, "
+                              + "but failed to obtain source details. "
+                              + "If ReBench is run outside of the relevant repo "
+                              + "set the path with --git-repo", None)
             if configurator.use_rebench_db and 'repo_url' in configurator.rebench_db:
                 source['repoURL'] = configurator.rebench_db['repo_url']
 
             if configurator.options and configurator.options.branch:
                 source['branchOrTag'] = configurator.options.branch
 
-            p = _FilePersistence(filename, self, configurator.discard_old_data, self._ui)
+            p = _FilePersistence(filename, self, configurator, self._ui)
             self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
 
             if configurator.use_rebench_db:
-                db = _ReBenchDB(configurator.get_rebench_db_connector(), self, self._ui)
+                db = _ReBenchDB(configurator, self, self._ui)
                 p = _CompositePersistence(p, db)
 
             self._files[filename] = p
@@ -165,7 +170,7 @@ class _CompositePersistence(_AbstractPersistence):
 
 class _FilePersistence(_ConcretePersistence):
 
-    def __init__(self, data_filename, data_store, discard_old_data, ui):
+    def __init__(self, data_filename, data_store, configurator, ui):
         super(_FilePersistence, self).__init__(data_store, ui)
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
@@ -173,12 +178,14 @@ class _FilePersistence(_ConcretePersistence):
 
         self._data_filename = data_filename
         self._file = None
-        if discard_old_data:
+        if configurator.discard_old_data:
             self._discard_old_data()
         self._lock = Lock()
         self._read_start_time()
         if not self._start_time:
             self._start_time = get_current_time()
+
+        self._configurator = configurator
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -294,7 +301,8 @@ class _FilePersistence(_ConcretePersistence):
         shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
         shebang_line += _START_TIME_LINE + self._start_time + "\n"
         shebang_line += "# Environment: " + json.dumps(determine_environment()) + "\n"
-        shebang_line += "# Source: " + json.dumps(determine_source_details()) + "\n"
+        shebang_line += "# Source: " + json.dumps(
+            determine_source_details(self._configurator)) + "\n"
 
         try:
             # pylint: disable-next=unspecified-encoding,consider-using-with
@@ -339,10 +347,11 @@ class _FilePersistence(_ConcretePersistence):
 
 class _ReBenchDB(_ConcretePersistence):
 
-    def __init__(self, rebench_db, data_store, ui):
+    def __init__(self, configurator, data_store, ui):
         super(_ReBenchDB, self).__init__(data_store, ui)
         # TODO: extract common code, possibly
-        self._rebench_db = rebench_db
+        self._configurator = configurator
+        self._rebench_db = configurator.get_rebench_db_connector()
 
         self._lock = Lock()
 
@@ -406,7 +415,7 @@ class _ReBenchDB(_ConcretePersistence):
             'criteria': criteria_index,
             'env': determine_environment(),
             'startTime': self._start_time,
-            'source': determine_source_details()}, num_measurements)
+            'source': determine_source_details(self._configurator)}, num_measurements)
 
     def close(self):
         with self._lock:
