@@ -27,11 +27,12 @@ from ..ui import UIError
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value):
+    def __init__(self, benchmark, cores, input_size, var_value, machine):
         self._benchmark = benchmark
         self._cores = cores
         self._input_size = input_size
         self._var_value = var_value
+        self._machine = machine
 
         self._reporters = set()
         self._persistence = set()
@@ -113,6 +114,14 @@ class RunId(object):
     @property
     def var_value(self):
         return self._var_value
+
+    @property
+    def machine(self):
+        return self._machine
+
+    @property
+    def machine_as_str(self):
+        return '' if self._machine is None else str(self._machine)
 
     @property
     def location(self):
@@ -233,8 +242,9 @@ class RunId(object):
         return hash(self.cmdline())
 
     def as_simple_string(self):
-        return "%s %s %s %s" % (self._benchmark.as_simple_string(),
-                                self._cores, self._input_size, self._var_value)
+        return "%s %s %s %s %s" % (
+            self._benchmark.as_simple_string(),
+            self._cores, self._input_size, self._var_value, self._machine)
 
     def _expand_vars(self, string):
         try:
@@ -245,6 +255,7 @@ class RunId(object):
                              'iterations': self.iterations,
                              'suite': self._benchmark.suite.name,
                              'variable': self.var_value_as_str,
+                             'machine': self.machine_as_str,
                              'warmup': self._benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
@@ -314,6 +325,7 @@ class RunId(object):
         result.append(self.cores_as_str)
         result.append(self.input_size_as_str)
         result.append(self.var_value_as_str)
+        result.append(self.machine_as_str)
 
         return result
 
@@ -323,6 +335,7 @@ class RunId(object):
             'cores': self._cores,
             'inputSize': self._input_size,
             'varValue': self._var_value,
+            'machine': self._machine,
             'extraArgs': str(self._benchmark.extra_args),
             'cmdline': self.cmdline(),
             'location': self.location
@@ -330,14 +343,16 @@ class RunId(object):
 
     @classmethod
     def from_str_list(cls, data_store, str_list):
-        benchmark = Benchmark.from_str_list(data_store, str_list[:-3])
+        benchmark = Benchmark.from_str_list(data_store, str_list[:-4])
         return data_store.create_run_id(
-            benchmark, str_list[-3], str_list[-2], str_list[-1])
+            benchmark, str_list[-4], str_list[-3], str_list[-2], str_list[-1])
 
     def __str__(self):
-        return "RunId(%s, %s, %s, %s, %s, %d)" % (self._benchmark.name,
-                                                  self._cores,
-                                                  self._benchmark.extra_args,
-                                                  self._input_size or '',
-                                                  self._var_value  or '',
-                                                  self._benchmark.run_details.warmup or 0)
+        return "RunId(%s, %s, %s, %s, %s, %s, %d)" % (
+            self._benchmark.name,
+            self._cores,
+            self._benchmark.extra_args,
+            self._input_size or '',
+            self._var_value  or '',
+            self._machine or '',
+            self._benchmark.run_details.warmup or 0)

@@ -66,19 +66,23 @@ class Experiment(object):
     def _compile_runs(self, configurator):
         runs = set()
 
+        # pylint: disable-next=too-many-nested-blocks
         for bench in self._benchmarks:
-            if not configurator.run_filter.applies(bench):
+            if not configurator.run_filter.applies_to_bench(bench):
                 continue
             variables = bench.variables
             for cores in variables.cores:
                 for input_size in variables.input_sizes:
                     for var_val in variables.variable_values:
-                        run = self._data_store.create_run_id(
-                            bench, cores, input_size, var_val)
-                        bench.add_run(run)
-                        runs.add(run)
-                        run.add_reporting(self._reporting)
-                        run.add_persistence(self._persistence)
+                        for machine in variables.machines:
+                            if not configurator.run_filter.applies_to_machine(machine):
+                                continue
+                            run = self._data_store.create_run_id(
+                                bench, cores, input_size, var_val, machine)
+                            bench.add_run(run)
+                            runs.add(run)
+                            run.add_reporting(self._reporting)
+                            run.add_persistence(self._persistence)
         return runs
 
     def _compile_executors_and_benchmark_suites(self, executions, suites, configurator):
