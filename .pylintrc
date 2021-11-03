@@ -130,6 +130,7 @@ disable=parameter-unpacking,
         duplicate-code,
         useless-object-inheritance,
         super-with-arguments,
+        consider-using-f-string,
         raise-missing-from
         
 # Enable the message, report, category or checker with the given id(s). You can
