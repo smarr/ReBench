@@ -97,7 +97,7 @@ class CliReporter(TextReporter):
     def __init__(self, executes_verbose, ui):
         super(CliReporter, self).__init__()
         self._num_runs = None
-        self._ui = ui
+        self.ui = ui
         self._runs_completed = 0
         self._start_time = None
         self._runs_remaining = 0
@@ -111,7 +111,7 @@ class CliReporter(TextReporter):
         self._runs_remaining -= 1
 
     def report_job_completed(self, run_ids):
-        self._ui.output("\n\n" + format_pretty_table(
+        self.ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
             ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
              '#Samples', 'Mean (ms)'],
@@ -135,7 +135,7 @@ class CodespeedReporter(Reporter):
         self._cache_for_seconds = 30
         self._cache = {}
         self._last_send = time()
-        self._ui = ui
+        self.ui = ui
 
     def run_completed(self, run_id, statistics, cmdline):
         if not self._incremental_report:
@@ -224,7 +224,7 @@ class CodespeedReporter(Reporter):
             # is not yet properly initialized, let's try again for those cases
             try:
                 response = self._send_payload(payload)
-                self._ui.verbose_error_info("Sent %d results to Codespeed, response was: %s\n"
+                self.ui.verbose_error_info("Sent %d results to Codespeed, response was: %s\n"
                                             % (len(results), response))
             except (IOError, HTTPException) as error:
                 envs = list({i['environment'] for i in results})
@@ -238,7 +238,7 @@ class CodespeedReporter(Reporter):
                        + "{ind}{ind}executables: %s\n") % (
                            envs, projects, benchmarks, executables)
 
-                self._ui.error(
+                self.ui.error(
                     "{ind}Error: Reporting to Codespeed failed.\n"
                     + "{ind}{ind}" + str(error) + "\n"
                     + "{ind}{ind}This is most likely caused by either a wrong URL in the\n"

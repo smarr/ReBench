@@ -42,7 +42,7 @@ class ReBenchTestCase(TestCase):
         self._tmp_file = mkstemp()[1]  # just use the file name
 
         self._sys_exit = sys.exit  # make sure that we restore sys.exit
-        self._ui = TestDummyUI()
+        self.ui = TestDummyUI()
 
     def tearDown(self):
         os.remove(self._tmp_file)

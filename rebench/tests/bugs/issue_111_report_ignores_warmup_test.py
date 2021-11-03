@@ -31,16 +31,16 @@ class Issue111Test(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_invocation_and_mean_with_warmup_2(self):
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_111.conf'),
-                           ds, self._ui, exp_name='test-warmup-2', data_file=self._tmp_file)
+                           ds, self.ui, exp_name='test-warmup-2', data_file=self._tmp_file)
         runs = cnf.get_runs()
         ds.load_data(runs, False)
 
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(runs, False, self._ui)
+        ex = Executor(runs, False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 7, 1)
@@ -48,9 +48,9 @@ class Issue111Test(ReBenchTestCase):
         self.assertEqual(run.get_mean_of_totals(), 10)
 
         # Reload data from file, and confirm we get the same result
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_111.conf'),
-                           ds, self._ui, exp_name='test-warmup-2', data_file=self._tmp_file)
+                           ds, self.ui, exp_name='test-warmup-2', data_file=self._tmp_file)
         runs = cnf.get_runs()
         ds.load_data(runs, False)
 
@@ -59,16 +59,16 @@ class Issue111Test(ReBenchTestCase):
         self.assertEqual(run.get_mean_of_totals(), 10)
 
     def test_invocation_and_mean_with_warmup_0(self):
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_111.conf'),
-                           ds, self._ui, exp_name='test-warmup-0', data_file=self._tmp_file)
+                           ds, self.ui, exp_name='test-warmup-0', data_file=self._tmp_file)
         runs = cnf.get_runs()
         ds.load_data(runs, False)
 
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(runs, False, self._ui)
+        ex = Executor(runs, False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 9, 1)
@@ -76,9 +76,9 @@ class Issue111Test(ReBenchTestCase):
         self.assertEqual(run.get_mean_of_totals(), 230)
 
         # Reload data from file, and confirm we get the same result
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_111.conf'),
-                           ds, self._ui, exp_name='test-warmup-0', data_file=self._tmp_file)
+                           ds, self.ui, exp_name='test-warmup-0', data_file=self._tmp_file)
         runs = cnf.get_runs()
         ds.load_data(runs, False)
 

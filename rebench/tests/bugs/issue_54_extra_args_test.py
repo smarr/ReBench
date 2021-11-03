@@ -12,7 +12,7 @@ class Issue54Test(ReBenchTestCase):
 
     def test_expansion_of_extra_args(self):
         cnf = Configurator(load_config(self._path + '/issue_54.conf'),
-                           DataStore(self._ui), self._ui, None, 'Test')
+                           DataStore(self.ui), self.ui, None, 'Test')
 
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))

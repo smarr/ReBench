@@ -188,7 +188,7 @@ class Configurator(object):
             self._rebench_db['send_to_rebench_db'] = cli_options.send_to_rebench_db
 
         self._options = cli_options
-        self._ui = ui
+        self.ui = ui
         self._data_store = data_store
         self._process_cli_options()
 
@@ -204,7 +204,7 @@ class Configurator(object):
 
     @property
     def ui(self):
-        return self._ui
+        return self.ui
 
     @property
     def build_log(self):
@@ -247,14 +247,14 @@ class Configurator(object):
 
         self._rebench_db_connector = ReBenchDB(
             self._rebench_db['db_url'], self._rebench_db['project_name'],
-            self._options.experiment_name, self._ui)
+            self._options.experiment_name, self.ui)
         return self._rebench_db_connector
 
     def _process_cli_options(self):
         if self._options is None:
             return
 
-        self._ui.init(self._options.verbose, self._options.debug)
+        self.ui.init(self._options.verbose, self._options.debug)
 
     @property
     def do_builds(self):

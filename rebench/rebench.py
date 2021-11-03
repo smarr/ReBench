@@ -50,11 +50,7 @@ class ReBench(object):
         self.version = rebench_version
         self.options = None
         self._config = None
-        self._ui = UI()
-
-    @property
-    def ui(self):
-        return self._ui
+        self.ui = UI()
 
     def shell_options(self):
         usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
@@ -232,17 +228,17 @@ Argument:
         if argv is None:
             argv = sys.argv
 
-        data_store = DataStore(self._ui)
+        data_store = DataStore(self.ui)
         opt_parser = self.shell_options()
         args = opt_parser.parse_args(argv[1:])
 
-        cli_reporter = CliReporter(args.verbose, self._ui)
+        cli_reporter = CliReporter(args.verbose, self.ui)
 
         exp_name, exp_filter = self.determine_exp_name_and_filters(args.exp_filter)
 
         try:
             config = load_config(args.config[0])
-            self._config = Configurator(config, data_store, self._ui, args,
+            self._config = Configurator(config, data_store, self.ui, args,
                                         cli_reporter, exp_name, args.data_file,
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
@@ -255,8 +251,8 @@ Argument:
 
         denoise_result = None
         try:
-            denoise_result = minimize_noise(not self._config.artifact_review, self._ui)
-            init_environment(denoise_result, self._ui)
+            denoise_result = minimize_noise(not self._config.artifact_review, self.ui)
+            init_environment(denoise_result, self.ui)
 
             data_store.load_data(runs, self._config.options.do_rerun)
 
@@ -265,17 +261,17 @@ Argument:
 
             return self.execute_experiment(runs, use_nice, use_shielding)
         finally:
-            restore_noise(denoise_result, not self._config.artifact_review, self._ui)
+            restore_noise(denoise_result, not self._config.artifact_review, self.ui)
 
     def execute_experiment(self, runs, use_nice, use_shielding):
-        self._ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
+        self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
 
         scheduler_class = {'batch':       BatchScheduler,
                            'round-robin': RoundRobinScheduler,
                            'random':      RandomScheduler}.get(self._config.options.scheduler)
 
         executor = Executor(runs, self._config.do_builds,
-                            self._ui,
+                            self.ui,
                             self._config.options.include_faulty,
                             self._config.options.debug,
                             scheduler_class,
@@ -286,7 +282,7 @@ Argument:
             return True
         else:
             if self._config.artifact_review:
-                self._ui.output("Executing benchmarks for Artifact Review"
+                self.ui.output("Executing benchmarks for Artifact Review"
                                 + " using the reported settings.")
             return executor.execute()
 

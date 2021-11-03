@@ -31,9 +31,9 @@ class IgnoreTimeoutsTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def _init(self, exp_name):
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/ignore_timeouts.conf'),
-                           ds, self._ui, exp_name=exp_name, data_file=self._tmp_file)
+                           ds, self.ui, exp_name=exp_name, data_file=self._tmp_file)
         ds.load_data(None, False)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.cmdline())
@@ -57,7 +57,7 @@ class IgnoreTimeoutsTest(ReBenchTestCase):
         _, cnf, runs = self._init('Exec')
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, self._ui)
+        ex = Executor(runs, False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 1)

@@ -32,15 +32,15 @@ class Issue112Test(ReBenchTestCase):
 
     def _test(self, exp_name, exp_result):
         # Executes first time
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_112.conf'),
-                           ds, self._ui, exp_name=exp_name, data_file=self._tmp_file)
+                           ds, self.ui, exp_name=exp_name, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         # Has not executed yet, check that there is simply
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, exp_result, exp_result)
