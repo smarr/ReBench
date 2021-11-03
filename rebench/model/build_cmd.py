@@ -38,46 +38,30 @@ class BuildCommand(object):
         return build_command
 
     def __init__(self, cmd, location):
-        self._cmd = cmd
-        self._location = location
-        self._built = False
-        self._build_failed = False
-
-    @property
-    def command(self):
-        return self._cmd
-
-    @property
-    def location(self):
-        return self._location
-
-    @property
-    def is_built(self):
-        return self._built
-
-    @property
-    def is_failed_build(self):
-        return self._build_failed
+        self.command = cmd
+        self.location = location
+        self.is_built = False
+        self.build_failed = False
 
     def mark_succeeded(self):
-        self._built = True
+        self.is_built = True
 
     def mark_failed(self):
-        self._build_failed = True
+        self.build_failed = True
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
-                self._cmd == other._cmd and
-                self._location == other._location)
+                self.command == other.command and
+                self.location == other.location)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash((self._cmd, self._location))
+        return hash((self.command, self.location))
 
     def as_dict(self):
         return {
-            'cmd': self._cmd,
-            'location': self._location
+            'cmd': self.command,
+            'location': self.location
         }

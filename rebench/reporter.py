@@ -247,7 +247,7 @@ class CodespeedReporter(Reporter):
                     + "{ind}{ind}" + msg + "\n", run_id)
 
     def _prepare_result(self, run_id):
-        return self._format_for_codespeed(run_id, run_id.get_statistics())
+        return self._format_for_codespeed(run_id, run_id.statistics)
 
     def report_job_completed(self, run_ids):
         if self._incremental_report:

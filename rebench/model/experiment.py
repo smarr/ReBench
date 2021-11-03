@@ -47,7 +47,7 @@ class Experiment(object):
 
     def __init__(self, name, description, data_file, reporting, run_details,
                  variables, configurator, executions, suites):
-        self._name = name
+        self.name = name
         self._description = description
         self._data_file = data_file
 
@@ -61,7 +61,7 @@ class Experiment(object):
         self._suites = self._compile_executors_and_benchmark_suites(
             executions, suites, configurator)
         self._benchmarks = self._compile_benchmarks()
-        self._runs = self._compile_runs(configurator)
+        self.runs = self._compile_runs(configurator)
 
     def _compile_runs(self, configurator):
         runs = set()
@@ -118,10 +118,3 @@ class Experiment(object):
                 bench_cfgs.append(Benchmark.compile(
                     bench, suite, self._data_store))
         return bench_cfgs
-
-    @property
-    def name(self):
-        return self._name
-
-    def get_runs(self):
-        return self._runs

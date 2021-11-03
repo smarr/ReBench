@@ -61,7 +61,7 @@ class ConfiguratorTest(ReBenchTestCase):
 
     def test_get_runs(self):
         exp = self.test_get_experiment()
-        runs = exp.get_runs()
+        runs = exp.runs
         self.assertEqual(2 * 2 * 2, len(runs))
 
     # Support for running a selected experiment

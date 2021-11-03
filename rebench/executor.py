@@ -274,7 +274,7 @@ class Executor(object):
         self._include_faulty = include_faulty
         self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
-        self._build_log = build_log
+        self.build_log = build_log
         self._artifact_review = artifact_review
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
@@ -326,7 +326,7 @@ class Executor(object):
             if build.is_built:
                 continue
 
-            if build.is_failed_build:
+            if build.build_failed:
                 run_id.fail_immediately()
                 raise FailedBuilding(name, build)
             self._execute_build_cmd(build, name, run_id)
@@ -365,7 +365,7 @@ class Executor(object):
             self.ui.error(msg, run_id, script, path)
             return
 
-        if self._build_log:
+        if self.build_log:
             self.process_output(name, stdout_result, stderr_result)
 
         if return_code != 0:
@@ -387,7 +387,7 @@ class Executor(object):
         build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
-        with open_with_enc(self._build_log, 'a', encoding='utf-8') as log_file:
+        with open_with_enc(self.build_log, 'a', encoding='utf-8') as log_file:
             if stdout_result:
                 log_file.write(name + '|STD:')
                 log_file.write(stdout_result)
@@ -417,7 +417,7 @@ class Executor(object):
         mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
             run_id.report_run_completed(cmdline)
-            if (not run_id.is_failed() and run_id.min_iteration_time
+            if (not run_id.is_failed and run_id.min_iteration_time
                     and mean_of_totals < run_id.min_iteration_time
                     and not self._artifact_review):
                 self.ui.warning(
@@ -552,7 +552,7 @@ class Executor(object):
             successful = True
             for run in self._runs:
                 run.report_job_completed(self._runs)
-                if run.is_failed():
+                if run.is_failed:
                     successful = False
             return successful
         finally:

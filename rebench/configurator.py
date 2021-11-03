@@ -153,10 +153,10 @@ class Configurator(object):
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self._build_log = build_log or raw_config.get('build_log', 'build.log')
-        self._data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
+        self.build_log = build_log or raw_config.get('build_log', 'build.log')
+        self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
         self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
-        self._artifact_review = raw_config.get('artifact_review', False)
+        self.artifact_review = raw_config.get('artifact_review', False)
 
         self._rebench_db_connector = None
 
@@ -179,22 +179,22 @@ class Configurator(object):
         if rdb_cfg:
             rdb_cfg = rdb_cfg.get('rebenchdb', None)
         if rdb_cfg:
-            self._rebench_db = rdb_cfg
+            self.rebench_db = rdb_cfg
         else:
-            self._rebench_db = {}
+            self.rebench_db = {}
         if cli_options:
             if cli_options.db_server:
-                self._rebench_db['db_url'] = cli_options.db_server
-            self._rebench_db['send_to_rebench_db'] = cli_options.send_to_rebench_db
+                self.rebench_db['db_url'] = cli_options.db_server
+            self.rebench_db['send_to_rebench_db'] = cli_options.send_to_rebench_db
 
-        self._options = cli_options
+        self.options = cli_options
         self.ui = ui
-        self._data_store = data_store
+        self.data_store = data_store
         self._process_cli_options()
 
-        self._build_commands = {}
+        self.build_commands = {}
 
-        self._run_filter = _RunFilter(run_filter)
+        self.run_filter = _RunFilter(run_filter)
 
         self._executors = raw_config.get('executors', {})
         self._suites_config = raw_config.get('benchmark_suites', {})
@@ -203,27 +203,11 @@ class Configurator(object):
         self._experiments = self._compile_experiments(experiments)
 
     @property
-    def ui(self):
-        return self.ui
-
-    @property
-    def build_log(self):
-        return self._build_log
-
-    @property
-    def rebench_db(self):
-        return self._rebench_db
-
-    @property
-    def artifact_review(self):
-        return self._artifact_review
-
-    @property
     def use_rebench_db(self):
-        report_results = self._options is None or self._options.use_data_reporting
-        return report_results and self._rebench_db and (
-            self._rebench_db.get('send_to_rebench_db', False)
-            or self._rebench_db.get('record_all', False))
+        report_results = self.options is None or self.options.use_data_reporting
+        return report_results and self.rebench_db and (
+            self.rebench_db.get('send_to_rebench_db', False)
+            or self.rebench_db.get('record_all', False))
 
     def get_rebench_db_connector(self):
         if not self.use_rebench_db:
@@ -231,11 +215,11 @@ class Configurator(object):
         if self._rebench_db_connector:
             return self._rebench_db_connector
 
-        if 'project_name' not in self._rebench_db:
+        if 'project_name' not in self.rebench_db:
             raise ConfigurationError(
                 "No project_name defined in configuration file under reporting.rebenchdb.")
 
-        if not self._options.experiment_name:
+        if not self.options.experiment_name:
             raise ConfigurationError(
                 "The experiment was not named, which is mandatory. "
                 "This is needed to identify the data uniquely. "
@@ -246,31 +230,27 @@ class Configurator(object):
                 "Use the --experiment option to set the name.")
 
         self._rebench_db_connector = ReBenchDB(
-            self._rebench_db['db_url'], self._rebench_db['project_name'],
-            self._options.experiment_name, self.ui)
+            self.rebench_db['db_url'], self.rebench_db['project_name'],
+            self.options.experiment_name, self.ui)
         return self._rebench_db_connector
 
     def _process_cli_options(self):
-        if self._options is None:
+        if self.options is None:
             return
 
-        self.ui.init(self._options.verbose, self._options.debug)
+        self.ui.init(self.options.verbose, self.options.debug)
 
     @property
     def do_builds(self):
-        return self._options is not None and self._options.do_builds
+        return self.options is not None and self.options.do_builds
 
     @property
     def discard_old_data(self):
-        return self._options is not None and self._options.clean
+        return self.options is not None and self.options.clean
 
     @property
     def experiment_name(self):
         return self._exp_name
-
-    @property
-    def data_file(self):
-        return self._data_file
 
     @property
     def reporting(self):
@@ -280,29 +260,13 @@ class Configurator(object):
     def run_details(self):
         return self._root_run_details
 
-    @property
-    def options(self):
-        return self._options
-
-    @property
-    def build_commands(self):
-        return self._build_commands
-
-    @property
-    def run_filter(self):
-        return self._run_filter
-
-    @property
-    def data_store(self):
-        return self._data_store
-
     def has_executor(self, executor_name):
         return executor_name in self._executors
 
     def get_executor(self, executor_name, run_details, variables):
         executor = Executor.compile(
             executor_name, self._executors[executor_name],
-            run_details, variables, self._build_commands)
+            run_details, variables, self.build_commands)
         return executor
 
     def get_suite(self, suite_name):
@@ -322,9 +286,9 @@ class Configurator(object):
     def get_runs(self):
         runs = set()
         for exp in list(self._experiments.values()):
-            runs |= exp.get_runs()
+            runs |= exp.runs
 
-        if self._options and self._options.setup_only:
+        if self.options and self.options.setup_only:
             # filter out runs we don't need to trigger a build
             runs_with_builds = set()
             build_commands = set()

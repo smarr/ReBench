@@ -61,67 +61,23 @@ class ExpRunDetails(object):
                  max_invocation_time, ignore_timeouts, parallel_interference_factor,
                  execute_exclusively, retries_after_failure,
                  invocations_override, iterations_override):
-        self._invocations = invocations
-        self._iterations = iterations
-        self._warmup = warmup
+        self.invocations = invocations
+        self.iterations = iterations
+        self.warmup = warmup
 
-        self._min_iteration_time = min_iteration_time
-        self._max_invocation_time = max_invocation_time
-        self._ignore_timeouts = ignore_timeouts
-        self._parallel_interference_factor = parallel_interference_factor
-        self._execute_exclusively = execute_exclusively
-        self._retries_after_failure = retries_after_failure
+        self.min_iteration_time = min_iteration_time
+        self.max_invocation_time = max_invocation_time
+        self.ignore_timeouts = ignore_timeouts
+        self.parallel_interference_factor = parallel_interference_factor
+        self.execute_exclusively = execute_exclusively
+        self.retries_after_failure = retries_after_failure
 
-        self._invocations_override = invocations_override
-        self._iterations_override = iterations_override
-
-    @property
-    def invocations(self):
-        return self._invocations
-
-    @property
-    def iterations(self):
-        return self._iterations
-
-    @property
-    def invocations_override(self):
-        return self._invocations_override
-
-    @property
-    def iterations_override(self):
-        return self._iterations_override
-
-    @property
-    def warmup(self):
-        return self._warmup
-
-    @property
-    def min_iteration_time(self):
-        return self._min_iteration_time
-
-    @property
-    def max_invocation_time(self):
-        return self._max_invocation_time
-
-    @property
-    def ignore_timeouts(self):
-        return self._ignore_timeouts
-
-    @property
-    def parallel_interference_factor(self):
-        return self._parallel_interference_factor
-
-    @property
-    def execute_exclusively(self):
-        return self._execute_exclusively
-
-    @property
-    def retries_after_failure(self):
-        return self._retries_after_failure
+        self.invocations_override = invocations_override
+        self.iterations_override = iterations_override
 
     def as_dict(self):
         return {
-            'warmup': self._warmup,
-            'minIterationTime': self._min_iteration_time,
-            'maxInvocationTime': self._max_invocation_time
+            'warmup': self.warmup,
+            'minIterationTime': self.min_iteration_time,
+            'maxInvocationTime': self.max_invocation_time
         }

@@ -22,29 +22,21 @@ from ..ui import UIError
 
 class DataPoint(object):
     def __init__(self, run_id):
-        self._run_id = run_id
+        self.run_id = run_id
         self._measurements = []
         self._total = None
-        self._invocation = -1
-
-    @property
-    def run_id(self):
-        return self._run_id
-
-    @property
-    def invocation(self):
-        return self._invocation
+        self.invocation = -1
 
     def number_of_measurements(self):
         return len(self._measurements)
 
     def add_measurement(self, measurement):
-        if self._invocation == -1:
-            self._invocation = measurement.invocation
-        elif self._invocation != measurement.invocation:
+        if self.invocation == -1:
+            self.invocation = measurement.invocation
+        elif self.invocation != measurement.invocation:
             raise UIError("A data point is expected to represent a single invocation " +
                           "but we got invocation " + str(measurement.invocation) +
-                          " and " + str(self._invocation) + "\n", None)
+                          " and " + str(self.invocation) + "\n", None)
 
         self._measurements.append(measurement)
         if measurement.is_total():
@@ -77,7 +69,7 @@ class DataPoint(object):
             if criterion not in criteria:
                 criteria[criterion] = len(criteria)
             data.append({'v': m.value, 'c': criteria[criterion]})
-        assert self._invocation == invocation
+        assert self.invocation == invocation
 
         return {
             'in': invocation,

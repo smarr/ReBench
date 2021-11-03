@@ -48,15 +48,25 @@ class Benchmark(object):
     def __init__(self, name, command, gauge_adapter, suite, variables, extra_args,
                  run_details, codespeed_name, data_store):
         assert run_details is None or isinstance(run_details, ExpRunDetails)
-        self._name = name
-        self._command = command
-        self._extra_args = extra_args
-        self._codespeed_name = codespeed_name
-        self._run_details = run_details
-        self._gauge_adapter = gauge_adapter
-        self._suite = suite
+        self.name = name
 
-        self._variables = variables
+        """
+        We distinguish between the benchmark name, used for reporting, and the
+        command that is passed to the benchmark executor.
+        If no command was specified in the config, the name is used instead.
+        See the compile(.) method for details.
+
+        :return: the command to be passed to the benchmark invocation
+        """
+        self.command = command
+
+        self.extra_args = extra_args
+        self.codespeed_name = codespeed_name
+        self.run_details = run_details
+        self.gauge_adapter = gauge_adapter
+        self.suite = suite
+
+        self.variables = variables
 
         # the compiled runs, these might be shared with other benchmarks/suites
         self._runs = set()
@@ -67,69 +77,29 @@ class Benchmark(object):
         self._runs.add(run)
 
     @property
-    def name(self):
-        return self._name
-
-    @property
-    def command(self):
-        """
-        We distinguish between the benchmark name, used for reporting, and the
-        command that is passed to the benchmark executor.
-        If no command was specified in the config, the name is used instead.
-        See the compile(.) method for details.
-
-        :return: the command to be passed to the benchmark invocation
-        """
-        return self._command
-
-    @property
-    def codespeed_name(self):
-        return self._codespeed_name
-
-    @property
-    def extra_args(self):
-        return self._extra_args
-
-    @property
-    def run_details(self):
-        return self._run_details
-
-    @property
-    def gauge_adapter(self):
-        return self._gauge_adapter
-
-    @property
-    def suite(self):
-        return self._suite
-
-    @property
-    def variables(self):
-        return self._variables
-
-    @property
     def execute_exclusively(self):
-        return self._run_details.execute_exclusively
+        return self.run_details.execute_exclusively
 
     def __str__(self):
         return "%s, executor:%s, suite:%s, args:'%s'" % (
-            self._name, self._suite.executor.name, self._suite.name, self._extra_args or '')
+            self.name, self.suite.executor.name, self.suite.name, self.extra_args or '')
 
     def as_simple_string(self):
-        if self._extra_args:
-            return "%s (%s, %s, %s)"  % (self._name, self._suite.executor.name,
-                                         self._suite.name, self._extra_args)
+        if self.extra_args:
+            return "%s (%s, %s, %s)"  % (self.name, self.suite.executor.name,
+                                         self.suite.name, self.extra_args)
         else:
-            return "%s (%s, %s)" % (self._name, self._suite.executor.name, self._suite.name)
+            return "%s (%s, %s)" % (self.name, self.suite.executor.name, self.suite.name)
 
     def as_str_list(self):
-        return [self._name, self._suite.executor.name, self._suite.name,
-                '' if self._extra_args is None else str(self._extra_args)]
+        return [self.name, self.suite.executor.name, self.suite.name,
+                '' if self.extra_args is None else str(self.extra_args)]
 
     def as_dict(self):
         return {
-            'name': self._name,
-            'runDetails': self._run_details.as_dict(),
-            'suite': self._suite.as_dict()
+            'name': self.name,
+            'runDetails': self.run_details.as_dict(),
+            'suite': self.suite.as_dict()
         }
 
     @classmethod
