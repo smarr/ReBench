@@ -124,7 +124,7 @@ def init_environment(denoise_result, ui):
 
 
 def determine_environment():
-    global _environment  # pylint: disable=global-statement
+    global _environment  # pylint: disable=global-statement,global-variable-not-assigned
     if _environment:
         return _environment
 
