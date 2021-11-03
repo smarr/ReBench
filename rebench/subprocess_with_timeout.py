@@ -86,8 +86,7 @@ class _SubprocessThread(Thread):
         return self._pid
 
     def process_output(self, proc):
-        if self._verbose and self._stdout == PIPE and (self._stderr == PIPE or
-                                                       self._stderr == STDOUT):
+        if self._verbose and self._stdout == PIPE and self._stderr in (PIPE, STDOUT):
             self.stdout_result = ""
             self.stderr_result = ""
 
