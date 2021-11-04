@@ -31,7 +31,7 @@ def get_current_time():
 class ReBenchDB(object):
 
     def __init__(self, server_base_url, project_name, experiment_name, ui):
-        self._ui = ui
+        self.ui = ui
 
         if not server_base_url:
             raise UIError("ReBenchDB expected server address, but got: %s" % server_base_url, None)
@@ -53,7 +53,7 @@ class ReBenchDB(object):
         success, response = self._send_to_rebench_db(benchmark_data, '/results')
 
         if success:
-            self._ui.verbose_output_info(
+            self.ui.verbose_output_info(
                 "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
                 num_m=num_measurements, resp=response)
 
@@ -63,12 +63,12 @@ class ReBenchDB(object):
         success, response = self._send_to_rebench_db({'endTime': end_time}, '/completion')
 
         if success:
-            self._ui.verbose_output_info(
+            self.ui.verbose_output_info(
                 "ReBenchDB was notified of completion of {project} {exp} at {time}\n" +
                 "{ind} Its response was: {resp}\n",
                 project=self._project_name, exp=self._experiment_name, time=end_time, resp=response)
         else:
-            self._ui.error("Reporting completion to ReBenchDB failed.\n" +
+            self.ui.error("Reporting completion to ReBenchDB failed.\n" +
                            "{ind}Error: {response}", response=response)
 
         return success, response
@@ -89,7 +89,7 @@ class ReBenchDB(object):
 
         payload = json.dumps(payload_data, separators=(',', ':'), ensure_ascii=True)
 
-        # self._ui.output("Saving JSON Payload of size: %d\n" % len(payload))
+        # self.ui.output("Saving JSON Payload of size: %d\n" % len(payload))
         with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding
             text_file.write(payload)
 
@@ -104,14 +104,14 @@ class ReBenchDB(object):
                 return True, response
             except TypeError as te:
                 # can't handle this, just abort
-                self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                                + "{ind}{ind}" + str(te) + "\n")
                 return False, None
             except (IOError, HTTPException) as error:
                 if attempts > 0:
                     # let's retry, the benchmark server might just time out, as usual
                     # but let it breath a little
-                    self._ui.verbose_output_info(
+                    self.ui.verbose_output_info(
                         "ReBenchDB: had issue reporting data. Trying again after "
                         + str(wait_sec) + "seconds.\n"
                         + "{ind}{ind}" + str(error) + "\n")
@@ -119,6 +119,6 @@ class ReBenchDB(object):
                     sleep(wait_sec)
                     wait_sec *= 2
                 else:
-                    self._ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                    self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                                    + "{ind}{ind}" + str(error) + "\n")
                     return False, None

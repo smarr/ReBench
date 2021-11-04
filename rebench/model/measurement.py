@@ -23,61 +23,29 @@ from .run_id import RunId
 class Measurement(object):
     def __init__(self, invocation, iteration, value, unit,
                  run_id, criterion='total', line_number=None, filename=None):
-        self._invocation = invocation
-        self._iteration = iteration
-        self._value = value
-        self._unit = unit
-        self._run_id = run_id
-        self._criterion = criterion
+        self.invocation = invocation
+        self.iteration = iteration
+        self.value = value
+        self.unit = unit
+        self.run_id = run_id
+        self.criterion = criterion
         assert unit is not None
-        self._line_number = line_number
-        self._filename = filename
+        self.line_number = line_number
+        self.filename = filename
 
     def is_total(self):
-        return self._criterion == 'total'
-
-    @property
-    def invocation(self):
-        return self._invocation
-
-    @property
-    def iteration(self):
-        return self._iteration
-
-    @property
-    def criterion(self):
-        return self._criterion
-
-    @property
-    def value(self):
-        return self._value
-
-    @property
-    def unit(self):
-        return self._unit
-
-    @property
-    def run_id(self):
-        return self._run_id
-
-    @property
-    def filename(self):
-        return self._filename
-
-    @property
-    def line_number(self):
-        return self._line_number
+        return self.criterion == 'total'
 
     def as_str_list(self):
-        if isinstance(self._value, float):
+        if isinstance(self.value, float):
             val = "%f" % self.value
         else:
             val = "%s" % self.value
 
-        return [str(self._invocation), str(self._iteration),
+        return [str(self.invocation), str(self.iteration),
                 val,
-                self._unit,
-                self._criterion] + self._run_id.as_str_list()
+                self.unit,
+                self.criterion] + self.run_id.as_str_list()
 
     @classmethod
     def from_str_list(cls, data_store, str_list, line_number=None, filename=None):
@@ -93,9 +61,9 @@ class Measurement(object):
 
     def as_dict(self):
         return {
-            'c': self._criterion,
-            'in': self._invocation,
-            'it': self._iteration,
-            'u': self._unit,
-            'v': self._value
+            'c': self.criterion,
+            'in': self.invocation,
+            'it': self.iteration,
+            'u': self.unit,
+            'v': self.value
         }

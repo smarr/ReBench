@@ -37,12 +37,12 @@ class Issue81UnicodeSuite(ReBenchTestCase):
             os.remove(self._path + '/build.log')
 
     def test_building(self):
-        cnf = Configurator(load_config(self._path + '/issue_81.conf'), DataStore(self._ui),
-                           self._ui, data_file=self._tmp_file, exp_name='Test')
+        cnf = Configurator(load_config(self._path + '/issue_81.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='Test')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

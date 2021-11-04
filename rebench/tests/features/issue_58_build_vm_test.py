@@ -46,12 +46,12 @@ class Issue58BuildExecutor(ReBenchTestCase):
             return log_file.read()
 
     def test_build_executor_simple_cmd(self):
-        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
-                           self._ui, data_file=self._tmp_file, exp_name='A')
+        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='A')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -62,12 +62,12 @@ class Issue58BuildExecutor(ReBenchTestCase):
             os.remove(self._path + '/vm_58a.sh')
 
     def test_build_executor_cmd_list(self):
-        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
-                           self._ui, data_file=self._tmp_file, exp_name='B')
+        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='B')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -86,13 +86,13 @@ class Issue58BuildExecutor(ReBenchTestCase):
             "E:BashA|STD:standard\nE:BashA|ERR:error\n", log)
 
     def test_broken_build_prevents_experiments(self):
-        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
-                           self._ui, data_file=self._tmp_file,
+        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file,
                            exp_name='C')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
         try:
@@ -108,13 +108,13 @@ class Issue58BuildExecutor(ReBenchTestCase):
             "E:BashC|STD:standard\nE:BashC|ERR:error\n", log)
 
     def test_build_is_run_only_once_for_same_command(self):
-        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self._ui),
-                           self._ui, data_file=self._tmp_file,
+        cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file,
                            exp_name='AandAA')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, True, self._ui, build_log=cnf.build_log)
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
         os.remove(self._path + '/vm_58a.sh')

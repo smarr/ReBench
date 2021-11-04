@@ -54,5 +54,5 @@ class MockHTTPServer(object):
         self._server.shutdown()
 
     def get_number_of_put_requests(self):
-        global _put_requests  # pylint: disable=global-statement
+        global _put_requests  # pylint: disable=global-statement,global-variable-not-assigned
         return _put_requests

@@ -31,9 +31,9 @@ class Issue117Test(ReBenchTestCase):
 
     def _test(self, exp_name, num_runs, exp_input_sizes):
         # Executes first time
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_117.conf'),
-                           ds, self._ui, exp_name=exp_name, data_file=self._tmp_file)
+                           ds, self.ui, exp_name=exp_name, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         # Has not executed yet, check that there is simply

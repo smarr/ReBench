@@ -36,14 +36,14 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
-        cnf = Configurator(load_config(self._path + '/issue_16.conf'), DataStore(self._ui),
-                           self._ui, exp_name=exp_name,
+        cnf = Configurator(load_config(self._path + '/issue_16.conf'), DataStore(self.ui),
+                           self.ui, exp_name=exp_name,
                            data_file=self._tmp_file)
         runs = cnf.get_runs()
         persistence = TestPersistence()
         for run in runs:
             run.add_persistence(persistence)
-        ex = Executor(cnf.get_runs(), False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
         run = next(iter(cnf.get_runs()))

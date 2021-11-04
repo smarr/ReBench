@@ -28,53 +28,53 @@ from ..ui import UIError
 class RunId(object):
 
     def __init__(self, benchmark, cores, input_size, var_value, machine):
-        self._benchmark = benchmark
-        self._cores = cores
-        self._input_size = input_size
-        self._var_value = var_value
-        self._machine = machine
+        self.benchmark = benchmark
+        self.cores = cores
+        self.input_size = input_size
+        self.var_value = var_value
+        self.machine = machine
 
         self._reporters = set()
         self._persistence = set()
-        self._statistics = StatisticProperties()
-        self._total_unit = None
+        self.statistics = StatisticProperties()
+        self.total_unit = None
 
         self._termination_check = None
         self._cmdline = None
-        self._failed = True
+        self.is_failed = True
 
         self._max_invocation = 0
 
     @property
     def warmup_iterations(self):
-        return self._benchmark.run_details.warmup
+        return self.benchmark.run_details.warmup
 
     @property
     def min_iteration_time(self):
-        return self._benchmark.run_details.min_iteration_time
+        return self.benchmark.run_details.min_iteration_time
 
     @property
     def max_invocation_time(self):
-        return self._benchmark.run_details.max_invocation_time
+        return self.benchmark.run_details.max_invocation_time
 
     @property
     def ignore_timeouts(self):
-        return self._benchmark.run_details.ignore_timeouts
+        return self.benchmark.run_details.ignore_timeouts
 
     @property
     def retries_after_failure(self):
-        return self._benchmark.run_details.retries_after_failure
+        return self.benchmark.run_details.retries_after_failure
 
     @property
     def iterations(self):
-        run_details = self._benchmark.run_details
+        run_details = self.benchmark.run_details
         if run_details.iterations_override is not None:
             return run_details.iterations_override
         return run_details.iterations
 
     @property
     def invocations(self):
-        run_details = self._benchmark.run_details
+        run_details = self.benchmark.run_details
         if run_details.invocations_override is not None:
             return run_details.invocations_override
         return run_details.invocations
@@ -85,62 +85,42 @@ class RunId(object):
 
     @property
     def execute_exclusively(self):
-        return self._benchmark.run_details.execute_exclusively
-
-    @property
-    def benchmark(self):
-        return self._benchmark
-
-    @property
-    def cores(self):
-        return self._cores
-
-    @property
-    def input_size(self):
-        return self._input_size
+        return self.benchmark.run_details.execute_exclusively
 
     @property
     def cores_as_str(self):
-        return '' if self._cores is None else str(self._cores)
+        return '' if self.cores is None else str(self.cores)
 
     @property
     def input_size_as_str(self):
-        return '' if self._input_size is None else str(self._input_size)
+        return '' if self.input_size is None else str(self.input_size)
 
     @property
     def var_value_as_str(self):
-        return '' if self._var_value is None else str(self._var_value)
-
-    @property
-    def var_value(self):
-        return self._var_value
-
-    @property
-    def machine(self):
-        return self._machine
+        return '' if self.var_value is None else str(self.var_value)
 
     @property
     def machine_as_str(self):
-        return '' if self._machine is None else str(self._machine)
+        return '' if self.machine is None else str(self.machine)
 
     @property
     def location(self):
-        if not self._benchmark.suite.location:
+        if not self.benchmark.suite.location:
             return None
-        return self._expand_vars(self._benchmark.suite.location)
+        return self._expand_vars(self.benchmark.suite.location)
 
     def build_commands(self):
         commands = set()
-        builds = self._benchmark.suite.executor.build
+        builds = self.benchmark.suite.executor.build
         if builds:
             commands.update(builds)
-        builds = self._benchmark.suite.build
+        builds = self.benchmark.suite.build
         if builds:
             commands.update(builds)
         return commands
 
     def requires_warmup(self):
-        return self._benchmark.run_details.warmup > 0
+        return self.benchmark.run_details.warmup > 0
 
     def fail_immediately(self):
         self._termination_check.fail_immediately()
@@ -149,11 +129,8 @@ class RunId(object):
         self._termination_check.indicate_failed_execution()
 
     def indicate_successful_execution(self):
-        self._failed = False
+        self.is_failed = False
         self._termination_check.indicate_successful_execution()
-
-    def is_failed(self):
-        return self._failed
 
     def add_reporter(self, reporter):
         self._reporters.add(reporter)
@@ -167,7 +144,7 @@ class RunId(object):
 
     def report_run_completed(self, cmdline):
         for reporter in self._reporters:
-            reporter.run_completed(self, self._statistics, cmdline)
+            reporter.run_completed(self, self.statistics, cmdline)
         for persistence in self._persistence:
             persistence.run_completed()
 
@@ -195,10 +172,10 @@ class RunId(object):
 
     def _new_data_point(self, data_point, warmup):
         self._max_invocation = max(self._max_invocation, data_point.invocation)
-        if self._total_unit is None:
-            self._total_unit = data_point.get_total_unit()
+        if self.total_unit is None:
+            self.total_unit = data_point.get_total_unit()
         if not warmup:
-            self._statistics.add_sample(data_point.get_total_value())
+            self.statistics.add_sample(data_point.get_total_value())
 
     def loaded_data_point(self, data_point, warmup):
         for persistence in self._persistence:
@@ -212,16 +189,10 @@ class RunId(object):
             persistence.persist_data_point(data_point)
 
     def get_number_of_data_points(self):
-        return self._statistics.num_samples
+        return self.statistics.num_samples
 
     def get_mean_of_totals(self):
-        return self._statistics.mean
-
-    def get_statistics(self):
-        return self._statistics
-
-    def get_total_unit(self):
-        return self._total_unit
+        return self.statistics.mean
 
     def get_termination_check(self, ui):
         if self._termination_check is None:
@@ -243,20 +214,20 @@ class RunId(object):
 
     def as_simple_string(self):
         return "%s %s %s %s %s" % (
-            self._benchmark.as_simple_string(),
-            self._cores, self._input_size, self._var_value, self._machine)
+            self.benchmark.as_simple_string(),
+            self.cores, self.input_size, self.var_value, self.machine)
 
     def _expand_vars(self, string):
         try:
-            return string % {'benchmark': self._benchmark.command,
+            return string % {'benchmark': self.benchmark.command,
                              'cores': self.cores_as_str,
-                             'executor': self._benchmark.suite.executor.name,
+                             'executor': self.benchmark.suite.executor.name,
                              'input': self.input_size_as_str,
                              'iterations': self.iterations,
-                             'suite': self._benchmark.suite.name,
+                             'suite': self.benchmark.suite.name,
                              'variable': self.var_value_as_str,
                              'machine': self.machine_as_str,
-                             'warmup': self._benchmark.run_details.warmup}
+                             'warmup': self.benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
             return None
@@ -268,7 +239,7 @@ class RunId(object):
                    + "{ind}The command line configured is: %s\n"
                    + "{ind}%s is not supported as key.\n"
                    + "{ind}Only benchmark, input, variable, cores, and warmup are supported.\n") % (
-                       self._benchmark.name, string, err)
+                       self.benchmark.name, string, err)
             raise UIError(msg, err)
 
     def cmdline(self):
@@ -278,18 +249,18 @@ class RunId(object):
 
     def _construct_cmdline(self):
         cmdline = ""
-        if self._benchmark.suite.executor.path:
-            cmdline = self._benchmark.suite.executor.path + "/"
+        if self.benchmark.suite.executor.path:
+            cmdline = self.benchmark.suite.executor.path + "/"
 
-        cmdline += self._benchmark.suite.executor.executable
+        cmdline += self.benchmark.suite.executor.executable
 
-        if self._benchmark.suite.executor.args:
-            cmdline += " " + str(self._benchmark.suite.executor.args)
+        if self.benchmark.suite.executor.args:
+            cmdline += " " + str(self.benchmark.suite.executor.args)
 
-        cmdline += " " + self._benchmark.suite.command
+        cmdline += " " + self.benchmark.suite.command
 
-        if self._benchmark.extra_args:
-            cmdline += " " + str(self._benchmark.extra_args)
+        if self.benchmark.extra_args:
+            cmdline += " " + str(self.benchmark.extra_args)
 
         cmdline = self._expand_vars(cmdline)
 
@@ -307,7 +278,7 @@ class RunId(object):
         msg = ("The configuration of the benchmark %s contains an improper Python format string.\n"
                + "{ind}The command line configured is: %s\n"
                + "{ind}Error: %s\n") % (
-                   self._benchmark.name, cmdline, err)
+                   self.benchmark.name, cmdline, err)
 
         # figure out which format misses a conversion type
         without_conversion_type = re.findall(
@@ -320,7 +291,7 @@ class RunId(object):
         raise UIError(msg, err)
 
     def as_str_list(self):
-        result = self._benchmark.as_str_list()
+        result = self.benchmark.as_str_list()
 
         result.append(self.cores_as_str)
         result.append(self.input_size_as_str)
@@ -331,12 +302,12 @@ class RunId(object):
 
     def as_dict(self):
         return {
-            'benchmark': self._benchmark.as_dict(),
-            'cores': self._cores,
-            'inputSize': self._input_size,
-            'varValue': self._var_value,
-            'machine': self._machine,
-            'extraArgs': str(self._benchmark.extra_args),
+            'benchmark': self.benchmark.as_dict(),
+            'cores': self.cores,
+            'inputSize': self.input_size,
+            'varValue': self.var_value,
+            'machine': self.machine,
+            'extraArgs': str(self.benchmark.extra_args),
             'cmdline': self.cmdline(),
             'location': self.location
         }
@@ -349,10 +320,10 @@ class RunId(object):
 
     def __str__(self):
         return "RunId(%s, %s, %s, %s, %s, %s, %d)" % (
-            self._benchmark.name,
-            self._cores,
-            self._benchmark.extra_args,
-            self._input_size or '',
-            self._var_value  or '',
-            self._machine or '',
-            self._benchmark.run_details.warmup or 0)
+            self.benchmark.name,
+            self.cores,
+            self.benchmark.extra_args,
+            self.input_size or '',
+            self.var_value  or '',
+            self.machine or '',
+            self.benchmark.run_details.warmup or 0)

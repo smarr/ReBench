@@ -34,23 +34,7 @@ class ExpVariables(object):
         return ExpVariables([''], [1], [''], [None])
 
     def __init__(self, input_sizes, cores, variable_values, machines):
-        self._input_sizes = input_sizes
-        self._cores = cores
-        self._variable_values = variable_values
-        self._machines = machines
-
-    @property
-    def input_sizes(self):
-        return self._input_sizes
-
-    @property
-    def cores(self):
-        return self._cores
-
-    @property
-    def variable_values(self):
-        return self._variable_values
-
-    @property
-    def machines(self):
-        return self._machines
+        self.input_sizes = input_sizes
+        self.cores = cores
+        self.variable_values = variable_values
+        self.machines = machines

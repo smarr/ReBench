@@ -39,21 +39,21 @@ class ExecutorTest(ReBenchTestCase):
     def test_setup_and_run_benchmark(self):
         options = ReBench().shell_options().parse_args(['dummy'])
 
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self._ui),
-                           self._ui, options,
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
+                           self.ui, options,
                            None, 'Test', data_file=self._tmp_file)
 
-        ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
+        ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
         ex.execute()
 
     def test_broken_command_format_with_ValueError(self):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(self._ui), self._ui, options,
+                               DataStore(self.ui), self.ui, options,
                                None, 'TestBrokenCommandFormat',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
+            ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
@@ -61,10 +61,10 @@ class ExecutorTest(ReBenchTestCase):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
             cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(self._ui), self._ui, options,
+                               DataStore(self.ui), self.ui, options,
                                None, 'TestBrokenCommandFormat2',
                                data_file=self._tmp_file)
-            ex = Executor(cnf.get_runs(), cnf.do_builds, self._ui)
+            ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
 
@@ -77,7 +77,7 @@ class ExecutorTest(ReBenchTestCase):
         for run in runs:
             run.add_persistence(persistence)
 
-        ex = Executor(runs, cnf.do_builds, self._ui)
+        ex = Executor(runs, cnf.do_builds, self.ui)
         ex.execute()
         for run in runs:
             data_points = persistence.get_data_points(run)
@@ -92,13 +92,13 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_basic_execution(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(self._ui), self._ui, None,
+                           DataStore(self.ui), self.ui, None,
                            data_file=self._tmp_file)
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(self._ui), self._ui, None, None,
+                           DataStore(self.ui), self.ui, None, None,
                            'all', data_file=self._tmp_file)
         self._basic_execution(cnf)
 
@@ -108,12 +108,12 @@ class ExecutorTest(ReBenchTestCase):
         cmd_config = option_parser.parse_args(['-R', '-q', 'persistency.conf'])
         self.assertTrue(cmd_config.quick)
 
-        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
-                           self._ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
+                           self.ui, cmd_config, data_file=self._tmp_file)
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, self._ui)
+        ex = Executor(runs, False, self.ui)
         ex.execute()
         run = list(runs)[0]
 
@@ -126,12 +126,12 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(2, cmd_config.invocations)
         self.assertEqual(2, cmd_config.iterations)
 
-        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
-                           self._ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
+                           self.ui, cmd_config, data_file=self._tmp_file)
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 
-        ex = Executor(runs, False, self._ui)
+        ex = Executor(runs, False, self.ui)
         ex.execute()
         run = list(runs)[0]
 

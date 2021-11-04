@@ -38,7 +38,7 @@ class Issue110Test(ReBenchTestCase):
         self._set_path(__file__)
         self._cleanup_file('build.log')
         self._cleanup_file('rebench.data')
-        self._data_store = DataStore(self._ui)
+        self._data_store = DataStore(self.ui)
         self._cli_options = ReBench().shell_options().parse_args(['-d', '--setup-only', 'dummy'])
 
     def tearDown(self):
@@ -68,12 +68,12 @@ class Issue110Test(ReBenchTestCase):
                              "incorrect num of invocations")
 
     def _execute(self, cnf):
-        ex = Executor(cnf.get_runs(), True, self._ui, build_log=cnf.build_log)
+        ex = Executor(cnf.get_runs(), True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
     def test_complete(self):
         cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self._ui, self._cli_options,
+                           self._data_store, self.ui, self._cli_options,
                            exp_name='Complete', data_file=self._tmp_file)
         self._data_store.load_data(None, False)
 
@@ -106,7 +106,7 @@ class Issue110Test(ReBenchTestCase):
 
     def test_a1(self):
         cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self._ui, self._cli_options,
+                           self._data_store, self.ui, self._cli_options,
                            exp_name='A1', data_file=self._tmp_file)
         self._data_store.load_data(None, False)
 
@@ -121,7 +121,7 @@ class Issue110Test(ReBenchTestCase):
 
     def test_b2(self):
         cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self._ui, self._cli_options,
+                           self._data_store, self.ui, self._cli_options,
                            exp_name='B2', data_file=self._tmp_file)
         self._data_store.load_data(None, False)
 
@@ -136,7 +136,7 @@ class Issue110Test(ReBenchTestCase):
 
     def test_suite_with_build(self):
         cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self._ui, self._cli_options,
+                           self._data_store, self.ui, self._cli_options,
                            exp_name='SuiteWithBuild', data_file=self._tmp_file)
         self._data_store.load_data(None, False)
 

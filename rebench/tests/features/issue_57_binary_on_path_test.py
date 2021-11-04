@@ -30,13 +30,13 @@ class Issue57ExecutableOnPath(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_sleep_gives_results(self):
-        store = DataStore(self._ui)
+        store = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/issue_57.conf'), store,
-                           self._ui, data_file=self._tmp_file)
+                           self.ui, data_file=self._tmp_file)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
-        ex = Executor(runs, False, self._ui, False)
+        ex = Executor(runs, False, self.ui, False)
         ex.execute()
 
         self.assertEqual("Bench1", runs[0].benchmark.name)

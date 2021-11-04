@@ -18,12 +18,12 @@ class ReporterTest(ReBenchTestCase):
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args([
             '--commit-id=id', '--environment=test', '--project=test', 'persistency.conf'])
-        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self._ui),
-                           self._ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
+                           self.ui, cmd_config, data_file=self._tmp_file)
 
         self._runs = cnf.get_runs()  # pylint: disable=attribute-defined-outside-init
 
-        ex = Executor(self._runs, False, self._ui)
+        ex = Executor(self._runs, False, self.ui)
         ex.execute()
         reporter = cnf.reporting.codespeed_reporter
         reporter.report_job_completed(self._runs)

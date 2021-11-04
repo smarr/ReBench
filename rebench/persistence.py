@@ -42,7 +42,7 @@ class DataStore(object):
         self._files = {}
         self._run_ids = {}
         self._bench_cfgs = {}
-        self._ui = ui
+        self.ui = ui
 
     def load_data(self, runs, discard_run_data):
         for persistence in list(self._files.values()):
@@ -62,11 +62,11 @@ class DataStore(object):
             if configurator.options and configurator.options.branch:
                 source['branchOrTag'] = configurator.options.branch
 
-            p = _FilePersistence(filename, self, configurator, self._ui)
-            self._ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
+            p = _FilePersistence(filename, self, configurator, self.ui)
+            self.ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
 
             if configurator.use_rebench_db:
-                db = _ReBenchDB(configurator, self, self._ui)
+                db = _ReBenchDB(configurator, self, self.ui)
                 p = _CompositePersistence(p, db)
 
             self._files[filename] = p
@@ -133,7 +133,7 @@ class _ConcretePersistence(_AbstractPersistence):
     def __init__(self, data_store, ui):
         self._data_store = data_store
         self._start_time = None
-        self._ui = ui
+        self.ui = ui
 
 
 class _CompositePersistence(_AbstractPersistence):
@@ -236,7 +236,7 @@ class _FilePersistence(_ConcretePersistence):
                 with open(self._data_filename, 'r') as data_file:
                     self._process_lines(data_file, current_runs, None)
         except IOError:
-            self._ui.debug_error_info("No data loaded, since %s does not exist.\n"
+            self.ui.debug_error_info("No data loaded, since %s does not exist.\n"
                                       % self._data_filename)
         return self._start_time
 
@@ -285,11 +285,11 @@ class _FilePersistence(_ConcretePersistence):
             except ValueError as err:
                 msg = str(err)
                 if not errors:
-                    self._ui.debug_error_info("Failed loading data from data file: "
+                    self.ui.debug_error_info("Failed loading data from data file: "
                                               + self._data_filename + "\n")
                 if msg not in errors:
                     # Configuration is not available, skip data point
-                    self._ui.debug_error_info("{ind}" + msg + "\n")
+                    self.ui.debug_error_info("{ind}" + msg + "\n")
                     errors.add(msg)
 
     def _open_file_and_append_execution_comment(self):
@@ -375,7 +375,7 @@ class _ReBenchDB(_ConcretePersistence):
     def send_data(self):
         current_time = time()
         time_past = current_time - self._last_send
-        self._ui.debug_output_info(
+        self.ui.debug_output_info(
             "ReBenchDB: data last send {seconds}s ago\n",
             seconds=round(time_past, 2))
         if time_past >= self._cache_for_seconds:
@@ -388,7 +388,7 @@ class _ReBenchDB(_ConcretePersistence):
                 self._cache = {}
 
     def _send_data(self, cache):
-        self._ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
+        self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
         num_measurements = 0
         all_data = []
         criteria = {}
@@ -407,7 +407,7 @@ class _ReBenchDB(_ConcretePersistence):
         for c, idx in criteria.items():
             criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
 
-        self._ui.debug_output_info(
+        self.ui.debug_output_info(
             "ReBenchDB: Send {num_m} measures. startTime: {st}\n",
             num_m=num_measurements, st=self._start_time)
         return self._rebench_db.send_results({

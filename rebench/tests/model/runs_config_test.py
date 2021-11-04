@@ -29,14 +29,14 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def setUp(self):
         super(RunsConfigTestCase, self).setUp()
-        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self._ui),
-                                 self._ui, None,
+        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self.ui),
+                                 self.ui, None,
                                  data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         self._run = list(runs)[0]
 
     def test_termination_check_basic(self):
-        check = TerminationCheck(self._run, self._ui)
+        check = TerminationCheck(self._run, self.ui)
         self.assertFalse(check.should_terminate(0, None))
 
         # start 9 times, but expect to be done only after 10
@@ -52,13 +52,13 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertTrue(check.should_terminate(0, None))
 
     def test_terminate_not_determine_by_number_of_data_points(self):
-        check = TerminationCheck(self._run, self._ui)
+        check = TerminationCheck(self._run, self.ui)
         self.assertFalse(check.should_terminate(0, None))
         self.assertFalse(check.should_terminate(10, None))
         self.assertFalse(check.should_terminate(10000, None))
 
     def test_consecutive_fails(self):
-        check = TerminationCheck(self._run, self._ui)
+        check = TerminationCheck(self._run, self.ui)
         self.assertFalse(check.should_terminate(0, None))
 
         for _ in range(0, 2):
@@ -69,7 +69,7 @@ class RunsConfigTestCase(ReBenchTestCase):
         self.assertTrue(check.should_terminate(0, None))
 
     def test_too_many_fails(self):
-        check = TerminationCheck(self._run, self._ui)
+        check = TerminationCheck(self._run, self.ui)
         self.assertFalse(check.should_terminate(0, None))
 
         for _ in range(0, 6):

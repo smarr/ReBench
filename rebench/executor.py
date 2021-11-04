@@ -48,7 +48,7 @@ class RunScheduler(object):
 
     def __init__(self, executor, ui):
         self._executor = executor
-        self._ui = ui
+        self.ui = ui
         self._runs_completed = 0
         self._start_time = time()
         self._total_num_runs = 0
@@ -77,7 +77,7 @@ class RunScheduler(object):
         return floor(hour), floor(minute), floor(sec)
 
     def _indicate_progress(self, completed_task, run):
-        if not self._ui.spinner_initialized():
+        if not self.ui.spinner_initialized():
             return
 
         if completed_task:
@@ -90,21 +90,21 @@ class RunScheduler(object):
         run_details = run.as_simple_string().replace(" None", "")
         label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
                 % (run_details, art_mean, hour, minute, sec)
-        self._ui.step_spinner(self._runs_completed, label)
+        self.ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
         run_id_names = run_id.as_str_list()
-        self._ui.step_spinner(
+        self.ui.step_spinner(
             self._runs_completed, "Run build for %s %s" % (run_id_names[1], run_id_names[2]))
 
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
-        runs = self._filter_out_completed_runs(self._executor.runs, self._ui)
+        runs = self._filter_out_completed_runs(self._executor.runs, self.ui)
         completed_runs = self._total_num_runs - len(runs)
         self._runs_completed = completed_runs
 
-        with self._ui.init_spinner(self._total_num_runs):
-            self._ui.step_spinner(completed_runs)
+        with self.ui.init_spinner(self._total_num_runs):
+            self.ui.step_spinner(completed_runs)
             self._process_remaining_runs(runs)
 
 
@@ -210,7 +210,7 @@ class ParallelScheduler(RunScheduler):
     def _process_sequential_runs(self, runs):
         seq_runs, par_runs = self._split_runs(runs)
 
-        scheduler = self._seq_scheduler_class(self._executor, self._ui)
+        scheduler = self._seq_scheduler_class(self._executor, self.ui)
         scheduler._process_remaining_runs(seq_runs)
 
         return par_runs
@@ -244,7 +244,7 @@ class ParallelScheduler(RunScheduler):
         return per_thread
 
     def get_local_scheduler(self):
-        return self._seq_scheduler_class(self._executor, self._ui)
+        return self._seq_scheduler_class(self._executor, self.ui)
 
     def acquire_work(self):
         with self._lock:
@@ -270,11 +270,11 @@ class Executor(object):
         self._use_shielding = use_shielding
 
         self._do_builds = do_builds
-        self._ui = ui
+        self.ui = ui
         self._include_faulty = include_faulty
         self._debug = debug
         self._scheduler = self._create_scheduler(scheduler)
-        self._build_log = build_log
+        self.build_log = build_log
         self._artifact_review = artifact_review
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
@@ -289,9 +289,9 @@ class Executor(object):
                 if not run.execute_exclusively:
                     i += 1
             if i > 1:
-                return ParallelScheduler(self, scheduler, self._ui)
+                return ParallelScheduler(self, scheduler, self.ui)
 
-        return scheduler(self, self._ui)
+        return scheduler(self, self.ui)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
@@ -326,7 +326,7 @@ class Executor(object):
             if build.is_built:
                 continue
 
-            if build.is_failed_build:
+            if build.build_failed:
                 run_id.fail_immediately()
                 raise FailedBuilding(name, build)
             self._execute_build_cmd(build, name, run_id)
@@ -339,10 +339,10 @@ class Executor(object):
         script = build_command.command
 
         self._scheduler.indicate_build(run_id)
-        self._ui.debug_output_info("Start build\n", None, script, path)
+        self.ui.debug_output_info("Start build\n", None, script, path)
 
         def _keep_alive(seconds):
-            self._ui.warning(
+            self.ui.warning(
                 "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, script, path)
 
         try:
@@ -362,10 +362,10 @@ class Executor(object):
                        + "{ind}{ind}File name: %s\n") % (name, err.strerror, err.filename)
             else:
                 msg = str(err)
-            self._ui.error(msg, run_id, script, path)
+            self.ui.error(msg, run_id, script, path)
             return
 
-        if self._build_log:
+        if self.build_log:
             self.process_output(name, stdout_result, stderr_result)
 
         if return_code != 0:
@@ -373,21 +373,21 @@ class Executor(object):
             run_id.fail_immediately()
             run_id.report_run_failed(
                 script, return_code, "Build of " + name + " failed.")
-            self._ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
+            self.ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
                 lines = escape_braces(stdout_result).split('\n')
-                self._ui.error("{ind}stdout:\n\n{ind}{ind}"
+                self.ui.error("{ind}stdout:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             if stderr_result and stderr_result.strip():
                 lines = escape_braces(stderr_result).split('\n')
-                self._ui.error("{ind}stderr:\n\n{ind}{ind}"
+                self.ui.error("{ind}stderr:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
             raise FailedBuilding(name, build_command)
 
         build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
-        with open_with_enc(self._build_log, 'a', encoding='utf-8') as log_file:
+        with open_with_enc(self.build_log, 'a', encoding='utf-8') as log_file:
             if stdout_result:
                 log_file.write(name + '|STD:')
                 log_file.write(stdout_result)
@@ -396,7 +396,7 @@ class Executor(object):
                 log_file.write(stderr_result)
 
     def execute_run(self, run_id):
-        termination_check = run_id.get_termination_check(self._ui)
+        termination_check = run_id.get_termination_check(self.ui)
 
         run_id.report_start_run()
 
@@ -417,10 +417,10 @@ class Executor(object):
         mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
             run_id.report_run_completed(cmdline)
-            if (not run_id.is_failed() and run_id.min_iteration_time
+            if (not run_id.is_failed and run_id.min_iteration_time
                     and mean_of_totals < run_id.min_iteration_time
                     and not self._artifact_review):
-                self._ui.warning(
+                self.ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
                     % (mean_of_totals, run_id.min_iteration_time), run_id, cmdline)
@@ -450,10 +450,10 @@ class Executor(object):
         # execute the external program here
 
         try:
-            self._ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
+            self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
             def _keep_alive(seconds):
-                self._ui.warning(
+                self.ui.warning(
                     "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
@@ -469,7 +469,7 @@ class Executor(object):
                        + "{ind}{ind}File name: %s\n") % (err.strerror, err.filename)
             else:
                 msg = str(err)
-            self._ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline)
             return True
 
         if return_code == 127:
@@ -478,7 +478,7 @@ class Executor(object):
                    + "{ind}Return code: %d\n"
                    + "{ind}{ind}%s.\n") % (
                        run_id.benchmark.suite.executor.name, return_code, output.strip())
-            self._ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline)
             return True
         elif return_code != 0 and not self._include_faulty and not (
                 return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
@@ -497,11 +497,11 @@ class Executor(object):
             else:
                 msg = "{ind}Run failed. Return code: %d\n" % return_code
 
-            self._ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline)
 
             if output and output.strip():
                 lines = escape_braces(output).split('\n')
-                self._ui.error("{ind}Output:\n\n{ind}{ind}"
+                self.ui.error("{ind}Output:\n\n{ind}{ind}"
                                + "\n{ind}{ind}".join(lines) + "\n")
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
@@ -535,7 +535,7 @@ class Executor(object):
                 i += 1
 
             run_id.indicate_successful_execution()
-            self._ui.verbose_output_info(msg, run_id, cmdline)
+            self.ui.verbose_output_info(msg, run_id, cmdline)
         except ExecutionDeliveredNoResults:
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)
@@ -552,7 +552,7 @@ class Executor(object):
             successful = True
             for run in self._runs:
                 run.report_job_completed(self._runs)
-                if run.is_failed():
+                if run.is_failed:
                     successful = False
             return successful
         finally:

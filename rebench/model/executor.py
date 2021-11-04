@@ -50,55 +50,23 @@ class Executor(object):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
         """
-        self._name = name
+        self.name = name
 
-        self._path = path
-        self._executable = executable
-        self._args = args
+        self.path = path
+        self.executable = executable
+        self.args = args
 
-        self._build = build
-        self._description = description
+        self.build = build
+        self.description = description
 
-        self._run_details = run_details
-        self._variables = variables
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def executable(self):
-        return self._executable
-
-    @property
-    def args(self):
-        return self._args
-
-    @property
-    def build(self):
-        return self._build
-
-    @property
-    def description(self):
-        return self._description
-
-    @property
-    def run_details(self):
-        return self._run_details
-
-    @property
-    def variables(self):
-        return self._variables
+        self.run_details = run_details
+        self.variables = variables
 
     def as_dict(self):
         result = {
-            'name': self._name,
-            'desc': self._description
+            'name': self.name,
+            'desc': self.description
         }
-        if self._build:
-            result['build'] = [b.as_dict() for b in self._build]
+        if self.build:
+            result['build'] = [b.as_dict() for b in self.build]
         return result

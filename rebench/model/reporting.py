@@ -26,7 +26,7 @@ class Reporting(object):
     @classmethod
     def compile(cls, reporting, root_reporting, options, ui):
         if "codespeed" in reporting and options and options.use_data_reporting:
-            codespeed = CodespeedReporting(reporting, options, ui).get_reporter()
+            codespeed = CodespeedReporting(reporting, options, ui).reporter
         else:
             codespeed = root_reporting.codespeed_reporter
         # We ignore the entry for ReBenchDB here,
@@ -41,23 +41,15 @@ class Reporting(object):
         return Reporting(None, cli_reporter)
 
     def __init__(self, codespeed_reporter, cli_reporter):
-        self._codespeed_reporter = codespeed_reporter
-        self._cli_reporter = cli_reporter
-
-    @property
-    def codespeed_reporter(self):
-        return self._codespeed_reporter
-
-    @property
-    def cli_reporter(self):
-        return self._cli_reporter
+        self.codespeed_reporter = codespeed_reporter
+        self.cli_reporter = cli_reporter
 
     def get_reporters(self):
         result = []
-        if self._cli_reporter:
-            result.append(self._cli_reporter)
-        if self._codespeed_reporter:
-            result.append(self._codespeed_reporter)
+        if self.cli_reporter:
+            result.append(self.cli_reporter)
+        if self.codespeed_reporter:
+            result.append(self.codespeed_reporter)
         return result
 
 
@@ -69,12 +61,12 @@ class CodespeedReporting(object):
         if options.commit_id is None:
             raise ConfigurationError("--commit-id has to be set on the command "
                                      "line for codespeed reporting.")
-        self._commit_id = options.commit_id
+        self.commit_id = options.commit_id
 
         if options.environment is None:
             raise ConfigurationError("--environment has to be set on the "
                                      "command line for codespeed reporting.")
-        self._environment = options.environment
+        self.environment = options.environment
 
         if "project" not in codespeed and options.project is None:
             raise ConfigurationError("The config file needs to configure a "
@@ -82,49 +74,18 @@ class CodespeedReporting(object):
                                      "section, or --project has to be given on "
                                      "the command line.")
         if options.project is not None:
-            self._project = options.project
+            self.project = options.project
         else:
-            self._project = codespeed["project"]
+            self.project = codespeed["project"]
 
         if "url" not in codespeed:
             raise ConfigurationError("The config file needs to define a URL to "
                                      "codespeed in the reporting.codespeed "
                                      "section")
-        self._url = codespeed["url"]
+        self.url = codespeed["url"]
 
-        self._report_incrementally = options.report_incrementally
-        self._branch = options.branch
-        self._executable = options.executable
+        self.report_incrementally = options.report_incrementally
+        self.branch = options.branch
+        self.executable = options.executable
 
-        self._reporter = CodespeedReporter(self, ui)
-
-    @property
-    def report_incrementally(self):
-        return self._report_incrementally
-
-    @property
-    def branch(self):
-        return self._branch
-
-    @property
-    def executable(self):
-        return self._executable
-
-    @property
-    def project(self):
-        return self._project
-
-    @property
-    def commit_id(self):
-        return self._commit_id
-
-    @property
-    def environment(self):
-        return self._environment
-
-    @property
-    def url(self):
-        return self._url
-
-    def get_reporter(self):
-        return self._reporter
+        self.reporter = CodespeedReporter(self, ui)

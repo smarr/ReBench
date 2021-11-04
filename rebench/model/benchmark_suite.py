@@ -49,66 +49,29 @@ class BenchmarkSuite(object):
     def __init__(self, suite_name, executor, gauge_adapter, command, location, build,
                  benchmarks_config, desc, run_details, variables):
         """Specialize the benchmark suite for the given executor"""
-        self._name = suite_name
-        self._executor = executor
-        self._gauge_adapter = gauge_adapter
-        self._command = command
-        self._location = location
-        self._build = build
-        self._benchmarks_config = benchmarks_config
+        self.name = suite_name
+        self.executor = executor
+        self.gauge_adapter = gauge_adapter
+        self.command = command
+        self.location = location
+        self.build = build
+
+        # This is the raw configuration, i.e., the list of benchmarks and their properties.
+        self.benchmarks_config = benchmarks_config
+
         self._desc = desc
-        self._run_details = run_details
-        self._variables = variables
-
-    @property
-    def variables(self):
-        return self._variables
-
-    @property
-    def location(self):
-        return self._location
-
-    @property
-    def run_details(self):
-        return self._run_details
-
-    @property
-    def build(self):
-        return self._build
-
-    @property
-    def executor(self):
-        return self._executor
-
-    @property
-    def benchmarks_config(self):
-        """
-        This is the raw configuration, i.e.,
-        the list of benchmarks and their properties.
-        """
-        return self._benchmarks_config
-
-    @property
-    def gauge_adapter(self):
-        return self._gauge_adapter
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def command(self):
-        return self._command
+        self.run_details = run_details
+        self.variables = variables
 
     def __str__(self):
-        return "Suite(%s, %s)" % (self._name, self._command)
+        return "Suite(%s, %s)" % (self.name, self.command)
 
     def as_dict(self):
         result = {
-            'name': self._name,
-            'executor': self._executor.as_dict(),
+            'name': self.name,
+            'executor': self.executor.as_dict(),
             'desc': self._desc
         }
-        if self._build:
-            result['build'] = [b.as_dict() for b in self._build]
+        if self.build:
+            result['build'] = [b.as_dict() for b in self.build]
         return result

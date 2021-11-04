@@ -36,7 +36,7 @@ from ..rebench import ReBench
 class PersistencyTest(ReBenchTestCase):
 
     def test_de_serialization(self):
-        data_store = DataStore(self._ui)
+        data_store = DataStore(self.ui)
         executor = ExecutorConf("MyVM", '', '',
                                 None, None, None, None, None)
         suite = BenchmarkSuite("MySuite", executor, '', '', None, None,
@@ -61,56 +61,56 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_iteration_invocation_semantics(self):
         # Executes first time
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                           ds, self._ui, data_file=self._tmp_file)
+                           ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 10)
 
         # Execute a second time, should not add any data points,
         # because goal is already reached
-        ds2 = DataStore(self._ui)
+        ds2 = DataStore(self.ui)
         cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
-                            ds2, self._ui, data_file=self._tmp_file)
+                            ds2, self.ui, data_file=self._tmp_file)
         ds2.load_data(None, False)
 
         self._assert_runs(cnf2, 1, 10, 10)
 
-        ex2 = Executor(cnf2.get_runs(), False, self._ui)
+        ex2 = Executor(cnf2.get_runs(), False, self.ui)
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
 
     def test_data_discarding(self):
         # Executes first time
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                           ds, self._ui, data_file=self._tmp_file)
+                           ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
 
         self._assert_runs(cnf, 1, 10, 10)
 
         # Execute a second time, this time, discard the data first, and then rerun
-        ds2 = DataStore(self._ui)
+        ds2 = DataStore(self.ui)
         cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
-                            ds2, self._ui, data_file=self._tmp_file)
+                            ds2, self.ui, data_file=self._tmp_file)
         run2 = cnf2.get_runs()
         ds2.load_data(run2, True)
 
         self._assert_runs(cnf2, 1, 0, 0)
 
-        ex2 = Executor(run2, False, self._ui)
+        ex2 = Executor(run2, False, self.ui)
         ex2.execute()
 
         self._assert_runs(cnf2, 1, 10, 10)
@@ -143,7 +143,7 @@ class PersistencyTest(ReBenchTestCase):
         port = server.get_free_port()
 
         server.start()
-        ds = DataStore(self._ui)
+        ds = DataStore(self.ui)
 
         raw_config = load_config(self._path + '/persistency.conf')
         del raw_config['reporting']['codespeed']
@@ -154,12 +154,12 @@ class PersistencyTest(ReBenchTestCase):
             'send_to_rebench_db': True,
             'record_all': True}
 
-        cnf = Configurator(raw_config, ds, self._ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(raw_config, ds, self.ui, cmd_config, data_file=self._tmp_file)
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
 
-        ex = Executor(cnf.get_runs(), False, self._ui)
+        ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
 
         run = list(cnf.get_runs())[0]
