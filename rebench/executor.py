@@ -263,11 +263,13 @@ class Executor(object):
 
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
-                 artifact_review=False, use_nice=False, use_shielding=False):
+                 artifact_review=False, use_nice=False, use_shielding=False,
+                 print_execution_plan=False):
         self._runs = runs
 
         self._use_nice = use_nice
         self._use_shielding = use_shielding
+        self._print_execution_plan = print_execution_plan
 
         self._do_builds = do_builds
         self.ui = ui
@@ -396,14 +398,19 @@ class Executor(object):
                 log_file.write(stderr_result)
 
     def execute_run(self, run_id):
-        termination_check = run_id.get_termination_check(self.ui)
-
-        run_id.report_start_run()
-
         gauge_adapter = self._get_gauge_adapter_instance(
             run_id.benchmark.gauge_adapter)
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
+
+        if self._print_execution_plan:
+            print("cd " + run_id.location)
+            print(cmdline)
+            return True
+
+        termination_check = run_id.get_termination_check(self.ui)
+
+        run_id.report_start_run()
 
         terminate = self._check_termination_condition(run_id, termination_check, cmdline)
         if not terminate and self._do_builds:
@@ -548,6 +555,8 @@ class Executor(object):
     def execute(self):
         try:
             self._scheduler.execute()
+            if self._print_execution_plan:
+                return True
 
             successful = True
             for run in self._runs:

@@ -145,11 +145,13 @@ For this purpose we use *schedulers* to determine the execution order.
 
 To check whether a configuration is correct, it can be useful to avoid
 execution altogether. For such *testing* or *dry run*, we have the following
-option:
+options:
 
 ```text
 -E, --no-execution    Disables execution. It allows to verify the
                       configuration file and other parameters.
+-p, --execution-plan  Print execution plan. This outputs all executions
+                      that would be performed, without executing them.
 ```  
 
 #### Continuous Performance Tracking
