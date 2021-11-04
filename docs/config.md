@@ -802,6 +802,45 @@ executors:
 
 ---
 
+**profiler:**
+
+An executor may specify how it can be profiled.
+If a `profiler` is given, then it can be part of an experiment
+with the `action: profiling` set.
+
+Currently, `perf` is supported.
+
+Example:
+
+```yaml
+executors:
+  MyBin1:
+    profiler:
+      perf: ~  # ~ is used for empty settings
+```
+
+ReBench has built-in support for `perf`, and extracts some useful information.
+Though, the settings and processing may not be desired and can be adapted
+with the following settings:
+
+```yaml
+executors:
+  MyBin1:
+    profiler:
+      perf:
+        # perf record is used to record the profile
+        # the standard setting uses 9999hz sampling frequency
+        # and determines the call-graph using the LBR approach.
+        record_args: record -g -F 9999 --call-graph lbr
+        # perf report is used to convert the raw results into
+        # report that shows for a function how much of a share of the overall
+        # run time it took.
+        report_args: report -g graph --no-children --stdio
+```
+
+
+---
+
 **run details and variables:**
 
 An executor can additionally use the keys for [run details](#runs) and [variables](#benchmark)
@@ -856,6 +895,28 @@ experiments:
     reporting:
       codespeed:
         ...
+```
+
+---
+
+**action:**
+
+The default for experiments is that they run as benchmarks, to measure
+their performance.
+
+Alternatively, we can run experiments to obtain profiling information.
+This would give a more detailed insight into the execution.
+
+Possible values: `benchmark`, `profile`
+
+Default: `benchmark`
+
+Example:
+
+```yaml
+experiments:
+  Example:
+    action: profile
 ```
 
 ---
