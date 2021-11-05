@@ -56,7 +56,7 @@ class PerfParser(object):
     re_child = re.compile(r"^\s+(?:\|\s*)*--(\d+\.\d\d)%--(\S+)$")
     re_stack_elements = re.compile(r"^\s+(?:\|\s+)*(?:---)?(\S+)$")
 
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         self._filename = filename
         self._elements = []
 

@@ -22,6 +22,7 @@ import os
 from .build_cmd import BuildCommand
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
+from .profiler import Profiler
 
 
 class Executor(object):
@@ -39,14 +40,16 @@ class Executor(object):
         description = executor.get('description')
         desc = executor.get('desc')
 
+        profiler = Profiler.compile(executor.get('profiler'))
+
         run_details = ExpRunDetails.compile(executor, run_details)
         variables = ExpVariables.compile(executor, variables)
 
         return Executor(executor_name, path, executable, args, build, description or desc,
-                        run_details, variables)
+                        profiler, run_details, variables)
 
     def __init__(self, name, path, executable, args, build, description,
-                 run_details, variables):
+                 profiler, run_details, variables):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
         """
@@ -58,6 +61,7 @@ class Executor(object):
 
         self.build = build
         self.description = description
+        self.profiler = profiler
 
         self.run_details = run_details
         self.variables = variables

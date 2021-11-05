@@ -36,7 +36,7 @@ class Issue4RunEquality(unittest.TestCase):
     @staticmethod
     def _create_template_run_id():
         executor = Executor('MyVM', 'foo_bar_path', 'foo_bar_bin',
-                            None, None, None, None, None)
+                            None, None, None, None, None, None)
         suite = BenchmarkSuite("MySuite", executor, '', '%(benchmark)s %(cores)s %(input)s',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
@@ -46,7 +46,7 @@ class Issue4RunEquality(unittest.TestCase):
     @staticmethod
     def _create_hardcoded_run_id():
         executor = Executor('MyVM', 'foo_bar_path', 'foo_bar_bin',
-                            None, None, None, None, None)
+                            None, None, None, None, None, None)
         suite = BenchmarkSuite('MySuite', executor, '', '%(benchmark)s %(cores)s 2 3',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite,

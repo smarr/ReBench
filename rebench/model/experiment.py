@@ -29,6 +29,7 @@ class Experiment(object):
 
     @classmethod
     def compile(cls, name, exp, configurator):
+        action = exp.get('action')
         description = exp.get('description')
         desc = exp.get('desc')
         data_file = exp.get('data_file') or configurator.data_file
@@ -42,14 +43,14 @@ class Experiment(object):
         executions = exp.get('executions')
         suites = exp.get('suites')
 
-        return Experiment(name, description or desc, data_file, reporting,
+        return Experiment(name, description or desc, action, data_file, reporting,
                           run_details, variables, configurator, executions, suites)
 
-    def __init__(self, name, description, data_file, reporting, run_details,
+    def __init__(self, name, description, action, data_file, reporting, run_details,
                  variables, configurator, executions, suites):
         self.name = name
         self._description = description
-        self._data_file = data_file
+        self._action = action
 
         self._run_details = run_details
         self._variables = variables
