@@ -248,6 +248,8 @@ Argument:
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
+        except ValueError as exc:
+            raise UIError(exc.args[0] + "\n", exc)
 
         if args.report_completion:
             return self._report_completion()
