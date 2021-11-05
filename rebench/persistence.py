@@ -29,6 +29,7 @@ from time import time
 from .environment import determine_environment, determine_source_details
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
+from .model.profile_data import ProfileData
 from .model.run_id      import RunId
 from .rebenchdb         import get_current_time
 from .ui                import UIError
@@ -48,7 +49,7 @@ class DataStore(object):
         for persistence in list(self._files.values()):
             persistence.load_data(runs, discard_run_data)
 
-    def get(self, filename, configurator):
+    def get(self, filename, configurator, action):
         if filename not in self._files:
             source = determine_source_details(configurator)
             if configurator.use_rebench_db and source['commitId'] is None:
@@ -62,11 +63,17 @@ class DataStore(object):
             if configurator.options and configurator.options.branch:
                 source['branchOrTag'] = configurator.options.branch
 
-            p = _FilePersistence(filename, self, configurator, self.ui)
+            if action == "profile":
+                p = _ProfileFilePersistence(filename, self, configurator, self.ui)
+            else:
+                p = _FilePersistence(filename, self, configurator, self.ui)
             self.ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
 
             if configurator.use_rebench_db:
-                db = _ReBenchDB(configurator, self, self.ui)
+                if action == "profile":
+                    db = _ProfileReBenchDB(configurator, self, self.ui)
+                else:
+                    db = _ReBenchDB(configurator, self, self.ui)
                 p = _CompositePersistence(p, db)
 
             self._files[filename] = p
@@ -258,30 +265,8 @@ class _FilePersistence(_ConcretePersistence):
                 continue
 
             try:
-                measurement = Measurement.from_str_list(
-                    self._data_store, line.rstrip('\n').split(self._SEP),
-                    line_number, self._data_filename)
-
-                run_id = measurement.run_id
-                if filtered_data_file and runs and run_id in runs:
-                    continue
-
-                # these are all the measurements that are not filtered out
-                if filtered_data_file:
-                    filtered_data_file.write(line)
-
-                if previous_run_id is not run_id:
-                    data_point = DataPoint(run_id)
-                    previous_run_id = run_id
-
-                data_point.add_measurement(measurement)
-
-                if measurement.is_total():
-                    run_id.loaded_data_point(data_point,
-                                             (measurement.iteration <= run_id.warmup_iterations
-                                              if run_id.warmup_iterations else False))
-                    data_point = DataPoint(run_id)
-
+                data_point, previous_run_id = self._parse_data_line(
+                    data_point, line, line_number, runs, filtered_data_file, previous_run_id)
             except ValueError as err:
                 msg = str(err)
                 if not errors:
@@ -291,6 +276,33 @@ class _FilePersistence(_ConcretePersistence):
                     # Configuration is not available, skip data point
                     self.ui.debug_error_info("{ind}" + msg + "\n")
                     errors.add(msg)
+
+    def _parse_data_line(
+            self, data_point, line, line_number, runs, filtered_data_file, previous_run_id):
+        measurement = Measurement.from_str_list(
+            self._data_store, line.rstrip('\n').split(self._SEP),
+            line_number, self._data_filename)
+
+        run_id = measurement.run_id
+        if filtered_data_file and runs and run_id in runs:
+            return data_point, previous_run_id
+
+        # these are all the measurements that are not filtered out
+        if filtered_data_file:
+            filtered_data_file.write(line)
+
+        if previous_run_id is not run_id:
+            data_point = DataPoint(run_id)
+            previous_run_id = run_id
+
+        data_point.add_measurement(measurement)
+
+        if measurement.is_total():
+            run_id.loaded_data_point(data_point,
+                                     (measurement.iteration <= run_id.warmup_iterations
+                                      if run_id.warmup_iterations else False))
+            data_point = DataPoint(run_id)
+        return data_point, previous_run_id
 
     def _open_file_and_append_execution_comment(self):
         """
@@ -318,6 +330,11 @@ class _FilePersistence(_ConcretePersistence):
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 
+    def _persists_data_point_in_open_file(self, data_point):
+        for measurement in data_point.get_measurements():
+            line = self._SEP.join(measurement.as_str_list())
+            self._file.write(line + "\n")
+
     def persist_data_point(self, data_point):
         """
         Serialize all measurements of the data point and persist them
@@ -325,11 +342,7 @@ class _FilePersistence(_ConcretePersistence):
         """
         with self._lock:
             self._open_file_to_add_new_data()
-
-            for measurement in data_point.get_measurements():
-                line = self._SEP.join(measurement.as_str_list())
-                self._file.write(line + "\n")
-
+            self._persists_data_point_in_open_file(data_point)
             self._file.flush()
 
     def run_completed(self):
@@ -343,6 +356,32 @@ class _FilePersistence(_ConcretePersistence):
         if self._file:
             self._file.close()
             self._file = None
+
+
+class _ProfileFilePersistence(_FilePersistence):
+    def _persists_data_point_in_open_file(self, data_point):
+        assert isinstance(data_point, ProfileData)
+        line = self._SEP.join(data_point.as_str_list())
+        assert "\n" not in line, "The newline character is now allowed in a data line"
+        self._file.write(line + "\n")
+
+    def _parse_data_line(
+            self, data_point, line, line_number, runs, filtered_data_file, previous_run_id):
+        str_list = line.rstrip('\n').split(self._SEP)
+
+        data_point = ProfileData.from_str_list(
+            self._data_store, str_list, line_number, self._data_filename)
+
+        run_id = data_point.run_id
+        if filtered_data_file and runs and run_id in runs:
+            return data_point
+
+        # these are all the measurements that are not filtered out
+        if filtered_data_file:
+            filtered_data_file.write(line)
+
+        run_id.loaded_data_point(data_point, True)
+        return data_point, run_id
 
 
 class _ReBenchDB(_ConcretePersistence):
@@ -420,3 +459,7 @@ class _ReBenchDB(_ConcretePersistence):
     def close(self):
         with self._lock:
             self._send_data_and_empty_cache()
+
+
+class _ProfileReBenchDB(_ReBenchDB):
+    pass

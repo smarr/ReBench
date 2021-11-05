@@ -1,6 +1,7 @@
 import json
 
 from ...configurator import Configurator, load_config
+from ...model.profile_data import ProfileData
 from ...persistence import DataStore
 from ...interop.perf_adapter import PerfAdapter
 
@@ -56,10 +57,31 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         # I want to be sure the profiling data is stored in the data file (possibly a separate one)
         pass
 
-    def test_perf_replacement_works(self):
-        # I want to be able to execute the benchmarks without having to have perf or sudo rights or anything
-        #   -> I want to be able to test this at least partially on macOS, where we don't have perf
-        pass
+    def test_persist_profile_data(self):
+        raw_config = load_config(self._path + '/issue_166.conf')
+        raw_config['experiments']['profile']['data_file'] = self._tmp_file
+        cnf = Configurator(raw_config, DataStore(self.ui), self.ui)
+        runs = list(cnf.get_runs())
+        run_id = runs[0]
+
+        self.assertEqual(0, run_id.completed_invocations)
+
+        data_point = ProfileData(run_id, "TEST-DATA, not json though, just a string", 1, 1)
+        run_id.add_data_point(data_point, True)
+        run_id.close_files()
+        self.assertEqual(1, run_id.completed_invocations)
+
+        # create new data store, and load data file
+        data_store = DataStore(self.ui)
+        cnf = Configurator(raw_config, data_store, self.ui)
+        data_store.get(self._tmp_file, cnf, "profile")
+        data_store.load_data(None, False)
+
+        # confirm that data was loaded (we don't have direct access to it,
+        # so, just check that completion count is correct)
+        run_id2 = list(cnf.get_runs())[0]
+        self.assertIsNot(run_id, run_id2)
+        self.assertEqual(1, run_id2.completed_invocations)
 
     def test_perf_gauge_adapter_reads_perf_report(self):
         cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
@@ -67,11 +89,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         runs = list(cnf.get_runs())
         run_id = runs[0]
 
-        # need first to mess with the profiler, to load our test data
-        profilers = run_id.benchmark.suite.executor.profiler
-        profiler = profilers[0]
-        profiler.command = "cat"
-        profiler.report_args = "perf-small.report"
+        self._make_profiler_return_small_report(run_id)
 
         perf_adapter = PerfAdapter()
         out_from_benchmark = ""  # don't really need it
@@ -90,3 +108,11 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(
             'MessageSendNode$AbstractMessageSendNode_evaluateArguments', result_data[0]['m'])
         self.assertEqual('intel_pmu_handle_irq', result_data[9]['m'])
+
+    @staticmethod
+    def _make_profiler_return_small_report(run_id):
+        # need first to mess with the profiler, to load our test data
+        profilers = run_id.benchmark.suite.executor.profiler
+        profiler = profilers[0]
+        profiler.command = "cat"
+        profiler.report_args = "perf-small.report"

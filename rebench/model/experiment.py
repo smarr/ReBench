@@ -32,7 +32,10 @@ class Experiment(object):
         action = exp.get('action')
         description = exp.get('description')
         desc = exp.get('desc')
-        data_file = exp.get('data_file') or configurator.data_file
+        if action == 'profile':
+            data_file = exp.get('data_file') or configurator.data_file + ".profiles"
+        else:
+            data_file = exp.get('data_file') or configurator.data_file
 
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
                                       configurator.options, configurator.ui)
@@ -57,7 +60,7 @@ class Experiment(object):
         self._reporting = reporting
 
         self._data_store = configurator.data_store
-        self._persistence = self._data_store.get(data_file, configurator)
+        self._persistence = self._data_store.get(data_file, configurator, action)
 
         self._suites = self._compile_executors_and_benchmark_suites(
             executions, suites, configurator)
