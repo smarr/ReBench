@@ -23,11 +23,16 @@ from ...interop.adapter      import OutputNotParseable
 from ...interop.time_adapter import TimeAdapter, TimeManualAdapter
 
 
+class _TestRunId(object):
+    def cmdline(self):
+        return "FOO"
+
+
 class TimeAdapterTest(TestCase):
 
     def test_acquire_command(self):
         adapter = TimeAdapter(False)
-        cmd = adapter.acquire_command("FOO")
+        cmd = adapter.acquire_command(_TestRunId())
         self.assertTrue(cmd.startswith("/usr/bin/time"))
 
     def test_parse_data(self):
@@ -48,5 +53,5 @@ sys          1.00"""
 
     def test_manual_adapter(self):
         adapter = TimeManualAdapter(False)
-        cmd = adapter.acquire_command("FOO")
+        cmd = adapter.acquire_command(_TestRunId())
         self.assertEqual("FOO", cmd)

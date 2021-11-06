@@ -307,7 +307,7 @@ class Executor(object):
                 cmdline += "--without-shielding "
             cmdline += "exec -- "
 
-        cmdline += gauge_adapter.acquire_command(run_id.cmdline())
+        cmdline += gauge_adapter.acquire_command(run_id)
 
         return cmdline
 
@@ -399,7 +399,7 @@ class Executor(object):
 
     def execute_run(self, run_id):
         gauge_adapter = self._get_gauge_adapter_instance(
-            run_id.benchmark.gauge_adapter)
+            run_id.get_gauge_adapter_name())
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 

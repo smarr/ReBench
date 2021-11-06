@@ -35,8 +35,8 @@ class GaugeAdapter(object):
         self._include_faulty = include_faulty
         self._other_error_definitions = None
 
-    def acquire_command(self, command):
-        return command
+    def acquire_command(self, run_id):
+        return run_id.cmdline()
 
     def parse_data(self, data, run_id, invocation):
         raise NotImplementedError()

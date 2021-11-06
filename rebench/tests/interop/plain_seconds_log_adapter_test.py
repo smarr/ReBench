@@ -26,8 +26,11 @@ from ...interop.plain_seconds_log_adapter import PlainSecondsLogAdapter
 class PlainSecondsAdapterTest(TestCase):
 
     def test_acquire_command(self):
+        class _TestRunId(object):
+            def cmdline(self):
+                return "FOO"
         adapter = PlainSecondsLogAdapter(False)
-        cmd = adapter.acquire_command("FOO")
+        cmd = adapter.acquire_command(_TestRunId())
         self.assertEqual("FOO", cmd)
 
     def test_parse_data(self):
