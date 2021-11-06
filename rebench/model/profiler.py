@@ -47,4 +47,4 @@ class PerfProfiler(Profiler):
 
         parser = PerfParser()
         parser.parse_lines(output.split("\n"))
-        return parser.json()
+        return parser.to_json()

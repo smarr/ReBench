@@ -12,12 +12,16 @@ def _unmangle(method_name):
     return method_name
 
 
-class Encoder(json.JSONEncoder):
-    def default(self, o):
-        if hasattr(o, 'to_json'):
-            return o.to_json()
+def _list_of_elem_or_str_to_json(trace):
+    assert trace
+    result = []
+    for e in trace:
+        if isinstance(e, Element):
+            result.append(e.to_json())
         else:
-            return json.JSONEncoder.default(self, o)
+            assert isinstance(e, str)
+            result.append(e)
+    return result
 
 
 class Element(object):
@@ -34,7 +38,7 @@ class Element(object):
     def to_json(self):
         result = {"p": self.percent, "m": self.method}
         if self.trace:
-            result["t"] = self.trace
+            result["t"] = _list_of_elem_or_str_to_json(self.trace)
         return result
 
 
@@ -148,8 +152,8 @@ class PerfParser(object):
         else:
             print(indentation + "          " + e)
 
-    def json(self):
-        return json.dumps(self._elements, cls=Encoder)
+    def to_json(self):
+        return _list_of_elem_or_str_to_json(self._elements)
 
     def get_elements(self):
         return self._elements
@@ -158,5 +162,5 @@ class PerfParser(object):
 if __name__ == "__main__":
     p = PerfParser(sys.argv[1])
     p.parse()
-    print(p.json())
+    print(json.dumps(p.to_json()))
     # p.print_elements()
