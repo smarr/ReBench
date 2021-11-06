@@ -103,6 +103,14 @@ class RunId(object):
             return None
         return self._expand_vars(self.benchmark.suite.location)
 
+    def get_gauge_adapter_name(self):
+        action = self.benchmark.suite.executor.action
+        if action == "profile":
+            # TODO: needs changing once we want to support different profilers
+            perf_profile = self.benchmark.suite.executor.profiler[0]
+            return perf_profile.gauge_adapter_name
+        return self.benchmark.gauge_adapter
+
     def build_commands(self):
         commands = set()
         builds = self.benchmark.suite.executor.build

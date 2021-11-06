@@ -105,7 +105,8 @@ class Experiment(object):
             else:
                 suites_for_executor = suites
 
-            executor = configurator.get_executor(executor_name, run_details, variables)
+            executor = configurator.get_executor(
+                executor_name, run_details, variables, self._action)
 
             for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(

@@ -19,10 +19,11 @@ class ProfileData(object):
         }
 
     def as_str_list(self):
-        return [str(self.invocation), str(self.num_iterations)] + self.run_id.as_str_list() + [self.processed_data]
+        return ([str(self.invocation), str(self.num_iterations)]
+                + self.run_id.as_str_list() + [self.processed_data])
 
     @classmethod
-    def from_str_list(cls, data_store, str_list, line_number=None, filename=None):
+    def from_str_list(cls, data_store, str_list, _line_number=None, _filename=None):
         invocation = int(str_list[0])
         num_iterations = int(str_list[1])
         run_id = RunId.from_str_list(data_store, str_list[2:-1])

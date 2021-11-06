@@ -19,14 +19,15 @@ class Profiler(object):
                 raise Exception("Not yet supported profiler type: " + k)
         return profilers
 
-    def __init__(self, name):
+    def __init__(self, name, gauge_name):
         self.name = name
+        self.gauge_adapter_name = gauge_name
 
 
 class PerfProfiler(Profiler):
 
     def __init__(self, name, cfg):
-        super(PerfProfiler, self).__init__(name)
+        super(PerfProfiler, self).__init__(name, "Perf")
         self.record_args = cfg.get('record_args')
         self.report_args = cfg.get('report_args')
         self.command = "perf"

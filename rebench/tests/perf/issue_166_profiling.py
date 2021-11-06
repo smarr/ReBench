@@ -1,6 +1,7 @@
 import json
 
 from ...configurator import Configurator, load_config
+from ...executor import Executor
 from ...model.profile_data import ProfileData
 from ...persistence import DataStore
 from ...interop.perf_adapter import PerfAdapter
@@ -51,15 +52,15 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
 
     def test_send_to_rebench_db(self):
         # In the end, I want to be sure that the profiling data is sent to ReBenchDB
-        pass
+        self.fail("TODO")
 
-    def test_check_profile_in_separate_data_file(self):
-        # I want to be sure the profiling data is stored in the data file (possibly a separate one)
-        pass
-
-    def test_persist_profile_data(self):
+    def _load_config_and_use_tmp_as_data_file(self):
         raw_config = load_config(self._path + '/issue_166.conf')
         raw_config['experiments']['profile']['data_file'] = self._tmp_file
+        return raw_config
+
+    def test_persist_profile_data(self):
+        raw_config = self._load_config_and_use_tmp_as_data_file()
         cnf = Configurator(raw_config, DataStore(self.ui), self.ui)
         runs = list(cnf.get_runs())
         run_id = runs[0]
@@ -109,10 +110,25 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
             'MessageSendNode$AbstractMessageSendNode_evaluateArguments', result_data[0]['m'])
         self.assertEqual('intel_pmu_handle_irq', result_data[9]['m'])
 
+    def test_execute_profiling(self):
+        raw_config = self._load_config_and_use_tmp_as_data_file()
+        cnf = Configurator(raw_config, DataStore(self.ui), self.ui, data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        run_id = list(cnf.get_runs())[0]
+        self.assertEqual(0, run_id.completed_invocations)
+
+        self._make_profiler_return_small_report(run_id)
+
+        executor = Executor(runs, False, self.ui)
+        executor.execute()
+
+        self.assertEqual(1, run_id.completed_invocations)
+
     @staticmethod
     def _make_profiler_return_small_report(run_id):
         # need first to mess with the profiler, to load our test data
         profilers = run_id.benchmark.suite.executor.profiler
         profiler = profilers[0]
-        profiler.command = "cat"
+        profiler.command = "./cat-first.sh"
+        profiler.record_args = "perf-small.report"
         profiler.report_args = "perf-small.report"
