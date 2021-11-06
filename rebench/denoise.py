@@ -30,13 +30,16 @@ class DenoiseResult(object):
         self.details = details
 
 
-def minimize_noise(show_warnings, ui):
+def minimize_noise(show_warnings, ui, for_profiling):
     result = {}
 
+    cmd = ['sudo', '-n', 'rebench-denoise']
+    if for_profiling:
+        cmd += ['--for-profiling']
+    cmd += ['--json', 'minimize']
+
     try:
-        output = output_as_str(subprocess.check_output(
-            ['sudo', '-n', 'rebench-denoise', '--json', 'minimize'],
-            stderr=subprocess.STDOUT))
+        output = output_as_str(subprocess.check_output(cmd, stderr=subprocess.STDOUT))
         try:
             result = json.loads(output)
             got_json = True
@@ -224,19 +227,28 @@ def _set_no_turbo(with_no_turbo):
     return with_no_turbo
 
 
-def _minimize_perf_sampling():
+def _configure_perf_sampling(for_profiling):
     try:
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
-            perc_file.write("1\n")
+            if for_profiling:
+                perc_file.write("0\n")
+            else:
+                perc_file.write("1\n")
 
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_event_max_sample_rate", "w") as sample_file:
-            sample_file.write("1\n")
+            if for_profiling:
+                sample_file.write("50000\n")
+            else:
+                sample_file.write("1\n")
     except IOError:
         return "failed"
 
-    return 1
+    if for_profiling:
+        return 0
+    else:
+        return 1
 
 
 def _restore_perf_sampling():
@@ -244,15 +256,20 @@ def _restore_perf_sampling():
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
             perc_file.write("25\n")
+
+        # pylint: disable-next=unspecified-encoding
+        with open("/proc/sys/kernel/perf_event_max_sample_rate", "w") as sample_file:
+            sample_file.write("50000\n")
     except IOError:
         return "failed"
     return "restored"
 
 
-def _minimize_noise(num_cores, use_nice, use_shielding):
+def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
     governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
     no_turbo = _set_no_turbo(True)
-    perf = _minimize_perf_sampling()
+    perf = _configure_perf_sampling(for_profiling)
+
     can_nice = _can_set_niceness() if use_nice else False
     shielding = _activate_shielding(num_cores) if use_shielding else False
 
@@ -343,6 +360,8 @@ def _shell_options():
                         dest='use_nice', help="Don't try setting process niceness")
     parser.add_argument('--without-shielding', action='store_false', default=True,
                         dest='use_shielding', help="Don't try shielding cores")
+    parser.add_argument('--for-profiling', action='store_true', default=False,
+                        dest='for_profiling', help="Don't restrict CPU usage by profiler")
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`test`: "
                               "`minimize` sets system to reduce noise. "
@@ -363,7 +382,7 @@ def main_func():
     result = {}
 
     if args.command == 'minimize':
-        result = _minimize_noise(num_cores, args.use_nice, args.use_shielding)
+        result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling)
     elif args.command == 'restore':
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':

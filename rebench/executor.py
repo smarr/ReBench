@@ -305,6 +305,8 @@ class Executor(object):
                 cmdline += "--without-nice "
             if not self._use_shielding:
                 cmdline += "--without-shielding "
+            if run_id.is_profiling():
+                cmdline += "--for-profiling "
             cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id)

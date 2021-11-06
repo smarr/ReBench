@@ -255,13 +255,14 @@ Argument:
             return self._report_completion()
 
         runs = self._config.get_runs()
+        does_profiling = any(r.is_profiling() for r in runs)
 
         denoise_result = None
         show_denoise_warnings = not (self._config.artifact_review
                                      or self._config.options.execution_plan)
 
         try:
-            denoise_result = minimize_noise(show_denoise_warnings, self.ui)
+            denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
             init_environment(denoise_result, self.ui)
 
             data_store.load_data(runs, self._config.options.do_rerun)
