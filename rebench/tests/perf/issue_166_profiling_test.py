@@ -66,11 +66,13 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         run_id = runs[0]
 
         self.assertEqual(0, run_id.completed_invocations)
+        self.assertEqual(0, run_id.get_number_of_data_points())
 
         data_point = ProfileData(run_id, "TEST-DATA, not json though, just a string", 1, 1)
         run_id.add_data_point(data_point, True)
         run_id.close_files()
         self.assertEqual(1, run_id.completed_invocations)
+        self.assertEqual(1, run_id.get_number_of_data_points())
 
         # create new data store, and load data file
         data_store = DataStore(self.ui)
@@ -83,6 +85,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         run_id2 = list(cnf.get_runs())[0]
         self.assertIsNot(run_id, run_id2)
         self.assertEqual(1, run_id2.completed_invocations)
+        self.assertEqual(1, run_id2.get_number_of_data_points())
 
     def test_perf_gauge_adapter_reads_perf_report(self):
         cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
@@ -116,6 +119,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         runs = cnf.get_runs()
         run_id = list(cnf.get_runs())[0]
         self.assertEqual(0, run_id.completed_invocations)
+        self.assertEqual(0, run_id.get_number_of_data_points())
 
         self._make_profiler_return_small_report(run_id)
 
@@ -123,6 +127,25 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         executor.execute()
 
         self.assertEqual(1, run_id.completed_invocations)
+        self.assertEqual(1, run_id.get_number_of_data_points())
+
+    def test_execute_profiling_profile2(self):
+        raw_config = self._load_config_and_use_tmp_as_data_file()
+        cnf = Configurator(
+            raw_config, DataStore(self.ui), self.ui, exp_name="profile2", data_file=self._tmp_file)
+
+        runs = cnf.get_runs()
+        run_id = list(cnf.get_runs())[0]
+        self.assertEqual(0, run_id.completed_invocations)
+        self.assertEqual(0, run_id.get_number_of_data_points())
+
+        self._make_profiler_return_small_report(run_id)
+
+        executor = Executor(runs, False, self.ui)
+        executor.execute()
+
+        self.assertEqual(7, run_id.completed_invocations)
+        self.assertEqual(7, run_id.get_number_of_data_points())
 
     @staticmethod
     def _make_profiler_return_small_report(run_id):
