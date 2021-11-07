@@ -242,6 +242,11 @@ def _configure_perf_sampling(for_profiling):
                 sample_file.write("50000\n")
             else:
                 sample_file.write("1\n")
+
+        if for_profiling:
+            # pylint: disable-next=unspecified-encoding
+            with open("/proc/sys/kernel/perf_event_paranoid", "w") as perf_file:
+                perf_file.write("-1\n")
     except IOError:
         return "failed"
 
@@ -260,6 +265,10 @@ def _restore_perf_sampling():
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_event_max_sample_rate", "w") as sample_file:
             sample_file.write("50000\n")
+
+        # pylint: disable-next=unspecified-encoding
+        with open("/proc/sys/kernel/perf_event_paranoid", "w") as perf_file:
+            perf_file.write("3\n")
     except IOError:
         return "failed"
     return "restored"
