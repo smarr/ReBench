@@ -269,12 +269,14 @@ class Executor(object):
 
         self._use_nice = use_nice
         self._use_shielding = use_shielding
+        self.use_denoise = use_nice or use_shielding
+
         self._print_execution_plan = print_execution_plan
 
         self._do_builds = do_builds
         self.ui = ui
         self._include_faulty = include_faulty
-        self._debug = debug
+        self.debug = debug
         self._scheduler = self._create_scheduler(scheduler)
         self.build_log = build_log
         self._artifact_review = artifact_review
@@ -298,8 +300,7 @@ class Executor(object):
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
 
-        use_denoise = self._use_nice or self._use_shielding
-        if use_denoise:
+        if self.use_denoise:
             cmdline += "sudo rebench-denoise "
             if not self._use_nice:
                 cmdline += "--without-nice "
@@ -454,7 +455,7 @@ class Executor(object):
                 except ImportError:
                     mod = None
             if mod is not None and hasattr(mod, adapter_name):
-                return getattr(mod, adapter_name)(self._include_faulty)
+                return getattr(mod, adapter_name)(self._include_faulty, self)
         return None
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
@@ -470,7 +471,7 @@ class Executor(object):
 
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, shell=True, verbose=self._debug,
+                stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive)
         except OSError as err:

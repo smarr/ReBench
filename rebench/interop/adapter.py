@@ -31,9 +31,10 @@ class GaugeAdapter(object):
     re_segfault = re.compile("Segmentation fault")
     re_bus_error = re.compile("Bus error")
 
-    def __init__(self, include_faulty):
+    def __init__(self, include_faulty, executor):
         self._include_faulty = include_faulty
         self._other_error_definitions = None
+        self._executor = executor
 
     def acquire_command(self, run_id):
         return run_id.cmdline()

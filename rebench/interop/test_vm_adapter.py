@@ -31,8 +31,8 @@ class TestExecutorAdapter(GaugeAdapter):
 
     re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
 
-    def __init__(self, include_faulty):
-        super(TestExecutorAdapter, self).__init__(include_faulty)
+    def __init__(self, include_faulty, executor):
+        super(TestExecutorAdapter, self).__init__(include_faulty, executor)
         self._other_error_definitions = [re.compile("FAILED")]
 
     def parse_data(self, data, run_id, invocation):

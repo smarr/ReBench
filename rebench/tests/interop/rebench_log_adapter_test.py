@@ -37,37 +37,37 @@ class RebenchAdapterTest(TestCase):
         self.assertEqual(unit_t, measure.unit)
 
     def test_simple_name(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 557ms", None, 1)
         self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_doted_name(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=1 runtime: 309557us", None, 1)
         self._assert_basics(data, 309.557, 'ms', 'total', True)
 
     def test_doted_and_ms(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=1 runtime: 557ms", None, 1)
         self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_high_iter_count(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "LanguageFeatures.Dispatch: iterations=2342 runtime: 557ms", None, 1)
         self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_total_explicit(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms",
             None, 1)
         self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_alloc_criterion(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             """LanguageFeatures.Dispatch alloc: iterations=2342 runtime: 222ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
@@ -75,7 +75,7 @@ LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
         self._assert_two_measures(data, 222, 'ms', 'alloc', 557, 'ms')
 
     def test_foobar_criterion(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             """LanguageFeatures.Dispatch foobar: iterations=2342 runtime: 550ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
@@ -83,7 +83,7 @@ LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
         self._assert_two_measures(data, 550, 'ms', 'foobar', 557, 'ms')
 
     def test_foobar_criterion_no_doted_name(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             """Dispatch foobar: iterations=2342 runtime: 550ms
 LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
@@ -91,21 +91,21 @@ LanguageFeatures.Dispatch total: iterations=2342 runtime: 557ms""",
         self._assert_two_measures(data, 550, 'ms', 'foobar', 557, 'ms')
 
     def test_some_prefix_before_data(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "some prefix: Dispatch: iterations=2342 runtime: 557ms",
             None, 11)
         self._assert_basics(data, 557, 'ms', 'total', True)
 
     def test_path_as_name(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data(
             "core-lib/Benchmarks/Join/FibSeq.ns: iterations=1 runtime: 129us",
             None, 12)
         self._assert_basics(data, 0.129, 'ms', 'total', True)
 
     def test_other_data(self):
-        adapter = RebenchLogAdapter(True)
+        adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("""Savina.Chameneos: trace size:    3903398byte
 Savina.Chameneos: external data: 40byte
 Savina.Chameneos: iterations=1 runtime: 64208us

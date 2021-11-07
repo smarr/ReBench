@@ -29,7 +29,7 @@ class PlainSecondsAdapterTest(TestCase):
         class _TestRunId(object):
             def cmdline(self):
                 return "FOO"
-        adapter = PlainSecondsLogAdapter(False)
+        adapter = PlainSecondsLogAdapter(False, None)
         cmd = adapter.acquire_command(_TestRunId())
         self.assertEqual("FOO", cmd)
 
@@ -37,7 +37,7 @@ class PlainSecondsAdapterTest(TestCase):
         data = """100
 50
 1"""
-        adapter = PlainSecondsLogAdapter(False)
+        adapter = PlainSecondsLogAdapter(False, None)
         data = adapter.parse_data(data, None, 2)
         self.assertEqual(3, len(data))
 
@@ -51,5 +51,5 @@ class PlainSecondsAdapterTest(TestCase):
         self.assertEqual(1000, data[2].get_total_value())
 
     def test_parse_no_data(self):
-        adapter = PlainSecondsLogAdapter(False)
+        adapter = PlainSecondsLogAdapter(False, None)
         self.assertRaises(OutputNotParseable, adapter.parse_data, "", None, 1)

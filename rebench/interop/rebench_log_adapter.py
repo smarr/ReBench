@@ -40,8 +40,8 @@ class RebenchLogAdapter(GaugeAdapter):
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
     re_incorrect = re.compile(r".*incorrect.*")
 
-    def __init__(self, include_faulty):
-        super(RebenchLogAdapter, self).__init__(include_faulty)
+    def __init__(self, include_faulty, executor):
+        super(RebenchLogAdapter, self).__init__(include_faulty, executor)
         self._other_error_definitions = [self.re_NPB_partial_invalid,
                                          self.re_NPB_invalid, self.re_incorrect]
 

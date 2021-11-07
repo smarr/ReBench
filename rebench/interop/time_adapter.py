@@ -38,8 +38,8 @@ class TimeAdapter(GaugeAdapter):
     re_formatted_time = re.compile(r"^wall-time \(secounds\): (\d+\.\d+)")
     re_formatted_rss = re.compile(r"^max rss \(kb\): (\d+)")
 
-    def __init__(self, include_faulty):
-        GaugeAdapter.__init__(self, include_faulty)
+    def __init__(self, include_faulty, executor):
+        GaugeAdapter.__init__(self, include_faulty, executor)
         self._use_formatted_time = False
 
     def acquire_command(self, run_id):

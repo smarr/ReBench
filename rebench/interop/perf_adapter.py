@@ -4,10 +4,6 @@ from ..model.profile_data import ProfileData
 
 class PerfAdapter(GaugeAdapter):
 
-    def __init__(self, debug=False):
-        super(PerfAdapter, self).__init__(False)
-        self._debug = debug
-
     @staticmethod
     def _get_profiler(run_id):
         profilers = run_id.benchmark.suite.executor.profiler
@@ -17,7 +13,7 @@ class PerfAdapter(GaugeAdapter):
 
     def parse_data(self, data, run_id, invocation):
         profiler = self._get_profiler(run_id)
-        json = profiler.process_profile(run_id, self._debug)
+        json = profiler.process_profile(run_id, self._executor)
 
         return [ProfileData(run_id, json, run_id.iterations, invocation)]
 

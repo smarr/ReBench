@@ -32,15 +32,17 @@ class PerfProfiler(Profiler):
         self.report_args = cfg.get('report_args') + " --input=profile.perf "
         self.command = "perf"
 
-    def _construct_report_cmdline(self):
+    def _construct_report_cmdline(self, executor):
         # need to use sudo, otherwise, the profile.perf file won't be accessible
-        with_sudo = "sudo rebench-denoise --without-nice --without-shielding exec -- "
-        return with_sudo + self.command + " " + self.report_args
+        cmd = ""
+        if executor.use_denoise:
+            cmd += "sudo rebench-denoise --without-nice --without-shielding exec -- "
+        return cmd + self.command + " " + self.report_args
 
-    def process_profile(self, run_id, verbose):
-        cmdline = self._construct_report_cmdline()
+    def process_profile(self, run_id, executor):
+        cmdline = self._construct_report_cmdline(executor)
         (return_code, output, _) = run(cmdline, cwd=run_id.location, shell=True,
-                                       verbose=verbose)
+                                       verbose=executor.debug)
 
         if return_code != 0:
             raise UIError(
