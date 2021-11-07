@@ -1,4 +1,5 @@
 # pylint: disable=line-too-long
+import json
 from unittest import TestCase
 
 from ...interop.perf_parser import PerfParser
@@ -6,8 +7,16 @@ from ...interop.perf_parser import PerfParser
 
 class PerfParserTest(TestCase):
 
+    def setUp(self):
+        self.p = None
+
+    def _assert_json_is_serializable(self):
+        data = self.p.to_json()
+        json_str = json.dumps(data)
+        self.assertIsInstance(json_str, str)
+
     def _parse(self, data):
-        p = PerfParser(None)
+        self.p = p = PerfParser(None)
         p.parse_lines(data.split("\n"))
         return p.get_elements()
 
@@ -31,6 +40,8 @@ class PerfParserTest(TestCase):
 
         self.assertEqual(e1.percent, 0.37)
         self.assertEqual(e4.percent, 0.27)
+
+        self._assert_json_is_serializable()
 
     def test_simple_hierarchy(self):
         data = """
@@ -90,6 +101,8 @@ class PerfParserTest(TestCase):
         self.assertEqual(e.method, "MessageSendNode$GenericMessageSendNode_doPreEvaluated")
         self.assertEqual(e.percent, 1.72)
 
+        self._assert_json_is_serializable()
+
     def test_hierarchy_with_some_nesting(self):
         data = """
      5.99%  som-native-inte  som-native-interp-ast  [.] LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric_b6d282cd7cee40289d20846bdb0b59a0940e00a5
@@ -128,6 +141,8 @@ class PerfParserTest(TestCase):
         self.assertEqual(e2.method,
                          "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
 
+        self._assert_json_is_serializable()
+
     def test_trace_from_main(self):
         data = """
      4.25%  som-native-inte  som-native-interp-ast  [.] OptimizedCallTarget_profileArguments_e8668a5ca6b9022553c0ee2866178043ad99124a
@@ -148,6 +163,8 @@ class PerfParserTest(TestCase):
         e2 = e.trace[1]
         self.assertEqual(e1, "OptimizedCallTarget_profileArguments")
         self.assertEqual(e2, "OptimizedDirectCallNode_call")
+
+        self._assert_json_is_serializable()
 
     def test_trace_from_main_and_nested(self):
         data = """
@@ -182,3 +199,5 @@ class PerfParserTest(TestCase):
 
         self.assertEqual(e3.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
         self.assertEqual(e4.method, "EagerBinaryPrimitiveNode_executeGeneric")
+
+        self._assert_json_is_serializable()
