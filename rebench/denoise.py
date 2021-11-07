@@ -238,9 +238,8 @@ def _configure_perf_sampling(for_profiling):
 
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_event_max_sample_rate", "w") as sample_file:
-            if for_profiling:
-                sample_file.write("50000\n")
-            else:
+            # for profiling we just disabled it above, and then don't need to set it
+            if not for_profiling:
                 sample_file.write("1\n")
 
         if for_profiling:
