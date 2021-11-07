@@ -1,3 +1,5 @@
+import json
+
 from ..model.run_id import RunId
 
 
@@ -19,8 +21,9 @@ class ProfileData(object):
         }
 
     def as_str_list(self):
+        as_json = json.dumps(self.processed_data)
         return ([str(self.invocation), str(self.num_iterations)]
-                + self.run_id.as_str_list() + [self.processed_data])
+                + self.run_id.as_str_list() + [as_json])
 
     @classmethod
     def from_str_list(cls, data_store, str_list, _line_number=None, _filename=None):
