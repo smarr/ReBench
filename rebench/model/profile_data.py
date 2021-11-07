@@ -10,7 +10,12 @@ class ProfileData(object):
         self.num_iterations = num_iterations
         self.invocation = invocation
 
-    def get_total_unit(self):
+    @staticmethod
+    def get_total_unit():
+        return None
+
+    @staticmethod
+    def get_total_value():
         return None
 
     def as_dict(self):
