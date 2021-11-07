@@ -380,7 +380,7 @@ class _ProfileFilePersistence(_FilePersistence):
         if filtered_data_file:
             filtered_data_file.write(line)
 
-        run_id.loaded_data_point(data_point, True)
+        run_id.loaded_data_point(data_point, False)
         return data_point, run_id
 
 

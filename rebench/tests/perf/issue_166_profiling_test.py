@@ -1,5 +1,3 @@
-import json
-
 from ...configurator import Configurator, load_config
 from ...executor import Executor
 from ...model.profile_data import ProfileData
@@ -42,8 +40,10 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
 
         self.assertEqual(profiler.name, "perf")
         self.assertEqual(profiler.command, "perf")
-        self.assertEqual(profiler.record_args, "record -g -F 9999 --call-graph lbr")
-        self.assertEqual(profiler.report_args, "report -g graph --no-children --stdio")
+        self.assertEqual(profiler.record_args,
+                         "record -g -F 9999 --call-graph lbr --output=profile.perf ")
+        self.assertEqual(profiler.report_args,
+                         "report -g graph --no-children --stdio --input=profile.perf ")
 
         # TODO: how do we deal with having multiple profilers defined?
         # this is something for when we support more than one
@@ -69,7 +69,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(0, run_id.get_number_of_data_points())
 
         data_point = ProfileData(run_id, "TEST-DATA, not json though, just a string", 1, 1)
-        run_id.add_data_point(data_point, True)
+        run_id.add_data_point(data_point, False)
         run_id.close_files()
         self.assertEqual(1, run_id.completed_invocations)
         self.assertEqual(1, run_id.get_number_of_data_points())
@@ -95,7 +95,10 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
 
         self._make_profiler_return_small_report(run_id)
 
-        perf_adapter = PerfAdapter()
+        executor = Executor(runs, False, self.ui)
+        executor.use_denoise = False
+
+        perf_adapter = PerfAdapter(False, executor)
         out_from_benchmark = ""  # don't really need it
 
         data = perf_adapter.parse_data(out_from_benchmark, run_id, 1)
@@ -106,7 +109,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(1, profile_data.num_iterations)
         self.assertIsNotNone(profile_data.processed_data)
 
-        result_data = json.loads(profile_data.processed_data)
+        result_data = profile_data.processed_data
         self.assertEqual(len(result_data), 10)
 
         self.assertEqual(
