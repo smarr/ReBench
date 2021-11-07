@@ -21,7 +21,7 @@ import re
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
-from ..statistics import StatisticProperties
+from ..statistics import StatisticProperties, SampleCounter
 from ..ui import UIError
 
 
@@ -36,7 +36,10 @@ class RunId(object):
 
         self._reporters = set()
         self._persistence = set()
-        self.statistics = StatisticProperties()
+        if self.is_profiling():
+            self.statistics = SampleCounter()
+        else:
+            self.statistics = StatisticProperties()
         self.total_unit = None
 
         self._termination_check = None

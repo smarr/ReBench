@@ -427,7 +427,9 @@ class Executor(object):
         mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
             run_id.report_run_completed(cmdline)
-            if (not run_id.is_failed and run_id.min_iteration_time
+            if (not run_id.is_failed
+                    and not run_id.is_profiling()
+                    and run_id.min_iteration_time
                     and mean_of_totals < run_id.min_iteration_time
                     and not self._artifact_review):
                 self.ui.warning(
@@ -533,7 +535,9 @@ class Executor(object):
                 msg += "{ind}{ind}Recorded %d data points, show last 20...\n" % num_points
             i = 0
             for data_point in data_points:
-                if warmup is not None and warmup > 0:
+                if run_id.is_profiling():
+                    run_id.add_data_point(data_point, False)
+                elif warmup is not None and warmup > 0:
                     warmup -= 1
                     run_id.add_data_point(data_point, True)
                 else:
