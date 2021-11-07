@@ -28,12 +28,14 @@ class PerfProfiler(Profiler):
 
     def __init__(self, name, cfg):
         super(PerfProfiler, self).__init__(name, "Perf")
-        self.record_args = cfg.get('record_args')
-        self.report_args = cfg.get('report_args')
+        self.record_args = cfg.get('record_args') + " --output=profile.perf "
+        self.report_args = cfg.get('report_args') + " --input=profile.perf "
         self.command = "perf"
 
     def _construct_report_cmdline(self):
-        return self.command + " " + self.report_args
+        # need to use sudo, otherwise, the profile.perf file won't be accessible
+        with_sudo = "sudo rebench-denoise --without-nice --without-shielding exec -- "
+        return with_sudo + self.command + " " + self.report_args
 
     def process_profile(self, run_id, verbose):
         cmdline = self._construct_report_cmdline()
