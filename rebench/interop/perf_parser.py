@@ -19,7 +19,6 @@ def _list_of_elem_or_str_to_json(trace):
         if isinstance(e, Element):
             result.append(e.to_json())
         else:
-            assert isinstance(e, str)
             result.append(e)
     return result
 
