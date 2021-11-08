@@ -17,16 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from . import none_or_int, none_or_float, none_or_bool
+from . import none_or_int, none_or_float, none_or_bool, remove_important, prefer_important
 
 
 class ExpRunDetails(object):
 
     @classmethod
     def compile(cls, config, defaults):
-        invocations = none_or_int(config.get('invocations', defaults.invocations))
-        iterations = none_or_int(config.get('iterations', defaults.iterations))
-        warmup = none_or_int(config.get('warmup', defaults.warmup))
+        invocations = prefer_important(config.get('invocations'), defaults.invocations)
+        iterations = prefer_important(config.get('iterations'), defaults.iterations)
+        warmup = prefer_important(config.get('warmup'), defaults.warmup)
 
         min_iteration_time = none_or_int(config.get('min_iteration_time',
                                                     defaults.min_iteration_time))
@@ -74,6 +74,19 @@ class ExpRunDetails(object):
 
         self.invocations_override = invocations_override
         self.iterations_override = iterations_override
+
+    def resolve_override_and_important(self):
+        # resolve overrides
+        if self.invocations_override is not None:
+            self.invocations = self.invocations_override
+
+        if self.iterations_override is not None:
+            self.iterations = self.iterations_override
+
+        # resolve important tags
+        self.invocations = remove_important(self.invocations)
+        self.iterations = remove_important(self.iterations)
+        self.warmup = remove_important(self.warmup)
 
     def as_dict(self):
         return {

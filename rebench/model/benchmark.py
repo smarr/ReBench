@@ -39,6 +39,7 @@ class Benchmark(object):
         codespeed_name = details.get('codespeed_name', None)
 
         run_details = ExpRunDetails.compile(details, suite.run_details)
+        run_details.resolve_override_and_important()
         variables = ExpVariables.compile(details, suite.variables)
 
         return Benchmark(name, command, gauge_adapter, suite,

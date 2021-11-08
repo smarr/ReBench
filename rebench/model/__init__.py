@@ -19,6 +19,34 @@
 # IN THE SOFTWARE.
 
 
+def prefer_important(val, default):
+    if val is None:
+        return default
+    if is_marked_important(val):
+        return val
+    if is_marked_important(default):
+        return default
+    return val
+
+
+def is_marked_important(val):
+    if isinstance(val, int):
+        return False
+    return str(val)[-1] == "!"
+
+
+def remove_important(val):
+    if val is None:
+        return None
+
+    if isinstance(val, int):
+        return val
+
+    if val[-1] == "!":
+        return int(val[:-1])
+    return int(val)
+
+
 def none_or_int(value):
     if value:
         return int(value)
