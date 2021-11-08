@@ -462,4 +462,24 @@ class _ReBenchDB(_ConcretePersistence):
 
 
 class _ProfileReBenchDB(_ReBenchDB):
-    pass
+
+    def _send_data(self, cache):
+        self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
+        num_profiles = 0
+        all_data = []
+        for run_id, data_points in cache.items():
+            profile_data = [dp.as_dict() for dp in data_points]
+            num_profiles += len(profile_data)
+            all_data.append({
+                'runId': run_id.as_dict(),
+                'p': profile_data
+            })
+
+        self.ui.debug_output_info(
+            "ReBenchDB: Send {num_m} profiles. startTime: {st}\n",
+            num_m=num_profiles, st=self._start_time)
+        return self._rebench_db.send_results({
+            'data': all_data,
+            'env': determine_environment(),
+            'startTime': self._start_time,
+            'source': determine_source_details(self._configurator)}, num_profiles)

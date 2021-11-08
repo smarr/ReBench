@@ -49,13 +49,13 @@ class ReBenchDB(object):
         self._project_name = project_name
         self._experiment_name = experiment_name
 
-    def send_results(self, benchmark_data, num_measurements):
+    def send_results(self, benchmark_data, num_items):
         success, response = self._send_to_rebench_db(benchmark_data, '/results')
 
         if success:
             self.ui.verbose_output_info(
-                "ReBenchDB: Sent {num_m} results to ReBenchDB, response was: {resp}\n",
-                num_m=num_measurements, resp=response)
+                "ReBenchDB: Sent {num_i} results to ReBenchDB, response was: {resp}\n",
+                num_i=num_items, resp=response)
 
         return success, response
 
