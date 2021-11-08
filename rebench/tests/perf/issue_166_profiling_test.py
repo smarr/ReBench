@@ -1,3 +1,4 @@
+from ..mock_http_server import MockHTTPServer
 from ...configurator import Configurator, load_config
 from ...executor import Executor
 from ...model.profile_data import ProfileData
@@ -5,6 +6,7 @@ from ...persistence import DataStore
 from ...interop.perf_adapter import PerfAdapter
 
 from ..rebench_test_case import ReBenchTestCase
+from ...rebench import ReBench
 
 
 class Issue166ProfilingSupportTest(ReBenchTestCase):
@@ -49,10 +51,6 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         # this is something for when we support more than one
         # perhaps it's a command line flag, or a setting of the experiment, ...
         # depends where we want to OS-dependent bits to come in...
-
-    def test_send_to_rebench_db(self):
-        # In the end, I want to be sure that the profiling data is sent to ReBenchDB
-        self.fail("TODO")
 
     def _load_config_and_use_tmp_as_data_file(self):
         raw_config = load_config(self._path + '/issue_166.conf')
@@ -149,6 +147,42 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
 
         self.assertEqual(7, run_id.completed_invocations)
         self.assertEqual(7, run_id.get_number_of_data_points())
+
+    def test_send_to_rebench_db(self):
+        server = MockHTTPServer()
+        port = server.get_free_port()
+        server.start()
+
+        raw_config = self._load_config_and_use_tmp_as_data_file()
+        raw_config['reporting'] = {}
+        raw_config['reporting']['rebenchdb'] = {
+            'db_url': 'http://localhost:' + str(port),
+            'repo_url': 'http://repo.git',
+            'project_name': 'Persistency Test',
+            'send_to_rebench_db': True,
+            'record_all': True}
+
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['--experiment=Test', 'ignored'])
+
+        try:
+            cnf = Configurator(
+                raw_config, DataStore(self.ui), self.ui, cmd_config, data_file=self._tmp_file)
+            runs = cnf.get_runs()
+            run_id = list(cnf.get_runs())[0]
+            self._make_profiler_return_small_report(run_id)
+
+            executor = Executor(runs, False, self.ui)
+            executor.execute()
+
+            run_id.close_files()
+
+            self.assertEqual(1, run_id.completed_invocations)
+            self.assertEqual(1, run_id.get_number_of_data_points())
+
+            self.assertEqual(1, server.get_number_of_put_requests())
+        finally:
+            server.shutdown()
 
     @staticmethod
     def _make_profiler_return_small_report(run_id):
