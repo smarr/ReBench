@@ -67,17 +67,11 @@ class RunId(object):
 
     @property
     def iterations(self):
-        run_details = self.benchmark.run_details
-        if run_details.iterations_override is not None:
-            return run_details.iterations_override
-        return run_details.iterations
+        return self.benchmark.run_details.iterations
 
     @property
     def invocations(self):
-        run_details = self.benchmark.run_details
-        if run_details.invocations_override is not None:
-            return run_details.invocations_override
-        return run_details.invocations
+        return self.benchmark.run_details.invocations
 
     @property
     def completed_invocations(self):

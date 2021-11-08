@@ -5,19 +5,22 @@ schema;runs_type:
   type: map
   mapping: &EXP_RUN_DETAILS
     invocations:
-      type: int
+      type: text
+      # pattern: \d+!?
       # default: 1  #  can't specify this here, because the defaults override settings
       desc: |
         The number of times an executor is executed a run.
     iterations:
-      type: int
+      type: text
+      # pattern: \d+!?
       # default: 1 #  can't specify this here, because the defaults override settings
       desc: |
         The number of times a run is executed within an executor
         invocation. This needs to be supported by a benchmark harness and
         ReBench passes this value on to the harness or benchmark.
     warmup:
-      type: int
+      type: text
+      # pattern: \d+!?
       desc: |
         Consider the first N iterations as warmup and ignore them in ReBench's summary
         statistics. Note ,they are still persisted in the data file.
