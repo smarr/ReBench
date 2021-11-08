@@ -447,7 +447,7 @@ class _ReBenchDB(_ConcretePersistence):
             criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
 
         self.ui.debug_output_info(
-            "ReBenchDB: Send {num_m} measures. startTime: {st}\n",
+            "ReBenchDB: Sending {num_m} measures. startTime: {st}\n",
             num_m=num_measurements, st=self._start_time)
         return self._rebench_db.send_results({
             'data': all_data,
@@ -476,7 +476,7 @@ class _ProfileReBenchDB(_ReBenchDB):
             })
 
         self.ui.debug_output_info(
-            "ReBenchDB: Send {num_m} profiles. startTime: {st}\n",
+            "ReBenchDB: Sending {num_m} profiles. startTime: {st}\n",
             num_m=num_profiles, st=self._start_time)
         return self._rebench_db.send_results({
             'data': all_data,
