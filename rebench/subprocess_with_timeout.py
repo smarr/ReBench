@@ -125,7 +125,7 @@ def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
     Run a command with a timeout after which it will be forcibly
     killed.
     """
-    executable_name = args.split(' ')[0]
+    executable_name = args.split(' ', 1)[0]
 
     thread = _SubprocessThread(executable_name, args, shell, cwd, verbose, stdout,
                                stderr, stdin_input)

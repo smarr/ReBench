@@ -124,6 +124,11 @@ Argument:
             default=False,
             help='Disables execution.'
                  ' It allows to verify the configuration file and other parameters.')
+        execution.add_argument(
+            '-p', '--execution-plan', action='store_true', dest='execution_plan',
+            default=False,
+            help='Print execution plan.'
+                 ' This outputs all executions that would be performed, without executing them.')
 
         data = parser.add_argument_group(
             'Data and Reporting',
@@ -243,6 +248,8 @@ Argument:
                                         args.build_log, exp_filter)
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
+        except ValueError as exc:
+            raise UIError(exc.args[0] + "\n", exc)
 
         if args.report_completion:
             return self._report_completion()
@@ -250,8 +257,11 @@ Argument:
         runs = self._config.get_runs()
 
         denoise_result = None
+        show_denoise_warnings = not (self._config.artifact_review
+                                     or self._config.options.execution_plan)
+
         try:
-            denoise_result = minimize_noise(not self._config.artifact_review, self.ui)
+            denoise_result = minimize_noise(show_denoise_warnings, self.ui)
             init_environment(denoise_result, self.ui)
 
             data_store.load_data(runs, self._config.options.do_rerun)
@@ -261,7 +271,7 @@ Argument:
 
             return self.execute_experiment(runs, use_nice, use_shielding)
         finally:
-            restore_noise(denoise_result, not self._config.artifact_review, self.ui)
+            restore_noise(denoise_result, show_denoise_warnings, self.ui)
 
     def execute_experiment(self, runs, use_nice, use_shielding):
         self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
@@ -276,7 +286,7 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log, self._config.artifact_review,
-                            use_nice, use_shielding)
+                            use_nice, use_shielding, self._config.options.execution_plan)
 
         if self._config.options.no_execution:
             return True
