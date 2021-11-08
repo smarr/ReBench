@@ -44,6 +44,9 @@ class MockHTTPServer(object):
         return port
 
     def start(self):
+        global _put_requests  # pylint: disable=global-statement
+        _put_requests = 0
+
         self._server = HTTPServer(('localhost', self._port), _RequestHandler)
 
         self._thread = Thread(target=self._server.serve_forever)
@@ -53,6 +56,9 @@ class MockHTTPServer(object):
     def shutdown(self):
         self._server.shutdown()
 
-    def get_number_of_put_requests(self):
-        global _put_requests  # pylint: disable=global-statement,global-variable-not-assigned
-        return _put_requests
+    @staticmethod
+    def get_number_of_put_requests():
+        global _put_requests  # pylint: disable=global-statement
+        result = _put_requests
+        _put_requests = 0
+        return result
