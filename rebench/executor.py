@@ -404,7 +404,8 @@ class Executor(object):
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 
         if self._print_execution_plan:
-            print("cd " + run_id.location)
+            if run_id.location:
+                print("cd " + run_id.location)
             print(cmdline)
             return True
 
