@@ -64,6 +64,16 @@ class PerfParser(object):
         self._elements = []
 
     def parse_lines(self, lines):
+        try:
+            self._parse_lines(lines)
+        except Exception as e:
+            exp_str = str(e)
+            print("Failed to parse: " + exp_str)
+            print("-----------perf-output------------")
+            print("\n".join(lines))
+            print("-----------perf-output-end--------")
+
+    def _parse_lines(self, lines):
         top_elements = self._elements
         stack = []
         prev_divider = ""
