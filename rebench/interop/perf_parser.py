@@ -53,7 +53,7 @@ def _create_element(m):
 
 class PerfParser(object):
 
-    re_main_item = re.compile(r"^\s+(\d+\.\d\d)%\s+(\S+)\s+(\S+)\s+\[(\S)]\s(\S+)$")
+    re_main_item = re.compile(r"^\s+(\d+\.\d\d)%\s\s(.+)\s\s(\S+)\s+\[(\S)]\s(\S+)$")
     re_child_divider = re.compile(r"^\s+(\|\s*)+$")
 
     re_child = re.compile(r"^\s+(?:\|\s*)*--(\d+\.\d\d)%--(\S+)$")
@@ -79,6 +79,9 @@ class PerfParser(object):
         prev_divider = ""
 
         for line in lines:
+            if not line:
+                continue
+
             # ignore comments
             if line.startswith("#"):
                 continue

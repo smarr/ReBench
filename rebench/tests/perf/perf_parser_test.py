@@ -201,3 +201,18 @@ class PerfParserTest(TestCase):
         self.assertEqual(e4.method, "EagerBinaryPrimitiveNode_executeGeneric")
 
         self._assert_json_is_serializable()
+
+    def test_main_item_with_space(self):
+        data = """
+     0.76%  gnal Dispatcher  [kernel.kallsyms]   [k] zap_pte_range.isra.0
+            |
+            ---zap_pte_range.isra.0
+               unmap_page_range
+"""
+        elements = self._parse(data)
+        e = elements[0]
+
+        self.assertEqual(e.percent, 0.76)
+        self.assertEqual(e.binary, "gnal Dispatcher")
+        self.assertEqual(e.method, "zap_pte_range.isra.0")
+        self.assertEqual(e.shared_object, "[kernel.kallsyms]")
