@@ -82,7 +82,7 @@ class Experiment(object):
                             if not configurator.run_filter.applies_to_machine(machine):
                                 continue
                             run = self._data_store.create_run_id(
-                                bench, cores, input_size, var_val, machine)
+                                bench, cores, input_size, var_val, machine, env)
                             bench.add_run(run)
                             runs.add(run)
                             run.add_reporting(self._reporting)

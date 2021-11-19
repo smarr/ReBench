@@ -79,7 +79,7 @@ class DataStore(object):
             self._files[filename] = p
         return self._files[filename]
 
-    def create_run_id(self, benchmark, cores, input_size, var_value, machine):
+    def create_run_id(self, benchmark, cores, input_size, var_value, machine, env):
         if isinstance(cores, str) and cores.isdigit():
             cores = int(cores)
         if input_size == '':
@@ -87,7 +87,7 @@ class DataStore(object):
         if var_value == '':
             var_value = None
 
-        run = RunId(benchmark, cores, input_size, var_value, machine)
+        run = RunId(benchmark, cores, input_size, var_value, machine, env)
         if run in self._run_ids:
             return self._run_ids[run]
         else:

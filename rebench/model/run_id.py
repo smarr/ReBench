@@ -27,12 +27,13 @@ from ..ui import UIError
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value, machine):
+    def __init__(self, benchmark, cores, input_size, var_value, machine, env):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
         self.machine = machine
+        self.env = env
 
         self._reporters = set()
         self._persistence = set()
@@ -256,6 +257,9 @@ class RunId(object):
 
     def _construct_cmdline(self):
         cmdline = ""
+        if self.env:
+            print("trop bien y a un env")
+
         if self.benchmark.suite.executor.path:
             cmdline = self.benchmark.suite.executor.path + "/"
 

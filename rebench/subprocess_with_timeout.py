@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 from os         import kill
 from select     import select
 from signal     import SIGKILL
@@ -36,7 +37,7 @@ else:
 
 class _SubprocessThread(Thread):
 
-    def __init__(self, executable_name, args, shell, cwd, verbose, stdout, stderr, stdin_input):
+    def __init__(self, executable_name, args, shell, cwd, verbose, stdout, stderr, stdin_input, env):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
@@ -45,6 +46,7 @@ class _SubprocessThread(Thread):
         self._stdout = stdout
         self._stderr = stderr
         self._stdin_input = stdin_input
+        self._env = os.environ if env is None else os.environ.copy().update(env)   # TODO should that be moved?
 
         self._pid = None
         self._started_cv = Condition()
@@ -62,9 +64,10 @@ class _SubprocessThread(Thread):
         try:
             self._started_cv.acquire()
             stdin = PIPE if self._stdin_input else None
+
             # pylint: disable-next=consider-using-with
             proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                         stdin=stdin, stdout=self._stdout, stderr=self._stderr)
+                         stdin=stdin, stdout=self._stdout, stderr=self._stderr, env=self._env)
             self._pid = proc.pid
             self._started_cv.notify()
             self._started_cv.release()
@@ -120,15 +123,16 @@ def _print_keep_alive(seconds_since_start):
 
 def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
         verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
-        keep_alive_output=_print_keep_alive):
+        keep_alive_output=_print_keep_alive, env=None):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
     """
     executable_name = args.split(' ', 1)[0]
 
+    stdout = sys.stdout  # TODO remove because evil, used for debugging
     thread = _SubprocessThread(executable_name, args, shell, cwd, verbose, stdout,
-                               stderr, stdin_input)
+                               stderr, stdin_input, env)
     thread.start()
 
     if timeout == -1:
