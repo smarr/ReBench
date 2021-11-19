@@ -40,6 +40,11 @@ class Executor(object):
 
         description = executor.get('description')
         desc = executor.get('desc')
+        env = executor.get('env')
+
+        # Turning env into a dict, but ideally env shouldn't be an array of strings to begin with...
+        # (its format in the yaml file should be changed)
+        env = {key: val for key, val in map(lambda x: x.split("="), env)}
 
         profiler = Profiler.compile(executor.get('profiler'))
 
@@ -51,10 +56,10 @@ class Executor(object):
                                      + "but no profiler details are given.")
 
         return Executor(executor_name, path, executable, args, build, description or desc,
-                        profiler, run_details, variables, action)
+                        profiler, run_details, variables, action, env)
 
     def __init__(self, name, path, executable, args, build, description,
-                 profiler, run_details, variables, action):
+                 profiler, run_details, variables, action, env):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
         """
@@ -70,6 +75,7 @@ class Executor(object):
 
         self.run_details = run_details
         self.variables = variables
+        self.env = env
 
         self.action = action
 

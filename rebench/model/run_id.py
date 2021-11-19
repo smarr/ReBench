@@ -257,11 +257,13 @@ class RunId(object):
 
     def _construct_cmdline(self):
         cmdline = ""
-        if self.env:
-            print("trop bien y a un env")
+
+        if self.benchmark.suite.executor.env:
+            for key, val in self.benchmark.suite.executor.env.items():
+               cmdline += (key + "=" + val + " ")
 
         if self.benchmark.suite.executor.path:
-            cmdline = self.benchmark.suite.executor.path + "/"
+            cmdline += self.benchmark.suite.executor.path + "/"
 
         cmdline += self.benchmark.suite.executor.executable
 
@@ -276,6 +278,7 @@ class RunId(object):
         cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
+
         return self._cmdline
 
     def __eq__(self, other):

@@ -286,6 +286,7 @@ class Configurator(object):
     def get_runs(self):
         runs = set()
         for exp in list(self._experiments.values()):
+            print(exp._env)
             runs |= exp.runs
 
         if self.options and self.options.setup_only:

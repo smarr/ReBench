@@ -37,7 +37,7 @@ class Issue42BuildExecutor(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui), self.ui)
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
-
+        print(cnf.build_log)
         ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         self.assertTrue(ex.execute())
 

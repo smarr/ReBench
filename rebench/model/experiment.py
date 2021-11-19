@@ -45,11 +45,13 @@ class Experiment(object):
 
         executions = exp.get('executions')
         suites = exp.get('suites')
+        
+        env = exp.get('env')
 
-        return Experiment(name, description or desc, action, data_file, reporting,
+        return Experiment(name, description or desc, action, env, data_file, reporting,
                           run_details, variables, configurator, executions, suites)
 
-    def __init__(self, name, description, action, data_file, reporting, run_details,
+    def __init__(self, name, description, action, env, data_file, reporting, run_details,
                  variables, configurator, executions, suites):
         self.name = name
         self._description = description
@@ -57,6 +59,7 @@ class Experiment(object):
 
         self._run_details = run_details
         self._variables = variables
+        self._env = env
         self._reporting = reporting
 
         self._data_store = configurator.data_store
@@ -75,6 +78,7 @@ class Experiment(object):
             if not configurator.run_filter.applies_to_bench(bench):
                 continue
             variables = bench.variables
+            env = bench.env
             for cores in variables.cores:
                 for input_size in variables.input_sizes:
                     for var_val in variables.variable_values:

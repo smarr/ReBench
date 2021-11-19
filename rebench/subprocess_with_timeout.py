@@ -123,16 +123,15 @@ def _print_keep_alive(seconds_since_start):
 
 def run(args, cwd=None, shell=False, kill_tree=True, timeout=-1,
         verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
-        keep_alive_output=_print_keep_alive, env=None):
+        keep_alive_output=_print_keep_alive):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
     """
     executable_name = args.split(' ', 1)[0]
 
-    stdout = sys.stdout  # TODO remove because evil, used for debugging
     thread = _SubprocessThread(executable_name, args, shell, cwd, verbose, stdout,
-                               stderr, stdin_input, env)
+                               stderr, stdin_input, env=None)
     thread.start()
 
     if timeout == -1:
