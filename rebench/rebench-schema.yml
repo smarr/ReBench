@@ -65,6 +65,13 @@ schema;runs_type:
         convenient to simply retry them a few times.
         This value indicates how often execution should be retried on failure.
 
+    env:
+      type: seq
+      sequence:
+        - type: str
+      desc: |
+        Environment variables.
+
 
 schema;reporting_type:
   type: map
