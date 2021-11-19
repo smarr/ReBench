@@ -32,34 +32,17 @@ class Issue42BuildExecutor(ReBenchTestCase):
     def setUp(self):
         super(Issue42BuildExecutor, self).setUp()
         self._set_path(__file__)
-        self._cleanup_log()
-
-    def tearDown(self):
-        self._cleanup_log()
-
-    def _cleanup_log(self):
-        if os.path.isfile(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
-
-    def _read_log(self):
-        # pylint: disable-next=unspecified-encoding
-        with open(self._path + '/build.log', 'r') as log_file:
-            return log_file.read()
 
     def test_build_executor_simple_cmd(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui), self.ui)
         runs = list(cnf.get_runs())
-        # runs = sorted(runs, key=lambda e: e.benchmark.name)
-        #
-        # ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
-        # ex.execute()
-        #
-        # try:
-        #     self.assertEqual("Bench1", runs[0].benchmark.name)
-        #     self.assertEqual(10, runs[0].get_number_of_data_points())
-        #     self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
-        # finally:
-        #     os.remove(self._path + '/vm_58a.sh')
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
+
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
+        self.assertTrue(ex.execute())
+
+        self.assertEqual("Bench1", runs[0].benchmark.name)
+        self.assertFalse(runs[0].is_failed)
 
 
 if __name__ == "__main__":
