@@ -27,13 +27,12 @@ from ..ui import UIError
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value, machine, env):
+    def __init__(self, benchmark, cores, input_size, var_value, machine):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
         self.machine = machine
-        self.env = env
 
         self._reporters = set()
         self._persistence = set()

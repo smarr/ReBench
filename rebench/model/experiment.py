@@ -78,7 +78,6 @@ class Experiment(object):
             if not configurator.run_filter.applies_to_bench(bench):
                 continue
             variables = bench.variables
-            env = bench.env
             for cores in variables.cores:
                 for input_size in variables.input_sizes:
                     for var_val in variables.variable_values:
@@ -86,7 +85,7 @@ class Experiment(object):
                             if not configurator.run_filter.applies_to_machine(machine):
                                 continue
                             run = self._data_store.create_run_id(
-                                bench, cores, input_size, var_val, machine, env)
+                                bench, cores, input_size, var_val, machine)
                             bench.add_run(run)
                             runs.add(run)
                             run.add_reporting(self._reporting)

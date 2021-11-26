@@ -30,6 +30,7 @@ class Benchmark(object):
            suite definitions.
         """
         name, details = value_with_optional_details(bench, {})
+
         command = details.get('command', name)
 
         gauge_adapter = details.get('gauge_adapter',
@@ -42,10 +43,10 @@ class Benchmark(object):
         variables = ExpVariables.compile(details, suite.variables)
 
         return Benchmark(name, command, gauge_adapter, suite,
-                         variables, None, extra_args, run_details, codespeed_name,
+                         variables, extra_args, run_details, codespeed_name,
                          data_store)
 
-    def __init__(self, name, command, gauge_adapter, suite, variables, env, extra_args,
+    def __init__(self, name, command, gauge_adapter, suite, variables, extra_args,
                  run_details, codespeed_name, data_store):
         assert run_details is None or isinstance(run_details, ExpRunDetails)
         self.name = name
@@ -67,7 +68,6 @@ class Benchmark(object):
         self.suite = suite
 
         self.variables = variables
-        self.env = env
 
         # the compiled runs, these might be shared with other benchmarks/suites
         self._runs = set()
