@@ -470,7 +470,7 @@ class Executor(object):
                     "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
-                cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
+                cmdline, env=run_id.env, cwd=run_id.location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive)

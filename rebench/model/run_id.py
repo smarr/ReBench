@@ -48,6 +48,8 @@ class RunId(object):
 
         self._max_invocation = 0
 
+        self.env = benchmark.suite.executor.env
+
     @property
     def warmup_iterations(self):
         return self.benchmark.run_details.warmup
@@ -256,13 +258,8 @@ class RunId(object):
 
     def _construct_cmdline(self):
         cmdline = ""
-
-        if self.benchmark.suite.executor.env:
-            for key, val in self.benchmark.suite.executor.env.items():
-               cmdline += (key + "=" + val + " ")
-
         if self.benchmark.suite.executor.path:
-            cmdline += self.benchmark.suite.executor.path + "/"
+            cmdline = self.benchmark.suite.executor.path + "/"
 
         cmdline += self.benchmark.suite.executor.executable
 
