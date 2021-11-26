@@ -42,9 +42,8 @@ class Executor(object):
         desc = executor.get('desc')
         env = executor.get('env')
 
-        # Turning env into a dict, but ideally env shouldn't be an array of strings to begin with...
-        # (its format in the yaml file should be changed)
-        env = {key: val for key, val in map(lambda x: x.split("="), env)}
+        # Converting a list of dicts containing the individual env name/var pairs to a single dict of pairs
+        env = {key: name for k in env for (key, name) in k.items()}
 
         profiler = Profiler.compile(executor.get('profiler'))
 

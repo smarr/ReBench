@@ -68,9 +68,15 @@ schema;runs_type:
     env:
       type: seq
       sequence:
-        - type: str
+        - type: map
+          matching-rule: all
+          mapping:
+            regex;(.*): # More specific regex for env var names could be used (no starting with a digit for instance)
+              type: str
       desc: |
         Environment variables.
+
+
 
 
 schema;reporting_type:
