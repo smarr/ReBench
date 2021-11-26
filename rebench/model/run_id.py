@@ -277,7 +277,6 @@ class RunId(object):
         cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
-
         return self._cmdline
 
     def __eq__(self, other):
