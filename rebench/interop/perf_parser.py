@@ -66,7 +66,7 @@ class PerfParser(object):
     def parse_lines(self, lines):
         try:
             self._parse_lines(lines)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             exp_str = str(e)
             print("Failed to parse: " + exp_str)
             print("-----------perf-output------------")
