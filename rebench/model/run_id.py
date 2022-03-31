@@ -21,7 +21,7 @@ import re
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
-from ..statistics import StatisticProperties
+from ..statistics import StatisticProperties, SampleCounter
 from ..ui import UIError
 
 
@@ -36,7 +36,10 @@ class RunId(object):
 
         self._reporters = set()
         self._persistence = set()
-        self.statistics = StatisticProperties()
+        if self.is_profiling():
+            self.statistics = SampleCounter()
+        else:
+            self.statistics = StatisticProperties()
         self.total_unit = None
 
         self._termination_check = None
@@ -102,6 +105,16 @@ class RunId(object):
         if not self.benchmark.suite.location:
             return None
         return self._expand_vars(self.benchmark.suite.location)
+
+    def get_gauge_adapter_name(self):
+        if self.is_profiling():
+            # TODO: needs changing once we want to support different profilers
+            perf_profile = self.benchmark.suite.executor.profiler[0]
+            return perf_profile.gauge_adapter_name
+        return self.benchmark.gauge_adapter
+
+    def is_profiling(self):
+        return self.benchmark.suite.executor.action == "profile"
 
     def build_commands(self):
         commands = set()

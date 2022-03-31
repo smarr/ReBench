@@ -38,11 +38,12 @@ class TimeAdapter(GaugeAdapter):
     re_formatted_time = re.compile(r"^wall-time \(secounds\): (\d+\.\d+)")
     re_formatted_rss = re.compile(r"^max rss \(kb\): (\d+)")
 
-    def __init__(self, include_faulty):
-        GaugeAdapter.__init__(self, include_faulty)
+    def __init__(self, include_faulty, executor):
+        GaugeAdapter.__init__(self, include_faulty, executor)
         self._use_formatted_time = False
 
-    def acquire_command(self, command):
+    def acquire_command(self, run_id):
+        command = run_id.cmdline()
         try:
             formatted_output = subprocess.call(
                 ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
@@ -118,5 +119,5 @@ class TimeManualAdapter(TimeAdapter):
        user to use the /usr/bin/time manually.
        This is useful for runs on remote machines like the Tilera or ARM boards.
     """
-    def acquire_command(self, command):
-        return command
+    def acquire_command(self, run_id):
+        return run_id.cmdline()

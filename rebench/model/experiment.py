@@ -29,9 +29,13 @@ class Experiment(object):
 
     @classmethod
     def compile(cls, name, exp, configurator):
+        action = exp.get('action')
         description = exp.get('description')
         desc = exp.get('desc')
-        data_file = exp.get('data_file') or configurator.data_file
+        if action == 'profile':
+            data_file = exp.get('data_file') or configurator.data_file + ".profiles"
+        else:
+            data_file = exp.get('data_file') or configurator.data_file
 
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
                                       configurator.options, configurator.ui)
@@ -42,21 +46,21 @@ class Experiment(object):
         executions = exp.get('executions')
         suites = exp.get('suites')
 
-        return Experiment(name, description or desc, data_file, reporting,
+        return Experiment(name, description or desc, action, data_file, reporting,
                           run_details, variables, configurator, executions, suites)
 
-    def __init__(self, name, description, data_file, reporting, run_details,
+    def __init__(self, name, description, action, data_file, reporting, run_details,
                  variables, configurator, executions, suites):
         self.name = name
         self._description = description
-        self._data_file = data_file
+        self._action = action
 
         self._run_details = run_details
         self._variables = variables
         self._reporting = reporting
 
         self._data_store = configurator.data_store
-        self._persistence = self._data_store.get(data_file, configurator)
+        self._persistence = self._data_store.get(data_file, configurator, action)
 
         self._suites = self._compile_executors_and_benchmark_suites(
             executions, suites, configurator)
@@ -101,7 +105,8 @@ class Experiment(object):
             else:
                 suites_for_executor = suites
 
-            executor = configurator.get_executor(executor_name, run_details, variables)
+            executor = configurator.get_executor(
+                executor_name, run_details, variables, self._action)
 
             for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(

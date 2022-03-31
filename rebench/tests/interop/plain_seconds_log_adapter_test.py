@@ -26,15 +26,18 @@ from ...interop.plain_seconds_log_adapter import PlainSecondsLogAdapter
 class PlainSecondsAdapterTest(TestCase):
 
     def test_acquire_command(self):
-        adapter = PlainSecondsLogAdapter(False)
-        cmd = adapter.acquire_command("FOO")
+        class _TestRunId(object):
+            def cmdline(self):
+                return "FOO"
+        adapter = PlainSecondsLogAdapter(False, None)
+        cmd = adapter.acquire_command(_TestRunId())
         self.assertEqual("FOO", cmd)
 
     def test_parse_data(self):
         data = """100
 50
 1"""
-        adapter = PlainSecondsLogAdapter(False)
+        adapter = PlainSecondsLogAdapter(False, None)
         data = adapter.parse_data(data, None, 2)
         self.assertEqual(3, len(data))
 
@@ -48,5 +51,5 @@ class PlainSecondsAdapterTest(TestCase):
         self.assertEqual(1000, data[2].get_total_value())
 
     def test_parse_no_data(self):
-        adapter = PlainSecondsLogAdapter(False)
+        adapter = PlainSecondsLogAdapter(False, None)
         self.assertRaises(OutputNotParseable, adapter.parse_data, "", None, 1)

@@ -35,8 +35,8 @@ class PlainSecondsLogAdapter(GaugeAdapter):
     re_incorrect = re.compile(r".*incorrect.*")
     re_err = re.compile(r".*error.*")
 
-    def __init__(self, include_faulty):
-        super(PlainSecondsLogAdapter, self).__init__(include_faulty)
+    def __init__(self, include_faulty, executor):
+        super(PlainSecondsLogAdapter, self).__init__(include_faulty, executor)
         self._other_error_definitions = [self.re_NPB_partial_invalid,
                                          self.re_NPB_invalid, self.re_incorrect,
                                          self.re_err]

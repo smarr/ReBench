@@ -9,7 +9,7 @@ class DenoiseTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_minimize(self):
-        result = minimize_noise(False, self.ui)
+        result = minimize_noise(False, self.ui, True)
         self.assertIsInstance(result.succeeded, bool)
         self.assertIsInstance(result.use_nice, bool)
         self.assertIsInstance(result.use_shielding, bool)

@@ -1,0 +1,74 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles'
+# Event count (approx.): 2041096754
+#
+# Overhead  Command          Shared Object          Symbol
+# ........  ...............  .....................  ............................................................................................................................
+#
+     7.20%  som-native-inte  som-native-interp-ast  [.] MessageSendNode$AbstractMessageSendNode_evaluateArguments_bf7729bae6effddecf0ca8938ecdffedaf15af80
+            |
+             --6.87%--MessageSendNode$AbstractMessageSendNode_evaluateArguments_bf7729bae6effddecf0ca8938ecdffedaf15af80
+                       MessageSendNode$AbstractMessageSendNode_executeGeneric_ce143f167036af2090f6f15e30925550ece327b1
+                       EagerBinaryPrimitiveNode_executeGeneric_bf7fec9ded572fea61a9eb9b0031d6b40ef4bfd5
+                       ExpressionNode_executeLong_60573f5a2d4614ca6dba4dee6fc4c0360506579e
+                       LocalVariableNodeFactory$LocalVariableWriteNodeGen_executeGeneric_long1_8df9fa806730986c6ab0936a7d9664e0804872dd
+                       LocalVariableNodeFactory$LocalVariableWriteNodeGen_executeGeneric_d34e37175ec510884af37c4981ffe17309cec6f9
+                       IntToDoInlinedLiteralsNode_doLooping_fb28898ad8110f21d8b57027a624697a9988f4df
+                       IntToDoInlinedLiteralsNode_doIntToDo_54685947c4bcab224870fc73d385c495122b828b
+                       |
+                        --6.82%--IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_long_long0_428318a36ea78a9e61e6131f65153ae65cab856e
+                                  IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_6c504e8fb74533c0c8f482ceba93fbeb804e2309
+                                  SequenceNode_executeAllButLast_7ffffa02f868d75a4ead8de6598d3a6c60cc77b5
+                                  SequenceNode_executeGeneric_364feac66f6f18a1c2b66d8747b1dbd96f2ec1fe
+                                  Invokable_execute_d564e72a18f8c94ffa706cc3f56f49e5f8bffad6
+                                  OptimizedCallTarget_executeRootNode_a43d01f11c960918e3be5d613c7f9397ed47b422
+                                  |
+                                   --3.13%--OptimizedCallTarget_profiledPERoot_afb4ccd0d1f43f0bbf82d042837d2118c889aac3
+                                             OptimizedCallTarget_callBoundary_945c18e26ecf71ada2e42c0edd94022a51217b1a
+                                             SubstrateOptimizedCallTarget_doInvoke_c3dbb37c50b0da98609ebaac00eaa5abf3d20158
+                                             OptimizedCallTarget_callDirect_fa23f04a788131fce3f957bec1f0bf5253856350
+                                             OptimizedDirectCallNode_call_ba221ffaf307f8b4cdcc1da9e0b137c8c24c957a
+                                             |
+                                              --3.06%--CachedDispatchNode_executeDispatch_25c10c62eef54a3b9bcd3e8ec866c36ad670747a
+                                                        |
+                                                         --1.72%--MessageSendNode$GenericMessageSendNode_doPreEvaluated_b0c6be8786ca7c0b2225a86f9d4ef06280c767d7
+                                                                   MessageSendNode$AbstractMessageSendNode_executeGeneric_ce143f167036af2090f6f15e30925550ece327b1
+                                                                   MessageSendNode$AbstractMessageSendNode_evaluateArguments_bf7729bae6effddecf0ca8938ecdffedaf15af80
+                                                                   MessageSendNode$AbstractMessageSendNode_executeGeneric_ce143f167036af2090f6f15e30925550ece327b1
+
+     0.68%  som-native-inte  som-native-interp-ast  [.] Math_addExact_82781cf4703b1f9361345a357477b948d4847383
+            |
+            ---Math_addExact_82781cf4703b1f9361345a357477b948d4847383
+               AdditionPrimFactory$AdditionPrimNodeGen_executeEvaluated_73ce65ad96187e7b4675410d98c15f7d7d11f8aa
+               EagerBinaryPrimitiveNode_executeEvaluated_6bd1130635df6bfc662b95445aab9a123815b924
+               EagerBinaryPrimitiveNode_executeGeneric_bf7fec9ded572fea61a9eb9b0031d6b40ef4bfd5
+               ExpressionNode_executeLong_60573f5a2d4614ca6dba4dee6fc4c0360506579e
+               LocalVariableNodeFactory$LocalVariableWriteNodeGen_executeGeneric_long1_8df9fa806730986c6ab0936a7d9664e0804872dd
+               LocalVariableNodeFactory$LocalVariableWriteNodeGen_executeGeneric_d34e37175ec510884af37c4981ffe17309cec6f9
+               IntToDoInlinedLiteralsNode_doLooping_fb28898ad8110f21d8b57027a624697a9988f4df
+               IntToDoInlinedLiteralsNode_doIntToDo_54685947c4bcab224870fc73d385c495122b828b
+               |
+                --0.65%--IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_long_long0_428318a36ea78a9e61e6131f65153ae65cab856e
+                          IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_6c504e8fb74533c0c8f482ceba93fbeb804e2309
+                          SequenceNode_executeAllButLast_7ffffa02f868d75a4ead8de6598d3a6c60cc77b5
+                          SequenceNode_executeGeneric_364feac66f6f18a1c2b66d8747b1dbd96f2ec1fe
+                          Invokable_execute_d564e72a18f8c94ffa706cc3f56f49e5f8bffad6
+                          OptimizedCallTarget_executeRootNode_a43d01f11c960918e3be5d613c7f9397ed47b422
+
+     0.37%  som-native-inte  som-native-interp-ast  [.] HeapChunkProvider_resetAlignedHeapChunk_3b0d29e3728eb7a6fc10e5e8f65655e2b0d220ca
+     0.37%  som-native-inte  [kernel.kallsyms]      [k] native_irq_return_iret
+     0.32%  som-native-inte  [kernel.kallsyms]      [k] clear_page_erms
+     0.00%  som-native-inte  [kernel.kallsyms]      [k] native_apic_msr_write
+     0.00%  perf             [kernel.kallsyms]      [k] native_apic_msr_write
+     0.00%  som-native-inte  [kernel.kallsyms]      [k] intel_bts_enable_local
+     0.00%  som-native-inte  [kernel.kallsyms]      [k] intel_pmu_handle_irq
+     0.00%  perf             [kernel.kallsyms]      [k] intel_pmu_handle_irq
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -250,6 +250,22 @@ schema;executor_type:
       type: str
     build:
       include: build_type
+    profiler:
+      type: map
+      allowempty: True
+      mapping:
+        perf:
+          type: map
+          allowempty: True
+          mapping:
+            record_args:
+              type: str
+              desc: Arguments given to `perf` when recording a profile
+              default: record -g -F 9999 --call-graph lbr
+            report_args:
+              type: str
+              desc: Argument given to `perf` when processing the recording
+              default: report -g graph --no-children --stdio
 
 schema;exp_suite_type:
   desc: A list of suites
@@ -282,6 +298,11 @@ schema;experiment_type:
     data_file:
       desc: The data for this experiment goes into a separate file
       type: str
+    action:
+      desc: Whether to do benchmarking or profiling. This controls how experiemnts are executed and how results are analyzed.
+      type: str
+      pattern: benchmark|profile
+      default: benchmark
     reporting:
       include: reporting_type
 

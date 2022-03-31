@@ -263,10 +263,10 @@ class Configurator(object):
     def has_executor(self, executor_name):
         return executor_name in self._executors
 
-    def get_executor(self, executor_name, run_details, variables):
+    def get_executor(self, executor_name, run_details, variables, action):
         executor = Executor.compile(
             executor_name, self._executors[executor_name],
-            run_details, variables, self.build_commands)
+            run_details, variables, self.build_commands, action)
         return executor
 
     def get_suite(self, suite_name):

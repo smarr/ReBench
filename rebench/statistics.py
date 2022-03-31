@@ -20,6 +20,16 @@
 import math
 
 
+class SampleCounter(object):
+
+    def __init__(self):
+        self.num_samples = 0
+        self.mean = 0
+
+    def add_sample(self, _sample):
+        self.num_samples += 1
+
+
 class StatisticProperties(object):
     """
     The class maintains running statistics for the added data points.

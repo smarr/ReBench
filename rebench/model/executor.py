@@ -22,12 +22,14 @@ import os
 from .build_cmd import BuildCommand
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
+from .profiler import Profiler
+from ..configuration_error import ConfigurationError
 
 
 class Executor(object):
 
     @classmethod
-    def compile(cls, executor_name, executor, run_details, variables, build_commands):
+    def compile(cls, executor_name, executor, run_details, variables, build_commands, action):
         path = executor.get('path')
         if path:
             path = os.path.abspath(path)
@@ -39,14 +41,20 @@ class Executor(object):
         description = executor.get('description')
         desc = executor.get('desc')
 
+        profiler = Profiler.compile(executor.get('profiler'))
+
         run_details = ExpRunDetails.compile(executor, run_details)
         variables = ExpVariables.compile(executor, variables)
 
+        if action == "profile" and len(profiler) == 0:
+            raise ConfigurationError("Executor " + executor_name + " is configured for profiling, "
+                                     + "but no profiler details are given.")
+
         return Executor(executor_name, path, executable, args, build, description or desc,
-                        run_details, variables)
+                        profiler, run_details, variables, action)
 
     def __init__(self, name, path, executable, args, build, description,
-                 run_details, variables):
+                 profiler, run_details, variables, action):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
         """
@@ -58,9 +66,12 @@ class Executor(object):
 
         self.build = build
         self.description = description
+        self.profiler = profiler
 
         self.run_details = run_details
         self.variables = variables
+
+        self.action = action
 
     def as_dict(self):
         result = {
