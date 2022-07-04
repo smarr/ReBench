@@ -348,7 +348,7 @@ class Executor(object):
 
         def _keep_alive(seconds):
             self.ui.warning(
-                "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, script, path)
+                "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, script, path)
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
@@ -467,7 +467,7 @@ class Executor(object):
 
             def _keep_alive(seconds):
                 self.ui.warning(
-                    "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
+                    "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, env=run_id.env, cwd=run_id.location, stdout=subprocess.PIPE,
