@@ -41,7 +41,7 @@ class PerfProfiler(Profiler):
 
     def process_profile(self, run_id, executor):
         cmdline = self._construct_report_cmdline(executor)
-        (return_code, output, _) = run(cmdline, cwd=run_id.location, shell=True,
+        (return_code, output, _) = run(cmdline, run_id.env, cwd=run_id.location, shell=True,
                                        verbose=executor.debug)
 
         if return_code != 0:
