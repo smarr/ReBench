@@ -45,7 +45,7 @@ class Experiment(object):
 
         executions = exp.get('executions')
         suites = exp.get('suites')
-        
+
         env = exp.get('env')
 
         return Experiment(name, description or desc, action, env, data_file, reporting,

@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import os
 from os         import kill
 from select     import select
 from signal     import SIGKILL
@@ -37,7 +36,8 @@ else:
 
 class _SubprocessThread(Thread):
 
-    def __init__(self, executable_name, args, env, shell, cwd, verbose, stdout, stderr, stdin_input):
+    def __init__(self, executable_name, args, env,
+                 shell, cwd, verbose, stdout, stderr, stdin_input):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
