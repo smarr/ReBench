@@ -42,9 +42,6 @@ class Executor(object):
         desc = executor.get('desc')
         env = executor.get('env')
 
-        # Converting a list of dicts containing the individual env name/var pairs to a single dict of pairs
-        env = {key: name for k in env for (key, name) in k.items()}
-
         profiler = Profiler.compile(executor.get('profiler'))
 
         run_details = ExpRunDetails.compile(executor, run_details)

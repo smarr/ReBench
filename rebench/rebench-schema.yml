@@ -64,19 +64,15 @@ schema;runs_type:
         Some experiments may fail non-deterministically. For these, it may be
         convenient to simply retry them a few times.
         This value indicates how often execution should be retried on failure.
-
     env:
-      type: seq
-      sequence:
-        - type: map
-          matching-rule: all
-          mapping:
-            regex;(.*): # More specific regex for env var names could be used (no starting with a digit for instance)
-              type: str
+      # default: an empty environment. Executors are start without anything
+      # in the environment to increase predictability and reproducibility.
+      type: map
+      mapping:
+        regex;(.+):
+          type: str
       desc: |
-        Environment variables.
-
-
+        Environment variables to be set when starting the executor.
 
 
 schema;reporting_type:
