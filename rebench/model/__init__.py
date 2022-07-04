@@ -65,6 +65,12 @@ def none_or_bool(value):
     return value
 
 
+def none_or_dict(value):
+    if value:
+        assert isinstance(value, dict)
+    return value
+
+
 def value_with_optional_details(value, default_details=None):
     if isinstance(value, dict):
         assert len(value) == 1

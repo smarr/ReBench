@@ -48,8 +48,6 @@ class RunId(object):
 
         self._max_invocation = 0
 
-        self.env = benchmark.suite.executor.env
-
     @property
     def warmup_iterations(self):
         return self.benchmark.run_details.warmup
@@ -77,6 +75,10 @@ class RunId(object):
     @property
     def invocations(self):
         return self.benchmark.run_details.invocations
+
+    @property
+    def env(self):
+        return self.benchmark.run_details.env
 
     @property
     def completed_invocations(self):

@@ -541,6 +541,7 @@ Thus, one can use:
 - `parallel_interference_factor`
 - `execute_exclusively`
 - `retries_after_failure`
+- `env`
 
 As well as:
 
