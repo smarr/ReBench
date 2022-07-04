@@ -37,7 +37,7 @@ else:
 
 class _SubprocessThread(Thread):
 
-    def __init__(self, executable_name, args, shell, cwd, verbose, stdout, stderr, stdin_input, env):
+    def __init__(self, executable_name, args, env, shell, cwd, verbose, stdout, stderr, stdin_input):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
@@ -65,14 +65,9 @@ class _SubprocessThread(Thread):
             self._started_cv.acquire()
             stdin = PIPE if self._stdin_input else None
 
-            env = self._env
-            if self._env:
-                env = os.environ.copy()
-                env.update(self._env)
-
             # pylint: disable-next=consider-using-with
             proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                         stdin=stdin, stdout=self._stdout, stderr=self._stderr, env=env)
+                         stdin=stdin, stdout=self._stdout, stderr=self._stderr, env=self._env)
             self._pid = proc.pid
             self._started_cv.notify()
             self._started_cv.release()
@@ -135,8 +130,8 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
     """
     executable_name = args.split(' ', 1)[0]
 
-    thread = _SubprocessThread(executable_name, args, shell, cwd, verbose, stdout,
-                               stderr, stdin_input, env)
+    thread = _SubprocessThread(executable_name, args, env, shell, cwd, verbose, stdout,
+                               stderr, stdin_input)
     thread.start()
 
     if timeout == -1:
