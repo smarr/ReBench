@@ -175,7 +175,7 @@ schema;build_type:
   desc: |
     A list of commands/strings to be executed by the system's shell.
     They are intended to set up the system for benchmarking,
-    typically to build binaries, compiled archieves, etc.
+    typically to build binaries, create archives, etc.
     Each command is executed once before any benchmark or executor that depend on it
     is executed. If the `location` or `path` of a suite/executor is set, it is used as
     working directory. Otherwise, it is the current working directory of ReBench.
