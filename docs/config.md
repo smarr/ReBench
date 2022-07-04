@@ -478,6 +478,9 @@ same build command without executing it multiple times.
 For this purpose, build commands are considered the same when they have the
 same command and location (based on simple string comparisons).
 
+Commands are executed with an empty environment, i.e., without any environment
+variables. All configuration is intended to be explicit to simplify reproduction.
+
 Example:
 
 ```yaml
