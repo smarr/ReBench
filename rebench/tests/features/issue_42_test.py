@@ -24,7 +24,18 @@ import unittest
 from ...configurator import Configurator, load_config
 from ...executor import Executor
 from ...persistence import DataStore
+from ...reporter import Reporter
 from ..rebench_test_case import ReBenchTestCase
+
+
+class _TestFailedReporter(Reporter):
+
+    def __init__(self):
+        super(_TestFailedReporter, self).__init__()
+        self.output = None
+
+    def run_failed(self, _run_id, _cmdline, _return_code, output):
+        self.output = output
 
 
 class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
@@ -46,10 +57,41 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         with open(self._path + '/build.log', 'r') as log_file:
             return log_file.read()
 
+    def test_env_vars_are_set_as_expected(self):
+        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='test-set-as-expected')
+        runs = list(cnf.get_runs())
+        reporter = _TestFailedReporter()
+        runs[0].add_reporter(reporter)
+
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
+        succeeded = ex.execute()
+        if not succeeded:
+            print(reporter.output)
+        self.assertTrue(succeeded)
+
+        self.assertEqual("as-expected", runs[0].benchmark.name)
+        self.assertFalse(runs[0].is_failed)
+
+    def test_run_without_config_has_empty_env(self):
+        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='test-no-env')
+        runs = list(cnf.get_runs())
+        reporter = _TestFailedReporter()
+        runs[0].add_reporter(reporter)
+
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
+        succeeded = ex.execute()
+        if not succeeded:
+            print(reporter.output)
+        self.assertTrue(succeeded)
+
+        self.assertEqual("no-env", runs[0].benchmark.name)
+        self.assertFalse(runs[0].is_failed)
 
     def test_build_with_env_but_build_env_should_be_empty(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='BuildWithEnv')
+                           self.ui, data_file=self._tmp_file, exp_name='build-with-env')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
@@ -62,10 +104,9 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
 
         self._assert_empty_standard_env(parts[1])
 
-
     def test_build_without_env_and_build_env_should_be_empty(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='BuildWithoutEnv')
+                           self.ui, data_file=self._tmp_file, exp_name='build-without-env')
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
@@ -76,7 +117,6 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         parts = log.split('|', 2)
         self.assertEqual("E:exe-with-build-but-not-env", parts[0])
         self._assert_empty_standard_env(parts[1])
-
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(':')
