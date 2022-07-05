@@ -56,7 +56,7 @@ class ExpRunDetails(object):
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, None,
+        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {},
                              invocations_override, iterations_override)
 
     def __init__(self, invocations, iterations, warmup, min_iteration_time,
