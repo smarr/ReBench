@@ -20,6 +20,7 @@
 from __future__ import print_function
 import os
 import unittest
+from unittest import skip
 
 from ...configurator import Configurator, load_config
 from ...executor import Executor
@@ -128,6 +129,23 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         if len(env) > 2:
             self.assertEqual("SHLVL=1", env[2])
             self.assertEqual("_=/usr/bin/env", env[3])
+
+    @skip("Needs more work, left here for documentation")
+    def test_env_supports_value_expansion(self):
+        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='test-value-expansion')
+        runs = list(cnf.get_runs())
+        runs = sorted(runs, key=lambda e: e.benchmark.name)
+
+        ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
+        ex.execute()
+        # TODO: before this can work, we need to be able to consider env as part of the run id,
+        # which sounds like a major change...
+        # the variable replacement is also not yet implemented for env vars
+        # should probably be done at the same time the commandline is constructed
+        # runs
+        # TODO: assert that the result values for the runs are matching
+        # the input size given in the env var.
 
 
 if __name__ == "__main__":

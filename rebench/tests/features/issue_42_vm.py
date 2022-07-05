@@ -34,10 +34,13 @@ elif test == "no-env":
         if e[0] not in known_envvars:
             print("Not in env: " + e[0])
             sys.exit(1)
+elif test == "value-expansion":
+    if os.environ.get("MY_VAR", None) is None:
+        sys.exit(1)
+    else:
+        print("RESULT-total: ", os.environ.get("MY_VAR", None))
 else:
     print("Unexpected test: " + test)
     sys.exit(1)
 
-
-# If it prints, the test is considered to have succeeded
 print("RESULT-total: ", random.triangular(700, 850))
