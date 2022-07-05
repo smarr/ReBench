@@ -301,7 +301,10 @@ class Executor(object):
         cmdline = ""
 
         if self.use_denoise:
-            cmdline += "sudo rebench-denoise "
+            cmdline += "sudo "
+            if run_id.env:
+                cmdline += "--preserve-env=" + ','.join(run_id.keys()) + " "
+            cmdline += "rebench-denoise "
             if not self._use_nice:
                 cmdline += "--without-nice "
             if not self._use_shielding:
