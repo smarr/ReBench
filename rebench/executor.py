@@ -301,7 +301,10 @@ class Executor(object):
         cmdline = ""
 
         if self.use_denoise:
-            cmdline += "sudo rebench-denoise "
+            cmdline += "sudo "
+            if run_id.env:
+                cmdline += "--preserve-env=" + ','.join(run_id.keys()) + " "
+            cmdline += "rebench-denoise "
             if not self._use_nice:
                 cmdline += "--without-nice "
             if not self._use_shielding:
@@ -348,11 +351,11 @@ class Executor(object):
 
         def _keep_alive(seconds):
             self.ui.warning(
-                "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, script, path)
+                "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, script, path)
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                '/bin/sh', path, False, True,
+                '/bin/sh', {}, path, False, True,
                 stdin_input=str.encode(script),
                 keep_alive_output=_keep_alive)
         except OSError as err:
@@ -467,10 +470,10 @@ class Executor(object):
 
             def _keep_alive(seconds):
                 self.ui.warning(
-                    "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
+                    "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
-                cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
+                cmdline, env=run_id.env, cwd=run_id.location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive)

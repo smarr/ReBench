@@ -100,7 +100,7 @@ class DataStore(object):
 
         if key not in self._bench_cfgs:
             raise ValueError("Requested configuration is not available: " +
-                             key.__str__())
+                             str(key))
 
         return self._bench_cfgs[key]
 

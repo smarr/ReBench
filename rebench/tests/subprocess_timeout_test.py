@@ -32,7 +32,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
     def test_normal_exec_no_timeout(self):
         cmdline = "sleep 1; echo Done"
-        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=10)
@@ -43,7 +43,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
     def test_exec_with_timeout(self):
         cmdline = "sleep 100; echo Done"
-        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=1)
@@ -54,7 +54,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
     def test_exec_with_timeout_python_interpreter(self):
         cmdline = "python -c \"while True: pass\""
-        (return_code, output, err) = sub.run(cmdline, cwd=self._path,
+        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
                                              shell=True, timeout=5)

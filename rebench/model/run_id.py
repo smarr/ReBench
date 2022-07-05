@@ -77,6 +77,10 @@ class RunId(object):
         return self.benchmark.run_details.invocations
 
     @property
+    def env(self):
+        return self.benchmark.run_details.env
+
+    @property
     def completed_invocations(self):
         return self._max_invocation
 
