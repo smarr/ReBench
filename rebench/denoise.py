@@ -20,9 +20,9 @@ except ValueError:
     rebench_version = "unknown"
 
 try:
-    FileNotFoundError
+    FileNotFoundError  # pylint: disable=used-before-assignment
 except NameError:
-    FileNotFoundError = IOError
+    FileNotFoundError = IOError  # pylint: disable=redefined-builtin
 
 
 class DenoiseResult(object):
@@ -35,7 +35,7 @@ class DenoiseResult(object):
         self.details = details
 
 
-def minimize_noise(show_warnings, ui, for_profiling):
+def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
     result = {}
 
     cmd = ['sudo', '-n', 'rebench-denoise']
