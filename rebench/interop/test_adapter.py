@@ -23,6 +23,7 @@ from ..model.measurement import Measurement
 
 
 class TestAdapter(GaugeAdapter):
+    __test__ = False # This is not a test class
 
     test_data = [45872, 45871, 45868, 45869, 45873,
                  45865, 45869, 45874, 45863, 45873,

@@ -29,6 +29,7 @@ class TestExecutorAdapter(GaugeAdapter):
        in test/test.conf
     """
 
+    __test__ = False  # This is not a test class
     re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
 
     def __init__(self, include_faulty, executor):
