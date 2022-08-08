@@ -12,7 +12,7 @@ jobs:
         yaml-parser: ['', 'ruamel']
         include:
           - python-version: 2.7
-            coverage: "--with-coverage --cover-package=rebench"
+            coverage: "--cov=rebench"
         exclude:
           - python-version: 2.7
             yaml-parser: ruamel
@@ -31,15 +31,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Install nose
-        run: pip install nose
+      - name: Install PyTest
+        run: pip install pytest
 
       - name: Install ruamel.yaml
         run: pip install ruamel.yaml
         if: matrix.yaml-parser == 'ruamel'
 
       - name: Install coverage and coveralls
-        run: pip install coverage coveralls
+        run: pip install pytest-cov coveralls
         if: matrix.coverage
 
       - name: Install ReBench dependencies
@@ -47,7 +47,7 @@ jobs:
 
       - name: Run tests
         run: |
-          nosetests ${{ matrix.coverage }}
+          pytest ${{ matrix.coverage }}
           (cd rebench && rebench ../rebench.conf e:TestRunner2)
 
       - name: Install and run pylint
