@@ -1,4 +1,5 @@
 class TestPersistence(object):
+    __test__ = False  # This is not a test class
 
     def __init__(self):
         self._data_points = []
