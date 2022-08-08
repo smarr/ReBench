@@ -61,3 +61,36 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         if: ${{ matrix.coverage && env.COVERALLS_REPO_TOKEN != '' }}
+
+  test-docker:
+    name: Test ReBench in Docker
+    runs-on: ubuntu-latest
+    container:
+      image: python:3
+
+    steps:
+      - name: Check for dockerenv file
+        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+
+      - name: Make Python to be Python3
+        run: ln -s /usr/bin/python3 /usr/bin/python && ln -s /usr/bin/pip3 /usr/bin/pip
+
+      - name: Install Time Command
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends time
+      
+      - name: Checkout ReBench
+        uses: actions/checkout@v2
+
+      - name: Install PyTest
+        run: pip install pytest
+
+      - name: Install ReBench dependencies
+        run: pip install .
+
+      - name: Run Test Run
+        run: (cd rebench && rebench ../rebench.conf e:TestRunner2)
+
+      - name: Run Unit Tests
+        run: python -m pytest
