@@ -90,7 +90,7 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         self.assertEqual("no-env", runs[0].benchmark.name)
         self.assertFalse(runs[0].is_failed)
 
-    def test_build_with_env_but_build_env_should_be_empty(self):
+    def test_build_with_env_should_see_a_run_env(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
                            self.ui, data_file=self._tmp_file, exp_name='build-with-env')
         runs = list(cnf.get_runs())
@@ -103,9 +103,20 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         parts = log.split('|', 2)
         self.assertEqual("E:exe-with-build-and-env", parts[0])
 
-        self._assert_empty_standard_env(parts[1])
+        env_parts = parts[1].split(':')
+        env = sorted(env_parts[1].split('\n'))
+        self.assertEqual('', env[0])
+        self.assertTrue(env[1].startswith("PWD="))
+        if env[2].startswith("SHLVL"):  # Platform differences
+            self.assertEqual("SHLVL=1", env[2])
+            self.assertEqual("VAR1=test", env[3])
+            self.assertEqual("VAR3=another test", env[4])
+            self.assertTrue(env[5].startswith("_="))
+        else:
+            self.assertEqual("VAR1=test", env[2])
+            self.assertEqual("VAR3=another test", env[3])
 
-    def test_build_without_env_and_build_env_should_be_empty(self):
+    def test_build_and_run_without_env_should_have_empty_env(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
                            self.ui, data_file=self._tmp_file, exp_name='build-without-env')
         runs = list(cnf.get_runs())

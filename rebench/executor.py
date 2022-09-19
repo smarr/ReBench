@@ -355,7 +355,7 @@ class Executor(object):
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                '/bin/sh', {}, path, False, True,
+                '/bin/sh', run_id.env, path, False, True,
                 stdin_input=str.encode(script),
                 keep_alive_output=_keep_alive)
         except OSError as err:
