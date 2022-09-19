@@ -1,7 +1,8 @@
 from unittest import TestCase
 
 from ..denoise import DenoiseResult
-from ..environment import determine_source_details, determine_environment, init_environment
+from ..environment import determine_source_details, determine_environment,\
+    init_environment, extract_base
 from ..ui import TestDummyUI
 
 
@@ -34,3 +35,12 @@ class ReBenchTestCase(TestCase):
         self.assertGreater(env['clockSpeed'], 0)
 
         self.assertGreaterEqual(len(env['software']), 3)
+
+    def test_extract_base(self):
+        self.assertEqual('', extract_base(''))
+        self.assertEqual('branch', extract_base('branch'))
+        self.assertEqual('tag/tag', extract_base('tag/tag'))
+        self.assertEqual('branch', extract_base('HEAD -> branch'))
+        self.assertEqual('branch', extract_base('HEAD -> branch, otherBranch'))
+        self.assertEqual('develop', extract_base(
+            'HEAD -> develop, origin/master, origin/develop, origin/HEAD, master'))

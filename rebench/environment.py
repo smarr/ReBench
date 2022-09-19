@@ -33,6 +33,14 @@ def _exec(cmd):
 _source = None
 
 
+def extract_base(branch_or_tag):
+    # in local working copies things may look like HEAD -> branch, remote/branch, otherBranch
+    if ',' in branch_or_tag:
+        branch_or_tag = branch_or_tag.split(',')[0]
+
+    return branch_or_tag.replace('HEAD -> ', '')
+
+
 def determine_source_details(configurator):
     global _source  # pylint: disable=global-statement
     if _source:
@@ -67,7 +75,7 @@ def determine_source_details(configurator):
             netloc="{}@{}".format(parsed.username, parsed.hostname))
     result['repoURL'] = _encode_str(parsed.geturl())
 
-    result['branchOrTag'] = _exec(git_cmd + ['show', '-s', '--format=%D', 'HEAD'])
+    result['branchOrTag'] = extract_base(_exec(git_cmd + ['show', '-s', '--format=%D', 'HEAD']))
     result['commitId'] = _exec(git_cmd + ['rev-parse', 'HEAD'])
     result['commitMsg'] = _exec(git_cmd + ['show', '-s', '--format=%B', 'HEAD'])
     result['authorName'] = _exec(git_cmd + ['show', '-s', '--format=%aN', 'HEAD'])
