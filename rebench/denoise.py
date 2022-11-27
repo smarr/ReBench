@@ -12,7 +12,8 @@ from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
 from .ui import escape_braces
-from .subprocess_with_timeout import output_as_str, kill_process
+from .subprocess_with_timeout import output_as_str  # pylint: disable=cyclic-import
+from .subprocess_kill import kill_process  # pylint: disable=cyclic-import
 
 try:
     from . import __version__ as rebench_version

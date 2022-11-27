@@ -1,13 +1,13 @@
 from __future__ import print_function
 
-from os         import kill
 from select     import select
-from signal     import SIGKILL
 from subprocess import PIPE, STDOUT, Popen
 from threading  import Thread, Condition
 from time       import time
 
 import sys
+
+from .subprocess_kill import kill_process
 
 IS_PY3 = None
 
@@ -165,58 +165,3 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
             raise exp  # pylint: disable=raising-bad-type
 
     return thread.returncode, thread.stdout_result, thread.stderr_result
-
-
-def _kill_py2(proc_id, uses_sudo):
-    if uses_sudo:
-        from .denoise import deliver_kill_signal
-
-        deliver_kill_signal(proc_id)
-        return
-
-    try:
-        kill(proc_id, SIGKILL)
-    except IOError:
-        # it's a race condition, so let's simply ignore it
-        pass
-
-
-def _kill_py3(proc_id, uses_sudo):
-    if uses_sudo:
-        from .denoise import deliver_kill_signal
-
-        deliver_kill_signal(proc_id)
-        return
-
-    try:
-        kill(proc_id, SIGKILL)
-    except ProcessLookupError:  # pylint: disable=undefined-variable
-        # it's a race condition, so let's simply ignore it
-        pass
-
-
-def kill_process(pid, recursively, thread, uses_sudo):
-    pids = [pid]
-    if recursively:
-        pids.extend(_get_process_children(pid))
-
-    for proc_id in pids:
-        if IS_PY3:
-            _kill_py3(proc_id, uses_sudo)
-        else:
-            _kill_py2(proc_id, uses_sudo)
-
-    if thread:
-        thread.join()
-        return E_TIMEOUT, thread.stdout_result, thread.stderr_result
-    return E_TIMEOUT, None, None
-
-
-def _get_process_children(pid):
-    # pylint: disable-next=consider-using-with
-    proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, _stderr = proc.communicate()
-    result = [int(p) for p in stdout.split()]
-    for child in result[:]:
-        result.extend(_get_process_children(child))
-    return result
