@@ -12,7 +12,7 @@ from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
 from .ui import escape_braces
-from .subprocess_with_timeout import output_as_str
+from .subprocess_with_timeout import output_as_str, kill_process
 
 try:
     from . import __version__ as rebench_version
@@ -143,6 +143,13 @@ def restore_noise(denoise_result, show_warning, ui):
         # warn a second time at the end of the execution
         ui.error(denoise_result.warn_msg)
 
+
+def deliver_kill_signal(pid):
+    try:
+        cmd = ['sudo', '-n', 'rebench-denoise', '--json', 'kill', str(pid)]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
 
 def _can_set_niceness():
     """
@@ -331,6 +338,10 @@ def _exec(num_cores, use_nice, use_shielding, args):
     os.execvpe(cmd, cmdline, env)
 
 
+def _kill(proc_id):
+    kill_process(int(proc_id), True, None, False)
+
+
 def _calculate(core_id):
     print("Started calculating: %d" % core_id)
     try:
@@ -381,10 +392,12 @@ def _shell_options():
     parser.add_argument('--for-profiling', action='store_true', default=False,
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
     parser.add_argument('command',
-                        help=("`minimize`|`restore`|`exec -- `|`test`: "
-                              "`minimize` sets system to reduce noise. "
+                        help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
+                              "`minimize` sets system to reduce noise. " +
                               "`restore` sets system to the assumed original settings. " +
                               "`exec -- ` executes the given arguments. " +
+                              "`kill pid` send kill signal to the process with given id " +
+                              "and all child processes. " +
                               "`test` executes a computation for 20 seconds in parallel. " +
                               "it is only useful to test rebench-denoise itself."),
                         default=None)
@@ -405,6 +418,8 @@ def main_func():
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
         _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
+    elif args.command == 'kill':
+        _kill(remaining_args[0])
     elif args.command == 'test':
         _test(num_cores)
     else:

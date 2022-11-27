@@ -476,7 +476,9 @@ class Executor(object):
                 cmdline, env=run_id.env, cwd=run_id.location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
-                keep_alive_output=_keep_alive)
+                keep_alive_output=_keep_alive,
+                uses_sudo=self.use_denoise
+            )
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:

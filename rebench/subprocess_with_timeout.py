@@ -123,7 +123,7 @@ def _print_keep_alive(seconds_since_start):
 
 def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
         verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
-        keep_alive_output=_print_keep_alive):
+        keep_alive_output=_print_keep_alive, uses_sudo=False):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
@@ -157,7 +157,7 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
 
     if timeout != -1 and thread.is_alive():
         assert thread.get_pid() is not None
-        return _kill_process(thread.get_pid(), kill_tree, thread)
+        return kill_process(thread.get_pid(), kill_tree, thread, uses_sudo)
 
     if not thread.is_alive():
         exp = thread.exception
@@ -167,7 +167,13 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
     return thread.returncode, thread.stdout_result, thread.stderr_result
 
 
-def _kill_py2(proc_id):
+def _kill_py2(proc_id, uses_sudo):
+    if uses_sudo:
+        from .denoise import deliver_kill_signal
+
+        deliver_kill_signal(proc_id)
+        return
+
     try:
         kill(proc_id, SIGKILL)
     except IOError:
@@ -175,7 +181,13 @@ def _kill_py2(proc_id):
         pass
 
 
-def _kill_py3(proc_id):
+def _kill_py3(proc_id, uses_sudo):
+    if uses_sudo:
+        from .denoise import deliver_kill_signal
+
+        deliver_kill_signal(proc_id)
+        return
+
     try:
         kill(proc_id, SIGKILL)
     except ProcessLookupError:  # pylint: disable=undefined-variable
@@ -183,20 +195,21 @@ def _kill_py3(proc_id):
         pass
 
 
-def _kill_process(pid, recursively, thread):
+def kill_process(pid, recursively, thread, uses_sudo):
     pids = [pid]
     if recursively:
         pids.extend(_get_process_children(pid))
 
     for proc_id in pids:
         if IS_PY3:
-            _kill_py3(proc_id)
+            _kill_py3(proc_id, uses_sudo)
         else:
-            _kill_py2(proc_id)
+            _kill_py2(proc_id, uses_sudo)
 
-    thread.join()
-
-    return E_TIMEOUT, thread.stdout_result, thread.stderr_result
+    if thread:
+        thread.join()
+        return E_TIMEOUT, thread.stdout_result, thread.stderr_result
+    return E_TIMEOUT, None, None
 
 
 def _get_process_children(pid):
