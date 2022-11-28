@@ -1,13 +1,14 @@
 from __future__ import print_function
 
-from os         import kill
 from select     import select
-from signal     import SIGKILL
 from subprocess import PIPE, STDOUT, Popen
 from threading  import Thread, Condition
 from time       import time
 
 import sys
+import signal
+
+from .subprocess_kill import kill_process
 
 IS_PY3 = None
 
@@ -32,6 +33,19 @@ else:
             return string_like.decode('utf-8')
         else:
             return string_like
+
+_signals_setup = False
+
+
+def keyboard_interrupt_on_sigterm(signum, frame):
+    raise KeyboardInterrupt()
+
+
+def _setup_signal_handling_if_needed():
+    global _signals_setup  # pylint: disable=global-statement
+    if not _signals_setup:
+        _signals_setup = True
+        signal.signal(signal.SIGTERM, keyboard_interrupt_on_sigterm)
 
 
 class _SubprocessThread(Thread):
@@ -123,17 +137,41 @@ def _print_keep_alive(seconds_since_start):
 
 def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
         verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
-        keep_alive_output=_print_keep_alive):
+        keep_alive_output=_print_keep_alive, uses_sudo=False):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
     """
+    _setup_signal_handling_if_needed()
     executable_name = args.split(' ', 1)[0]
 
     thread = _SubprocessThread(executable_name, args, env, shell, cwd, verbose, stdout,
                                stderr, stdin_input)
     thread.start()
 
+    was_interrupted = False
+
+    try:
+        _join_with_keep_alive(keep_alive_output, thread, timeout)
+    except KeyboardInterrupt:
+        was_interrupted = True
+
+    if (timeout != -1 or was_interrupted) and thread.is_alive():
+        assert thread.get_pid() is not None
+        result = kill_process(thread.get_pid(), kill_tree, thread, uses_sudo)
+        if was_interrupted:
+            raise KeyboardInterrupt()
+        return result
+
+    if not thread.is_alive():
+        exp = thread.exception
+        if exp:
+            raise exp  # pylint: disable=raising-bad-type
+
+    return thread.returncode, thread.stdout_result, thread.stderr_result
+
+
+def _join_with_keep_alive(keep_alive_output, thread, timeout):
     if timeout == -1:
         thread.join()
     else:
@@ -154,56 +192,3 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
                 diff = time() - start
                 if diff < timeout:
                     keep_alive_output(diff)
-
-    if timeout != -1 and thread.is_alive():
-        assert thread.get_pid() is not None
-        return _kill_process(thread.get_pid(), kill_tree, thread)
-
-    if not thread.is_alive():
-        exp = thread.exception
-        if exp:
-            raise exp  # pylint: disable=raising-bad-type
-
-    return thread.returncode, thread.stdout_result, thread.stderr_result
-
-
-def _kill_py2(proc_id):
-    try:
-        kill(proc_id, SIGKILL)
-    except IOError:
-        # it's a race condition, so let's simply ignore it
-        pass
-
-
-def _kill_py3(proc_id):
-    try:
-        kill(proc_id, SIGKILL)
-    except ProcessLookupError:  # pylint: disable=undefined-variable
-        # it's a race condition, so let's simply ignore it
-        pass
-
-
-def _kill_process(pid, recursively, thread):
-    pids = [pid]
-    if recursively:
-        pids.extend(_get_process_children(pid))
-
-    for proc_id in pids:
-        if IS_PY3:
-            _kill_py3(proc_id)
-        else:
-            _kill_py2(proc_id)
-
-    thread.join()
-
-    return E_TIMEOUT, thread.stdout_result, thread.stderr_result
-
-
-def _get_process_children(pid):
-    # pylint: disable-next=consider-using-with
-    proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, _stderr = proc.communicate()
-    result = [int(p) for p in stdout.split()]
-    for child in result[:]:
-        result.extend(_get_process_children(child))
-    return result
