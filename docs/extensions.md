@@ -12,7 +12,15 @@ ReBench currently provides builtin support for the following benchmark harnesses
 - `PlainSecondsLog`: a plain seconds log, i.e., a floating point number per line
 - `ReBenchLog`: the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
 - `SavinaLog`: the harness of the [Savina](https://github.com/shamsimam/savina) benchmarks
+- `ValidationLog`: the format used by [SOMns](https://github.com/smarr/SOMns)'s ImpactHarness
 - `Time`: a harness that uses `/usr/bin/time` automatically
+
+### `ReBenchLog`
+The approximate format that `ReBenchLog` parses is as follows:
+
+    optional_prefix benchmark_name: iterations=123 runtime: 1000[ms|us]
+
+(Note that measurements may be normalized to milliseconds.)
 
 ### `PlainSecondsLog`
 This adapter attempts to read every line of program output as a millisecond
