@@ -30,6 +30,8 @@ class RebenchLogAdapter(GaugeAdapter):
     """RebenchLogPerformance is the standard log parser of ReBench.
        It reads a simple log format, which includes the number of iterations of
        a benchmark and its runtime in microseconds.
+
+       Note: regular expressions are documented in /docs/extensions.md
     """
     re_log_line = re.compile(
         r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
