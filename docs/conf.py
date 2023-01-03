@@ -5,4 +5,4 @@ source_parsers = {
 }
 
 source_suffix = ['.md']
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'gitbook'
