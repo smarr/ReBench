@@ -19,5 +19,7 @@ markdown_extensions:
   - toc:
       permalink: True
 
+plugins: []
+
 theme:
   name: gitbook
