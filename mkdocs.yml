@@ -2,7 +2,7 @@ site_name: 'ReBench: Execute and Document Benchmarks Reproducibly'
 site_description: ReBench documentation
 site_author: 'ReBench contributors, see AUTHORS.md'
 
-pages:
+nav:
   - Home:           index.md
   - Basic Concepts: concepts.md
   - Usage:          usage.md
@@ -17,3 +17,6 @@ pages:
 markdown_extensions:
   - toc:
       permalink: True
+
+theme:
+  name: gitbook
