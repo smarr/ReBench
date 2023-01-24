@@ -404,8 +404,14 @@ class Executor(object):
                 log_file.write(stderr_result)
 
     def execute_run(self, run_id):
-        gauge_adapter = self._get_gauge_adapter_instance(
-            run_id.get_gauge_adapter_name())
+        # obtain gauge adapter module from provided name or die trying
+        gauge_adapter_name = run_id.get_gauge_adapter_name()
+        gauge_adapter = self._get_gauge_adapter_instance(gauge_adapter_name)
+        if gauge_adapter is None:
+            run_id.fail_immediately()
+            msg = "{ind}Couldn't find gauge adapter: %s\n" % gauge_adapter_name
+            self.ui.error(msg, run_id)
+            # TODO exit early here (how?)
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 

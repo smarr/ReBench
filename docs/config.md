@@ -407,6 +407,9 @@ all of them.
 Name of the parser that interprets the output of the benchmark harness.
 For a list of supported options see the list of [extensions](extensions.md#available-harness-support).
 
+Note that case matters -- `ReBenchLog` (with a capital 'B') will fail to be
+found on systems with case-sensitive paths (Linux).
+
 This key is mandatory.
 
 Example:
@@ -414,7 +417,7 @@ Example:
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    gauge_adapter: ReBenchLog
+    gauge_adapter: RebenchLog
 ```
 
 ---

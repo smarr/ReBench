@@ -11,10 +11,13 @@ ReBench currently provides builtin support for the following benchmark harnesses
 
 - `JMH`: [JMH](http://openjdk.java.net/projects/code-tools/jmh/), Java's microbenchmark harness
 - `PlainSecondsLog`: a plain seconds log, i.e., a floating point number per line
-- `ReBenchLog`: the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
+- `RebenchLog`: the ReBench log format, which indicates benchmark name and run time in milliseconds or microseconds
 - `SavinaLog`: the harness of the [Savina](https://github.com/shamsimam/savina) benchmarks
 - `ValidationLog`: the format used by [SOMns](https://github.com/smarr/SOMns)'s ImpactHarness
 - `Time`: a harness that uses `/usr/bin/time` automatically
+
+Note that case matters -- `ReBenchLog` (with a capital 'B') may fail to be
+found.
 
 ### `PlainSecondsLog`
 
@@ -35,9 +38,9 @@ Implementation Notes:
 
  - Python's `float()` function is used for parsing
 
-### `ReBenchLog`
+### `RebenchLog`
 
-The ReBenchLog parser is the most commonly used and has most features.
+The `RebenchLog` parser is the most commonly used and has most features.
 It supports parsing of microseconds and milliseconds values.
 Though, internally, ReBench stores all values as milliseconds using Python's
 floating point numbers, i.e., as 64-bit values.
@@ -47,7 +50,7 @@ run time, which can be useful to measure the time of subtasks or metrics such
 as memory use. When other criteria a provided, the `total` time is expected to
 be the last in the output, concluding the overall data point.
 
-The approximate format that `ReBenchLog` parses is as follows:
+The approximate format that `RebenchLog` parses is as follows:
 
     optional_prefix benchmark_name: iterations=123 runtime: 1000[ms|us]
 
