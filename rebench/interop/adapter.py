@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
+import pkgutil
+import sys
 
 
 class GaugeAdapter(object):
@@ -78,3 +80,24 @@ class OutputNotParseable(ExecutionDeliveredNoResults):
 
 class ResultsIndicatedAsInvalid(ExecutionDeliveredNoResults):
     pass
+
+
+def instantiate_adapter(name, include_faulty, executor):
+    adapter_name = name + "Adapter"
+    root = sys.modules['rebench.interop'].__path__
+
+    for _, module_name, _ in pkgutil.walk_packages(root):
+        # depending on how ReBench was executed, name might one of the two
+        try:
+            mod = __import__("rebench.interop." + module_name, fromlist=adapter_name)
+        except ImportError:
+            try:
+                mod = __import__("interop." + module_name, fromlist=adapter_name)
+            except ImportError:
+                mod = None
+        if mod is not None:
+            for key in dir(mod):
+                if key.lower() == adapter_name.lower():
+                    return getattr(mod, key)(include_faulty, executor)
+
+    return None

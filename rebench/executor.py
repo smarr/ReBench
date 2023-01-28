@@ -24,15 +24,13 @@ from collections import deque
 from math import floor
 from multiprocessing import cpu_count
 import os
-import pkgutil
 import random
 import subprocess
-import sys
 from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .interop.adapter import ExecutionDeliveredNoResults
+from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter
 from .ui import escape_braces
 
 
@@ -444,22 +442,7 @@ class Executor(object):
         return terminate
 
     def _get_gauge_adapter_instance(self, adapter_name):
-        adapter_name += "Adapter"
-
-        root = sys.modules['rebench.interop'].__path__
-
-        for _, name, _ in pkgutil.walk_packages(root):
-            # depending on how ReBench was executed, name might one of the two
-            try:
-                mod = __import__("rebench.interop." + name, fromlist=adapter_name)
-            except ImportError:
-                try:
-                    mod = __import__("interop." + name, fromlist=adapter_name)
-                except ImportError:
-                    mod = None
-            if mod is not None and hasattr(mod, adapter_name):
-                return getattr(mod, adapter_name)(self._include_faulty, self)
-        return None
+        return instantiate_adapter(adapter_name, self._include_faulty, self)
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
