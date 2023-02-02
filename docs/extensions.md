@@ -16,6 +16,7 @@ ReBench currently provides builtin support for the following benchmark harnesses
 - `ValidationLog`: the format used by [SOMns](https://github.com/smarr/SOMns)'s ImpactHarness
 - `Time`: a harness that uses `/usr/bin/time` automatically
 
+
 ### `PlainSecondsLog`
 
 This adapter attempts to read every line of program output as a millisecond
@@ -34,6 +35,7 @@ Example output from a harness or benchmark:
 Implementation Notes:
 
  - Python's `float()` function is used for parsing
+
 
 ### `ReBenchLog`
 
@@ -79,6 +81,24 @@ Implementation Notes:
  - For arbitrary criteria, which may also be used for the `total` criteria,
    the following regular expression should match
    `r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")`
+
+
+## `Time`
+
+The `Time` adapter uses Unix's `/usr/bin/time` command.
+On Linux, or more generally the platforms that support it, it will also use the
+`-f` switch of the `time` command to record the maximum resident set size,
+i.e., the maximum amount of memory the program used.
+
+Example configuration for a suite:
+
+```yaml
+    Suite:
+        gauge_adapter: Time
+        benchmarks:
+          - Bench1
+```
+
 
 ## Supporting other Benchmark Harnesses
 
