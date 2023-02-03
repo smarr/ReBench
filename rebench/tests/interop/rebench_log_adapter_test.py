@@ -130,3 +130,29 @@ Savina.Chameneos: iterations=1 runtime: 48581us""", None, 13)
         self.assertEqual(40, measure.value)
         self.assertEqual('external data', measure.criterion)
         self.assertEqual('byte', measure.unit)
+
+    def test_float_value(self):
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 557.123ms", None, 1)
+        self._assert_basics(data, 557.123, 'ms', 'total', True)
+
+    def test_float_value_in_scientific_notation(self):
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123e2ms", None, 1)
+        self._assert_basics(data, 557.123, 'ms', 'total', True)
+
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123e-2ms", None, 1)
+        self._assert_basics(data, 0.0557123, 'ms', 'total', True)
+
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123E-2ms", None, 1)
+        self._assert_basics(data, 0.0557123, 'ms', 'total', True)
+
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: .57ms", None, 1)
+        self._assert_basics(data, 0.57, 'ms', 'total', True)
+
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("Dispatch: iterations=1 runtime: 57.ms", None, 1)
+        self._assert_basics(data, 57, 'ms', 'total', True)

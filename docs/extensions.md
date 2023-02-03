@@ -76,7 +76,7 @@ Savina.Chameneos: iterations=1 runtime: 48581us
 Implementation Notes:
 
  - For parsing of the total run time, the following regular expression is used:
-   `r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")`
+   `^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[mu])s`
 
  - For arbitrary criteria, which may also be used for the `total` criteria,
    the following regular expression should match
