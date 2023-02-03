@@ -131,6 +131,24 @@ Savina.Chameneos: iterations=1 runtime: 48581us""", None, 13)
         self.assertEqual('external data', measure.criterion)
         self.assertEqual('byte', measure.unit)
 
+    def test_other_data_with_float_values(self):
+        adapter = RebenchLogAdapter(True, None)
+        data = adapter.parse_data("""Savina.Chameneos: some metrics:    5.7foobar
+Savina.Chameneos: external data: 5.2e1GB
+Savina.Chameneos: iterations=1 runtime: 64208us""", None, 13)
+
+        point = data[0]
+        measure = point.get_measurements()[0]
+
+        self.assertEqual(5.7, measure.value)
+        self.assertEqual('some metrics', measure.criterion)
+        self.assertEqual('foobar', measure.unit)
+
+        measure = point.get_measurements()[1]
+        self.assertEqual(52, measure.value)
+        self.assertEqual('external data', measure.criterion)
+        self.assertEqual('GB', measure.unit)
+
     def test_float_value(self):
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 557.123ms", None, 1)

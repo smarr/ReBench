@@ -80,7 +80,7 @@ Implementation Notes:
 
  - For arbitrary criteria, which may also be used for the `total` criteria,
    the following regular expression should match
-   `r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")`
+   `^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[a-zA-Z]+)`
 
 
 ## `Time`

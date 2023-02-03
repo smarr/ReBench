@@ -36,7 +36,7 @@ class RebenchLogAdapter(GaugeAdapter):
     re_log_line = re.compile(
         r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[mu])s")
     re_extra_criterion_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")
+        r"^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[a-zA-Z]+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
@@ -70,9 +70,9 @@ class RebenchLogAdapter(GaugeAdapter):
             else:
                 match = self.re_extra_criterion_log_line.match(line)
                 if match:
-                    value = float(match.group(3))
-                    criterion = match.group(2)
-                    unit = match.group(4)
+                    value = float(match.group("value"))
+                    criterion = match.group("criterion")
+                    unit = match.group("unit")
 
                     measure = Measurement(invocation, iteration, value, unit, run_id, criterion)
 
