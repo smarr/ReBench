@@ -34,9 +34,13 @@ class RebenchLogAdapter(GaugeAdapter):
        Note: regular expressions are documented in /docs/extensions.md
     """
     re_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[mu])s")
+        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) "
+        + r"runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+        + r"(?P<unit>[mu])s")
     re_extra_criterion_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[a-zA-Z]+)")
+        r"^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*"
+        + r"(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+        + r"(?P<unit>[a-zA-Z]+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
