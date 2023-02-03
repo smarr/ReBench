@@ -34,7 +34,7 @@ class RebenchLogAdapter(GaugeAdapter):
        Note: regular expressions are documented in /docs/extensions.md
     """
     re_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(?P<unit>[mu])s")
     re_extra_criterion_log_line = re.compile(
         r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")
 
@@ -60,8 +60,8 @@ class RebenchLogAdapter(GaugeAdapter):
             measure = None
             match = self.re_log_line.match(line)
             if match:
-                time = float(match.group(4))
-                if match.group(5) == "u":
+                time = float(match.group("runtime"))
+                if match.group("unit") == "u":
                     time /= 1000
                 criterion = (match.group(2) or 'total').strip()
 
