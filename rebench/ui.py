@@ -133,14 +133,18 @@ class UI(object):
         self._output_detail_header(run_id, cmd, cwd)
         self._output(text, 'red', **kw)
 
+    def _is_first_error_with(self, text):
+        if text not in self._error_once_cache:
+            self._error_once_cache.add(text)
+            return True
+        return False
+
     def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
         stream = StringIO("")
         self._output_on_stream(stream, sys.stdout, text, 'red', **kw)
         stream_str = stream.getvalue()
 
-        if stream_str not in self._error_once_cache:
-            self._error_once_cache.add(stream_str)
-
+        if self._is_first_error_with(stream_str):
             self._output_detail_header(run_id, cmd, cwd)
             self._output(text, 'red', **kw)
 
