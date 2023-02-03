@@ -19,6 +19,7 @@
 # IN THE SOFTWARE.
 import sys
 
+from io import StringIO
 from os import getcwd
 
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
@@ -43,6 +44,7 @@ class UI(object):
         self._prev_cwd = None
         self._progress_spinner = None
         self._need_to_erase_spinner = False
+        self._error_once_cache = set()
 
     def init(self, verbose, debug):
         self._verbose = verbose
@@ -112,12 +114,15 @@ class UI(object):
         auto_encode(sys.stdout, text + '\n', *args, **kw)
         sys.stdout.flush()
 
+    def _output_on_stream(self, tmp_stream, out_stream, text, color, *args, **kw):
+        if terminal_supports_colors(out_stream):
+            text = ansi_wrap(text, color=color)
+        auto_encode(tmp_stream, text, ind=_DETAIL_INDENT, *args, **kw)
+
     def _output(self, text, color, *args, **kw):
         self._erase_spinner()
 
-        if terminal_supports_colors(sys.stdout):
-            text = ansi_wrap(text, color=color)
-        auto_encode(sys.stdout, text, ind=_DETAIL_INDENT, *args, **kw)
+        self._output_on_stream(sys.stdout, sys.stdout, text, color, *args, **kw)
         sys.stdout.flush()
 
     def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
@@ -127,6 +132,17 @@ class UI(object):
     def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
         self._output_detail_header(run_id, cmd, cwd)
         self._output(text, 'red', **kw)
+
+    def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        stream = StringIO("")
+        self._output_on_stream(stream, sys.stdout, text, 'red', **kw)
+        stream_str = stream.getvalue()
+
+        if stream_str not in self._error_once_cache:
+            self._error_once_cache.add(stream_str)
+
+            self._output_detail_header(run_id, cmd, cwd)
+            self._output(text, 'red', **kw)
 
     def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
@@ -189,6 +205,9 @@ class TestDummyUI(object):
         pass
 
     def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
+        pass
+
+    def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
         pass
 
     def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
