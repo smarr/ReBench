@@ -136,4 +136,4 @@ def determine_environment():
     if _environment:
         return _environment
 
-    raise Exception("Environment was not initialized before accessing it.")
+    raise RuntimeError("Environment was not initialized before accessing it.")

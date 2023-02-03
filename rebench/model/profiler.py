@@ -16,7 +16,7 @@ class Profiler(object):
                 perf = PerfProfiler(k, v)
                 profilers.append(perf)
             else:
-                raise Exception("Not yet supported profiler type: " + k)
+                raise NotImplementedError("Not yet supported profiler type: " + k)
         return profilers
 
     def __init__(self, name, gauge_name):

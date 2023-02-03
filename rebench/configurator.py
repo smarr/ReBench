@@ -98,7 +98,7 @@ class _RunFilter(object):
             elif parts[0] == "m" and len(parts) == 2:
                 self._machine_filters.append(_MachineFilter(parts[1]))
             else:
-                raise Exception("Unknown filter expression: " + run_filter)
+                raise RuntimeError("Unknown filter expression: " + run_filter)
 
     def applies_to_bench(self, bench):
         return (self._match(self._executor_filters, bench) and

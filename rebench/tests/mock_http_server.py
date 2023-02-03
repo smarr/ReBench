@@ -50,7 +50,7 @@ class MockHTTPServer(object):
         self._server = HTTPServer(('localhost', self._port), _RequestHandler)
 
         self._thread = Thread(target=self._server.serve_forever)
-        self._thread.setDaemon(True)
+        self._thread.daemon = True
         self._thread.start()
 
     def shutdown(self):

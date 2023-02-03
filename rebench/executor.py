@@ -67,7 +67,7 @@ class RunScheduler(object):
             return 0, 0, 0
 
         current = time()
-        time_per_invocation = ((current - self._start_time) / self._runs_completed)
+        time_per_invocation = (current - self._start_time) / self._runs_completed
         etl = time_per_invocation * (self._total_num_runs - self._runs_completed)
         sec = etl % 60
         minute = (etl - sec) / 60 % 60
