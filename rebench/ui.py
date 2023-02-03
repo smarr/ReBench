@@ -214,7 +214,7 @@ class UiSpinner(Spinner):
         assert not self.interactive
         label = label or self.label
         if not label:
-            raise Exception("No label set for spinner!")
+            raise RuntimeError("No label set for spinner!")
 
         if self.total:
             label = "%s: %.2f%%\n" % (label, progress / (self.total / 100.0))

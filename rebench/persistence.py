@@ -403,7 +403,7 @@ class _ReBenchDB(_ConcretePersistence):
         self._start_time = start_time
 
     def load_data(self, runs, discard_run_data):
-        raise Exception("Does not yet support data loading from ReBenchDB")
+        raise RuntimeError("Does not yet support data loading from ReBenchDB")
 
     def persist_data_point(self, data_point):
         with self._lock:
