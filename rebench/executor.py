@@ -402,8 +402,9 @@ class Executor(object):
                 log_file.write(stderr_result)
 
     def execute_run(self, run_id):
-        gauge_adapter = self._get_gauge_adapter_instance(
-            run_id.get_gauge_adapter_name())
+        gauge_adapter = self._get_gauge_adapter_instance(run_id)
+        if gauge_adapter is None:
+            return True
 
         cmdline = self._construct_cmdline(run_id, gauge_adapter)
 
@@ -441,8 +442,18 @@ class Executor(object):
 
         return terminate
 
-    def _get_gauge_adapter_instance(self, adapter_name):
-        return instantiate_adapter(adapter_name, self._include_faulty, self)
+    def _get_gauge_adapter_instance(self, run_id):
+        adapter_name = run_id.get_gauge_adapter_name()
+        adapter = instantiate_adapter(adapter_name,
+                                      self._include_faulty,
+                                      self)
+
+        if adapter is None:
+            run_id.fail_immediately()
+            msg = "{ind}Couldn't find gauge adapter: %s\n" % adapter_name
+            self.ui.error_once(msg, run_id)
+
+        return adapter
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):

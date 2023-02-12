@@ -1,13 +1,15 @@
-from unittest import TestCase
+from unittest import TestCase, skipIf
 
 from ..denoise import DenoiseResult
 from ..environment import determine_source_details, determine_environment,\
-    init_environment, extract_base
+    init_environment, extract_base, git_not_available, git_repo_not_initialized
 from ..ui import TestDummyUI
 
 
-class ReBenchTestCase(TestCase):
+class EnvironmentTest(TestCase):
 
+    @skipIf(git_not_available() or git_repo_not_initialized(),
+        "git seems not to be installed, or on the path, or the .git dir is missing")
     def test_source_details(self):
         details = determine_source_details(None)
         self.assertEqual(len(details['commitId']), 40)

@@ -2,7 +2,7 @@ from pykwalify.errors import SchemaError
 from yaml import YAMLError
 
 from ..configurator import load_config
-from ..ui import UIError, escape_braces
+from ..ui import UI, UIError, escape_braces
 
 from .rebench_test_case import ReBenchTestCase
 
@@ -36,3 +36,9 @@ class UITest(ReBenchTestCase):
         with self.assertRaises(UIError) as err:
             load_config(self._path + '/broken-yaml.conf')
         self.assertIsInstance(err.exception.source_exception, YAMLError)
+
+    def test_is_first_error_with(self):
+        ui = UI()
+        self.assertTrue(ui._is_first_error_with("a"))
+        self.assertFalse(ui._is_first_error_with("a"))
+        self.assertTrue(ui._is_first_error_with("b"))

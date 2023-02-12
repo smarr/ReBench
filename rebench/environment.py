@@ -41,6 +41,14 @@ def extract_base(branch_or_tag):
     return branch_or_tag.replace('HEAD -> ', '')
 
 
+def git_not_available():
+    return _exec(['git', '--version']) is None
+
+
+def git_repo_not_initialized():
+    return _exec(['git', 'rev-parse']) is None
+
+
 def determine_source_details(configurator):
     global _source  # pylint: disable=global-statement
     if _source:

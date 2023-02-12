@@ -17,12 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from unittest import skipIf
 from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
 
 from ..persistence import DataStore
 
 from ..configurator import Configurator, load_config
+from ..environment import git_not_available, git_repo_not_initialized
 from ..executor import Executor
 from ..model.benchmark import Benchmark
 from ..model.benchmark_suite import BenchmarkSuite
@@ -115,6 +117,8 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf2, 1, 10, 10)
 
+    @skipIf(git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB")
     def test_rebench_db(self):
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
