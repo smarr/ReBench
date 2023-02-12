@@ -184,7 +184,7 @@ class ExecutorTest(ReBenchTestCase):
 
 
 def test_suite():
-    return unittest.makeSuite(ExecutorTest)
+    unittest.defaultTestLoader.loadTestsFromTestCase(ExecutorTest)
 
 
 if __name__ == "__main__":

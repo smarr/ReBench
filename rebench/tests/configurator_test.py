@@ -139,7 +139,7 @@ class ConfiguratorTest(ReBenchTestCase):
 
 # allow command-line execution
 def test_suite():
-    return unittest.makeSuite(ConfiguratorTest)
+    unittest.defaultTestLoader.loadTestsFromTestCase(ConfiguratorTest)
 
 
 if __name__ == "__main__":

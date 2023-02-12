@@ -65,7 +65,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
 
 def test_suite():
-    return unittest.makeSuite(SubprocessTimeoutTest)
+    unittest.defaultTestLoader.loadTestsFromTestCase(SubprocessTimeoutTest)
 
 
 if __name__ == "__main__":
