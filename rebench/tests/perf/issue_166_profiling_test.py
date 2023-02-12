@@ -1,5 +1,7 @@
+from unittest import skipIf
 from ..mock_http_server import MockHTTPServer
 from ...configurator import Configurator, load_config
+from ...environment import git_not_available, git_repo_not_initialized
 from ...executor import Executor
 from ...model.profile_data import ProfileData
 from ...persistence import DataStore
@@ -148,6 +150,8 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(7, run_id.completed_invocations)
         self.assertEqual(7, run_id.get_number_of_data_points())
 
+    @skipIf(git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB")
     def test_send_to_rebench_db(self):
         server = MockHTTPServer()
         port = server.get_free_port()
