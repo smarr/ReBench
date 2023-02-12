@@ -34,9 +34,13 @@ class RebenchLogAdapter(GaugeAdapter):
        Note: regular expressions are documented in /docs/extensions.md
     """
     re_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) runtime: ([0-9]+)([mu])s")
+        r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) "
+        + r"runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+        + r"(?P<unit>[mu])s")
     re_extra_criterion_log_line = re.compile(
-        r"^(?:.*: )?([^\s]+): ([^:]{1,30}):\s*([0-9]+)([a-zA-Z]+)")
+        r"^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*"
+        + r"(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+        + r"(?P<unit>[a-zA-Z]+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
@@ -60,8 +64,8 @@ class RebenchLogAdapter(GaugeAdapter):
             measure = None
             match = self.re_log_line.match(line)
             if match:
-                time = float(match.group(4))
-                if match.group(5) == "u":
+                time = float(match.group("runtime"))
+                if match.group("unit") == "u":
                     time /= 1000
                 criterion = (match.group(2) or 'total').strip()
 
@@ -70,9 +74,9 @@ class RebenchLogAdapter(GaugeAdapter):
             else:
                 match = self.re_extra_criterion_log_line.match(line)
                 if match:
-                    value = float(match.group(3))
-                    criterion = match.group(2)
-                    unit = match.group(4)
+                    value = float(match.group("value"))
+                    criterion = match.group("criterion")
+                    unit = match.group("unit")
 
                     measure = Measurement(invocation, iteration, value, unit, run_id, criterion)
 
