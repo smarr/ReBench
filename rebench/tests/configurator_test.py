@@ -52,7 +52,7 @@ class ConfiguratorTest(ReBenchTestCase):
                            self.ui, None, None, 'all')
         self.assertEqual(6, len(cnf.get_experiments()))
 
-    def test_get_experiment(self):
+    def _get_experiment(self):
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self.ui),
                            self.ui, None)
         exp = cnf.get_experiment('Test')
@@ -60,7 +60,7 @@ class ConfiguratorTest(ReBenchTestCase):
         return exp
 
     def test_get_runs(self):
-        exp = self.test_get_experiment()
+        exp = self._get_experiment()
         runs = exp.runs
         self.assertEqual(2 * 2 * 2, len(runs))
 
