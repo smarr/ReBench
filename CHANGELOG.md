@@ -4,7 +4,7 @@
 
  -
 
-## [1.1.0] Denoise - 2020-09-17
+## [1.1.0] Denoise - 2023-02-21
 
 This release focuses on reducing the noise from the system  (#143, #144).
 For this purpose, it introduces the `rebench-denoise` tool, which will adapt
@@ -22,7 +22,7 @@ The use of `rebench-denoise` will require root rights.
 
 Other new features include:
 
- - add support for configurating environment variables (#174)
+ - add support for configuring environment variables (#174)
  - add support for recording profiling information (#190)
  - add support for printing the execution plan without running it (#171)
  - add marker in configuration to make setting important, which overrides
@@ -30,7 +30,7 @@ Other new features include:
    configuration values (#170)
  - add support for filtering experiments by machines (#161)
 
-Thanks to @tobega, @qinsoon, @OctaveLarose, and @raehik for their contributions.
+Thanks to @tobega, @qinsoon, @cmccandless, @OctaveLarose, and @raehik for their contributions.
 
 Other notable improvements:
 
@@ -43,6 +43,8 @@ Other notable improvements:
  - make gauge adapter names in configurations case-insensitive (#202)
  - improve documentation (#197, #198)
  - use PyTest for unit tests (#192)
+ 
+**Full Changelog**: https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
  
 
 ## [1.0.1] - 2020-06-23
