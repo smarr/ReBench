@@ -2,16 +2,11 @@ import getpass
 import os
 import subprocess
 
+from urllib.parse import urlparse
 from cpuinfo.cpuinfo import _get_cpu_info_internal
 from psutil import virtual_memory
 
 from .subprocess_with_timeout import output_as_str
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2.7
-    from urlparse import urlparse
 
 
 def _encode_str(out):

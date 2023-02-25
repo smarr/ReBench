@@ -2,34 +2,12 @@ from os         import kill
 from signal     import SIGKILL
 from subprocess import PIPE, Popen
 
-IS_PY3 = None
-
-try:
-    _ = ProcessLookupError
-    IS_PY3 = True
-except NameError:
-    IS_PY3 = False
 
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
 
 
-def _kill_py2(proc_id, uses_sudo):
-    if uses_sudo:
-        from .denoise import deliver_kill_signal  # pylint: disable=import-outside-toplevel
-
-        deliver_kill_signal(proc_id)
-        return
-
-    try:
-        kill(proc_id, SIGKILL)
-    except IOError:
-        # there's a race condition, the process may have already terminated on its own
-        # so let's simply ignore it
-        pass
-
-
-def _kill_py3(proc_id, uses_sudo):
+def _kill(proc_id, uses_sudo):
     if uses_sudo:
         from .denoise import deliver_kill_signal  # pylint: disable=import-outside-toplevel
 
@@ -50,10 +28,7 @@ def kill_process(pid, recursively, thread, uses_sudo):
         pids.extend(_get_process_children(pid))
 
     for proc_id in pids:
-        if IS_PY3:
-            _kill_py3(proc_id, uses_sudo)
-        else:
-            _kill_py2(proc_id, uses_sudo)
+        _kill(proc_id, uses_sudo)
 
     if thread:
         thread.join()

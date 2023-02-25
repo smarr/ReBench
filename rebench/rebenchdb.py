@@ -2,25 +2,10 @@ import json
 from datetime import datetime
 from time import sleep
 
+from http.client import HTTPException
+from urllib.request import urlopen, Request as PutRequest
+
 from .ui import UIError
-
-try:
-    from http.client import HTTPException
-    from urllib.request import urlopen, Request as PutRequest
-except ImportError:
-    # Python 2.7
-    from httplib import HTTPException
-    from urllib2 import urlopen, Request
-
-
-    class PutRequest(Request):
-        def __init__(self, *args, **kwargs):
-            if 'method' in kwargs:
-                del kwargs['method']
-            Request.__init__(self, *args, **kwargs)
-
-        def get_method(self, *_args, **_kwargs):  # pylint: disable=arguments-differ
-            return 'PUT'
 
 
 def get_current_time():

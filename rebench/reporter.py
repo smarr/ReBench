@@ -24,17 +24,10 @@ from operator import itemgetter
 import json
 import re
 
+from http.client import HTTPException
+from urllib.request import urlopen
+from urllib.parse import urlencode
 from humanfriendly.tables import format_pretty_table
-
-
-try:
-    from http.client import HTTPException
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
-except ImportError:
-    from httplib import HTTPException
-    from urllib import urlencode # pylint: disable=ungrouped-imports
-    from urllib2 import urlopen
 
 
 class Reporter(object):

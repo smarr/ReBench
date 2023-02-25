@@ -1,11 +1,6 @@
-try:
-    # Python 3
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-except ImportError:
-    # Python 2
-    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
 import socket
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
 

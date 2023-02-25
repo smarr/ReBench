@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from .rebench_test_case import ReBenchTestCase
 
 from ..configurator import Configurator, load_config
@@ -5,11 +7,6 @@ from ..executor import Executor
 from ..persistence import DataStore
 from ..rebench import ReBench
 from ..reporter import CodespeedReporter
-
-try:
-    from http.client import HTTPException
-except ImportError:
-    from httplib import HTTPException
 
 
 class ReporterTest(ReBenchTestCase):

@@ -20,11 +20,6 @@ try:
 except ValueError:
     rebench_version = "unknown"
 
-try:
-    FileNotFoundError  # pylint: disable=used-before-assignment
-except NameError:
-    FileNotFoundError = IOError  # pylint: disable=redefined-builtin
-
 
 class DenoiseResult(object):
 
