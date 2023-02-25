@@ -62,10 +62,9 @@ class ReBenchDB(object):
     def _send_payload(payload, url):
         req = PutRequest(url, payload,
                          {'Content-Type': 'application/json'}, method='PUT')
-        socket = urlopen(req)
-        response = socket.read()
-        socket.close()
-        return response
+        with urlopen(req) as socket:
+            response = socket.read()
+            return response
 
     def _send_to_rebench_db(self, payload_data, operation):
         payload_data['projectName'] = self._project_name

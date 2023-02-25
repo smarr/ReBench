@@ -202,10 +202,9 @@ class CodespeedReporter(Reporter):
         return result
 
     def _send_payload(self, payload):
-        socket = urlopen(self._cfg.url, payload)
-        response = socket.read()
-        socket.close()
-        return response
+        with urlopen(self._cfg.url, payload) as socket:
+            response = socket.read()
+            return response
 
     def _send_to_codespeed(self, results, run_id):
         payload = urlencode({'json': json.dumps(results)})
