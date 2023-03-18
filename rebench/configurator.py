@@ -130,6 +130,7 @@ def load_config(file_name):
                 schema_files=[dirname(__file__) + "/rebench-schema.yml"])
             try:
                 validator.validate(raise_exception=True)
+                validate_gauge_adapters(data)
             except SchemaError as err:
                 errors = [escape_braces(val_err) for val_err in validator.validation_errors]
                 raise UIError(
@@ -145,6 +146,21 @@ def load_config(file_name):
     except yaml.YAMLError as err:
         raise UIError("Parsing of the config file "
                       + file_name + " failed.\nError " + str(err) + "\n", err)
+
+
+def validate_gauge_adapters(raw_config):
+    benchmark_suites = raw_config.get('benchmark_suites', {})
+    for suite_name, suite in benchmark_suites.items():
+        adapter = suite['gauge_adapter']
+        if not isinstance(adapter, (dict, str)):
+            raise UIError(("Gauge adapter for suite %s must be a string or a dictionary," +
+                           "but is %s.\n") % (suite_name, type(adapter).__name__), None)
+
+        if isinstance(adapter, dict) and len(adapter) != 1:
+            raise UIError("When specifying a custom gauge adapter," +
+                          " exactly one must to be specified." +
+                          " Currently there are %d. (%s)\n" % (len(adapter), adapter), None)
+    return True
 
 
 class Configurator(object):

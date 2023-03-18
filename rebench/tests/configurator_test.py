@@ -19,8 +19,9 @@
 # IN THE SOFTWARE.
 import unittest
 
-from ..configurator           import Configurator, load_config
-from ..persistence            import DataStore
+from ..configurator     import Configurator, load_config, validate_gauge_adapters
+from ..persistence      import DataStore
+from ..ui               import UIError
 from .rebench_test_case import ReBenchTestCase
 
 
@@ -135,6 +136,46 @@ class ConfiguratorTest(ReBenchTestCase):
 
         runs = cnf.get_runs()
         self.assertEqual(14 + 24, len(runs))
+
+    def test_validate_gauge_adapters_with_all_correct_settings(self):
+        result = validate_gauge_adapters({
+            'benchmark_suites': {
+                'StandardOne': {
+                    'gauge_adapter': 'ReBenchLog'
+                },
+                'SimpleCustomOne': {
+                    'gauge_adapter': {
+                        'MyClass': './my_class.py'
+                    }
+                }
+            }
+        })
+        self.assertTrue(result)
+
+    def test_validate_gauge_adapters_with_wrong_settings(self):
+        with self.assertRaises(UIError) as ctx:
+            validate_gauge_adapters({
+                'benchmark_suites': {
+                    'TwoAdapters': {
+                        'gauge_adapter': {
+                            'MyClass1': './my_class.py',
+                            'MyClass2': './my_class.py',
+                        }
+                    }
+                }
+            })
+            self.assertIn('exactly one', ctx.exception.message)
+
+    def test_validate_gauge_adapter_with_invalid_value(self):
+        with self.assertRaises(UIError) as ctx:
+            validate_gauge_adapters({
+                'benchmark_suites': {
+                    'InvalidValue': {
+                        'gauge_adapter': 42
+                    }
+                }
+            })
+            self.assertIn('must be a string or a dict', ctx.exception.message)
 
 
 # allow command-line execution
