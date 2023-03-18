@@ -20,6 +20,7 @@
 import re
 import pkgutil
 import sys
+from os.path import join
 
 
 class GaugeAdapter(object):
@@ -82,7 +83,13 @@ class ResultsIndicatedAsInvalid(ExecutionDeliveredNoResults):
     pass
 
 
-def instantiate_adapter(name, include_faulty, executor):
+def instantiate_adapter(adapter_cfg, include_faulty, executor):
+    if isinstance(adapter_cfg, str):
+        return _search_in_rebench_modules(adapter_cfg, include_faulty, executor)
+    return _load_directly(adapter_cfg, include_faulty, executor)
+
+
+def _search_in_rebench_modules(name, include_faulty, executor):
     adapter_name = name + "Adapter"
     root = sys.modules['rebench.interop'].__path__
 
@@ -95,9 +102,33 @@ def instantiate_adapter(name, include_faulty, executor):
                 mod = __import__("interop." + module_name, fromlist=adapter_name)
             except ImportError:
                 mod = None
-        if mod is not None:
-            for key in dir(mod):
-                if key.lower() == adapter_name.lower():
-                    return getattr(mod, key)(include_faulty, executor)
+        adapter_cls = _get_adapter_case_insensitively_from_module(mod, adapter_name)
+        if adapter_cls is not None:
+            return adapter_cls(include_faulty, executor)
 
+    return None
+
+
+def _get_adapter_case_insensitively_from_module(mod, adapter_name):
+    if mod is not None:
+        keys = mod.keys() if isinstance(mod, dict) else dir(mod)
+        for key in keys:
+            if key.lower() == adapter_name.lower():
+                return mod[key] if isinstance(mod, dict) else getattr(mod, key)
+    return None
+
+
+def _load_directly(adapter_cfg, include_faulty, executor):
+    name, path = next(iter(adapter_cfg.items()))
+    full_path = join(executor.config_dir, path)
+    with open(full_path, 'r') as adapter_file:  # pylint: disable=unspecified-encoding
+        file_content = adapter_file.read()
+
+    module_globals = {'__name__': name}
+    code = compile(file_content, full_path, 'exec')
+    exec(code, module_globals)  # pylint: disable=exec-used
+
+    cls = _get_adapter_case_insensitively_from_module(module_globals, name)
+    if cls is not None:
+        return cls(include_faulty, executor)
     return None

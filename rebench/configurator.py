@@ -178,6 +178,8 @@ class Configurator(object):
         self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
         self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
         self.artifact_review = raw_config.get('artifact_review', False)
+        self.config_dir = raw_config.get('__dir__', None)
+        self.config_file = raw_config.get('__file__', None)
 
         self._rebench_db_connector = None
 
