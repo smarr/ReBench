@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import logging
-from os.path import dirname
+from os.path import dirname, abspath
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
 import yaml
@@ -131,6 +131,11 @@ def load_config(file_name):
             try:
                 validator.validate(raise_exception=True)
                 validate_gauge_adapters(data)
+
+                # add file name and directory to config to be able to use it when loading
+                # for instance gauge adapters
+                data['__file__'] = file_name
+                data['__dir__'] = dirname(abspath(file_name))
             except SchemaError as err:
                 errors = [escape_braces(val_err) for val_err in validator.validation_errors]
                 raise UIError(
