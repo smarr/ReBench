@@ -404,17 +404,32 @@ all of them.
 
 **gauge_adapter:**
 
-Name of the parser that interprets the output of the benchmark harness.
-For a list of supported options see the list of [extensions](extensions.md#available-harness-support).
+Either the name of the parser that interpreters the output of the benchmark harness,
+or a map with one element, which is the name of the parser and the path
+to the Python file with a custom parser.
+
+For a list of supported parsers see the list of [extensions](extensions.md#available-harness-support).
+
+If a custom parser is used, the given path is assumed to be relative to the
+configuration file.
 
 This key is mandatory.
 
-Example:
+Example 1, using a built-in parser:
 
 ```yaml
 benchmark_suites:
   ExampleSuite:
     gauge_adapter: ReBenchLog
+```
+
+Example 2, using a custom parser:
+
+```yaml
+benchmark_suites:
+  ExampleSuite:
+    gauge_adapter:
+      MyClass: ./my_parser.py
 ```
 
 ---

@@ -102,16 +102,58 @@ Example configuration for a suite:
 
 ## Supporting other Benchmark Harnesses
 
-To add support for your own harness, check the `rebench.interop` module.
-In there, the `adapter` module contains the `GaugeAdapter` base class.
+To add support for your own harness, you can implement your own gauge adapter
+and use it in the configuration by naming the class and giving a path to
+the file implementing it. The path is expected to be relative to the
+configuration file.
+
+Example configuration with a custom adapter:
+
+```yaml
+    Suite:
+        gauge_adapter:
+           MyAdapter: my_adapter.py
+        benchmarks:
+          - Bench1
+```
+
+A custom adapter is expected to behave like a `GaugeAdapter` object,
+and it is recommended to inherit from the `GaugeAdapter` base class.
+
+The simplest adapter would look like this:
+
+```python
+from rebench.interop.adapter   import GaugeAdapter
+from rebench.model.data_point  import DataPoint
+from rebench.model.measurement import Measurement
+
+
+class MyAdapter(GaugeAdapter):
+
+    def parse_data(self, data, run_id, invocation):
+        iteration = 1
+        data_points = []
+        current = DataPoint(run_id)
+        data_points.append(current)
+        
+        measure = Measurement(invocation, iteration, 1.0, 'ms', run_id, 'total')
+        current.add_measurement(measure)
+
+        return data_points
+```
 
 The key method to implement is `parse_data(self, data, run_id, invocation)`.
 The method is expected to return a list of `DataPoint` objects.
 Each data point can contain a number of `Measurement` objects, where one of
 them needs to be indicated as the `total` value.
-The idea here is that a harness can measure different phases of a benchmark
-or different properties, for instance memory usage.
-These can be encoded as different measurements. The overall run time is
+
+The criterion identifies what is measured. This can be different phases of a
+benchmark or different properties, for instance memory usage.
+Each criterion is encoded as a separate measurement. The overall run time is
 assumed to be the final measurement to conclude the information for a single
-iteration of a benchmark.
+iteration of a benchmark, using the `total` criterion.
+Other criterion names are not standardized.
+
+For more examples, see the `rebench.interop` module.
+In there, the `adapter` module contains the `GaugeAdapter` base class.
 A good example to study is the `rebench_log_adapter` implementation.
