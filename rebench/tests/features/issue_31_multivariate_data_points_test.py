@@ -41,8 +41,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
                            data_file=self._tmp_file)
         runs = cnf.get_runs()
         persistence = TestPersistence()
-        for run in runs:
-            run.add_persistence(persistence)
+        persistence.use_on(runs)
 
         ex = Executor(runs, False, self.ui)
         ex.execute()

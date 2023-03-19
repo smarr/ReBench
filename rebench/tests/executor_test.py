@@ -74,8 +74,7 @@ class ExecutorTest(ReBenchTestCase):
 
         runs = cnf.get_runs()
         persistence = TestPersistence()
-        for run in runs:
-            run.add_persistence(persistence)
+        persistence.use_on(runs)
 
         ex = Executor(runs, cnf.do_builds, self.ui)
         ex.execute()
