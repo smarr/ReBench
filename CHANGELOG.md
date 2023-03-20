@@ -2,7 +2,15 @@
 
 ## [Unreleased]
 
- -
+The main feature of this release is the new support for custom
+gauge adapters. This allows the use of a Python file from the
+ReBench config, which can parse arbitrary output from a benchmark, see #209.
+
+Other new features:
+ - 
+
+Other changes:
+ - 
 
 ## [1.1.0] Denoise - 2023-02-21
 
