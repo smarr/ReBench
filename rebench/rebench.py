@@ -287,7 +287,8 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log, self._config.artifact_review,
-                            use_nice, use_shielding, self._config.options.execution_plan)
+                            use_nice, use_shielding, self._config.options.execution_plan,
+                            self._config.config_dir)
 
         if self._config.options.no_execution:
             return True

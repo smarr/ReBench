@@ -110,12 +110,21 @@ class RunId(object):
             return None
         return self._expand_vars(self.benchmark.suite.location)
 
-    def get_gauge_adapter_name(self):
+    def get_gauge_adapter(self):
         if self.is_profiling():
             # TODO: needs changing once we want to support different profilers
             perf_profile = self.benchmark.suite.executor.profiler[0]
             return perf_profile.gauge_adapter_name
         return self.benchmark.gauge_adapter
+
+    def get_gauge_adapter_name(self):
+        if self.is_profiling():
+            return self.get_gauge_adapter()
+
+        adapter = self.benchmark.gauge_adapter
+        if isinstance(adapter, str):
+            return adapter
+        return next(iter(adapter))  # get the first key in the dict
 
     def is_profiling(self):
         return self.benchmark.suite.executor.action == "profile"

@@ -193,10 +193,12 @@ schema;benchmark_suite_type:
   mapping:
     <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
     gauge_adapter:
-      type: str
+      type: any
       required: true
       desc: |
-        Name of the parser that interpreters the output of the benchmark harness
+        Either the name of the parser that interpreters the output of the benchmark harness,
+        or a map with one element, which is the name of the parser and the path
+        to the Python file with a custom parser.
     command:
       type: str
       required: true

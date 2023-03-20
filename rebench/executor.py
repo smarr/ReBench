@@ -262,7 +262,7 @@ class Executor(object):
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
                  artifact_review=False, use_nice=False, use_shielding=False,
-                 print_execution_plan=False):
+                 print_execution_plan=False, config_dir=None):
         self._runs = runs
 
         self._use_nice = use_nice
@@ -278,6 +278,7 @@ class Executor(object):
         self._scheduler = self._create_scheduler(scheduler)
         self.build_log = build_log
         self._artifact_review = artifact_review
+        self.config_dir = config_dir
 
         num_runs = RunScheduler.number_of_uncompleted_runs(runs, ui)
         for run in runs:
@@ -443,14 +444,14 @@ class Executor(object):
         return terminate
 
     def _get_gauge_adapter_instance(self, run_id):
-        adapter_name = run_id.get_gauge_adapter_name()
-        adapter = instantiate_adapter(adapter_name,
+        adapter_cfg = run_id.get_gauge_adapter()
+        adapter = instantiate_adapter(adapter_cfg,
                                       self._include_faulty,
                                       self)
 
         if adapter is None:
             run_id.fail_immediately()
-            msg = "{ind}Couldn't find gauge adapter: %s\n" % adapter_name
+            msg = "{ind}Couldn't find gauge adapter: %s\n" % run_id.get_gauge_adapter_name()
             self.ui.error_once(msg, run_id)
 
         return adapter
