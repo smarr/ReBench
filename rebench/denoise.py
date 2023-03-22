@@ -105,7 +105,7 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
                    + ' can be used without password.\n'
             msg += '{ind}To be able to run rebench-denoise without password,\n'
             msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
-            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD: '\
+            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
                    + denoise_cmd + '\n'
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
