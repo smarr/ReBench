@@ -24,6 +24,7 @@ from unittest import skip
 
 from ...configurator import Configurator, load_config
 from ...executor import Executor
+from ...interop.time_adapter import TimeManualAdapter
 from ...persistence import DataStore
 from ...reporter import Reporter
 from ..rebench_test_case import ReBenchTestCase
@@ -129,6 +130,24 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         parts = log.split('|', 2)
         self.assertEqual("E:exe-with-build-but-not-env", parts[0])
         self._assert_empty_standard_env(parts[1])
+
+    def test_construct_cmdline_env_vars_set_as_expected(self):
+        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='test-set-as-expected')
+        runs = list(cnf.get_runs())
+        ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
+
+        self.assertIn(" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT rebench-denoise",
+                      ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)))
+
+    def test_construct_cmdline_build_with_env(self):
+        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file, exp_name='build-with-env')
+        runs = list(cnf.get_runs())
+        ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
+
+        self.assertIn(" --preserve-env=VAR1,VAR3 rebench-denoise",
+                      ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)))
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(':')

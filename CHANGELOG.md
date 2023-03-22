@@ -10,6 +10,7 @@ Other new features:
  - 
 
 Other changes:
+ - fix handling of environment variables when sudo is used (#210)
  - 
 
 ## [1.1.0] Denoise - 2023-02-21
