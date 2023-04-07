@@ -121,8 +121,11 @@ def init_environment(denoise_result, ui):
         cpu_info = _get_cpu_info_internal()
         if cpu_info:
             result['cpu'] = cpu_info['brand_raw']
-            result['clockSpeed'] = (cpu_info['hz_advertised'][0]
-                                    * (10 ** cpu_info['hz_advertised'][1]))
+            if 'hz_advertised' in cpu_info:
+                result['clockSpeed'] = (cpu_info['hz_advertised'][0]
+                                        * (10 ** cpu_info['hz_advertised'][1]))
+            else:
+                result['clockSpeed'] = 0
     except ValueError:
         pass
 
