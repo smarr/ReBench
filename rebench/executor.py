@@ -30,7 +30,8 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter
+from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
+    ResultsIndicatedAsInvalid
 from .ui import escape_braces
 
 
@@ -551,7 +552,11 @@ class Executor(object):
 
             run_id.indicate_successful_execution()
             self.ui.verbose_output_info(msg, run_id, cmdline)
-        except ExecutionDeliveredNoResults:
+        except ExecutionDeliveredNoResults as e:
+            if isinstance(e, OutputNotParseable):
+                self.ui.error("{ind}Output of run could not be parsed.\n", run_id, cmdline)
+            elif isinstance(e, ResultsIndicatedAsInvalid):
+                self.ui.error("{ind}Results were marked as invalid.\n", run_id, cmdline)
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)
 
