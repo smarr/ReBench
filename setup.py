@@ -29,8 +29,10 @@ with open("README.md", "r") as fh:
 
 if sys.version_info[0] < 3:
     pykwalify_version = 'pykwalify==1.7.0'
+    py_cpuinfo_version = 'py-cpuinfo==7.0.0'
 else:
     pykwalify_version = 'pykwalify>=1.8.0'
+    py_cpuinfo_version = 'py-cpuinfo==9.0.0'
 
 setup(name='ReBench',
       version=rebench_version,
@@ -46,7 +48,7 @@ setup(name='ReBench',
           'PyYAML>=3.12',
           pykwalify_version,
           'humanfriendly>=8.0',
-          'py-cpuinfo==7.0.0',
+          py_cpuinfo_version,
           'psutil>=5.6.7'
       ],
       entry_points = {

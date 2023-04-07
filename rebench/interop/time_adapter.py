@@ -44,15 +44,28 @@ class TimeAdapter(GaugeAdapter):
 
     def acquire_command(self, run_id):
         command = run_id.cmdline()
+        time_bin = '/usr/bin/time'
+
         try:
             formatted_output = subprocess.call(
                 ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError:
             formatted_output = 1
+
+        if formatted_output == 1:
+            try:
+                formatted_output = subprocess.call(
+                    ['/opt/local/bin/gtime', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if formatted_output == 0:
+                    time_bin = '/opt/local/bin/gtime'
+            except OSError:
+                formatted_output = 1
+
         if formatted_output == 0:
             self._use_formatted_time = True
-            return "/usr/bin/time -f %s %s" % (TimeAdapter.time_format, command)
+            return "%s -f %s %s" % (time_bin, TimeAdapter.time_format, command)
         else:
             # use standard, but without info on memory
             # TODO: add support for reading out memory info on OS X
