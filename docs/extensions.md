@@ -86,7 +86,7 @@ Implementation Notes:
 ## `Time`
 
 The `Time` adapter uses Unix's `/usr/bin/time` command.
-On Linux, or more generally the platforms that support it, it will also use the
+If it the `time` program supports it, we will also use the
 `-f` switch of the `time` command to record the maximum resident set size,
 i.e., the maximum amount of memory the program used.
 
@@ -99,6 +99,13 @@ Example configuration for a suite:
           - Bench1
 ```
 
+Note:
+
+Compatible `time` binaries are looked for in:
+ - `/usr/bin/time`
+ - `/opt/local/bin/gtime`
+
+On MacOS, a GNU time command can be installed for instance with Homebrew and MacPorts.
 
 ## Supporting other Benchmark Harnesses
 
