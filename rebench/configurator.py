@@ -287,6 +287,10 @@ class Configurator(object):
         return executor_name in self._executors
 
     def get_executor(self, executor_name, run_details, variables, action):
+        if executor_name not in self._executors:
+            raise ConfigurationError(
+                "An experiment tries to use an undefined executor: %s" % executor_name)
+
         executor = Executor.compile(
             executor_name, self._executors[executor_name],
             run_details, variables, self.build_commands, action)
