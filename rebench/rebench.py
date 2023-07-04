@@ -125,6 +125,10 @@ Argument:
             help='Disables execution.'
                  ' It allows to verify the configuration file and other parameters.')
         execution.add_argument(
+            '-D', '--no-denoise', action='store_false', dest='use_denoise',
+            default=True,
+            help='Disable use of denoise, and thus, do not try to minimize interference from the system during benchmarking.')
+        execution.add_argument(
             '-p', '--execution-plan', action='store_true', dest='execution_plan',
             default=False,
             help='Print execution plan.'
@@ -256,23 +260,25 @@ Argument:
 
         runs = self._config.get_runs()
         does_profiling = any(r.is_profiling() for r in runs)
+        if not self._config.options.use_denoise:
+            self.load_data_and_execute_experiments( runs, data_store,False, False,None)
+        else:
+            denoise_result = None
+            show_denoise_warnings = not (self._config.artifact_review or self._config.options.execution_plan)
+            try:
+                denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
+                use_nice = denoise_result.use_nice
+                use_shielding = denoise_result.use_shielding
+                self.load_data_and_execute_experiments(runs, data_store, use_nice, use_shielding,denoise_result)
+            finally:
+                restore_noise(denoise_result, show_denoise_warnings, self.ui)
 
-        denoise_result = None
-        show_denoise_warnings = not (self._config.artifact_review
-                                     or self._config.options.execution_plan)
+    def load_data_and_execute_experiments(self, runs, data_store, use_nice, use_shielding,denoise_result):
+        init_environment(denoise_result, self.ui)
+        data_store.load_data(runs, self._config.options.do_rerun)
+        return self.execute_experiment(runs, use_nice, use_shielding)
+            
 
-        try:
-            denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
-            init_environment(denoise_result, self.ui)
-
-            data_store.load_data(runs, self._config.options.do_rerun)
-
-            use_nice = denoise_result.use_nice
-            use_shielding = denoise_result.use_shielding
-
-            return self.execute_experiment(runs, use_nice, use_shielding)
-        finally:
-            restore_noise(denoise_result, show_denoise_warnings, self.ui)
 
     def execute_experiment(self, runs, use_nice, use_shielding):
         self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")

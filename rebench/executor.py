@@ -263,12 +263,14 @@ class Executor(object):
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
                  artifact_review=False, use_nice=False, use_shielding=False,
-                 print_execution_plan=False, config_dir=None):
+                 print_execution_plan=False, config_dir=None,
+                 use_denoise=True):
+        self.use_denoise=use_denoise
         self._runs = runs
 
         self._use_nice = use_nice
         self._use_shielding = use_shielding
-        self.use_denoise = use_nice or use_shielding
+        self.use_denoise =  self.use_denoise and (use_nice or use_shielding)
 
         self._print_execution_plan = print_execution_plan
 
