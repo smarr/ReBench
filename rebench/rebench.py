@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # ReBench is a tool to run and document benchmarks.
 #
 # It is inspired by JavaStats implemented by Andy Georges.
@@ -54,7 +54,7 @@ class ReBench(object):
 
     def shell_options(self):
         usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
-        
+
 Argument:
   config    required argument, file containing the experiment to be executed
   exp_name  optional argument, the name of an experiment definition

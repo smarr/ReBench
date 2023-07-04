@@ -10,29 +10,16 @@ import signal
 
 from .subprocess_kill import kill_process
 
-IS_PY3 = None
-
-try:
-    _ = ProcessLookupError
-    IS_PY3 = True
-except NameError:
-    IS_PY3 = False
 
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
 
-if IS_PY3:
-    def output_as_str(string_like):
-        if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-            return string_like.decode('utf-8')
-        else:
-            return string_like
-else:
-    def output_as_str(string_like):
-        if string_like is not None and type(string_like) == str:  # pylint: disable=unidiomatic-typecheck
-            return string_like.decode('utf-8')
-        else:
-            return string_like
+
+def output_as_str(string_like):
+    if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
+        return string_like.decode('utf-8')
+    else:
+        return string_like
 
 _signals_setup = False
 

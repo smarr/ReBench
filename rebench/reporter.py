@@ -24,17 +24,10 @@ from operator import itemgetter
 import json
 import re
 
+from http.client import HTTPException
+from urllib.request import urlopen
+from urllib.parse import urlencode
 from humanfriendly.tables import format_pretty_table
-
-
-try:
-    from http.client import HTTPException
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
-except ImportError:
-    from httplib import HTTPException
-    from urllib import urlencode # pylint: disable=ungrouped-imports
-    from urllib2 import urlopen
 
 
 class Reporter(object):
@@ -209,10 +202,9 @@ class CodespeedReporter(Reporter):
         return result
 
     def _send_payload(self, payload):
-        socket = urlopen(self._cfg.url, payload)
-        response = socket.read()
-        socket.close()
-        return response
+        with urlopen(self._cfg.url, payload) as socket:
+            response = socket.read()
+            return response
 
     def _send_to_codespeed(self, results, run_id):
         payload = urlencode({'json': json.dumps(results)})

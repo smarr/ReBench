@@ -2,25 +2,10 @@ import json
 from datetime import datetime
 from time import sleep
 
+from http.client import HTTPException
+from urllib.request import urlopen, Request as PutRequest
+
 from .ui import UIError
-
-try:
-    from http.client import HTTPException
-    from urllib.request import urlopen, Request as PutRequest
-except ImportError:
-    # Python 2.7
-    from httplib import HTTPException
-    from urllib2 import urlopen, Request
-
-
-    class PutRequest(Request):
-        def __init__(self, *args, **kwargs):
-            if 'method' in kwargs:
-                del kwargs['method']
-            Request.__init__(self, *args, **kwargs)
-
-        def get_method(self, *_args, **_kwargs):  # pylint: disable=arguments-differ
-            return 'PUT'
 
 
 def get_current_time():
@@ -77,10 +62,9 @@ class ReBenchDB(object):
     def _send_payload(payload, url):
         req = PutRequest(url, payload,
                          {'Content-Type': 'application/json'}, method='PUT')
-        socket = urlopen(req)
-        response = socket.read()
-        socket.close()
-        return response
+        with urlopen(req) as socket:
+            response = socket.read()
+            return response
 
     def _send_to_rebench_db(self, payload_data, operation):
         payload_data['projectName'] = self._project_name
