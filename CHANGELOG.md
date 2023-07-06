@@ -6,12 +6,19 @@ The main feature of this release is the new support for custom
 gauge adapters. This allows the use of a Python file from the
 ReBench config, which can parse arbitrary output from a benchmark, see #209.
 
+Furthermore, ReBench dropped support for Python 2. If you require ReBench to
+run with Python 2, please see #208 for the removed supported code, or use
+version 1.1.0, which was the last version with Python 2 support.
+
+
 Other new features:
- - 
+ - add command-line option `-D` to disable the use of denoise (#217)
 
 Other changes:
  - fix handling of environment variables when sudo is used (#210)
- - 
+ - try `gtime` from MacPorts as alternative `time` command on macOS (#212)
+ - update py-cpuinfo to work on macOS with ARM-base CPUs (#212)
+ - make error more readable when executor is not available (#213)
 
 ## [1.1.0] Denoise - 2023-02-21
 
