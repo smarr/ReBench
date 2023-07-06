@@ -262,7 +262,7 @@ Argument:
         runs = self._config.get_runs()
         does_profiling = any(r.is_profiling() for r in runs)
         if not self._config.options.use_denoise:
-            self.load_data_and_execute_experiments( runs, data_store,False, False,None)
+            return self.load_data_and_execute_experiments(runs, data_store, False, False, None)
         else:
             denoise_result = None
             show_denoise_warnings = not (self._config.artifact_review
@@ -271,7 +271,8 @@ Argument:
                 denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
                 use_nice = denoise_result.use_nice
                 use_shielding = denoise_result.use_shielding
-                self.load_data_and_execute_experiments(runs, data_store, use_nice, use_shielding,denoise_result)
+                return self.load_data_and_execute_experiments(
+                    runs, data_store, use_nice, use_shielding, denoise_result)
             finally:
                 restore_noise(denoise_result, show_denoise_warnings, self.ui)
 
