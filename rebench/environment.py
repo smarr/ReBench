@@ -109,7 +109,7 @@ def init_environment(denoise_result, ui):
         'hostName': u_name[1],
         'osType': u_name[0],
         'memory': virtual_memory().total,
-        'denoise': denoise_result.details
+        'denoise': {} if denoise_result is None else denoise_result.details
     }
 
     try:
