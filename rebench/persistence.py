@@ -329,6 +329,9 @@ class _FilePersistence(_ConcretePersistence):
                 err)
 
     _SEP = "\t"  # separator between serialized parts of a measurement
+    def _persists_data_titles_in_open_file(self):
+        line = self._SEP.join(Measurement.get_column_headers())
+        self._file.write(line + "\n")
 
     def _persists_data_point_in_open_file(self, data_point):
         for measurement in data_point.get_measurements():
@@ -351,6 +354,7 @@ class _FilePersistence(_ConcretePersistence):
     def _open_file_to_add_new_data(self):
         if not self._file:
             self._file = self._open_file_and_append_execution_comment()
+            self._persists_data_titles_in_open_file()
 
     def close(self):
         if self._file:
