@@ -18,10 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import subprocess
-from datetime import datetime
 import json
 import sys
-
+from datetime import datetime
 from unittest import skipIf
 from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
@@ -38,8 +37,6 @@ from ..model.exp_run_details import ExpRunDetails
 from ..model.measurement import Measurement
 from ..model.run_id import RunId
 from ..rebench import ReBench
-
-
 
 
 class PersistencyTest(ReBenchTestCase):
