@@ -67,7 +67,6 @@ class PersistencyTest(ReBenchTestCase):
     def test_iteration_invocation_semantics(self):
         # Executes first time
         ds = DataStore(self.ui)
-        #file configured here
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
                            ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
@@ -175,7 +174,7 @@ class PersistencyTest(ReBenchTestCase):
     def test_check_file_lines(self):
         ds = DataStore(self.ui)
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
-        ds, self.ui, data_file=self._tmp_file)
+                            ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
         ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
