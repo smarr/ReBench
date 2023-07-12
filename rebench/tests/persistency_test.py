@@ -17,6 +17,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import subprocess
+from datetime import datetime
+import json
+import sys
+
 from unittest import skipIf
 from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
@@ -35,8 +40,9 @@ from ..model.run_id import RunId
 from ..rebench import ReBench
 
 
-class PersistencyTest(ReBenchTestCase):
 
+
+class PersistencyTest(ReBenchTestCase):
     def test_de_serialization(self):
         data_store = DataStore(self.ui)
         executor = ExecutorConf("MyVM", '', '',
@@ -64,10 +70,10 @@ class PersistencyTest(ReBenchTestCase):
     def test_iteration_invocation_semantics(self):
         # Executes first time
         ds = DataStore(self.ui)
+        #file configured here
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
                            ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
-
         self._assert_runs(cnf, 1, 0, 0)
 
         ex = Executor(cnf.get_runs(), False, self.ui)
@@ -168,3 +174,58 @@ class PersistencyTest(ReBenchTestCase):
 
         run = list(cnf.get_runs())[0]
         run.close_files()
+
+    def test_check_file_lines(self):
+        ds = DataStore(self.ui)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'),
+        ds, self.ui, data_file=self._tmp_file)
+        ds.load_data(None, False)
+        ex = Executor(cnf.get_runs(), False, self.ui)
+        ex.execute()
+        current_line = 0
+        with open(self._tmp_file, 'r') as file:
+            for line in file:
+                if current_line==0:
+                    command = self.get_line_after_char('#!', line)
+                    self.assertEqual(command, subprocess.list2cmdline(sys.argv))
+                if current_line ==1:
+                    time = self.get_line_after_char('Start:', line)
+                    self.assertTrue(self.is_valid_time(time))
+                if current_line == 2 :
+                    json_code = self.get_line_after_char('Environment:', line)
+                    self.assertTrue(self.is_valid_json(json_code))
+                if current_line == 3 :
+                    json_code = self.get_line_after_char('Source:', line)
+                    self.assertTrue(self.is_valid_json(json_code))
+                if current_line == 4:
+                    self.assertTrue(self.is_scv_header(line))
+                    return
+                current_line +=1
+
+    def get_line_after_char(self, char, line):
+        if char in line:
+            get_line = line.split(char)
+            return (get_line[1]).strip()
+        return None
+
+    def is_valid_time(self, time_str):
+        try:
+            datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+            return True
+        except ValueError:
+            return False
+
+    def is_valid_json(self, json_str):
+        try:
+            json.loads(json_str)
+            return True
+        except json.JSONDecodeError:
+            return False
+        
+    def is_scv_header(self, line):
+        line = line.strip().split()
+        words = Measurement.get_column_headers()
+        for word in words:
+            if word not in line:
+                return False
+        return True
