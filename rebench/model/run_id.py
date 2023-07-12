@@ -337,10 +337,10 @@ class RunId(object):
         benchmark = Benchmark.from_str_list(data_store, str_list[:-4])
         return data_store.create_run_id(
             benchmark, str_list[-4], str_list[-3], str_list[-2], str_list[-1])
-    
-    @classmethod 
+
+    @classmethod
     def get_column_headers(cls):
-        benchmark_headers = Benchmark.get_column_headers() 
+        benchmark_headers = Benchmark.get_column_headers()
         return benchmark_headers + ["cores", "inputSize", "varValue", "machine"]
 
     def __str__(self):
