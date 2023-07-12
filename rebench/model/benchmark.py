@@ -107,3 +107,6 @@ class Benchmark(object):
     def from_str_list(cls, data_store, str_list):
         return data_store.get_config(str_list[0], str_list[1], str_list[2],
                                      None if str_list[3] == '' else str_list[3])
+    @classmethod
+    def get_column_headers(cls):
+        return ["benchmark", "executor", "suite", "extraArgs"]

@@ -17,6 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import subprocess
+import json
+import sys
+from datetime import datetime
 from unittest import skipIf
 from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
@@ -36,7 +40,6 @@ from ..rebench import ReBench
 
 
 class PersistencyTest(ReBenchTestCase):
-
     def test_de_serialization(self):
         data_store = DataStore(self.ui)
         executor = ExecutorConf("MyVM", '', '',
@@ -67,7 +70,6 @@ class PersistencyTest(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/persistency.conf'),
                            ds, self.ui, data_file=self._tmp_file)
         ds.load_data(None, False)
-
         self._assert_runs(cnf, 1, 0, 0)
 
         ex = Executor(cnf.get_runs(), False, self.ui)
@@ -168,3 +170,46 @@ class PersistencyTest(ReBenchTestCase):
 
         run = list(cnf.get_runs())[0]
         run.close_files()
+
+    def test_check_file_lines(self):
+        ds = DataStore(self.ui)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'),
+                            ds, self.ui, data_file=self._tmp_file)
+        ds.load_data(None, False)
+        ex = Executor(cnf.get_runs(), False, self.ui)
+        ex.execute()
+        with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
+            lines = file.readlines()
+            command = self.get_line_after_char('#!', lines[0])
+            self.assertEqual(command, subprocess.list2cmdline(sys.argv))
+            time = self.get_line_after_char('Start:', lines[1])
+            self.assertTrue(self.is_valid_time(time))
+            json_code = self.get_line_after_char('Environment:', lines[2])
+            self.assertTrue(self.is_valid_json(json_code))
+            json_code = self.get_line_after_char('Source:', lines[3])
+            self.assertTrue(self.is_valid_json(json_code))
+            line = lines[4].split("\t")
+            line[-1] = line[-1].rstrip('\n')
+            words = Measurement.get_column_headers()
+            self.assertEqual(line, words)
+            self.assertEqual(len((lines[5]).split("\t")) ,len(line))
+
+    def get_line_after_char(self, char, line):
+        if char in line:
+            get_line = line.split(char)
+            return (get_line[1]).strip()
+        return None
+
+    def is_valid_time(self, time_str):
+        try:
+            datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+            return True
+        except ValueError:
+            return False
+
+    def is_valid_json(self, json_str):
+        try:
+            json.loads(json_str)
+            return True
+        except json.JSONDecodeError:
+            return False
