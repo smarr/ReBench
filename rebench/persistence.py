@@ -303,6 +303,8 @@ class _FilePersistence(_ConcretePersistence):
                                       if run_id.warmup_iterations else False))
             data_point = DataPoint(run_id)
         return data_point, previous_run_id
+    
+    _SEP = "\t"  # separator between serialized parts of a measurement
 
     def _open_file_and_append_execution_comment(self):
         """
@@ -310,16 +312,17 @@ class _FilePersistence(_ConcretePersistence):
         This allows it theoretically to be executable.
         But more importantly also records execution metadata to reproduce the data.
         """
-        shebang_line = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
-        shebang_line += _START_TIME_LINE + self._start_time + "\n"
-        shebang_line += "# Environment: " + json.dumps(determine_environment()) + "\n"
-        shebang_line += "# Source: " + json.dumps(
+        shebang_with_metadata = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
+        shebang_with_metadata += _START_TIME_LINE + self._start_time + "\n"
+        shebang_with_metadata += "# Environment: " + json.dumps(determine_environment()) + "\n"
+        shebang_with_metadata += "# Source: " + json.dumps(
             determine_source_details(self._configurator)) + "\n"
+        shebang_with_metadata += self._SEP.join(Measurement.get_column_headers()) + "\n"
 
         try:
             # pylint: disable-next=unspecified-encoding,consider-using-with
             data_file = open(self._data_filename, 'a+')
-            data_file.write(shebang_line)
+            data_file.write(shebang_with_metadata)
             data_file.flush()
             return data_file
         except Exception as err:  # pylint: disable=broad-except
@@ -328,10 +331,6 @@ class _FilePersistence(_ConcretePersistence):
                     os.getcwd(), err),
                 err)
 
-    _SEP = "\t"  # separator between serialized parts of a measurement
-    def _persists_data_titles_in_open_file(self):
-        line = self._SEP.join(Measurement.get_column_headers())
-        self._file.write(line + "\n")
 
     def _persists_data_point_in_open_file(self, data_point):
         for measurement in data_point.get_measurements():
@@ -354,7 +353,6 @@ class _FilePersistence(_ConcretePersistence):
     def _open_file_to_add_new_data(self):
         if not self._file:
             self._file = self._open_file_and_append_execution_comment()
-            self._persists_data_titles_in_open_file()
 
     def close(self):
         if self._file:
@@ -487,3 +485,4 @@ class _ProfileReBenchDB(_ReBenchDB):
             'env': determine_environment(),
             'startTime': self._start_time,
             'source': determine_source_details(self._configurator)}, num_profiles)
+    
