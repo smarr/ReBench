@@ -60,8 +60,8 @@ class Measurement(object):
                            criterion, line_number, filename)
     @classmethod
     def get_column_headers(cls):
-        return["Invocation","iteration","value","Unit","Criterion","Benchmark",
-               "Executor","Suite","Cores","Input size","Var value","Machine"]
+        run_id_headers = RunId.get_column_headers() 
+        return ["invocation", "iteration", "value", "unit", "criterion"] + run_id_headers
 
     def as_dict(self):
         return {
