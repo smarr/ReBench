@@ -180,23 +180,18 @@ class PersistencyTest(ReBenchTestCase):
         ex.execute()
         current_line = 0
         with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
-            for line in file:
-                if current_line==0:
-                    command = self.get_line_after_char('#!', line)
-                    self.assertEqual(command, subprocess.list2cmdline(sys.argv))
-                if current_line ==1:
-                    time = self.get_line_after_char('Start:', line)
-                    self.assertTrue(self.is_valid_time(time))
-                if current_line == 2 :
-                    json_code = self.get_line_after_char('Environment:', line)
-                    self.assertTrue(self.is_valid_json(json_code))
-                if current_line == 3 :
-                    json_code = self.get_line_after_char('Source:', line)
-                    self.assertTrue(self.is_valid_json(json_code))
-                if current_line == 4:
-                    self.assertTrue(self.is_csv_header(line))
-                    return
-                current_line +=1
+            lines = file.readlines()
+            command = self.get_line_after_char('#!', lines[0])
+            self.assertEqual(command, subprocess.list2cmdline(sys.argv))
+            time = self.get_line_after_char('Start:', lines[1])
+            self.assertTrue(self.is_valid_time(time))
+            json_code = self.get_line_after_char('Environment:', lines[2])
+            self.assertTrue(self.is_valid_json(json_code))
+            json_code = self.get_line_after_char('Source:', lines[3])
+            self.assertTrue(self.is_valid_json(json_code))
+            line = lines[4].strip().split()
+            words = Measurement.get_column_headers()
+            self.assertEquals(line, words)
 
     def get_line_after_char(self, char, line):
         if char in line:
@@ -217,11 +212,3 @@ class PersistencyTest(ReBenchTestCase):
             return True
         except json.JSONDecodeError:
             return False
-        
-    def is_csv_header(self, line):
-        line = line.strip().split()
-        words = Measurement.get_column_headers()
-        for word in words:
-            if word not in line:
-                return False
-        return True
