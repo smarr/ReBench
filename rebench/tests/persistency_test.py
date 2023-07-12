@@ -179,7 +179,7 @@ class PersistencyTest(ReBenchTestCase):
         ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
         current_line = 0
-        with open(self._tmp_file, 'r') as file:
+        with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
             for line in file:
                 if current_line==0:
                     command = self.get_line_after_char('#!', line)
@@ -218,7 +218,7 @@ class PersistencyTest(ReBenchTestCase):
         except json.JSONDecodeError:
             return False
         
-    def is_scv_header(self, line):
+    def is_csv_header(self, line):
         line = line.strip().split()
         words = Measurement.get_column_headers()
         for word in words:
