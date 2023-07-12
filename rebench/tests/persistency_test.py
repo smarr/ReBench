@@ -178,7 +178,6 @@ class PersistencyTest(ReBenchTestCase):
         ds.load_data(None, False)
         ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
-        current_line = 0
         with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
             lines = file.readlines()
             command = self.get_line_after_char('#!', lines[0])
@@ -191,7 +190,7 @@ class PersistencyTest(ReBenchTestCase):
             self.assertTrue(self.is_valid_json(json_code))
             line = lines[4].strip().split()
             words = Measurement.get_column_headers()
-            self.assertEquals(line, words)
+            self.assertEqual(line, words)
 
     def get_line_after_char(self, char, line):
         if char in line:
