@@ -303,7 +303,7 @@ class _FilePersistence(_ConcretePersistence):
                                       if run_id.warmup_iterations else False))
             data_point = DataPoint(run_id)
         return data_point, previous_run_id
-    
+                
     _SEP = "\t"  # separator between serialized parts of a measurement
 
     def _open_file_and_append_execution_comment(self):
@@ -485,4 +485,3 @@ class _ProfileReBenchDB(_ReBenchDB):
             'env': determine_environment(),
             'startTime': self._start_time,
             'source': determine_source_details(self._configurator)}, num_profiles)
-    
