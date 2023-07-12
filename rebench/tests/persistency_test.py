@@ -194,7 +194,7 @@ class PersistencyTest(ReBenchTestCase):
                     json_code = self.get_line_after_char('Source:', line)
                     self.assertTrue(self.is_valid_json(json_code))
                 if current_line == 4:
-                    self.assertTrue(self.is_scv_header(line))
+                    self.assertTrue(self.is_csv_header(line))
                     return
                 current_line +=1
 
