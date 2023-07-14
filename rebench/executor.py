@@ -508,6 +508,8 @@ class Executor(object):
                        + "{ind}{ind}Return code: %d\n"
                        + "{ind}{ind}max_invocation_time: %s\n") % (
                            return_code, run_id.max_invocation_time)
+            elif return_code is None:
+                msg = "{ind}Run failed. Return code: None\n"
             else:
                 msg = "{ind}Run failed. Return code: %d\n" % return_code
 
