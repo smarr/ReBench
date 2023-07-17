@@ -33,7 +33,7 @@ class TimeAdapterTest(TestCase):
     def test_acquire_command(self):
         adapter = TimeAdapter(False, None)
         cmd = adapter.acquire_command(_TestRunId())
-        self.assertTrue(cmd.startswith("/usr/bin/time"))
+        self.assertRegex(cmd, r"^/.*/bin/g?time")
 
     def test_parse_data(self):
         data = """real        11.00
