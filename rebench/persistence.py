@@ -317,12 +317,16 @@ class _FilePersistence(_ConcretePersistence):
         shebang_with_metadata += "# Environment: " + json.dumps(determine_environment()) + "\n"
         shebang_with_metadata += "# Source: " + json.dumps(
             determine_source_details(self._configurator)) + "\n"
-        shebang_with_metadata += self._SEP.join(Measurement.get_column_headers()) + "\n"
+
+        csv_header = self._SEP.join(Measurement.get_column_headers()) + "\n"
 
         try:
             # pylint: disable-next=unspecified-encoding,consider-using-with
             data_file = open(self._data_filename, 'a+')
+            is_empty = data_file.tell() == 0
             data_file.write(shebang_with_metadata)
+            if is_empty:
+                data_file.write(csv_header)
             data_file.flush()
             return data_file
         except Exception as err:  # pylint: disable=broad-except
