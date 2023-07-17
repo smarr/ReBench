@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  test-linux:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -18,7 +18,7 @@ jobs:
             yaml-parser: ruamel
           - python-version: pypy3
             yaml-parser: ruamel
-    name: Python ${{ matrix.python-version }} ${{ matrix.yaml-parser }}
+    name: "Ubuntu-latest: Python ${{ matrix.python-version }} ${{ matrix.yaml-parser }}"
     steps:
       - name: Checkout ReBench
         uses: actions/checkout@v3
@@ -60,8 +60,31 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         if: ${{ matrix.coverage && env.COVERALLS_REPO_TOKEN != '' }}
 
+  test-macos:
+    runs-on: macos-latest
+    name: "macOS: Python 3.11"
+    steps:
+      - name: Checkout ReBench
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install PyTest
+        run: pip install pytest
+
+      - name: Install ReBench dependencies
+        run: pip install .
+
+      - name: Run tests
+        run: |
+          python -m pytest
+          (cd rebench && rebench ../rebench.conf e:TestRunner2)
+
   test-docker:
-    name: Test ReBench in Docker
+    name: "Docker: python:3"
     runs-on: ubuntu-latest
     container:
       image: python:3
