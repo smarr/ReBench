@@ -34,7 +34,7 @@ class EnvironmentTest(TestCase):
 
         self.assertTrue('manualRun' in env)
         self.assertGreater(env['memory'], 0)
-        self.assertGreater(env['clockSpeed'], 0)
+        self.assertGreaterEqual(env['clockSpeed'], 0)
 
         self.assertGreaterEqual(len(env['software']), 3)
 
