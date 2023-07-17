@@ -53,7 +53,7 @@ class SubprocessTimeoutTest(unittest.TestCase):
         self.assertEqual(None, err)
 
     def test_exec_with_timeout_python_interpreter(self):
-        cmdline = "python -c \"while True: pass\""
+        cmdline = "python3 -c \"while True: pass\""
         (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
                                              stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT,
