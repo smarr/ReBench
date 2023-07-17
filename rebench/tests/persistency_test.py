@@ -217,3 +217,19 @@ class PersistencyTest(ReBenchTestCase):
         ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
 
+    def test_check_single_csv_header(self):
+        """Check that there is only one csv header in the file"""
+        # first run
+        self._load_config_and_run()
+
+        # second run, requesting more invocations
+        opt_parser = ReBench().shell_options()
+        args = opt_parser.parse_args(['-in', '20', '-R', self._path + '/persistency.conf'])
+        self._load_config_and_run(args)
+
+        with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
+            lines = file.readlines()
+
+        # count the number of lines starting with 'invocation'
+        invocation_lines = [line for line in lines if line.startswith('invocation')]
+        self.assertEqual(len(invocation_lines), 1)
