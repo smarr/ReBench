@@ -38,11 +38,11 @@ setup(name='ReBench',
       packages=find_packages(exclude=['*.tests']),
       package_data={'rebench': ['rebench-schema.yml']},
       install_requires=[
-          'PyYAML>=3.12',
+          'PyYAML>=6.0',
           'pykwalify>=1.8.0',
-          'humanfriendly>=8.0',
+          'humanfriendly>=10.0',
           'py-cpuinfo==9.0.0',
-          'psutil>=5.6.7'
+          'psutil>=5.9.5'
       ],
       entry_points = {
           'console_scripts' : [

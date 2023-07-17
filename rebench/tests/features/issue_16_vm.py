@@ -1,7 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # simple script emulating an executor generating benchmark results
-from __future__ import print_function
-
 import sys
 
 print(sys.argv)

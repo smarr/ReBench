@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from select     import select
 from subprocess import PIPE, STDOUT, Popen
 from threading  import Thread, Condition
