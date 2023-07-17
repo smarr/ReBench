@@ -172,27 +172,29 @@ class PersistencyTest(ReBenchTestCase):
         run.close_files()
 
     def test_check_file_lines(self):
-        ds = DataStore(self.ui)
-        cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                            ds, self.ui, data_file=self._tmp_file)
-        ds.load_data(None, False)
-        ex = Executor(cnf.get_runs(), False, self.ui)
-        ex.execute()
+        self._load_config_and_run()
+
         with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
             lines = file.readlines()
-            command = self.get_line_after_char('#!', lines[0])
-            self.assertEqual(command, subprocess.list2cmdline(sys.argv))
-            time = self.get_line_after_char('Start:', lines[1])
-            self.assertTrue(self.is_valid_time(time))
-            json_code = self.get_line_after_char('Environment:', lines[2])
-            self.assertTrue(self.is_valid_json(json_code))
-            json_code = self.get_line_after_char('Source:', lines[3])
-            self.assertTrue(self.is_valid_json(json_code))
-            line = lines[4].split("\t")
-            line[-1] = line[-1].rstrip('\n')
-            words = Measurement.get_column_headers()
-            self.assertEqual(line, words)
-            self.assertEqual(len((lines[5]).split("\t")) ,len(line))
+
+        command = self.get_line_after_char('#!', lines[0])
+        self.assertEqual(command, subprocess.list2cmdline(sys.argv))
+
+        time = self.get_line_after_char('Start:', lines[1])
+        self.assertTrue(self.is_valid_time(time))
+
+        self.assertIsNotNone(json.loads(self.get_line_after_char('Environment:', lines[2])))
+        self.assertIsNotNone(json.loads(self.get_line_after_char('Source:', lines[3])))
+
+        column_headers = lines[4].split("\t")
+        # remove the newline character from the last column header
+        column_headers[-1] = column_headers[-1].rstrip('\n')
+
+        expected_headers = Measurement.get_column_headers()
+        self.assertEqual(column_headers, expected_headers)
+
+        self.assertEqual(len((lines[5]).split("\t")), len(column_headers),
+                         'expected same number of column headers as data columns')
 
     def get_line_after_char(self, char, line):
         if char in line:
@@ -207,9 +209,11 @@ class PersistencyTest(ReBenchTestCase):
         except ValueError:
             return False
 
-    def is_valid_json(self, json_str):
-        try:
-            json.loads(json_str)
-            return True
-        except json.JSONDecodeError:
-            return False
+    def _load_config_and_run(self, args=None):
+        ds = DataStore(self.ui)
+        cnf = Configurator(load_config(self._path + '/persistency.conf'),
+                           ds, self.ui, args, data_file=self._tmp_file)
+        ds.load_data(None, False)
+        ex = Executor(cnf.get_runs(), False, self.ui)
+        ex.execute()
+
