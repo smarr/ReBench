@@ -93,9 +93,6 @@ jobs:
       - name: Check for dockerenv file
         run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
 
-      - name: Make Python to be Python3
-        run: ln -s /usr/bin/python3 /usr/bin/python && ln -s /usr/bin/pip3 /usr/bin/pip
-
       - name: Install Time Command
         run: |
           apt-get update
@@ -105,13 +102,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install PyTest
-        run: pip install pytest
+        run: pip3 install pytest
 
       - name: Install ReBench dependencies
-        run: pip install .
+        run: pip3 install .
 
       - name: Run Test Run
         run: (cd rebench && rebench -D ../rebench.conf e:TestRunner2)
 
       - name: Run Unit Tests
-        run: python -m pytest
+        run: python3 -m pytest
