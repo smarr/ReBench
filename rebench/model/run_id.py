@@ -152,6 +152,12 @@ class RunId(object):
         self.is_failed = False
         self._termination_check.indicate_successful_execution()
 
+    def mark_binary_as_missing(self):
+        self.benchmark.suite.executor.binary_missing = True
+
+    def is_binary_missing(self):
+        return self.benchmark.suite.executor.binary_missing
+
     def add_reporter(self, reporter):
         self._reporters.add(reporter)
 
@@ -207,6 +213,9 @@ class RunId(object):
 
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
+
+    def get_executor(self):
+        return self.benchmark.suite.executor
 
     def get_number_of_data_points(self):
         return self.statistics.num_samples

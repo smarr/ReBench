@@ -60,7 +60,7 @@ class Executor(object):
            the executor definitions
         """
         self.name = name
-
+        self.binary_missing = False
         self.path = path
         self.executable = executable
         self.args = args
