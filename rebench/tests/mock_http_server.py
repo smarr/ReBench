@@ -4,22 +4,26 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
 
-_put_requests = 0
-
-
 class _RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
+        self.send_header("Content-Length", 0)
 
     def do_PUT(self):
         self.send_response(200)
+        self.send_header("Content-Length", 0)
         self.end_headers()
-        global _put_requests  # pylint: disable=global-statement
-        _put_requests += 1
+        self.server.put_requests += 1
 
     def log_request(self, code='-', size='-'):
         pass
+
+
+class HTTPServerWithCounter(HTTPServer):
+    def __init__(self, *args, **kwargs):
+        super(HTTPServerWithCounter, self).__init__(*args, **kwargs)
+        self.put_requests = 0
 
 
 class MockHTTPServer(object):
@@ -39,10 +43,7 @@ class MockHTTPServer(object):
         return port
 
     def start(self):
-        global _put_requests  # pylint: disable=global-statement
-        _put_requests = 0
-
-        self._server = HTTPServer(('localhost', self._port), _RequestHandler)
+        self._server = HTTPServerWithCounter(('localhost', self._port), _RequestHandler)
 
         self._thread = Thread(target=self._server.serve_forever)
         self._thread.daemon = True
@@ -51,9 +52,7 @@ class MockHTTPServer(object):
     def shutdown(self):
         self._server.shutdown()
 
-    @staticmethod
-    def get_number_of_put_requests():
-        global _put_requests  # pylint: disable=global-statement
-        result = _put_requests
-        _put_requests = 0
+    def get_number_of_put_requests(self):
+        result = self._server.put_requests
+        self._server.put_requests = 0
         return result
