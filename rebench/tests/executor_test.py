@@ -19,15 +19,17 @@
 # IN THE SOFTWARE.
 import unittest
 import os
-
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
-from ..executor          import Executor
+from ..executor          import (BatchScheduler, BenchmarkThreadExceptions, Executor
+                                 , RandomScheduler, RoundRobinScheduler)
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
 from ..ui import UIError
+from ..reporter          import Reporter
+
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -56,6 +58,32 @@ class ExecutorTest(ReBenchTestCase):
             ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
+
+    def test_remove_executors_with_missing_binary(self):
+        options = ReBench().shell_options().parse_args(['dummy'])
+        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
+                        self.ui, options,
+                        None, 'Test', data_file=self._tmp_file)
+        initial_runs = list(cnf.get_runs())
+        reporter = TestReporter(self)
+        chosen_executor = initial_runs[0].get_executor()
+        total_marked = 0
+        for runs in initial_runs:
+            if runs.get_executor == chosen_executor:
+                runs.mark_binary_as_missing()
+                total_marked +=1
+            runs.add_reporter(reporter)
+        schedulers = [BatchScheduler,RoundRobinScheduler,RandomScheduler]
+        for scheduler in schedulers:
+            try:
+                ex = Executor(set(initial_runs), False, self.ui, False, False, scheduler)
+                ex.execute()
+            except BenchmarkThreadExceptions:
+                pass  # Ignore the exception for now
+            completed_runs = reporter.get_completed_runs()
+            if total_marked > 1:
+                assert len(completed_runs) < len(initial_runs)
+
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:
@@ -94,6 +122,7 @@ class ExecutorTest(ReBenchTestCase):
                            DataStore(self.ui), self.ui, None,
                            data_file=self._tmp_file)
         self._basic_execution(cnf)
+
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
@@ -181,10 +210,23 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
-
 def test_suite():
     unittest.defaultTestLoader.loadTestsFromTestCase(ExecutorTest)
 
 
 if __name__ == "__main__":
     unittest.main(defaultTest='test_suite')
+
+
+class TestReporter(Reporter):
+    def __init__(self, test_case):
+        super(TestReporter, self).__init__()
+        self._test_case = test_case
+        self.runs_completed = []   # Store completed runs in this list
+
+    def run_completed(self, run_id, statistics, cmdline):
+        #self._test_case.run_completed(run_id)
+        self.runs_completed.append(run_id)   # Store the completed run in the list
+
+    def get_completed_runs(self):
+        return self.runs_completed
