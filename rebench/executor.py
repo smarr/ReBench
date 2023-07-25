@@ -412,16 +412,21 @@ class Executor(object):
                 log_file.write(name + '|ERR:')
                 log_file.write(stderr_result)
 
-    def without_missing_binaries(self, executor , runs):
-        self.ui.warning("""Binary '{}' is missing.
-                        Aborting remaining benchmarks on the same executor."""
-                        .format(executor.name))
-        runs = [
-            run for run in runs if run.get_executor() != executor]
-        return runs
+    def without_missing_binaries(self, executor, runs):
+        is_first = True
+        remaining_runs = []
+        for run in runs:
+            if run.get_executor() is executor:
+                run.fail_immediately()
+                run.report_run_failed(None, None, None)
+                if is_first:
+                    self.ui.warning("{ind}Aborting remaining benchmarks using %s." % executor.name)
+                    is_first = False
+            else:
+                remaining_runs.append(run)
+        return remaining_runs
 
     def execute_run(self, run_id):
-
         gauge_adapter = self._get_gauge_adapter_instance(run_id)
         if gauge_adapter is None:
             return True
@@ -477,7 +482,7 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
-        output=""
+        output = ""
         try:
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
