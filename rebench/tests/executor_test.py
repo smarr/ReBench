@@ -210,13 +210,6 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
-def test_suite():
-    unittest.defaultTestLoader.loadTestsFromTestCase(ExecutorTest)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest='test_suite')
-
 
 class _TestReporter(Reporter):
     __test__ = False  # This is not a test class
@@ -228,3 +221,11 @@ class _TestReporter(Reporter):
 
     def run_completed(self, run_id, statistics, cmdline):
         self.runs_completed.append(run_id)
+
+
+def test_suite():
+    unittest.defaultTestLoader.loadTestsFromTestCase(ExecutorTest)
+
+
+if __name__ == "__main__":
+    unittest.main(defaultTest='test_suite')
