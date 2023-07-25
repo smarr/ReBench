@@ -512,7 +512,7 @@ class Executor(object):
                    + "{ind}{ind}%s.\n") % (
                        run_id.benchmark.suite.executor.name, return_code, output.strip())
             self.ui.error(msg, run_id, cmdline)
-            run_id.report_run_failed(cmdline, 0, output)
+            run_id.report_run_failed(cmdline, return_code, output)
             run_id.mark_binary_as_missing()
             return True
         elif return_code != 0 and not self._include_faulty and not (
