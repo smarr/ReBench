@@ -19,11 +19,11 @@
 # IN THE SOFTWARE.
 import unittest
 import os
+
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
-from ..executor          import (BatchScheduler, BenchmarkThreadExceptions, Executor
-                                 , RandomScheduler, RoundRobinScheduler)
+from ..executor          import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
@@ -59,11 +59,11 @@ class ExecutorTest(ReBenchTestCase):
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
-    def test_remove_executors_with_missing_binary(self):
+    def _remove_executors_with_missing_binary(self, scheduler):
         options = ReBench().shell_options().parse_args(['dummy'])
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
-                        self.ui, options,
-                        None, 'Test', data_file=self._tmp_file)
+                           self.ui, options,
+                           None, 'Test', data_file=self._tmp_file)
         initial_runs = list(cnf.get_runs())
         reporter = _TestReporter(self)
         chosen_executor = initial_runs[0].get_executor()
@@ -73,17 +73,21 @@ class ExecutorTest(ReBenchTestCase):
                 runs.mark_binary_as_missing()
                 total_marked +=1
             runs.add_reporter(reporter)
-        schedulers = [BatchScheduler,RoundRobinScheduler,RandomScheduler]
-        for scheduler in schedulers:
-            try:
-                ex = Executor(set(initial_runs), False, self.ui, False, False, scheduler)
-                ex.execute()
-            except BenchmarkThreadExceptions:
-                pass  # Ignore the exception for now
-            completed_runs = reporter.runs_completed
-            if total_marked > 1:
-                assert len(completed_runs) < len(initial_runs)
 
+        ex = Executor(set(initial_runs), False, self.ui, False, False, scheduler)
+        ex.execute()
+        completed_runs = reporter.runs_completed
+        if total_marked > 1:
+            assert len(completed_runs) < len(initial_runs)
+
+    def test_remove_executors_with_missing_binary_batch(self):
+        self._remove_executors_with_missing_binary(BatchScheduler)
+
+    def test_remove_executors_with_missing_binary_round_robin(self):
+        self._remove_executors_with_missing_binary(RoundRobinScheduler)
+
+    def test_remove_executors_with_missing_binary_random(self):
+        self._remove_executors_with_missing_binary(RandomScheduler)
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:
@@ -122,7 +126,6 @@ class ExecutorTest(ReBenchTestCase):
                            DataStore(self.ui), self.ui, None,
                            data_file=self._tmp_file)
         self._basic_execution(cnf)
-
 
     def test_basic_execution_with_magic_all(self):
         cnf = Configurator(load_config(self._path + '/small.conf'),
