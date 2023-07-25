@@ -65,7 +65,7 @@ class ExecutorTest(ReBenchTestCase):
                         self.ui, options,
                         None, 'Test', data_file=self._tmp_file)
         initial_runs = list(cnf.get_runs())
-        reporter = TestReporter(self)
+        reporter = _TestReporter(self)
         chosen_executor = initial_runs[0].get_executor()
         total_marked = 0
         for runs in initial_runs:
@@ -80,7 +80,7 @@ class ExecutorTest(ReBenchTestCase):
                 ex.execute()
             except BenchmarkThreadExceptions:
                 pass  # Ignore the exception for now
-            completed_runs = reporter.get_completed_runs()
+            completed_runs = reporter.runs_completed
             if total_marked > 1:
                 assert len(completed_runs) < len(initial_runs)
 
@@ -218,15 +218,13 @@ if __name__ == "__main__":
     unittest.main(defaultTest='test_suite')
 
 
-class TestReporter(Reporter):
+class _TestReporter(Reporter):
+    __test__ = False  # This is not a test class
+
     def __init__(self, test_case):
-        super(TestReporter, self).__init__()
+        super(_TestReporter, self).__init__()
         self._test_case = test_case
-        self.runs_completed = []   # Store completed runs in this list
+        self.runs_completed = []
 
     def run_completed(self, run_id, statistics, cmdline):
-        #self._test_case.run_completed(run_id)
-        self.runs_completed.append(run_id)   # Store the completed run in the list
-
-    def get_completed_runs(self):
-        return self.runs_completed
+        self.runs_completed.append(run_id)
