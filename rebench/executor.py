@@ -419,6 +419,7 @@ class Executor(object):
             if run.get_executor() is executor:
                 run.fail_immediately()
                 run.report_run_failed(None, None, None)
+                run.report_run_completed(None)
                 if is_first:
                     self.ui.warning("{ind}Aborting remaining benchmarks using %s." % executor.name)
                     is_first = False
