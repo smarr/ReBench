@@ -60,25 +60,26 @@ class ExecutorTest(ReBenchTestCase):
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
     def _remove_executors_with_missing_binary(self, scheduler):
-        options = ReBench().shell_options().parse_args(['dummy'])
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
-                           self.ui, options,
-                           None, 'Test', data_file=self._tmp_file)
-        initial_runs = list(cnf.get_runs())
+        yaml = load_config(self._path + '/test.conf')
+
+        # change config to use executable that doesn't exist
+        self.assertEqual(yaml['executors']['TestRunner1']['executable'], 'test-vm1.py %(cores)s')
+        yaml['executors']['TestRunner1']['executable'] = 'does_not_exist'
+
+        cnf = Configurator(yaml, DataStore(self.ui),
+                           self.ui, exp_name='Test', data_file=self._tmp_file)
+
         reporter = _TestReporter(self)
-        chosen_executor = initial_runs[0].get_executor()
-        total_marked = 0
+        initial_runs = list(cnf.get_runs())
+        initial_runs = sorted(initial_runs, key=lambda r: r.cmdline())
         for runs in initial_runs:
-            if runs.get_executor == chosen_executor:
-                runs.mark_binary_as_missing()
-                total_marked +=1
             runs.add_reporter(reporter)
 
-        ex = Executor(set(initial_runs), False, self.ui, False, False, scheduler)
+        ex = Executor(initial_runs, False, self.ui, False, False, scheduler)
         ex.execute()
-        completed_runs = reporter.runs_completed
-        if total_marked > 1:
-            assert len(completed_runs) < len(initial_runs)
+        self.assertEqual(len(reporter.runs_completed), 28)
+        self.assertEqual(len(reporter.runs_failed), 11)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 3)
 
     def test_remove_executors_with_missing_binary_batch(self):
         self._remove_executors_with_missing_binary(BatchScheduler)
@@ -221,6 +222,14 @@ class _TestReporter(Reporter):
         super(_TestReporter, self).__init__()
         self._test_case = test_case
         self.runs_completed = []
+        self.runs_failed = []
+        self.runs_failed_without_return_code = []
+
+    def run_failed(self, run_id, _cmdline, return_code, _output):
+        if return_code is None:
+            self.runs_failed_without_return_code.append(run_id)
+        else:
+            self.runs_failed.append(run_id)
 
     def run_completed(self, run_id, statistics, cmdline):
         self.runs_completed.append(run_id)
