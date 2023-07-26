@@ -66,6 +66,11 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(yaml['executors']['TestRunner1']['executable'], 'test-vm1.py %(cores)s')
         yaml['executors']['TestRunner1']['executable'] = 'does_not_exist'
 
+        # the test.conf has some extra compilcations that we don't want
+        # by setting this to true, we avoid running things in parallel on multiple threads
+        yaml['executors']['TestRunner1']['execute_exclusively'] = True
+        yaml['executors']['TestRunner2']['execute_exclusively'] = True
+
         cnf = Configurator(yaml, DataStore(self.ui),
                            self.ui, exp_name='Test', data_file=self._tmp_file)
 
