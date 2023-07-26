@@ -59,7 +59,7 @@ class ExecutorTest(ReBenchTestCase):
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
-    def _remove_executors_with_missing_binary(self, scheduler):
+    def _remove_executors_with_missing_exe(self, scheduler):
         yaml = load_config(self._path + '/test.conf')
 
         # change config to use executable that doesn't exist
@@ -83,17 +83,17 @@ class ExecutorTest(ReBenchTestCase):
         ex = Executor(initial_runs, False, self.ui, False, False, scheduler)
         ex.execute()
         self.assertEqual(len(reporter.runs_completed), 28)
-        self.assertEqual(len(reporter.runs_failed), 11)
-        self.assertEqual(len(reporter.runs_failed_without_return_code), 3)
+        self.assertEqual(len(reporter.runs_failed), 1)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 13)
 
-    def test_remove_executors_with_missing_binary_batch(self):
-        self._remove_executors_with_missing_binary(BatchScheduler)
+    def test_remove_executors_with_missing_exe_batch(self):
+        self._remove_executors_with_missing_exe(BatchScheduler)
 
-    def test_remove_executors_with_missing_binary_round_robin(self):
-        self._remove_executors_with_missing_binary(RoundRobinScheduler)
+    def test_remove_executors_with_missing_exe_round_robin(self):
+        self._remove_executors_with_missing_exe(RoundRobinScheduler)
 
-    def test_remove_executors_with_missing_binary_random(self):
-        self._remove_executors_with_missing_binary(RandomScheduler)
+    def test_remove_executors_with_missing_exe_random(self):
+        self._remove_executors_with_missing_exe(RandomScheduler)
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:

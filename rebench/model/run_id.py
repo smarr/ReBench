@@ -44,9 +44,14 @@ class RunId(object):
 
         self._termination_check = None
         self._cmdline = None
+        self.executable = None
+        self.executable_missing = False
         self.is_failed = True
 
         self._max_invocation = 0
+
+    def has_same_executable(self, other):
+        return self.executable == other.executable
 
     @property
     def warmup_iterations(self):
@@ -152,11 +157,6 @@ class RunId(object):
         self.is_failed = False
         self._termination_check.indicate_successful_execution()
 
-    def mark_binary_as_missing(self):
-        self.benchmark.suite.executor.binary_missing = True
-
-    def is_binary_missing(self):
-        return self.benchmark.suite.executor.binary_missing
 
     def add_reporter(self, reporter):
         self._reporters.add(reporter)
@@ -213,9 +213,6 @@ class RunId(object):
 
         for persistence in self._persistence:
             persistence.persist_data_point(data_point)
-
-    def get_executor(self):
-        return self.benchmark.suite.executor
 
     def get_number_of_data_points(self):
         return self.statistics.num_samples
@@ -294,6 +291,7 @@ class RunId(object):
         cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
+        self.executable = cmdline.split(' ')[0]
         return self._cmdline
 
     def __eq__(self, other):

@@ -114,10 +114,10 @@ class BatchScheduler(RunScheduler):
                 completed = False
                 while not completed:
                     completed = self._executor.execute_run(run_id)
-                    self._indicate_progress(completed, run_id)
-                    if run_id.is_binary_missing():
+                    if run_id.executable_missing:
                         remaining_runs = self._executor.without_missing_binaries(
-                            run_id.get_executor(), remaining_runs)
+                            run_id, remaining_runs)
+                    self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
 
@@ -130,13 +130,12 @@ class RoundRobinScheduler(RunScheduler):
             try:
                 run = task_list.popleft()
                 completed = self._executor.execute_run(run)
-                self._indicate_progress(completed, run)
                 if not completed:
                     task_list.append(run)
-                else:
-                    if run.is_binary_missing():
-                        task_list = deque(self._executor.without_missing_binaries(
-                            run.get_executor(), task_list))
+                elif run.executable_missing:
+                    task_list = deque(self._executor.without_missing_binaries(
+                        run, task_list))
+                self._indicate_progress(completed, run)
 
             except FailedBuilding:
                 pass
@@ -150,12 +149,12 @@ class RandomScheduler(RunScheduler):
             run = random.choice(task_list)
             try:
                 completed = self._executor.execute_run(run)
-                self._indicate_progress(completed, run)
                 if completed:
                     task_list.remove(run)
-                    if run.is_binary_missing():
+                    if run.executable_missing:
                         task_list = self._executor.without_missing_binaries(
-                            run.get_executor(), task_list)
+                            run, task_list)
+                self._indicate_progress(completed, run)
 
             except FailedBuilding:
                 task_list.remove(run)
@@ -412,16 +411,16 @@ class Executor(object):
                 log_file.write(name + '|ERR:')
                 log_file.write(stderr_result)
 
-    def without_missing_binaries(self, executor, runs):
+    def without_missing_binaries(self, run_exe_missing, runs):
         is_first = True
         remaining_runs = []
         for run in runs:
-            if run.get_executor() is executor:
+            if run.has_same_executable(run_exe_missing):
                 run.fail_immediately()
                 run.report_run_failed(None, None, None)
                 run.report_run_completed(None)
                 if is_first:
-                    self.ui.warning("{ind}Aborting remaining benchmarks using %s." % executor.name)
+                    self.ui.warning("{ind}Aborting remaining benchmarks using %s." % run.executable)
                     is_first = False
             else:
                 remaining_runs.append(run)
@@ -519,7 +518,7 @@ class Executor(object):
                        run_id.benchmark.suite.executor.name, return_code, output.strip())
             self.ui.error(msg, run_id, cmdline)
             run_id.report_run_failed(cmdline, return_code, output)
-            run_id.mark_binary_as_missing()
+            run_id.executable_missing = True
             return True
         elif return_code != 0 and not self._include_faulty and not (
                 return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
