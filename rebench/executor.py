@@ -115,8 +115,10 @@ class BatchScheduler(RunScheduler):
                 while not completed:
                     completed = self._executor.execute_run(run_id)
                     if run_id.executable_missing:
+                        num_runs = len(remaining_runs)
                         remaining_runs = self._executor.without_missing_binaries(
                             run_id, remaining_runs)
+                        self._runs_completed += num_runs - len(remaining_runs)
                     self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
@@ -133,8 +135,10 @@ class RoundRobinScheduler(RunScheduler):
                 if not completed:
                     task_list.append(run)
                 elif run.executable_missing:
+                    num_runs = len(task_list)
                     task_list = deque(self._executor.without_missing_binaries(
                         run, task_list))
+                    self._runs_completed += num_runs - len(task_list)
                 self._indicate_progress(completed, run)
 
             except FailedBuilding:
@@ -152,8 +156,10 @@ class RandomScheduler(RunScheduler):
                 if completed:
                     task_list.remove(run)
                     if run.executable_missing:
+                        num_runs = len(task_list)
                         task_list = self._executor.without_missing_binaries(
                             run, task_list)
+                        self._runs_completed += num_runs - len(task_list)
                 self._indicate_progress(completed, run)
 
             except FailedBuilding:
