@@ -23,11 +23,13 @@ import os
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
-from ..executor          import Executor
+from ..executor          import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
 from ..persistence       import DataStore
 from ..ui import UIError
+from ..reporter          import Reporter
+
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -56,6 +58,42 @@ class ExecutorTest(ReBenchTestCase):
             ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
+
+    def _remove_executors_with_missing_exe(self, scheduler):
+        yaml = load_config(self._path + '/test.conf')
+
+        # change config to use executable that doesn't exist
+        self.assertEqual(yaml['executors']['TestRunner1']['executable'], 'test-vm1.py %(cores)s')
+        yaml['executors']['TestRunner1']['executable'] = 'does_not_exist'
+
+        # the test.conf has some extra compilcations that we don't want
+        # by setting this to true, we avoid running things in parallel on multiple threads
+        yaml['executors']['TestRunner1']['execute_exclusively'] = True
+        yaml['executors']['TestRunner2']['execute_exclusively'] = True
+
+        cnf = Configurator(yaml, DataStore(self.ui),
+                           self.ui, exp_name='Test', data_file=self._tmp_file)
+
+        reporter = _TestReporter(self)
+        initial_runs = list(cnf.get_runs())
+        initial_runs = sorted(initial_runs, key=lambda r: r.cmdline())
+        for runs in initial_runs:
+            runs.add_reporter(reporter)
+
+        ex = Executor(initial_runs, False, self.ui, False, False, scheduler)
+        ex.execute()
+        self.assertEqual(len(reporter.runs_completed), 28)
+        self.assertEqual(len(reporter.runs_failed), 1)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 13)
+
+    def test_remove_executors_with_missing_exe_batch(self):
+        self._remove_executors_with_missing_exe(BatchScheduler)
+
+    def test_remove_executors_with_missing_exe_round_robin(self):
+        self._remove_executors_with_missing_exe(RoundRobinScheduler)
+
+    def test_remove_executors_with_missing_exe_random(self):
+        self._remove_executors_with_missing_exe(RandomScheduler)
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:
@@ -180,6 +218,26 @@ class ExecutorTest(ReBenchTestCase):
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
+
+
+class _TestReporter(Reporter):
+    __test__ = False  # This is not a test class
+
+    def __init__(self, test_case):
+        super(_TestReporter, self).__init__()
+        self._test_case = test_case
+        self.runs_completed = []
+        self.runs_failed = []
+        self.runs_failed_without_return_code = []
+
+    def run_failed(self, run_id, _cmdline, return_code, _output):
+        if return_code is None:
+            self.runs_failed_without_return_code.append(run_id)
+        else:
+            self.runs_failed.append(run_id)
+
+    def run_completed(self, run_id, statistics, cmdline):
+        self.runs_completed.append(run_id)
 
 
 def test_suite():

@@ -44,9 +44,14 @@ class RunId(object):
 
         self._termination_check = None
         self._cmdline = None
+        self.executable = None
+        self.executable_missing = False
         self.is_failed = True
 
         self._max_invocation = 0
+
+    def has_same_executable(self, other):
+        return self.executable == other.executable
 
     @property
     def warmup_iterations(self):
@@ -285,6 +290,7 @@ class RunId(object):
         cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
+        self.executable = cmdline.split(' ')[0]
         return self._cmdline
 
     def __eq__(self, other):

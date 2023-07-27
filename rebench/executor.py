@@ -108,11 +108,18 @@ class RunScheduler(object):
 class BatchScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
-        for run_id in runs:
+        remaining_runs = list(runs)
+        while len(remaining_runs) > 0:
+            run_id = remaining_runs.pop(0)
             try:
                 completed = False
                 while not completed:
                     completed = self._executor.execute_run(run_id)
+                    if run_id.executable_missing:
+                        num_runs = len(remaining_runs)
+                        remaining_runs = self._executor.without_missing_binaries(
+                            run_id, remaining_runs)
+                        self._runs_completed += num_runs - len(remaining_runs)
                     self._indicate_progress(completed, run_id)
             except FailedBuilding:
                 pass
@@ -122,14 +129,18 @@ class RoundRobinScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
         task_list = deque(runs)
-
         while task_list:
             try:
                 run = task_list.popleft()
                 completed = self._executor.execute_run(run)
-                self._indicate_progress(completed, run)
                 if not completed:
                     task_list.append(run)
+                elif run.executable_missing:
+                    num_runs = len(task_list)
+                    task_list = deque(self._executor.without_missing_binaries(
+                        run, task_list))
+                    self._runs_completed += num_runs - len(task_list)
+                self._indicate_progress(completed, run)
             except FailedBuilding:
                 pass
 
@@ -138,14 +149,19 @@ class RandomScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
         task_list = list(runs)
-
         while task_list:
             run = random.choice(task_list)
             try:
                 completed = self._executor.execute_run(run)
-                self._indicate_progress(completed, run)
                 if completed:
                     task_list.remove(run)
+                    if run.executable_missing:
+                        num_runs = len(task_list)
+                        task_list = self._executor.without_missing_binaries(
+                            run, task_list)
+                        self._runs_completed += num_runs - len(task_list)
+                self._indicate_progress(completed, run)
+
             except FailedBuilding:
                 task_list.remove(run)
 
@@ -403,6 +419,21 @@ class Executor(object):
                 log_file.write(name + '|ERR:')
                 log_file.write(stderr_result)
 
+    def without_missing_binaries(self, run_exe_missing, runs):
+        is_first = True
+        remaining_runs = []
+        for run in runs:
+            if run.has_same_executable(run_exe_missing):
+                run.fail_immediately()
+                run.report_run_failed(None, None, None)
+                run.report_run_completed(None)
+                if is_first:
+                    self.ui.warning("{ind}Aborting remaining benchmarks using %s." % run.executable)
+                    is_first = False
+            else:
+                remaining_runs.append(run)
+        return remaining_runs
+
     def execute_run(self, run_id):
         gauge_adapter = self._get_gauge_adapter_instance(run_id)
         if gauge_adapter is None:
@@ -460,7 +491,7 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         # execute the external program here
-
+        output = ""
         try:
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
@@ -484,15 +515,19 @@ class Executor(object):
             else:
                 msg = str(err)
             self.ui.error(msg, run_id, cmdline)
+            run_id.report_run_failed(cmdline, 0, output)
             return True
 
         if return_code == 127:
+            run_id.fail_immediately()
             msg = ("{ind}Error: Could not execute %s.\n"
                    + "{ind}{ind}The command was not found.\n"
                    + "{ind}Return code: %d\n"
                    + "{ind}{ind}%s.\n") % (
                        run_id.benchmark.suite.executor.name, return_code, output.strip())
             self.ui.error(msg, run_id, cmdline)
+            run_id.report_run_failed(cmdline, return_code, output)
+            run_id.executable_missing = True
             return True
         elif return_code != 0 and not self._include_faulty and not (
                 return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
