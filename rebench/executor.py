@@ -106,6 +106,7 @@ class RunScheduler(object):
 
 
 class BatchScheduler(RunScheduler):
+
     def _process_remaining_runs(self, runs):
         remaining_runs = list(runs)
         while len(remaining_runs) > 0:
@@ -140,7 +141,6 @@ class RoundRobinScheduler(RunScheduler):
                         run, task_list))
                     self._runs_completed += num_runs - len(task_list)
                 self._indicate_progress(completed, run)
-
             except FailedBuilding:
                 pass
 
@@ -345,9 +345,11 @@ class Executor(object):
     def _process_builds(self, builds, name, run_id):
         if not builds:
             return
+
         for build in builds:
             if build.is_built:
                 continue
+
             if build.build_failed:
                 run_id.fail_immediately()
                 raise FailedBuilding(name, build)
@@ -448,6 +450,7 @@ class Executor(object):
         termination_check = run_id.get_termination_check(self.ui)
 
         run_id.report_start_run()
+
         terminate = self._check_termination_condition(run_id, termination_check, cmdline)
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)

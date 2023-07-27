@@ -157,7 +157,6 @@ class RunId(object):
         self.is_failed = False
         self._termination_check.indicate_successful_execution()
 
-
     def add_reporter(self, reporter):
         self._reporters.add(reporter)
 
