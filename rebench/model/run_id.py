@@ -47,6 +47,7 @@ class RunId(object):
         self.executable = None
         self.executable_missing = False
         self.is_failed = True
+        self.updated_cmdline = []
 
         self._max_invocation = 0
 
@@ -249,6 +250,7 @@ class RunId(object):
                              'executor': self.benchmark.suite.executor.name,
                              'input': self.input_size_as_str,
                              'iterations': self.iterations,
+                             'invocation': '%(invocation)s',
                              'suite': self.benchmark.suite.name,
                              'variable': self.var_value_as_str,
                              'machine': self.machine_as_str,
@@ -271,6 +273,12 @@ class RunId(object):
         if self._cmdline:
             return self._cmdline
         return self._construct_cmdline()
+
+    def store_cmdline(self, cmd):
+        self.updated_cmdline.append(cmd)
+
+    def get_cmdline(self):
+        return self.updated_cmdline
 
     def _construct_cmdline(self):
         cmdline = ""

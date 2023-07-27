@@ -447,6 +447,7 @@ It supports various format variables, including:
  - executor (the executor's name)
  - input (the input variable's value)
  - iterations (the number of iterations)
+ - invocation (the current invocation)
  - suite (the name of the benchmark suite)
  - variable (another variable's value)
  - warmup (the number of iterations to be considered warmup iterations)
@@ -458,7 +459,7 @@ Example:
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s
+    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s %(invocations)
 ```
 
 ---
