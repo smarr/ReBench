@@ -495,8 +495,7 @@ class Executor(object):
         assert not self._print_execution_plan
         # execute the external program here
         output = ""
-        if 'invocation ' in cmdline:
-            cmdline = cmdline % {'invocation':run_id.completed_invocations +1}
+        cmdline = cmdline % {'invocation':run_id.completed_invocations +1}
         try:
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
