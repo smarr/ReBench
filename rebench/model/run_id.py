@@ -47,7 +47,6 @@ class RunId(object):
         self.executable = None
         self.executable_missing = False
         self.is_failed = True
-        self.updated_cmdline = []
 
         self._max_invocation = 0
 
