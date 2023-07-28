@@ -71,3 +71,6 @@ class Measurement(object):
             'u': self.unit,
             'v': self.value
         }
+
+    def __repr__(self):
+        return "Measurement(%s, %s, %s)" % (self.value, self.unit, self.criterion)
