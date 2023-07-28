@@ -273,12 +273,6 @@ class RunId(object):
             return self._cmdline
         return self._construct_cmdline()
 
-    def store_cmdline(self, cmd):
-        self.updated_cmdline.append(cmd)
-
-    def get_cmdline(self):
-        return self.updated_cmdline
-
     def _construct_cmdline(self):
         cmdline = ""
         if self.benchmark.suite.executor.path:
