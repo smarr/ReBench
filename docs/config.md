@@ -459,7 +459,7 @@ Example:
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s %(invocations)
+    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s %(invocation)s
 ```
 
 ---
