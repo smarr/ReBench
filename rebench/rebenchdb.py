@@ -66,12 +66,15 @@ class ReBenchDB(object):
             response = socket.read()
             return response
 
+    def convert_data_to_json(self, data):
+        return json.dumps(data, separators=(',', ':'), ensure_ascii=True)
+
     def _send_to_rebench_db(self, payload_data, operation):
         payload_data['projectName'] = self._project_name
         payload_data['experimentName'] = self._experiment_name
         url = self._server_base_url + operation
 
-        payload = json.dumps(payload_data, separators=(',', ':'), ensure_ascii=True)
+        payload = self.convert_data_to_json(payload_data)
 
         # self.ui.output("Saving JSON Payload of size: %d\n" % len(payload))
         with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding

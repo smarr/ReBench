@@ -24,8 +24,10 @@ from datetime import datetime
 from unittest import skipIf
 from .mock_http_server import MockHTTPServer
 from .rebench_test_case import ReBenchTestCase
+from .persistence import TestPersistence
 
-from ..persistence import DataStore
+from ..persistence import DataStore, _ReBenchDB
+from ..rebenchdb import ReBenchDB
 
 from ..configurator import Configurator, load_config
 from ..environment import git_not_available, git_repo_not_initialized
@@ -237,3 +239,118 @@ class PersistencyTest(ReBenchTestCase):
         # count the number of lines starting with 'invocation'
         invocation_lines = [line for line in lines if line.startswith('invocation')]
         self.assertEqual(len(invocation_lines), 1)
+
+    def _create_dummy_rebench_db_persistence(self):
+        class _Cfg(object):
+            @staticmethod
+            def get_rebench_db_connector():
+                return None
+
+        return _ReBenchDB(_Cfg(), None, self.ui)
+
+    def _run_exp_to_get_data_points_with_inconsistent_set_of_criteria(self):
+        yaml = load_config(self._path + '/features/issue_16.conf')
+        yaml['executors']['TestRunner']['executable'] = 'features/issue_16_vm2.py'
+        cnf = Configurator(yaml, DataStore(self.ui),
+                           self.ui, exp_name='Test1',
+                           data_file=self._tmp_file)
+        runs = cnf.get_runs()
+        persistence = TestPersistence()
+        persistence.use_on(runs)
+        run_id_obj = list(runs)[0]
+        ex = Executor(runs, False, self.ui)
+        ex.execute()
+        return {list(runs)[0]: persistence.get_data_points()}, run_id_obj
+
+    def _assert_criteria_index_structure(self, criteria_index):
+        criteria = ['bar', 'baz', 'total', 'foo']
+        for i, c in enumerate(criteria_index):
+            self.assertEqual(i, c['i'])
+            self.assertEqual(criteria[i], c['c'])
+            self.assertEqual('ms', c['u'])
+
+    def _assert_run_id_structure(self, run_id, run_id_obj):
+        self.assertEqual(run_id['varValue'], run_id_obj.var_value)
+        self.assertIsNone(run_id['varValue'])
+
+        self.assertEqual(run_id['machine'], run_id_obj.machine)
+        self.assertIsNone(run_id['machine'])
+
+        self.assertEqual(run_id['location'], run_id_obj.location)
+        self.assertEqual(run_id['inputSize'], run_id_obj.input_size)
+
+        self.assertEqual(run_id['extraArgs'], run_id_obj.benchmark.extra_args)
+        self.assertIsNone(run_id['extraArgs'])
+
+        self.assertEqual(run_id['cores'], run_id_obj.cores)
+        self.assertEqual(1, run_id['cores'])
+
+        self.assertEqual(run_id['cmdline'], run_id_obj.cmdline())
+
+    def _assert_benchmark_structure(self, run_id, run_id_obj):
+        benchmark = run_id['benchmark']
+
+        self.assertEqual(benchmark['name'], run_id_obj.benchmark.name)
+        run_details = benchmark['runDetails']
+        self.assertEqual(-1, run_details['maxInvocationTime'])
+        self.assertEqual(50, run_details['minIterationTime'])
+        self.assertIsNone(run_details['warmup'])
+
+        suite = benchmark['suite']
+        self.assertIsNone(suite['desc'])
+        self.assertEqual('Suite', suite['name'])
+        executor = suite['executor']
+        self.assertIsNone(executor['desc'])
+        self.assertEqual('TestRunner', executor['name'])
+
+    def _assert_data_point_structure(self, data):
+        self.assertEqual(10, len(data))
+        for point, i in zip(data, list(range(0, 10))):
+            self.assertEqual(1, point['in'])
+            self.assertEqual(i + 1, point['it'])
+
+            criteria = []
+            if i % 2 == 0:
+                criteria.append(0)
+            if i % 3 == 0:
+                criteria.append(1)
+            if i % 2 == 1:
+                criteria.append(3)
+            criteria.append(2)
+
+            for criterion, m in zip(criteria, point['m']):
+                self.assertEqual(criterion, m['c'])
+                self.assertEqual(i, int(m['v']))
+
+    def _create_dummy_rebench_db_adapter(self):
+        return ReBenchDB('http://localhost', '', '', self.ui)
+
+    def test_data_conversion_to_rebench_db_api(self):
+        cache, run_id_obj = self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        rebench_db = self._create_dummy_rebench_db_persistence()
+        all_data, criteria_index, num_measurements = rebench_db.convert_data_to_api_format(cache)
+
+        self.assertEqual(24, num_measurements)
+
+        self._assert_criteria_index_structure(criteria_index)
+
+        run_id = all_data[0]['runId']
+        data = all_data[0]['d']
+
+        self._assert_run_id_structure(run_id, run_id_obj)
+        self._assert_benchmark_structure(run_id, run_id_obj)
+        self._assert_data_point_structure(data)
+
+        rdb = self._create_dummy_rebench_db_adapter()
+
+        self.assertEqual('[{"in":1,"it":1,"m":[{"v":0.0,"c":0},{"v":0.0,"c":1},{"v":0.0,"c":2}]},' +
+                         '{"in":1,"it":2,"m":[{"v":1.1,"c":3},{"v":1.1,"c":2}]},' +
+                         '{"in":1,"it":3,"m":[{"v":2.2,"c":0},{"v":2.2,"c":2}]},' +
+                         '{"in":1,"it":4,"m":[{"v":3.3,"c":1},{"v":3.3,"c":3},{"v":3.3,"c":2}]},' +
+                         '{"in":1,"it":5,"m":[{"v":4.4,"c":0},{"v":4.4,"c":2}]},' +
+                         '{"in":1,"it":6,"m":[{"v":5.5,"c":3},{"v":5.5,"c":2}]},' +
+                         '{"in":1,"it":7,"m":[{"v":6.6,"c":0},{"v":6.6,"c":1},{"v":6.6,"c":2}]},' +
+                         '{"in":1,"it":8,"m":[{"v":7.7,"c":3},{"v":7.7,"c":2}]},' +
+                         '{"in":1,"it":9,"m":[{"v":8.8,"c":0},{"v":8.8,"c":2}]},' +
+                         '{"in":1,"it":10,"m":[{"v":9.9,"c":1},{"v":9.9,"c":3},{"v":9.9,"c":2}]}]',
+                         rdb.convert_data_to_json(data))
