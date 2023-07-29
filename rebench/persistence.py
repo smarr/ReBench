@@ -453,6 +453,25 @@ class _ReBenchDB(_ConcretePersistence):
 
         return all_data, criteria_index, num_measurements
 
+    def convert_data_to_api_20_format(self, data):
+        num_measurements = 0
+        all_data = []
+        criteria = {}
+        for run_id, data_points in data.items():
+            dp_data = []
+            for dp in data_points:
+                num_measurements += dp.add_measurements_api_v20(criteria, dp_data)
+            all_data.append({
+                'runId': run_id.as_dict(),
+                'd': dp_data
+            })
+
+        criteria_index = []
+        for c, idx in criteria.items():
+            criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+
+        return all_data, criteria_index, num_measurements
+
     def _send_data(self, cache):
         self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
         all_data, criteria_index, num_measurements = self.convert_data_to_api_format(cache)

@@ -354,3 +354,50 @@ class PersistencyTest(ReBenchTestCase):
                          '{"in":1,"it":9,"m":[{"v":8.8,"c":0},{"v":8.8,"c":2}]},' +
                          '{"in":1,"it":10,"m":[{"v":9.9,"c":1},{"v":9.9,"c":3},{"v":9.9,"c":2}]}]',
                          rdb.convert_data_to_json(data))
+
+    def _assert_data_point_structure_v20(self, data):
+        self.assertEqual(1, len(data))
+        in1 = data[0]
+        self.assertEqual(1, in1['in'])
+        self.assertEqual(4, len(in1['m']))  # 4 criteria
+
+        ms = in1['m']
+        for i in range(0, 10):
+            if i % 2 == 0:
+                self.assertEqual(i, int(ms[0][i]))
+            elif len(ms[0]) > i:
+                self.assertIsNone(ms[0][i])
+
+            if i % 3 == 0:
+                self.assertEqual(i, int(ms[1][i]))
+            elif len(ms[1]) > i:
+                self.assertIsNone(ms[1][i])
+
+            self.assertEqual(i, int(ms[2][i]))
+
+            if i % 2 == 1:
+                self.assertEqual(i, int(ms[3][i]))
+            elif len(ms[3]) > i:
+                self.assertIsNone(ms[3][i])
+
+    def test_data_conversion_to_rebench_db_api_v20(self):
+        cache, run_id_obj = self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        rebench_db = self._create_dummy_rebench_db_persistence()
+        all_data, criteria_index, num_measurements = rebench_db.convert_data_to_api_20_format(cache)
+
+        self.assertEqual(24, num_measurements)
+
+        run_id = all_data[0]['runId']
+        data = all_data[0]['d']
+
+        self._assert_criteria_index_structure(criteria_index)
+        self._assert_run_id_structure(run_id, run_id_obj)
+        self._assert_benchmark_structure(run_id, run_id_obj)
+        self._assert_data_point_structure_v20(data)
+
+        rdb = self._create_dummy_rebench_db_adapter()
+        self.assertEqual('[{"in":1,"m":[[0.0,null,2.2,null,4.4,null,6.6,null,8.8],' +
+                         '[0.0,null,null,3.3,null,null,6.6,null,null,9.9],' +
+                         '[0.0,1.1,2.2,3.3,4.4,5.5,6.6,7.7,8.8,9.9],' +
+                         '[null,1.1,null,3.3,null,5.5,null,7.7,null,9.9]]}]',
+                         rdb.convert_data_to_json(data))

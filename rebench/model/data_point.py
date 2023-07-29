@@ -77,5 +77,49 @@ class DataPoint(object):
             'm': data
         }
 
+    def add_measurements_api_v20(self, criteria, data):
+        num_measurements = 0
+        iteration = -1
+        invocation = -1
+
+        # data contains a list of hashes
+        # with {in: n, m: [[], [], ...]}
+        # where m is a list of values for each criterion
+
+        ms = None
+
+        for m in self._measurements:
+            if iteration == -1:
+                iteration = m.iteration
+                invocation = m.invocation
+                for d in data:
+                    if d['in'] == invocation:
+                        ms = d['m']
+                        break
+                if ms is None:
+                    ms = []
+                    data.append({'in': invocation, 'm': ms})
+                    for _ in criteria:
+                        ms.append([])
+            else:
+                assert iteration == m.iteration
+                assert invocation == m.invocation
+                assert ms is not None
+            criterion = (m.criterion, m.unit)
+            if criterion not in criteria:
+                criteria[criterion] = len(criteria)
+
+            c_idx = criteria[criterion]
+            if len(ms) <= c_idx:
+                ms.append([])
+
+            while len(ms[c_idx]) + 1 < iteration:
+                ms[c_idx].append(None)
+            ms[c_idx].append(m.value)
+            num_measurements += 1
+
+        assert self.invocation == invocation
+        return num_measurements
+
     def __repr__(self):
         return "DataPoint(" + str(self.run_id) + ", " + str(self._measurements) + ")"
