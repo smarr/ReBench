@@ -43,7 +43,8 @@ class FailedBuilding(Exception):
 
 class RunScheduler(object):
 
-    def __init__(self, executor, ui):
+    def __init__(self, executor, ui, print_execution_plan):
+        self._print_execution_plan = print_execution_plan
         self._executor = executor
         self.ui = ui
         self._runs_completed = 0
@@ -74,7 +75,7 @@ class RunScheduler(object):
         return floor(hour), floor(minute), floor(sec)
 
     def _indicate_progress(self, completed_task, run):
-        if not self.ui.spinner_initialized():
+        if not self.ui.spinner_initialized() or self._print_execution_plan:
             return
 
         if completed_task:
@@ -101,7 +102,8 @@ class RunScheduler(object):
         self._runs_completed = completed_runs
 
         with self.ui.init_spinner(self._total_num_runs):
-            self.ui.step_spinner(completed_runs)
+            if not self._print_execution_plan:
+                self.ui.step_spinner(completed_runs)
             self._process_remaining_runs(runs)
 
 
@@ -196,8 +198,8 @@ class BenchmarkThreadExceptions(Exception):
 
 class ParallelScheduler(RunScheduler):
 
-    def __init__(self, executor, seq_scheduler_class, ui):
-        RunScheduler.__init__(self, executor, ui)
+    def __init__(self, executor, seq_scheduler_class, ui, print_execution_plan):
+        RunScheduler.__init__(self, executor, ui, print_execution_plan)
         self._seq_scheduler_class = seq_scheduler_class
         self._lock = RLock()
         self._num_worker_threads = self._number_of_threads()
@@ -223,7 +225,7 @@ class ParallelScheduler(RunScheduler):
     def _process_sequential_runs(self, runs):
         seq_runs, par_runs = self._split_runs(runs)
 
-        scheduler = self._seq_scheduler_class(self._executor, self.ui)
+        scheduler = self._seq_scheduler_class(self._executor, self.ui, self._print_execution_plan)
         scheduler._process_remaining_runs(seq_runs)
 
         return par_runs
@@ -257,7 +259,7 @@ class ParallelScheduler(RunScheduler):
         return per_thread
 
     def get_local_scheduler(self):
-        return self._seq_scheduler_class(self._executor, self.ui)
+        return self._seq_scheduler_class(self._executor, self.ui, self._print_execution_plan)
 
     def acquire_work(self):
         with self._lock:
@@ -279,12 +281,12 @@ class Executor(object):
                  artifact_review=False, use_nice=False, use_shielding=False,
                  print_execution_plan=False, config_dir=None,
                  use_denoise=True):
-        self.use_denoise=use_denoise
+        self.use_denoise = use_denoise
         self._runs = runs
 
         self._use_nice = use_nice
         self._use_shielding = use_shielding
-        self.use_denoise =  self.use_denoise and (use_nice or use_shielding)
+        self.use_denoise = self.use_denoise and (use_nice or use_shielding)
 
         self._print_execution_plan = print_execution_plan
 
@@ -292,7 +294,7 @@ class Executor(object):
         self.ui = ui
         self._include_faulty = include_faulty
         self.debug = debug
-        self._scheduler = self._create_scheduler(scheduler)
+        self._scheduler = self._create_scheduler(scheduler, print_execution_plan)
         self.build_log = build_log
         self._artifact_review = artifact_review
         self.config_dir = config_dir
@@ -301,7 +303,7 @@ class Executor(object):
         for run in runs:
             run.set_total_number_of_runs(num_runs)
 
-    def _create_scheduler(self, scheduler):
+    def _create_scheduler(self, scheduler, print_execution_plan):
         # figure out whether to use parallel scheduler
         if cpu_count() > 1:
             i = 0
@@ -309,9 +311,9 @@ class Executor(object):
                 if not run.execute_exclusively:
                     i += 1
             if i > 1:
-                return ParallelScheduler(self, scheduler, self.ui)
+                return ParallelScheduler(self, scheduler, self.ui, print_execution_plan)
 
-        return scheduler(self, self.ui)
+        return scheduler(self, self.ui, print_execution_plan)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
@@ -490,6 +492,7 @@ class Executor(object):
 
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
+        assert not self._print_execution_plan
         # execute the external program here
         output = ""
         try:
