@@ -38,14 +38,32 @@ class TimeAdapter(GaugeAdapter):
     re_formatted_time = re.compile(r"^wall-time \(secounds\): (\d+\.\d+)")
     re_formatted_rss = re.compile(r"^max rss \(kb\): (\d+)")
 
+    _completed_time_availability_check = False
+    _use_formatted_time = False
+    _time_bin = None
+
     def __init__(self, include_faulty, executor):
         GaugeAdapter.__init__(self, include_faulty, executor)
-        self._use_formatted_time = False
+
+    def _create_command(self, command):
+        assert self._completed_time_availability_check
+        if self._use_formatted_time:
+            return "%s -f %s %s" % (self._time_bin, TimeAdapter.time_format, command)
+        else:
+            # use standard, but without info on memory
+            # TODO: add support for reading out memory info on OS X
+            return "/usr/bin/time -p %s" % command
 
     def acquire_command(self, run_id):
         command = run_id.cmdline()
-        time_bin = '/usr/bin/time'
 
+        if not self._completed_time_availability_check:
+            self._check_which_time_command_is_available()
+
+        return self._create_command(command)
+
+    def _check_which_time_command_is_available(self):
+        time_bin = '/usr/bin/time'
         try:
             formatted_output = subprocess.call(
                 ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
@@ -63,13 +81,9 @@ class TimeAdapter(GaugeAdapter):
             except OSError:
                 formatted_output = 1
 
-        if formatted_output == 0:
-            self._use_formatted_time = True
-            return "%s -f %s %s" % (time_bin, TimeAdapter.time_format, command)
-        else:
-            # use standard, but without info on memory
-            # TODO: add support for reading out memory info on OS X
-            return "/usr/bin/time -p %s" % command
+        TimeAdapter._use_formatted_time = formatted_output == 0
+        TimeAdapter._time_bin = time_bin
+        TimeAdapter._completed_time_availability_check = True
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
