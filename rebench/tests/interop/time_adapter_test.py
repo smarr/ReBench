@@ -40,6 +40,7 @@ class TimeAdapterTest(TestCase):
 user         5.00
 sys          1.00"""
         adapter = TimeAdapter(False, None)
+        TimeAdapter._use_formatted_time = False
         data = adapter.parse_data(data, None, 1)
         self.assertEqual(1, len(data))
 
