@@ -206,7 +206,11 @@ the experiment in general.
 
 **invocations:**
 
-The number of times an executor is executed for a given run.
+The number of times an executor is executed for a given run
+The current invocation can be retrieved using a benchmark harness.
+
+The invocations setting can be used e.g can be used as an identifier when storing the results,
+allowing you to distinguish between different runs of a benchmark with different tools.
 
 Default: `1`
 
