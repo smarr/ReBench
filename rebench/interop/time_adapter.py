@@ -66,7 +66,7 @@ class TimeAdapter(GaugeAdapter):
         time_bin = '/usr/bin/time'
         try:
             formatted_output = subprocess.call(
-                ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
+                ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError:
             formatted_output = 1
@@ -74,7 +74,7 @@ class TimeAdapter(GaugeAdapter):
         if formatted_output == 1:
             try:
                 formatted_output = subprocess.call(
-                    ['/opt/local/bin/gtime', '-f', TimeAdapter.time_format, '/bin/sleep', '1'],
+                    ['/opt/local/bin/gtime', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 if formatted_output == 0:
                     time_bin = '/opt/local/bin/gtime'
