@@ -249,6 +249,10 @@ class RunId(object):
                              'executor': self.benchmark.suite.executor.name,
                              'input': self.input_size_as_str,
                              'iterations': self.iterations,
+
+                             # the invocation number needs to be set right before execution
+                             # we don't know it here, and it would change the RunId identity
+                             'invocation': '%(invocation)s',
                              'suite': self.benchmark.suite.name,
                              'variable': self.var_value_as_str,
                              'machine': self.machine_as_str,
@@ -271,6 +275,10 @@ class RunId(object):
         if self._cmdline:
             return self._cmdline
         return self._construct_cmdline()
+
+    def cmdline_for_next_invocation(self):
+        """Replace the invocation number in the command line"""
+        return self.cmdline() % {'invocation': self.completed_invocations + 1}
 
     def _construct_cmdline(self):
         cmdline = ""

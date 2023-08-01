@@ -204,6 +204,8 @@ All keys that can be used in the `runs` mapping can also be used for the
 definition of a benchmark, benchmark suite, executor, a concrete experiment, and
 the experiment in general.
 
+<a id="invocations"></a>
+
 **invocations:**
 
 The number of times an executor is executed for a given run.
@@ -215,6 +217,35 @@ Example:
 ```yaml
 runs:
   invocations: 100
+```
+
+*Access to the current invocation number:*
+
+The current invocation number can be used similar to [other variables](#format-vars)
+as `%(invocation)s` in any configuration part that is used to compose the command line
+for a run.
+
+This can be useful, for instance when one needs to generate different output files
+for each invocation.
+
+Example:
+
+```yaml
+benchmark_suites:
+  ExampleSuite:
+    invocations: 3
+    command: Harness -output=%(benchmark)-%(invocation)s.log %(benchmark)
+    benchmark:
+      - Benchmark1
+```
+
+The above example will execute the `Benchmark1` three times, each with a different
+output file name:
+
+```bash
+Harness -output=Benchmark1-1.log Benchmark1
+Harness -output=Benchmark1-2.log Benchmark1
+Harness -output=Benchmark1-3.log Benchmark1
 ```
 
 ---
@@ -434,6 +465,8 @@ benchmark_suites:
 
 ---
 
+<a id="format-vars"></a>
+
 **command:**
 
 The command for the benchmark harness. It will be combined with the
@@ -447,6 +480,7 @@ It supports various format variables, including:
  - executor (the executor's name)
  - input (the input variable's value)
  - iterations (the number of iterations)
+ - [invocation](#invocations) (the current invocation)
  - suite (the name of the benchmark suite)
  - variable (another variable's value)
  - warmup (the number of iterations to be considered warmup iterations)
@@ -458,7 +492,7 @@ Example:
 ```yaml
 benchmark_suites:
   ExampleSuite:
-    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s
+    command: Harness %(benchmark)s --problem-size=%(input)s --iterations=%(iterations)s %(invocation)s
 ```
 
 ---

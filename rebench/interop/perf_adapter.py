@@ -19,4 +19,5 @@ class PerfAdapter(GaugeAdapter):
 
     def acquire_command(self, run_id):
         profiler = self._get_profiler(run_id)
-        return profiler.command + " " + profiler.record_args + " " + run_id.cmdline()
+        return (profiler.command + " " + profiler.record_args + " " +
+                run_id.cmdline_for_next_invocation())

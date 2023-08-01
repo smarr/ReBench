@@ -55,7 +55,7 @@ class TimeAdapter(GaugeAdapter):
             return "/usr/bin/time -p %s" % command
 
     def acquire_command(self, run_id):
-        command = run_id.cmdline()
+        command = run_id.cmdline_for_next_invocation()
 
         if not self._completed_time_availability_check:
             self._check_which_time_command_is_available()
@@ -147,4 +147,4 @@ class TimeManualAdapter(TimeAdapter):
        This is useful for runs on remote machines like the Tilera or ARM boards.
     """
     def acquire_command(self, run_id):
-        return run_id.cmdline()
+        return run_id.cmdline_for_next_invocation()
