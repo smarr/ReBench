@@ -34,19 +34,20 @@ class Issue216CurrentInvocation(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/issue_216.conf'), DataStore(self.ui),
                            self.ui, exp_name=exp_name,
                            data_file=self._tmp_file)
-        runs = cnf.get_runs()
+        runs = list(cnf.get_runs())
+        self.assertEqual(1, len(runs))
 
         persistence = TestPersistence()
         persistence.use_on(runs)
         ex = Executor(runs, False, self.ui)
         ex.execute()
-        self.assertEqual(1, len(cnf.get_runs()))
-        run = next(iter(cnf.get_runs()))
+
+        run = runs[0]
         self.assertEqual(num_data_points, run.get_number_of_data_points())
         return persistence.get_data_points()
 
     def test_associates_measurements_and_data_points_correctly(self):
-        data_points = self._records_data_points('Test1', 10)
-        for point, i in zip(data_points, range(10)):  
-            for measurement in point.get_measurements():
-                self.assertEqual(i, int(measurement.value))
+        data_points = self._records_data_points('Test', 4)
+        for point, i in zip(data_points, range(4)):
+            self.assertEqual(1, len(point.get_measurements()))
+            self.assertEqual(i + 1, int(point.get_measurements()[0].value))
