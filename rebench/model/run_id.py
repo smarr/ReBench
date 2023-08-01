@@ -249,6 +249,9 @@ class RunId(object):
                              'executor': self.benchmark.suite.executor.name,
                              'input': self.input_size_as_str,
                              'iterations': self.iterations,
+
+                             # the invocation number needs to be set right before execution
+                             # we don't know it here, and it would change the RunId identity
                              'invocation': '%(invocation)s',
                              'suite': self.benchmark.suite.name,
                              'variable': self.var_value_as_str,

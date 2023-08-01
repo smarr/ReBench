@@ -493,9 +493,11 @@ class Executor(object):
     def _generate_data_point(self, cmdline, gauge_adapter, run_id,
                              termination_check):
         assert not self._print_execution_plan
-        # execute the external program here
         output = ""
-        cmdline = cmdline % {'invocation':run_id.completed_invocations +1}
+
+        # replace the invocation number in the command line
+        cmdline = cmdline % {'invocation': run_id.completed_invocations + 1}
+
         try:
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 
