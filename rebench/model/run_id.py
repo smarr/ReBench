@@ -327,13 +327,14 @@ class RunId(object):
         return result
 
     def as_dict(self):
+        extra_args = self.benchmark.extra_args
         return {
             'benchmark': self.benchmark.as_dict(),
             'cores': self.cores,
             'inputSize': self.input_size,
             'varValue': self.var_value,
             'machine': self.machine,
-            'extraArgs': str(self.benchmark.extra_args),
+            'extraArgs': extra_args if extra_args is None else str(extra_args),
             'cmdline': self.cmdline(),
             'location': self.location
         }

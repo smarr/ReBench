@@ -76,3 +76,6 @@ class DataPoint(object):
             'it': iteration,
             'm': data
         }
+
+    def __repr__(self):
+        return "DataPoint(" + str(self.run_id) + ", " + str(self._measurements) + ")"

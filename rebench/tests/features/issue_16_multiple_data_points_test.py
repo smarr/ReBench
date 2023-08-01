@@ -35,8 +35,10 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         super(Issue16MultipleDataPointsTest, self).setUp()
         self._set_path(__file__)
 
-    def _records_data_points(self, exp_name, num_data_points):
-        cnf = Configurator(load_config(self._path + '/issue_16.conf'), DataStore(self.ui),
+    def _records_data_points(self, exp_name, num_data_points, yaml=None):
+        if yaml is None:
+            yaml = load_config(self._path + '/issue_16.conf')
+        cnf = Configurator(yaml, DataStore(self.ui),
                            self.ui, exp_name=exp_name,
                            data_file=self._tmp_file)
         runs = cnf.get_runs()
@@ -65,3 +67,21 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
                                               point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i, int(measurement.value))
+
+    def test_not_every_criterion_has_to_be_present_for_all_iterations(self):
+        yaml = load_config(self._path + '/issue_16.conf')
+        yaml['executors']['TestRunner']['executable'] = 'issue_16_vm2.py'
+        data_points = self._records_data_points('Test1', 10, yaml)
+        for point, i in zip(data_points, list(range(0, 10))):
+            criteria = []
+            if i % 2 == 0:
+                criteria.append("bar")
+            if i % 3 == 0:
+                criteria.append("baz")
+            if i % 2 == 1:
+                criteria.append("foo")
+            criteria.append("total")
+
+            for criterion, m in zip(criteria, point.get_measurements()):
+                self.assertEqual(criterion, m.criterion)
+                self.assertEqual(i, int(m.value))
