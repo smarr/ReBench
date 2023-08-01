@@ -27,7 +27,7 @@ class PlainSecondsAdapterTest(TestCase):
 
     def test_acquire_command(self):
         class _TestRunId(object):
-            def cmdline(self):
+            def cmdline_for_next_invocation(self):
                 return "FOO"
         adapter = PlainSecondsLogAdapter(False, None)
         cmd = adapter.acquire_command(_TestRunId())

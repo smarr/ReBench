@@ -495,9 +495,6 @@ class Executor(object):
         assert not self._print_execution_plan
         output = ""
 
-        # replace the invocation number in the command line
-        cmdline = cmdline % {'invocation': run_id.completed_invocations + 1}
-
         try:
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
 

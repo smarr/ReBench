@@ -276,6 +276,10 @@ class RunId(object):
             return self._cmdline
         return self._construct_cmdline()
 
+    def cmdline_for_next_invocation(self):
+        """Replace the invocation number in the command line"""
+        return self.cmdline() % {'invocation': self.completed_invocations + 1}
+
     def _construct_cmdline(self):
         cmdline = ""
         if self.benchmark.suite.executor.path:

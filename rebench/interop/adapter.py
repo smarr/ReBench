@@ -40,14 +40,14 @@ class GaugeAdapter(object):
         self._executor = executor
 
     def acquire_command(self, run_id):
-        return run_id.cmdline()
+        return run_id.cmdline_for_next_invocation()
 
     def parse_data(self, data, run_id, invocation):
         raise NotImplementedError()
 
     def check_for_error(self, line):
         """Check whether the output line contains one of the common error
-           messages. If its an erroneous run, the result has to be discarded.
+           messages. If it's an erroneous run, the result has to be discarded.
         """
         if self._include_faulty:
             return False
