@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] Custom Gauge Adapters - 2023-08-06
+
 The main feature of this release is the new support for custom
 gauge adapters. This allows the use of a Python file from the
 ReBench config, which can parse arbitrary output from a benchmark, see #209.
@@ -13,12 +15,19 @@ version 1.1.0, which was the last version with Python 2 support.
 
 Other new features:
  - add command-line option `-D` to disable the use of denoise (#217)
+ - include CSV headers into .data files (#220, #227)
+ - abort all benchmarks for which the exector is missing (#224)
+ - make the current invocation accessible in the command as `%(invocation)s` (#230)
 
 Other changes:
+ - fix bug where `'None'` instead of `null` was reported to ReBenchDB (#232)
  - fix handling of environment variables when sudo is used (#210)
  - try `gtime` from MacPorts as alternative `time` command on macOS (#212)
  - update py-cpuinfo to work on macOS with ARM-base CPUs (#212)
  - make error more readable when executor is not available (#213)
+ - add testing on macOS on Github Actions (#226)
+
+Thanks to @naomiGrew for the contributions!
 
 ## [1.1.0] Denoise - 2023-02-21
 
@@ -210,7 +219,8 @@ Thank you!
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.2.0...HEAD
+[1.2.0]:  https://github.com/smarr/ReBench/compare/v1.1.0...v1.2.0
 [1.1.0]:  https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
 [1.0.1]:  https://github.com/smarr/ReBench/compare/v1.0.0...v1.0.1
 [1.0.0]:  https://github.com/smarr/ReBench/compare/v1.0rc2...v1.0.0

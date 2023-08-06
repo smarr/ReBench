@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: 'ReBench: Execute and Document Benchmarks Reproducibly'
+message: >-
+  If you use this software, please consider citing. Either
+  based on the metadata found in this file, or the main DOI:
+  https://doi.org/10.5281/zenodo.1311762
+type: software
+authors:
+  - given-names: Stefan
+    family-names: Marr
+    email: s.marr@kent.ac.uk
+    affiliation: University of Kent
+    orcid: 'https://orcid.org/0000-0001-9059-5180'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.1311762
+    description: Release and archival on Zenodo
+repository-code: 'https://github.com/smarr/rebench'
+url: 'https://rebench.dev/'
+repository-artifact: 'https://doi.org/10.5281/zenodo.1311762'
+abstract: >-
+  ReBench is a tool to run and document benchmark
+  experiments. Currently, it is mostly used for benchmarking
+  language implementations, but it can be used to monitor
+  the performance of all kinds of other applications and
+  programs, too.
+keywords:
+  - science
+  - benchmarking
+  - performance tracking
+  - continuous benchmarking
+  - continuous testing
+  - research
+  - reproducibility
+license: MIT
