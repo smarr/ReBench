@@ -1,0 +1,20 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    name: Ubuntu Latest
+    steps:
+      - name: Checkout ReBench
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+
+      - name: Install PyTest
+        run: pip install pytest
+
+      - name: Run PyTest
+        run: pytest
