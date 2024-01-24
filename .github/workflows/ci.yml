@@ -9,10 +9,13 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.11"]
-        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.7"] #, "3.11"]
+        os: [ubuntu-latest] #, macos-latest]
 
     steps:
+      - name: Where are we
+        run: pwd
+
       - name: Checkout ReBench
         uses: actions/checkout@v3
 
