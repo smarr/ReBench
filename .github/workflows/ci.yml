@@ -4,12 +4,13 @@ on: [push, pull_request]
 
 jobs:
   test-linux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     name: "Ubuntu Latest ${{ matrix.python-version }}"
 
     strategy:
       matrix:
         python-version: ["3.7", "3.11"]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout ReBench
