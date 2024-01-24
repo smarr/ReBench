@@ -34,3 +34,4 @@ jobs:
         run: |
           pip install pylint
           pylint rebench
+        if: matrix.python-version == '3.11'
