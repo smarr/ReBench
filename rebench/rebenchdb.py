@@ -3,7 +3,7 @@ from datetime import datetime
 from time import sleep
 
 from http.client import HTTPException
-from urllib.request import urlopen, Request as PutRequest
+from urllib.request import urlopen, Request as HttpRequest
 
 from .ui import UIError
 
@@ -33,6 +33,20 @@ class ReBenchDB(object):
         self._server_base_url = server_base_url
         self._project_name = project_name
         self._experiment_name = experiment_name
+        self._api_v2 = None
+
+    def is_api_v2(self):
+        if self._api_v2 is None:
+            api_version = self._get_api_version()
+            if api_version:
+                major = api_version.split('.')[0]
+                if int(major) == 2:
+                    self._api_v2 = True
+
+            if self._api_v2 is None:
+                self._api_v2 = False
+
+        return self._api_v2
 
     def send_results(self, benchmark_data, num_items):
         success, response = self._send_to_rebench_db(benchmark_data, '/results')
@@ -60,11 +74,18 @@ class ReBenchDB(object):
 
     @staticmethod
     def _send_payload(payload, url):
-        req = PutRequest(url, payload,
+        req = HttpRequest(url, payload,
                          {'Content-Type': 'application/json'}, method='PUT')
         with urlopen(req) as socket:
             response = socket.read()
             return response
+
+    def _get_api_version(self):
+        url = self._server_base_url + '/results'
+        req = HttpRequest(url, method='OPTIONS')
+        with urlopen(req) as socket:
+            response = socket.read()
+            return socket.getheader('X-ReBenchDB-Result-API-Version')
 
     def convert_data_to_json(self, data):
         return json.dumps(data, separators=(',', ':'), ensure_ascii=True)

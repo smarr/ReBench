@@ -474,7 +474,10 @@ class _ReBenchDB(_ConcretePersistence):
 
     def _send_data(self, cache):
         self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
-        all_data, criteria_index, num_measurements = self.convert_data_to_api_format(cache)
+        if self._rebench_db.is_api_v2():
+            all_data, criteria_index, num_measurements = self.convert_data_to_api_20_format(cache)
+        else:
+            all_data, criteria_index, num_measurements = self.convert_data_to_api_format(cache)
 
         self.ui.debug_output_info(
             "ReBenchDB: Sending {num_m} measures. startTime: {st}\n",
