@@ -2,6 +2,7 @@ import socket
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
+from time import sleep
 
 
 class _RequestHandler(BaseHTTPRequestHandler):
@@ -32,6 +33,7 @@ class MockHTTPServer(object):
         self._port = -1
         self._server = None
         self._thread = None
+        self._is_shutdown = False
 
     def get_free_port(self):
         s = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
@@ -49,7 +51,13 @@ class MockHTTPServer(object):
         self._thread.daemon = True
         self._thread.start()
 
-    def shutdown(self):
+    def process_and_shutdown(self):
+        if self._is_shutdown:
+            return
+
+        sleep(1)  # yield GIL and give server time to process request
+
+        self._is_shutdown = True
         self._server.shutdown()
 
     def get_number_of_put_requests(self):

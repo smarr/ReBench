@@ -1,4 +1,5 @@
 from unittest import skipIf
+
 from ..mock_http_server import MockHTTPServer
 from ...configurator import Configurator, load_config
 from ...environment import git_not_available, git_repo_not_initialized
@@ -184,9 +185,11 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
             self.assertEqual(1, run_id.completed_invocations)
             self.assertEqual(1, run_id.get_number_of_data_points())
 
+            server.process_and_shutdown()
+
             self.assertEqual(1, server.get_number_of_put_requests())
         finally:
-            server.shutdown()
+            server.process_and_shutdown()
 
     @staticmethod
     def _make_profiler_return_small_report(run_id):
