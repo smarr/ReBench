@@ -129,9 +129,11 @@ class PersistencyTest(ReBenchTestCase):
 
         try:
             self._exec_rebench_db(cmd_config, server)
+            server.process_and_shutdown()
+
             self.assertEqual(1, server.get_number_of_put_requests())
         finally:
-            server.shutdown()
+            server.process_and_shutdown()
 
     def test_disabled_rebench_db(self):
         option_parser = ReBench().shell_options()
@@ -141,9 +143,11 @@ class PersistencyTest(ReBenchTestCase):
 
         try:
             self._exec_rebench_db(cmd_config, server)
+            server.process_and_shutdown()
+
             self.assertEqual(0, server.get_number_of_put_requests())
         finally:
-            server.shutdown()
+            server.process_and_shutdown()
 
     def _exec_rebench_db(self, cmd_config, server):
         port = server.get_free_port()
