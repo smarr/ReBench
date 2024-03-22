@@ -123,11 +123,27 @@ class PersistencyTest(ReBenchTestCase):
 
     @skipIf(git_not_available() or git_repo_not_initialized(),
         "git source info not available, but needed for reporting to ReBenchDB")
-    def test_rebench_db(self):
+    def test_rebenchdb(self):
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
 
         server = MockHTTPServer()
+
+        try:
+            self._exec_rebench_db(cmd_config, server)
+            server.process_and_shutdown()
+
+            self.assertEqual(1, server.get_number_of_put_requests())
+        finally:
+            server.process_and_shutdown()
+
+    @skipIf(git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB")
+    def test_rebenchdb_400_error(self):
+        option_parser = ReBench().shell_options()
+        cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
+
+        server = MockHTTPServer(test_error_handling=True)
 
         try:
             self._exec_rebench_db(cmd_config, server)

@@ -83,9 +83,13 @@ class ReBenchDB(object):
     def _get_api_version(self):
         url = self._server_base_url + '/results'
         req = HttpRequest(url, method='OPTIONS')
-        with urlopen(req) as socket:
-            response = socket.read()
-            return socket.getheader('X-ReBenchDB-Result-API-Version')
+        try:
+            with urlopen(req) as socket:
+                response = socket.read()
+                return socket.getheader('X-ReBenchDB-Result-API-Version')
+        except:
+            # some error, so no API version available
+            return None
 
     def convert_data_to_json(self, data):
         return json.dumps(data, separators=(',', ':'), ensure_ascii=True)
@@ -116,7 +120,7 @@ class ReBenchDB(object):
                                + "{ind}{ind}" + str(te) + "\n")
                 return False, None
             except (IOError, HTTPException) as error:
-                if attempts > 0:
+                if error.status != 400 and attempts > 0:
                     # let's retry, the benchmark server might just time out, as usual
                     # but let it breath a little
                     self.ui.warning(
