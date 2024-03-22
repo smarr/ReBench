@@ -119,7 +119,7 @@ class ReBenchDB(object):
                 if attempts > 0:
                     # let's retry, the benchmark server might just time out, as usual
                     # but let it breath a little
-                    self.ui.verbose_output_info(
+                    self.ui.warning(
                         "ReBenchDB: had issue reporting data. Trying again after "
                         + str(wait_sec) + "seconds.\n"
                         + "{ind}{ind}" + str(error) + "\n")
