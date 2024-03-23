@@ -432,12 +432,11 @@ class _ReBenchDB(_ConcretePersistence):
             if self._send_data(self._cache):
                 self._cache = {}
 
-    def _send_data(self, cache):
-        self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
+    def convert_data_to_api_format(self, data):
         num_measurements = 0
         all_data = []
         criteria = {}
-        for run_id, data_points in cache.items():
+        for run_id, data_points in data.items():
             dp_data = []
             for dp in data_points:
                 measurements = dp.measurements_as_dict(criteria)
@@ -451,6 +450,34 @@ class _ReBenchDB(_ConcretePersistence):
         criteria_index = []
         for c, idx in criteria.items():
             criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+
+        return all_data, criteria_index, num_measurements
+
+    def convert_data_to_api_20_format(self, data):
+        num_measurements = 0
+        all_data = []
+        criteria = {}
+        for run_id, data_points in data.items():
+            dp_data = []
+            for dp in data_points:
+                num_measurements += dp.add_measurements_api_v20(criteria, dp_data)
+            all_data.append({
+                'runId': run_id.as_dict(),
+                'd': dp_data
+            })
+
+        criteria_index = []
+        for c, idx in criteria.items():
+            criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+
+        return all_data, criteria_index, num_measurements
+
+    def _send_data(self, cache):
+        self.ui.debug_output_info("ReBenchDB: Prepare data for sending\n")
+        if self._rebench_db.is_api_v2():
+            all_data, criteria_index, num_measurements = self.convert_data_to_api_20_format(cache)
+        else:
+            all_data, criteria_index, num_measurements = self.convert_data_to_api_format(cache)
 
         self.ui.debug_output_info(
             "ReBenchDB: Sending {num_m} measures. startTime: {st}\n",
