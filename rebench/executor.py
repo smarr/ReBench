@@ -50,6 +50,19 @@ class RunScheduler(object):
         self._runs_completed = 0
         self._start_time = time()
         self._total_num_runs = 0
+        self._progress_label = self._get_progress_label("70")
+
+    def _get_progress_label(self, num_chars):
+        return "Running %" + num_chars + "s\t%10.1f%s\tleft: %02d:%02d:%02d"
+
+    def _set_min_num_chars_for_run_strings(self, runs):
+        max_len = 0
+        for run in runs:
+            run_str = self._run_string_for_progress(run)
+            l = len(run_str)
+            if l > max_len:
+                max_len = l
+        self._progress_label = self._get_progress_label(str(max_len))
 
     @staticmethod
     def _filter_out_completed_runs(runs, ui):
@@ -74,6 +87,10 @@ class RunScheduler(object):
         hour = (etl - sec - minute) / 60 / 60
         return floor(hour), floor(minute), floor(sec)
 
+    @staticmethod
+    def _run_string_for_progress(run):
+        return run.as_simple_string().replace(" None", "")
+
     def _indicate_progress(self, completed_task, run):
         if not self.ui.spinner_initialized() or self._print_execution_plan:
             return
@@ -82,12 +99,12 @@ class RunScheduler(object):
             self._runs_completed += 1
 
         art_mean = run.get_mean_of_totals()
+        art_unit = run.total_unit
 
         hour, minute, sec = self._estimate_time_left()
 
-        run_details = run.as_simple_string().replace(" None", "")
-        label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
-                % (run_details, art_mean, hour, minute, sec)
+        run_details = self._run_string_for_progress(run)
+        label = self._progress_label % (run_details, art_mean, art_unit, hour, minute, sec)
         self.ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
@@ -110,6 +127,7 @@ class RunScheduler(object):
 class BatchScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
+        self._set_min_num_chars_for_run_strings(runs)
         remaining_runs = list(runs)
         while len(remaining_runs) > 0:
             run_id = remaining_runs.pop(0)
@@ -130,6 +148,7 @@ class BatchScheduler(RunScheduler):
 class RoundRobinScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
+        self._set_min_num_chars_for_run_strings(runs)
         task_list = deque(runs)
         while task_list:
             try:
@@ -150,6 +169,7 @@ class RoundRobinScheduler(RunScheduler):
 class RandomScheduler(RunScheduler):
 
     def _process_remaining_runs(self, runs):
+        self._set_min_num_chars_for_run_strings(runs)
         task_list = list(runs)
         while task_list:
             run = random.choice(task_list)
