@@ -28,13 +28,31 @@ class DenoiseResult(object):
         self.use_shielding = use_shielding
         self.details = details
 
+def find_denoise():  #Find and return the canonical absolute path to make sudo happy
+    try:
+        denoise_path = output_as_str(subprocess.check_output('realpath `which rebench-denoise`',
+                                                            shell=True))
+    except subprocess.CalledProcessError:
+        denoise_path = '$PATH_TO/rebench-denoise'
+    return denoise_path.rstrip()  #get rid of the trailing newline
+
+def find_cset():  #Find the absolute path to cset since it's not the PATH inside of sudo
+    try:
+        cset_path = output_as_str(subprocess.check_output('realpath `which cset`',
+                                                            shell=True))
+    except subprocess.CalledProcessError:
+        cset_path = '$PATH_TO/cset'
+    return cset_path.rstrip()  #get rid of the trailing newline
 
 def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
     result = {}
 
-    cmd = ['sudo', '-n', 'rebench-denoise']
+    denoise_path = find_denoise()
+    cset_path = find_cset()
+    cmd = ['sudo', '-n', denoise_path]
     if for_profiling:
         cmd += ['--for-profiling']
+    cmd += ['--cset-path', cset_path]
     cmd += ['--json', 'minimize']
 
     try:
@@ -88,18 +106,12 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
             success = True
     else:
         if 'password is required' in output:
-            try:
-                denoise_cmd = output_as_str(subprocess.check_output('which rebench-denoise',
-                                                                    shell=True))
-            except subprocess.CalledProcessError:
-                denoise_cmd = '$PATH_TO/rebench-denoise'
-
-            msg += '{ind}Please make sure `sudo rebench-denoise`'\
+            msg += '{ind}Please make sure `sudo ' + denoise_path + '`' \
                    + ' can be used without password.\n'
             msg += '{ind}To be able to run rebench-denoise without password,\n'
             msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
             msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
-                   + denoise_cmd + '\n'
+                   + denoise_path + '\n'
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
         elif "No such file or directory: 'sudo'" in output:
@@ -124,7 +136,7 @@ def restore_noise(denoise_result, show_warning, ui):
         pass
     else:
         try:
-            cmd = ['sudo', '-n', 'rebench-denoise', '--json']
+            cmd = ['sudo', '-n', find_denoise(), '--json']
             if not denoise_result.use_shielding:
                 cmd += ['--without-shielding']
             if not denoise_result.use_nice:
@@ -140,7 +152,7 @@ def restore_noise(denoise_result, show_warning, ui):
 
 def deliver_kill_signal(pid):
     try:
-        cmd = ['sudo', '-n', 'rebench-denoise', '--json', 'kill', str(pid)]
+        cmd = ['sudo', '-n', find_denoise(), '--json', 'kill', str(pid)]
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -176,7 +188,7 @@ def _activate_shielding(num_cores):
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
     try:
-        output = subprocess.check_output(["cset", "shield", "-c", core_spec, "-k", "on"],
+        output = subprocess.check_output([cset_path, "shield", "-c", core_spec, "-k", "on"],
                                          stderr=subprocess.STDOUT)
         output = output_as_str(output)
     except OSError:
@@ -193,7 +205,7 @@ def _activate_shielding(num_cores):
 
 def _reset_shielding():
     try:
-        output = subprocess.check_output(["cset", "shield", "-r"],
+        output = subprocess.check_output([cset_path, "shield", "-r"],
                                          stderr=subprocess.STDOUT)
         output = output_as_str(output)
         return "cset: done" in output
@@ -314,7 +326,7 @@ def _restore_standard_settings(num_cores, use_shielding):
 def _exec(num_cores, use_nice, use_shielding, args):
     cmdline = []
     if use_shielding:
-        cmdline += ["cset", "shield", "--exec", "--"]
+        cmdline += [cset_path, "shield", "--exec", "--"]
     if use_nice:
         cmdline += ["nice", "-n-20"]
     cmdline += args
@@ -385,6 +397,7 @@ def _shell_options():
                         dest='use_shielding', help="Don't try shielding cores")
     parser.add_argument('--for-profiling', action='store_true', default=False,
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
+    parser.add_argument('--cset-path', help="Absolute path to cset")
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
                               "`minimize` sets system to reduce noise. " +
@@ -401,6 +414,9 @@ def _shell_options():
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
+
+    global cset_path 
+    cset_path = args.cset_path    
 
     cpu_info = get_cpu_info()
     num_cores = cpu_info["count"]

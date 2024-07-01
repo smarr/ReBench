@@ -28,6 +28,7 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
+from .denoise import find_denoise, find_cset
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .ui import escape_braces
@@ -342,13 +343,14 @@ class Executor(object):
             cmdline += "sudo "
             if run_id.env:
                 cmdline += "--preserve-env=" + ','.join(run_id.env.keys()) + " "
-            cmdline += "rebench-denoise "
+            cmdline += find_denoise() + " "
             if not self._use_nice:
                 cmdline += "--without-nice "
             if not self._use_shielding:
                 cmdline += "--without-shielding "
             if run_id.is_profiling():
                 cmdline += "--for-profiling "
+            cmdline += "--cset-path " + find_cset() + " "
             cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id)
