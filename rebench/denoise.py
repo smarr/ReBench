@@ -19,7 +19,39 @@ except ValueError:
     rebench_version = "unknown"
 
 
-class DenoiseResult(object):
+class CommandsPaths:
+    """Hold the path information for commands."""
+
+    def __init__(self):
+        self.cset_path = None
+        self.denoise_path = None
+
+    def absolute_path_for_command(self, command):
+        """Find and return the canonical absolute path to make sudo happy"""
+        try:
+            selected_cmd = output_as_str(
+                subprocess.check_output(['which', command], shell=True)).strip()
+            return os.path.realpath(selected_cmd)
+        except subprocess.CalledProcessError:
+            return command
+
+    def get_cset(self):
+        if not self.cset_path:
+            self.cset_path = self.absolute_path_for_command('cset')
+        return self.cset_path
+
+    def set_cset(self, cset_path):
+        self.cset_path = cset_path
+
+    def get_denoise(self):
+        if not self.denoise_path:
+            self.denoise_path = self.absolute_path_for_command('rebench-denoise')
+        return self.denoise_path
+
+
+paths = CommandsPaths()
+
+class DenoiseResult:
 
     def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
         self.succeeded = succeeded
@@ -28,33 +60,14 @@ class DenoiseResult(object):
         self.use_shielding = use_shielding
         self.details = details
 
-def find_denoise():
-    """Find and return the canonical absolute path to make sudo happy"""
-    try:
-        denoise_path = output_as_str(subprocess.check_output('realpath `which rebench-denoise`',
-                                                            shell=True))
-    except subprocess.CalledProcessError:
-        denoise_path = '$PATH_TO/rebench-denoise'
-    return denoise_path.rstrip()  #get rid of the trailing newline
-
-def find_cset():
-    """Find the absolute path to cset since it's not the PATH inside of sudo"""
-    try:
-        cset_path = output_as_str(subprocess.check_output('realpath `which cset`',
-                                                            shell=True))
-    except subprocess.CalledProcessError:
-        cset_path = '$PATH_TO/cset'
-    return cset_path.rstrip()  #get rid of the trailing newline
 
 def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
     result = {}
 
-    denoise_path = find_denoise()
-    cset_path = find_cset()
-    cmd = ['sudo', '-n', denoise_path]
+    cmd = ['sudo', '-n', paths.get_denoise()]
     if for_profiling:
         cmd += ['--for-profiling']
-    cmd += ['--cset-path', cset_path]
+    cmd += ['--cset-path', paths.get_cset()]
     cmd += ['--json', 'minimize']
 
     try:
@@ -108,12 +121,12 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
             success = True
     else:
         if 'password is required' in output:
-            msg += '{ind}Please make sure `sudo ' + denoise_path + '`' \
+            msg += '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
                    + ' can be used without password.\n'
             msg += '{ind}To be able to run rebench-denoise without password,\n'
             msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
             msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
-                   + denoise_path + '\n'
+                   + paths.get_denoise() + '\n'
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
         elif "No such file or directory: 'sudo'" in output:
@@ -138,7 +151,7 @@ def restore_noise(denoise_result, show_warning, ui):
         pass
     else:
         try:
-            cmd = ['sudo', '-n', find_denoise(), '--json']
+            cmd = ['sudo', '-n', paths.get_denoise(), '--json']
             if not denoise_result.use_shielding:
                 cmd += ['--without-shielding']
             if not denoise_result.use_nice:
@@ -154,7 +167,7 @@ def restore_noise(denoise_result, show_warning, ui):
 
 def deliver_kill_signal(pid):
     try:
-        cmd = ['sudo', '-n', find_denoise(), '--json', 'kill', str(pid)]
+        cmd = ['sudo', '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -399,7 +412,7 @@ def _shell_options():
                         dest='use_shielding', help="Don't try shielding cores")
     parser.add_argument('--for-profiling', action='store_true', default=False,
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
-    parser.add_argument('--cset-path', help="Absolute path to cset")
+    parser.add_argument('--cset-path', help="Absolute path to cset", default=None)
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
                               "`minimize` sets system to reduce noise. " +
@@ -417,8 +430,7 @@ def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
 
-    global cset_path 
-    cset_path = args.cset_path    
+    paths.set_cset(args.cset_path)
 
     cpu_info = get_cpu_info()
     num_cores = cpu_info["count"]
