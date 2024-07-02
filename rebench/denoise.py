@@ -28,7 +28,8 @@ class DenoiseResult(object):
         self.use_shielding = use_shielding
         self.details = details
 
-def find_denoise():  #Find and return the canonical absolute path to make sudo happy
+def find_denoise():
+    """Find and return the canonical absolute path to make sudo happy"""
     try:
         denoise_path = output_as_str(subprocess.check_output('realpath `which rebench-denoise`',
                                                             shell=True))
@@ -36,7 +37,8 @@ def find_denoise():  #Find and return the canonical absolute path to make sudo h
         denoise_path = '$PATH_TO/rebench-denoise'
     return denoise_path.rstrip()  #get rid of the trailing newline
 
-def find_cset():  #Find the absolute path to cset since it's not the PATH inside of sudo
+def find_cset():
+    """Find the absolute path to cset since it's not the PATH inside of sudo"""
     try:
         cset_path = output_as_str(subprocess.check_output('realpath `which cset`',
                                                             shell=True))
