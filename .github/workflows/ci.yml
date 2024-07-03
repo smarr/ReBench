@@ -44,7 +44,7 @@ jobs:
         run: |
           pip install pylint
           pylint rebench
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.12'
 
       - name: Upload coverage results to Coveralls
         run: coveralls
