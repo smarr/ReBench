@@ -8,8 +8,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Don't test pypy3.10, it currently is broken on GitHub Actions.
-        # re-enable once PyYAML can be installed again. See #225
         python-version: ["3.7", "3.12", "pypy3.10"]
         include:
           - python-version: 3.7
