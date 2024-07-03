@@ -85,9 +85,9 @@ class ReBenchDB(object):
         req = HttpRequest(url, method='OPTIONS')
         try:
             with urlopen(req) as socket:
-                response = socket.read()
+                socket.read()
                 return socket.getheader('X-ReBenchDB-Result-API-Version')
-        except:
+        except:  # pylint: disable=bare-except
             # some error, so no API version available
             return None
 
@@ -120,6 +120,7 @@ class ReBenchDB(object):
                                + "{ind}{ind}" + str(te) + "\n")
                 return False, None
             except (IOError, HTTPException) as error:
+                # pylint: disable-next=no-member
                 is_client_error = hasattr(error, 'status') and 400 <= error.status < 500
                 if not is_client_error and attempts > 0:
                     # let's retry, the benchmark server might just time out, as usual

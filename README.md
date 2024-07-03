@@ -149,9 +149,30 @@ In case you encounter issues,
 please feel free to [open an issue](https://github.com/smarr/rebench/issues/new)
 so that we can help.
 
-For contributions, we use the [normal Github flow](https://guides.github.com/introduction/flow/)
+For contributions, we use the [normal GitHub flow](https://guides.github.com/introduction/flow/)
 of pull requests, discussion, and revisions. For larger contributions,
 it is likely useful to discuss them upfront in an issue first.
+
+### Development Setup
+
+For the development setup, the currently recommended
+way is to use `pip install --editable .` in the root directory of the repository.
+You may also want to use a virtual environment to avoid conflicts with other Python packages.
+
+For instance:
+
+```bash
+git clone https://github.com/smarr/rebench.git
+cd rebench
+pip install --editable .
+```
+
+Unit tests and linting can be run with:
+
+```bash
+python -m pytest
+python -m pylint rebench
+```
 
 ## Use in Academia
 

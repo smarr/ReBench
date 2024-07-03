@@ -136,8 +136,9 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         runs = list(cnf.get_runs())
         ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
 
-        self.assertRegex(ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
-                         r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT [^\s]*rebench-denoise")
+        self.assertRegex(
+            ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
+            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT [^\s]*rebench-denoise")
 
     def test_construct_cmdline_build_with_env(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
