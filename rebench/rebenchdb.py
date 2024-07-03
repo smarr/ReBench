@@ -85,9 +85,9 @@ class ReBenchDB(object):
         req = HttpRequest(url, method='OPTIONS')
         try:
             with urlopen(req) as socket:
-                response = socket.read()
+                socket.read()
                 return socket.getheader('X-ReBenchDB-Result-API-Version')
-        except:
+        except:  # pylint: disable=bare-except
             # some error, so no API version available
             return None
 

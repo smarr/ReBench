@@ -61,8 +61,7 @@ class RunScheduler(object):
         for run in runs:
             run_str = self._run_string_for_progress(run)
             l = len(run_str)
-            if l > max_len:
-                max_len = l
+            max_len = max(l, max_len)
         self._progress_label = self._get_progress_label(str(max_len))
 
     @staticmethod
