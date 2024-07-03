@@ -203,7 +203,7 @@ def _activate_shielding(num_cores):
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
     try:
-        output = subprocess.check_output([cset_path, "shield", "-c", core_spec, "-k", "on"],
+        output = subprocess.check_output([paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
                                          stderr=subprocess.STDOUT)
         output = output_as_str(output)
     except OSError:
@@ -220,7 +220,7 @@ def _activate_shielding(num_cores):
 
 def _reset_shielding():
     try:
-        output = subprocess.check_output([cset_path, "shield", "-r"],
+        output = subprocess.check_output([paths.get_cset(), "shield", "-r"],
                                          stderr=subprocess.STDOUT)
         output = output_as_str(output)
         return "cset: done" in output
@@ -341,7 +341,7 @@ def _restore_standard_settings(num_cores, use_shielding):
 def _exec(num_cores, use_nice, use_shielding, args):
     cmdline = []
     if use_shielding:
-        cmdline += [cset_path, "shield", "--exec", "--"]
+        cmdline += [paths.get_cset(), "shield", "--exec", "--"]
     if use_nice:
         cmdline += ["nice", "-n-20"]
     cmdline += args
