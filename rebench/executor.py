@@ -523,8 +523,12 @@ class Executor(object):
                 self.ui.warning(
                     "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, cmdline)
 
+            location = run_id.location
+            if location:
+                location = os.path.expanduser(location)
+
             (return_code, output, _) = subprocess_timeout.run(
-                cmdline, env=run_id.env, cwd=run_id.location, stdout=subprocess.PIPE,
+                cmdline, env=run_id.env, cwd=location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive,

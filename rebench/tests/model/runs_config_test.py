@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import os
 from ...model.data_point import DataPoint
 from ...model.measurement import Measurement
 from ...model.termination_check import TerminationCheck
@@ -79,3 +80,26 @@ class RunsConfigTestCase(ReBenchTestCase):
 
         check.indicate_failed_execution()
         self.assertTrue(check.should_terminate(0, None))
+
+    def test_expand_user(self):
+        self._cnf = Configurator(load_config(self._path + '/small_expand_user.conf'), DataStore(self.ui),
+                                 self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
+        self._run = sorted_runs[0]
+        expected_cmdline = os.path.expanduser(
+            '~/PycharmProjects/ReBench/rebench/tests/test-vm1.py 1 TestBenchMarks Bench1')
+        self.assertEqual(self._run.cmdline_for_next_invocation(), expected_cmdline)
+        self.assertNotIn("~", self._run.cmdline_for_next_invocation())
+
+    def test_command_path_expansion(self):
+        self._cnf = Configurator(load_config(self._path + '/small_support_tilda.conf'), DataStore(self.ui),
+                                 self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
+        self._run = sorted_runs[0]
+        expected_command = '~/PycharmProjects/ReBench/rebench/tests/test-vm1.py 1 TestBenchMarks ~/suiteFolder/Bench1'.replace('~', os.path.expanduser('~'))
+
+        next_invocation_cmdline = self._run.cmdline_for_next_invocation()
+        self.assertNotIn("~", next_invocation_cmdline)
+        self.assertEqual(expected_command, next_invocation_cmdline)

@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+import os
 import re
 
 from .benchmark import Benchmark
@@ -278,7 +279,9 @@ class RunId(object):
 
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
-        return self.cmdline() % {'invocation': self.completed_invocations + 1}
+        cmdline = self.cmdline() % {'invocation': self.completed_invocations + 1}
+        cmdline = cmdline.replace("~", os.path.expanduser("~"))
+        return cmdline
 
     def _construct_cmdline(self):
         cmdline = ""

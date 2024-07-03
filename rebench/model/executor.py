@@ -31,7 +31,7 @@ class Executor(object):
     @classmethod
     def compile(cls, executor_name, executor, run_details, variables, build_commands, action):
         path = executor.get('path')
-        if path:
+        if path and not path.startswith('~'):
             path = os.path.abspath(path)
         executable = executor.get('executable')
         args = executor.get('args')
