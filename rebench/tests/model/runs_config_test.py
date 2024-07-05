@@ -88,8 +88,9 @@ class RunsConfigTestCase(ReBenchTestCase):
         runs = self._cnf.get_runs()
         sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
         self._run = sorted_runs[0]
+        print(self._run.cmdline())
         expected_cmd = '~/tests/vm1.py 1 Bench ~/suiteFolder/Bench1'.replace('~', expanduser('~'))
-
+        self.assertNotIn("~", expected_cmd)
+        expected_cmd += " -message 'a string with a ~'"
         next_invocation_cmdline = self._run.cmdline_for_next_invocation()
-        self.assertNotIn("~", next_invocation_cmdline)
         self.assertEqual(expected_cmd, next_invocation_cmdline)

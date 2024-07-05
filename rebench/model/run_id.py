@@ -19,6 +19,7 @@
 # IN THE SOFTWARE.
 import os
 import re
+import shlex
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
@@ -280,7 +281,11 @@ class RunId(object):
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
         cmdline = self.cmdline() % {'invocation': self.completed_invocations + 1}
-        cmdline = cmdline.replace("~", os.path.expanduser("~"))
+        # split will change the type of quotes, which may cause issues with shell variables
+        parts = shlex.split(cmdline)
+        for i, part in enumerate(parts):
+            parts[i] = os.path.expanduser(part)
+        cmdline = shlex.join(parts)
         return cmdline
 
     def _construct_cmdline(self):
