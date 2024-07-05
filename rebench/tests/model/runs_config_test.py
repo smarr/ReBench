@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from os.path import expanduser
 from ...model.data_point import DataPoint
 from ...model.measurement import Measurement
 from ...model.termination_check import TerminationCheck
@@ -79,3 +80,17 @@ class RunsConfigTestCase(ReBenchTestCase):
 
         check.indicate_failed_execution()
         self.assertTrue(check.should_terminate(0, None))
+
+    def test_command_user_path_expansion(self):
+        self._cnf = Configurator(
+            load_config(self._path + '/small_expand_user.conf'), DataStore(self.ui),
+            self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
+        self._run = sorted_runs[0]
+
+        expected_cmd = '~/tests/vm1.py 1 Bench ~/suiteFolder/Bench1'.replace('~', expanduser('~'))
+        self.assertNotIn("~", expected_cmd)
+        expected_cmd += " -message 'a string with a ~'"
+        next_invocation_cmdline = self._run.cmdline_for_next_invocation()
+        self.assertEqual(expected_cmd, next_invocation_cmdline)
