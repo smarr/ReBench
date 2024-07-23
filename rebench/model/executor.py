@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import os
+import subprocess
 
 from .build_cmd import BuildCommand
 from .exp_run_details import ExpRunDetails
@@ -35,6 +36,7 @@ class Executor(object):
             path = os.path.abspath(path)
         executable = executor.get('executable')
         args = executor.get('args')
+        version_command = executor.get('version_command')
 
         build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
 
@@ -51,10 +53,10 @@ class Executor(object):
             raise ConfigurationError("Executor " + executor_name + " is configured for profiling, "
                                      + "but no profiler details are given.")
 
-        return Executor(executor_name, path, executable, args, build, description or desc,
+        return Executor(executor_name, path, executable, args, version_command, build, description or desc,
                         profiler, run_details, variables, action, env)
 
-    def __init__(self, name, path, executable, args, build, description,
+    def __init__(self, name, path, executable, args, version_command, build, description,
                  profiler, run_details, variables, action, env):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
@@ -63,6 +65,7 @@ class Executor(object):
         self.path = path
         self.executable = executable
         self.args = args
+        self.version_command = version_command
 
         self.build = build
         self.description = description

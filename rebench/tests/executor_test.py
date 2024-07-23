@@ -19,17 +19,18 @@
 # IN THE SOFTWARE.
 import unittest
 import os
+import subprocess
 
+from ..model.executor import Executor as RebenchExecutor
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
-from ..rebench           import ReBench
-from ..executor          import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
-from ..configurator      import Configurator, load_config
+from ..rebench import ReBench
+from ..executor import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
+from ..configurator import Configurator, load_config
 from ..model.measurement import Measurement
-from ..persistence       import DataStore
+from ..persistence import DataStore
 from ..ui import UIError
-from ..reporter          import Reporter
-
+from ..reporter import Reporter
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -218,6 +219,41 @@ class ExecutorTest(ReBenchTestCase):
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, ['e:bar', 's:b'])
+
+    def test_version_command(self):
+        executor = RebenchExecutor(
+            "TestExecutor", None, None, None, "python --version",
+            None, None, None, None, None, None, None
+        )
+
+        try:
+            result = subprocess.run(
+                executor.version_command, shell=True, check=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            version_output = result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            version_output = e.stderr.strip()
+        self.assertTrue("Python" in version_output)
+
+    def test_version_command_in_config(self):
+        self._cnf = Configurator(load_config(self._path + '/small_with_version_command.conf'), DataStore(self.ui),
+                                 self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        executor = list(runs)[0].benchmark.suite.executor
+
+        self.assertEqual(executor.version_command, "python --version")
+
+        try:
+            result = subprocess.run(
+                executor.version_command, shell=True, check=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            version_output = result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            version_output = e.stderr.strip()
+
+        self.assertTrue("Python" in version_output)
 
 
 class _TestReporter(Reporter):
