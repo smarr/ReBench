@@ -277,6 +277,10 @@ schema;executor_type:
               type: str
               desc: Argument given to `perf` when processing the recording
               default: report -g graph --no-children --stdio
+    version_command:
+      type: str
+      required: false
+
 
 schema;exp_suite_type:
   desc: A list of suites
