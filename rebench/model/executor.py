@@ -27,8 +27,7 @@ from .profiler import Profiler
 from ..configuration_error import ConfigurationError
 
 
-class Executor(object):
-
+class Executor:
     @classmethod
     def compile(cls, executor_name, executor, run_details, variables, build_commands, action):
         path = executor.get('path')
@@ -37,51 +36,61 @@ class Executor(object):
         executable = executor.get('executable')
         args = executor.get('args')
         version_command = executor.get('version_command')
+        version_string = executor.get('version_string')
+        version_git = executor.get('version_git')
 
         build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
-
         description = executor.get('description')
         desc = executor.get('desc')
         env = executor.get('env')
-
         profiler = Profiler.compile(executor.get('profiler'))
-
         run_details = ExpRunDetails.compile(executor, run_details)
         variables = ExpVariables.compile(executor, variables)
 
         if action == "profile" and len(profiler) == 0:
-            raise ConfigurationError("Executor " + executor_name + " is configured for profiling, "
-                                     + "but no profiler details are given.")
+            raise ConfigurationError(f"Executor {executor_name} is configured for profiling, "
+                                     "but no profiler details are given.")
 
-        return Executor(executor_name, path, executable, args, version_command, build, description or desc,
-                        profiler, run_details, variables, action, env)
+        return Executor(executor_name, path, executable, args, version_command, version_string, version_git, build,
+                        description or desc, profiler, run_details, variables, action, env)
 
-    def __init__(self, name, path, executable, args, version_command, build, description,
+    def __init__(self, name, path, executable, args, version_command, version_string, version_git, build, description,
                  profiler, run_details, variables, action, env):
-        """Specializing the executor details in the run definitions with the settings from
-           the executor definitions
-        """
         self.name = name
         self.path = path
         self.executable = executable
         self.args = args
         self.version_command = version_command
-
+        self.version_string = version_string
+        self.version_git = version_git
         self.build = build
         self.description = description
         self.profiler = profiler
-
         self.run_details = run_details
         self.variables = variables
         self.env = env
-
         self.action = action
 
+    def get_version(self):
+        if self.version_command:
+            try:
+                result = subprocess.run(self.version_command, shell=True, check=True, capture_output=True, text=True)
+                return result.stdout.strip()
+            except subprocess.CalledProcessError as e:
+                return e.stderr.strip()
+        elif self.version_string:
+            return self.version_string
+        elif self.version_git:
+            try:
+                result = subprocess.run(self.version_git, shell=True, check=True, capture_output=True, text=True)
+                return result.stdout.strip()
+            except subprocess.CalledProcessError as e:
+                return e.stderr.strip()
+        else:
+            return "Unknown version"
+
     def as_dict(self):
-        result = {
-            'name': self.name,
-            'desc': self.description
-        }
+        result = {'name': self.name, 'desc': self.description}
         if self.build:
             result['build'] = [b.as_dict() for b in self.build]
         return result

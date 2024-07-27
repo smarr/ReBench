@@ -223,7 +223,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_version_command(self):
         executor = RebenchExecutor(
             "TestExecutor", None, None, None, "python --version",
-            None, None, None, None, None, None, None
+            None, None, None, None, None, None, None, None, None
         )
 
         try:
@@ -254,6 +254,61 @@ class ExecutorTest(ReBenchTestCase):
             version_output = e.stderr.strip()
 
         self.assertTrue("Python" in version_output)
+
+    def test_version_string(self):
+        executor = RebenchExecutor(
+            "TestExecutor", None, None, None, None, "7.42",
+            None, None, None, None, None, None, None, None
+        )
+
+        version_output = executor.version_string
+        self.assertTrue("7.42" in version_output)
+
+    def test_version_string_in_config(self):
+        self._cnf = Configurator(load_config(self._path + '/small_with_version_string.conf'), DataStore(self.ui),
+                                 self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        executor = list(runs)[0].benchmark.suite.executor
+
+        self.assertEqual(executor.version_string, "7.42")
+
+        version_output = executor.version_string
+        self.assertTrue("7.42" in version_output)
+
+    def test_version_git(self):
+        executor = RebenchExecutor(
+            "TestExecutor", None, None, None, None, None,
+            "git rev-parse HEAD", None, None, None, None, None, None, None
+        )
+
+        try:
+            result = subprocess.run(
+                executor.version_git, shell=True, check=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            version_output = result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            version_output = e.stderr.strip()
+        self.assertTrue(len(version_output) > 0)
+
+    def test_version_git_in_config(self):
+        self._cnf = Configurator(load_config(self._path + '/small_with_version_git.conf'), DataStore(self.ui),
+                                 self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        executor = list(runs)[0].benchmark.suite.executor
+
+        self.assertEqual(executor.version_git, "git rev-parse HEAD")
+
+        try:
+            result = subprocess.run(
+                executor.version_git, shell=True, check=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            version_output = result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            version_output = e.stderr.strip()
+
+        self.assertTrue(len(version_output) > 0)
 
 
 class _TestReporter(Reporter):
