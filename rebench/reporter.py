@@ -105,7 +105,7 @@ class CliReporter(TextReporter):
         self.ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
             ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             '#Samples', 'Mean (ms)'],
+             'Machine', '#Samples', 'Mean (ms)'],
             vertical_bar=' '))
 
     def set_total_number_of_runs(self, num_runs):
