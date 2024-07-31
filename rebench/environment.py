@@ -22,6 +22,8 @@ def _exec(cmd):
             out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
+    except FileNotFoundError:
+        return None
     return _encode_str(out)
 
 
