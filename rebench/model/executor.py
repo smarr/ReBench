@@ -56,6 +56,9 @@ class Executor:
 
     def __init__(self, name, path, executable, args, version_command, version_string, version_git, build, description,
                  profiler, run_details, variables, action, env):
+        """Specializing the executor details in the run definitions with the settings from
+                   the executor definitions
+        """
         self.name = name
         self.path = path
         self.executable = executable
@@ -87,7 +90,7 @@ class Executor:
             except subprocess.CalledProcessError as e:
                 return e.stderr.strip()
         else:
-            return "Unknown version"
+            return None
 
     def as_dict(self):
         result = {'name': self.name, 'desc': self.description}

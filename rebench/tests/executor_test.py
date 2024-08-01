@@ -237,7 +237,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue("Python" in version_output)
 
     def test_version_command_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version_command.conf'), DataStore(self.ui),
+        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
                                  self.ui, None, data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor
@@ -265,7 +265,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue("7.42" in version_output)
 
     def test_version_string_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version_string.conf'), DataStore(self.ui),
+        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
                                  self.ui, None, data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor
@@ -292,7 +292,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue(len(version_output) > 0)
 
     def test_version_git_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version_git.conf'), DataStore(self.ui),
+        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
                                  self.ui, None, data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor

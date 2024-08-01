@@ -225,22 +225,6 @@ class Configurator(object):
         experiments = raw_config.get('experiments', {})
         self._experiments = self._compile_experiments(experiments)
 
-    def _parse_executor(self, executor_name, executor_config):
-        path = executor_config.get('path')
-        executable = executor_config.get('executable')
-        cores = executor_config.get('cores')
-        version_command = executor_config.get('version_command')
-
-        executor = Executor([], False, self.ui, config_dir=self.config_dir)
-        if version_command:
-            executor.set_version_command(version_command)
-        return executor
-
-    def _compile_experiment(self, exp_name, experiment):
-        experiment['executors'] = {name: self._parse_executor(name, config) for name, config in
-                                   experiment.get('executors', {}).items()}
-        return Experiment.compile(exp_name, experiment, self)
-
     @property
     def use_rebench_db(self):
         report_results = self.options is None or self.options.use_data_reporting
@@ -307,14 +291,9 @@ class Configurator(object):
             raise ConfigurationError(
                 "An experiment tries to use an undefined executor: %s" % executor_name)
 
-        executor_config = self._executors[executor_name]
         executor = Executor.compile(
-            executor_name, executor_config,
+            executor_name, self._executors[executor_name],
             run_details, variables, self.build_commands, action)
-
-        version_command = executor_config.get('version_command')
-        if version_command:
-            executor.version_command = version_command
 
         return executor
 
@@ -364,3 +343,6 @@ class Configurator(object):
                 self._exp_name, experiments[self._exp_name])
 
         return results
+
+    def _compile_experiment(self, exp_name, experiment):
+        return Experiment.compile(exp_name, experiment, self)
