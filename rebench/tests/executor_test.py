@@ -237,9 +237,10 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue("Python" in version_output)
 
     def test_version_command_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
-                                 self.ui, None, data_file=self._tmp_file)
-        runs = self._cnf.get_runs()
+        cnf = Configurator(load_config(self._path + '/small_with_version.conf'),
+                           DataStore(self.ui),
+                           self.ui, None, data_file=self._tmp_file)
+        runs = cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor
 
         self.assertEqual(executor.version_command, "python --version")
@@ -265,9 +266,10 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue("7.42" in version_output)
 
     def test_version_string_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
-                                 self.ui, None, data_file=self._tmp_file)
-        runs = self._cnf.get_runs()
+        cnf = Configurator(load_config(self._path + '/small_with_version.conf'),
+                           DataStore(self.ui),
+                           self.ui, None, data_file=self._tmp_file)
+        runs = cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor
 
         self.assertEqual(executor.version_string, "7.42")
@@ -292,9 +294,10 @@ class ExecutorTest(ReBenchTestCase):
         self.assertTrue(len(version_output) > 0)
 
     def test_version_git_in_config(self):
-        self._cnf = Configurator(load_config(self._path + '/small_with_version.conf'), DataStore(self.ui),
-                                 self.ui, None, data_file=self._tmp_file)
-        runs = self._cnf.get_runs()
+        cnf = Configurator(load_config(self._path + '/small_with_version.conf'),
+                           DataStore(self.ui),
+                           self.ui, None, data_file=self._tmp_file)
+        runs = cnf.get_runs()
         executor = list(runs)[0].benchmark.suite.executor
 
         self.assertEqual(executor.version_git, "git rev-parse HEAD")

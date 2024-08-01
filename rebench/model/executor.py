@@ -51,10 +51,12 @@ class Executor:
             raise ConfigurationError(f"Executor {executor_name} is configured for profiling, "
                                      "but no profiler details are given.")
 
-        return Executor(executor_name, path, executable, args, version_command, version_string, version_git, build,
+        return Executor(executor_name, path, executable, args,
+                        version_command, version_string, version_git, build,
                         description or desc, profiler, run_details, variables, action, env)
 
-    def __init__(self, name, path, executable, args, version_command, version_string, version_git, build, description,
+    def __init__(self, name, path, executable, args,
+                 version_command, version_string, version_git, build, description,
                  profiler, run_details, variables, action, env):
         """Specializing the executor details in the run definitions with the settings from
                    the executor definitions
@@ -77,7 +79,8 @@ class Executor:
     def get_version(self):
         if self.version_command:
             try:
-                result = subprocess.run(self.version_command, shell=True, check=True, capture_output=True, text=True)
+                result = subprocess.run(self.version_command, shell=True,
+                                        check=True, capture_output=True, text=True)
                 return result.stdout.strip()
             except subprocess.CalledProcessError as e:
                 return e.stderr.strip()
@@ -85,7 +88,8 @@ class Executor:
             return self.version_string
         elif self.version_git:
             try:
-                result = subprocess.run(self.version_git, shell=True, check=True, capture_output=True, text=True)
+                result = subprocess.run(self.version_git, shell=True,
+                                        check=True, capture_output=True, text=True)
                 return result.stdout.strip()
             except subprocess.CalledProcessError as e:
                 return e.stderr.strip()
