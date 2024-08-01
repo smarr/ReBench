@@ -22,6 +22,8 @@ def _exec(cmd):
             out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
+    except FileNotFoundError:
+        return None
     return _encode_str(out)
 
 
@@ -113,9 +115,14 @@ def init_environment(denoise_result, ui):
     }
 
     try:
+        if 'PATH' not in os.environ:
+            os.environ['PATH'] = ''
+
         cpu_info = _get_cpu_info_internal()
+
         if cpu_info:
-            result['cpu'] = cpu_info['brand_raw']
+            if 'brand_raw' in cpu_info:
+                result['cpu'] = cpu_info['brand_raw']
             if 'hz_advertised' in cpu_info:
                 result['clockSpeed'] = (cpu_info['hz_advertised'][0]
                                         * (10 ** cpu_info['hz_advertised'][1]))
