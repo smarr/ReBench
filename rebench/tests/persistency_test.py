@@ -45,7 +45,9 @@ class PersistencyTest(ReBenchTestCase):
     def test_de_serialization(self):
         data_store = DataStore(self.ui)
         executor = ExecutorConf("MyVM", '', '',
-                                None, None, None, None, None, None, "benchmark", {})
+                                None, None, None, None,
+                                None, None, None, None,
+                                None, "benchmark", {})
         suite = BenchmarkSuite("MySuite", executor, '', '', None, None,
                                None, None, None, None)
         benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
