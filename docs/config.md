@@ -204,6 +204,21 @@ All keys that can be used in the `runs` mapping can also be used for the
 definition of a benchmark, benchmark suite, executor, a concrete experiment, and
 the experiment in general.
 
+<a id="env"></a>
+
+**env**
+
+Sets an environment variable for a given run.
+
+Default: empty
+
+Example:
+```yaml
+runs:
+  env:
+    PATH: "/path/to/something"
+```
+
 <a id="invocations"></a>
 
 **invocations:**
@@ -527,8 +542,13 @@ same build command without executing it multiple times.
 For this purpose, build commands are considered the same when they have the
 same command and location (based on simple string comparisons).
 
-Commands are executed with an empty environment, i.e., without any environment
-variables. All configuration is intended to be explicit to simplify reproduction.
+Commands are executed using Python's `Popen` class and an environment
+dictionary managed by ReBench is used. The environment dictionary starts empty,
+but can be added to using the [`env`](#env) directive. This means that
+environment variables in the parent environment are **not** inherited. Note
+that when the environment dictionary is empty, this does not necessarily mean
+that the executor's environment will be truly empty. The exact behaviour is
+dependent on the underlying system and shell.
 
 Example:
 
