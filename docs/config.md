@@ -502,6 +502,10 @@ It supports various format variables, including:
 
 This key is mandatory.
 
+The final command line will be constructed using this command.
+The command line will be executed in an environment managed by ReBench
+that starts out empty, but can be added to using the [`env`](#env) directive.
+
 Example:
 
 ```yaml
@@ -542,13 +546,14 @@ same build command without executing it multiple times.
 For this purpose, build commands are considered the same when they have the
 same command and location (based on simple string comparisons).
 
-Commands are executed using Python's `Popen` class and an environment
-dictionary managed by ReBench is used. The environment dictionary starts empty,
-but can be added to using the [`env`](#env) directive. This means that
-environment variables in the parent environment are **not** inherited. Note
-that when the environment dictionary is empty, this does not necessarily mean
+Commands are executed with an environment managed by ReBench.
+The environment starts empty, but can be added to using the [`env`](#env) directive.
+This means that environment variables in the parent environment are **not** inherited. Note
+that when the environment is empty, this does not necessarily mean
 that the executor's environment will be truly empty. The exact behaviour is
-dependent on the underlying system and shell.
+dependent on the underlying system.
+
+Build operations are executed directly, without using a shell.
 
 Example:
 
@@ -808,6 +813,10 @@ executors:
 
 The name of the executable to be used.
 
+The executable is one part of the command constructed, which ReBench will
+eventually execute. The command is executed in an environment managed by ReBench
+that starts out empty, but can be added to using the [`env`](#env) directive.
+
 Example:
 
 ```yaml
@@ -862,6 +871,14 @@ same build command without executing it multiple times.
 For this purpose, build commands are considered the same when they have the
 same command and location (based on simple string comparisons).
 
+Commands are executed with an environment managed by ReBench.
+The environment starts empty, but can be added to using the [`env`](#env) directive.
+This means that environment variables in the parent environment are **not** inherited. Note
+that when the environment is empty, this does not necessarily mean
+that the executor's environment will be truly empty. The exact behaviour is
+dependent on the underlying system.
+
+Build operations are executed directly, without using a shell.
 
 Example:
 
