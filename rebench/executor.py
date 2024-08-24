@@ -622,6 +622,8 @@ class Executor(object):
                 self.ui.error("{ind}Output of run could not be parsed.\n", run_id, cmdline)
             elif isinstance(e, ResultsIndicatedAsInvalid):
                 self.ui.error("{ind}Results were marked as invalid.\n", run_id, cmdline)
+            else:
+                self.ui.error("{ind}" + e.get_message() + "\n", run_id, cmdline)
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, 0, output)
 
