@@ -1,6 +1,6 @@
+from ..interop.adapter import ExecutionDeliveredNoResults
 from ..interop.perf_parser import PerfParser
 from ..subprocess_with_timeout import run
-from ..ui import UIError
 
 
 class Profiler(object):
@@ -45,9 +45,9 @@ class PerfProfiler(Profiler):
                                        verbose=executor.debug)
 
         if return_code != 0:
-            raise UIError(
+            raise ExecutionDeliveredNoResults(
                 "perf failed with error code when processing the profile to create a report: "
-                + str(return_code), None)
+                + str(return_code))
 
         parser = PerfParser()
         parser.parse_lines(output.split("\n"))

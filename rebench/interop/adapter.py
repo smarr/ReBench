@@ -74,6 +74,9 @@ class ExecutionDeliveredNoResults(Exception):
         super(ExecutionDeliveredNoResults, self).__init__()
         self._unparseable_data = unparsable_data
 
+    def get_message(self):
+        return self._unparseable_data
+
 
 class OutputNotParseable(ExecutionDeliveredNoResults):
     pass
