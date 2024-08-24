@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 import re
 import subprocess
-from .adapter            import GaugeAdapter, OutputNotParseable
+from .adapter            import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 from ..model.data_point  import DataPoint
 from ..model.measurement import Measurement
 
@@ -93,7 +93,8 @@ class TimeAdapter(GaugeAdapter):
 
         for line in data.split("\n"):
             if self.check_for_error(line):
-                return None
+                raise ResultsIndicatedAsInvalid(
+                    "Output of bench program indicated error.")
 
             if self._use_formatted_time:
                 match1 = self.re_formatted_rss.match(line)
