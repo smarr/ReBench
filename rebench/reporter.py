@@ -26,6 +26,7 @@ from http.client import HTTPException
 from urllib.request import urlopen
 from urllib.parse import urlencode
 from humanfriendly.tables import format_pretty_table
+from humanfriendly.terminal import ansi_wrap
 
 
 class Reporter(object):
@@ -56,6 +57,11 @@ class Reporter(object):
 
 class TextReporter(Reporter):
 
+    def __init__(self):
+        super(TextReporter, self).__init__()
+        self.expected_columns = ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
+             'Machine', '#Samples', 'Mean (ms)']
+
     @staticmethod
     def _path_to_string(path):
         out = [path[0].as_simple_string()]
@@ -64,8 +70,20 @@ class TextReporter(Reporter):
                 out.append(str(item))
         return " ".join(out) + " "
 
-    @staticmethod
-    def _generate_all_output(run_ids):
+    def _generate_all_output(self, run_ids):
+        """
+        Collect all values to generate overview table.
+
+        Though, we want the table to be as compact as possible.
+        So, we do identify columns that repeat the same value, and strip them from the table
+        to output them before as summary details.
+
+        We handle tables with <=4 rows differently and show all columns in the table.
+
+        We also show always the last column, which is the mean of the total values.
+        """
+        column_value_sets = [set() for _ in self.expected_columns]
+
         rows = []
 
         for run_id in run_ids:
@@ -77,9 +95,38 @@ class TextReporter(Reporter):
                 out.append("Failed")
             else:
                 out.append(int(round(mean, 0)))
+
+            for i, v in enumerate(out):
+                column_value_sets[i].add(v)
             rows.append(out)
 
-        return sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7))
+        sorted_rows = sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7))
+
+        if len(sorted_rows) <= 4:
+            return sorted_rows, self.expected_columns, None
+
+        return self._filter_columns(sorted_rows, column_value_sets)
+
+    def _filter_columns(self, sorted_rows, column_value_sets):
+        assert self.expected_columns[-1] == 'Mean (ms)'
+        last_column_idx = len(self.expected_columns) - 1
+
+        summary = []
+        used_cols = []
+        column_idxs_to_be_deleted = []
+
+        for i, values in enumerate(column_value_sets):
+            if len(values) > 1 or i == last_column_idx:
+                used_cols.append(self.expected_columns[i])
+            else:
+                column_idxs_to_be_deleted.insert(0, i)
+                summary.append([self.expected_columns[i], values.pop()])
+
+        for row in sorted_rows:
+            for i in column_idxs_to_be_deleted:
+                del row[i]
+
+        return sorted_rows, used_cols, summary
 
 
 class CliReporter(TextReporter):
@@ -102,11 +149,13 @@ class CliReporter(TextReporter):
         self._runs_remaining -= 1
 
     def report_job_completed(self, run_ids):
-        self.ui.output("\n\n" + format_pretty_table(
-            self._generate_all_output(run_ids),
-            ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Machine', '#Samples', 'Mean (ms)'],
-            vertical_bar=' '))
+        rows, used_cols, summary = self._generate_all_output(run_ids)
+        self.ui.output("\n")
+        if summary:
+            self.ui.output(ansi_wrap(" Result Summary of Uniform Values", bold=True))
+            self.ui.output(format_pretty_table(summary, ['Property', 'Value'],
+                                               vertical_bar='', horizontal_bar=''))
+        self.ui.output(format_pretty_table(rows, used_cols, vertical_bar=''))
 
     def set_total_number_of_runs(self, num_runs):
         self._num_runs = num_runs

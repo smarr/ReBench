@@ -1,6 +1,6 @@
 from select     import select
 from subprocess import PIPE, STDOUT, Popen
-from threading  import Thread, Condition
+from threading  import Thread, Condition, current_thread, main_thread
 from time       import time
 
 import sys
@@ -27,6 +27,9 @@ def keyboard_interrupt_on_sigterm(signum, frame):
 
 
 def _setup_signal_handling_if_needed():
+    if current_thread() is not main_thread():
+        return
+
     global _signals_setup  # pylint: disable=global-statement
     if not _signals_setup:
         _signals_setup = True
