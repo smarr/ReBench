@@ -244,11 +244,12 @@ class Configurator(object):
 
         if not self.options.experiment_name:
             raise ConfigurationError(
-                "The experiment was not named, which is mandatory. "
-                "This is needed to identify the data uniquely. "
-                "It should also help to remember in which context it "
+                "Reporting to ReBenchDB is enabled, but "
+                "the required experiment name is not set. "
+                "It is needed to identify the data uniquely "
+                "and helps to remember in which context data "
                 "was recorded, perhaps relating to a specific CI job "
-                "or confirming some hypothesis."
+                "or to confirm some hypothesis."
                 "\n\n"
                 "Use the --experiment option to set the name.")
 
