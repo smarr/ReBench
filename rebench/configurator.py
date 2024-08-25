@@ -295,6 +295,7 @@ class Configurator(object):
         executor = Executor.compile(
             executor_name, self._executors[executor_name],
             run_details, variables, self.build_commands, action)
+
         return executor
 
     def get_suite(self, suite_name):

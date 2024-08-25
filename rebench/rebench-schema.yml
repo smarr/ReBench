@@ -277,6 +277,18 @@ schema;executor_type:
               type: str
               desc: Argument given to `perf` when processing the recording
               default: report -g graph --no-children --stdio
+    version_command:
+      type: str
+      required: false
+      desc: Command to retrieve the version of the executable.
+    version_string:
+      type: str
+      required: false
+      desc: Explicit version string provided by the user.
+    version_git:
+      type: str
+      required: false
+      desc: Command to retrieve the Git version of the executable.
 
 schema;exp_suite_type:
   desc: A list of suites
