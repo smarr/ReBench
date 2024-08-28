@@ -47,7 +47,8 @@ setup(name='ReBench',
       entry_points = {
           'console_scripts' : [
               'rebench = rebench.rebench:main_func',
-              'rebench-denoise = rebench.denoise:main_func'
+              'rebench-denoise = rebench.denoise:main_func',
+              'rebench-load-test = rebench.load_test:main_func'
           ]
       },
       test_suite = 'rebench.tests',
