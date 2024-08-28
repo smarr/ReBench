@@ -133,10 +133,13 @@ def _shield_upper_bound(num_cores):
     return num_cores - 1
 
 
-def _activate_shielding(num_cores):
-    min_cores = _shield_lower_bound(num_cores)
-    max_cores = _shield_upper_bound(num_cores)
-    core_spec = "%d-%d" % (min_cores, max_cores)
+def _activate_shielding(num_cores, shield):
+    if shield:
+        core_spec = shield
+    else:
+        min_cores = _shield_lower_bound(num_cores)
+        max_cores = _shield_upper_bound(num_cores)
+        core_spec = "%d-%d" % (min_cores, max_cores)
 
     if not paths.has_cset():
         return False
@@ -250,13 +253,13 @@ def _restore_perf_sampling():
     return "restored"
 
 
-def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
+def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling, shield):
     governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
     no_turbo = _set_no_turbo(True)
     perf = _configure_perf_sampling(for_profiling)
 
     can_nice = _can_set_niceness() if use_nice else False
-    shielding = _activate_shielding(num_cores) if use_shielding else False
+    shielding = _activate_shielding(num_cores, shield) if use_shielding else False
 
     return {"scaling_governor": governor,
             "no_turbo": no_turbo,
@@ -354,6 +357,8 @@ def _shell_options():
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
     parser.add_argument('--cset-path', help="Absolute path to cset", default=None)
     parser.add_argument('--num-cores', help="Number of cores. Is required.", default=None)
+    parser.add_argument('--shield', help='list of cores to shield, e.g. 0-3,5,12-43',
+                        action='store', default=None, dest='shield')
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
                               "`minimize` sets system to reduce noise. " +
@@ -383,7 +388,8 @@ def main_func():
     result = {}
 
     if args.command == 'minimize' and num_cores is not None:
-        result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling)
+        result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling,
+                                 args.shield)
     elif args.command == 'restore' and num_cores is not None:
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
