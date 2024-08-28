@@ -57,7 +57,14 @@ def main_func():
     args, remaining_args = arg_parser.parse_known_args()
 
     values = start_load_test(args)
-    print(values)
+    output_report(values)
+
+
+def output_report(values):
+    highest = max(values)
+
+    for v in values:
+        print(f"Value:\t{v}\tpercentage:\t{v/highest*100:.2f}%")
 
 
 if __name__ == "__main__":
