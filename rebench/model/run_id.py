@@ -51,6 +51,7 @@ class RunId(object):
         self.is_failed = True
 
         self._max_invocation = 0
+        self._expandend_env = None
 
     def has_same_executable(self, other):
         return self.executable == other.executable
@@ -85,7 +86,13 @@ class RunId(object):
 
     @property
     def env(self):
-        return self.benchmark.run_details.env
+        if self._expandend_env is not None:
+            return self._expandend_env
+
+        self._expandend_env = self.benchmark.run_details.env
+        for key, value in self._expandend_env.items():
+            self._expandend_env[key] = self._expand_user(value)
+        return self._expandend_env
 
     @property
     def completed_invocations(self):
@@ -278,14 +285,21 @@ class RunId(object):
             return self._cmdline
         return self._construct_cmdline()
 
+    def _expand_user(self, possible_path):
+        # split will change the type of quotes, which may cause issues with shell variables
+        parts = shlex.split(possible_path)
+        for i, part in enumerate(parts):
+            expanded = os.path.expanduser(part)
+            if '~' in expanded and ':' in expanded:
+                path_list = expanded.split(':')
+                expanded = ':'.join([os.path.expanduser(p) for p in path_list])
+            parts[i] = expanded
+        return shlex.join(parts)
+
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
         cmdline = self.cmdline() % {'invocation': self.completed_invocations + 1}
-        # split will change the type of quotes, which may cause issues with shell variables
-        parts = shlex.split(cmdline)
-        for i, part in enumerate(parts):
-            parts[i] = os.path.expanduser(part)
-        cmdline = shlex.join(parts)
+        cmdline = self._expand_user(cmdline)
         return cmdline
 
     def _construct_cmdline(self):
