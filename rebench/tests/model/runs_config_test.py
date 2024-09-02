@@ -87,10 +87,25 @@ class RunsConfigTestCase(ReBenchTestCase):
             self.ui, None, data_file=self._tmp_file)
         runs = self._cnf.get_runs()
         sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
-        self._run = sorted_runs[0]
 
-        expected_cmd = '~/tests/vm1.py 1 Bench ~/suiteFolder/Bench1'.replace('~', expanduser('~'))
+        run = sorted_runs[0]
+
+        expected_cmd = '~/tests/vm1.py 1 -cp ~/foo:~/bar Bench ~/suiteFolder/Bench1'.replace(
+            '~', expanduser('~'))
         self.assertNotIn("~", expected_cmd)
         expected_cmd += " -message 'a string with a ~'"
-        next_invocation_cmdline = self._run.cmdline_for_next_invocation()
+        next_invocation_cmdline = run.cmdline_for_next_invocation()
         self.assertEqual(expected_cmd, next_invocation_cmdline)
+
+    def test_env_user_path_expansion(self):
+        self._cnf = Configurator(
+            load_config(self._path + '/small_expand_user.conf'), DataStore(self.ui),
+            self.ui, None, data_file=self._tmp_file)
+        runs = self._cnf.get_runs()
+        sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
+        run = sorted_runs[0]
+
+        env = run.env
+
+        self.assertNotIn("~", env['PATH'])
+        self.assertNotIn("~", env['WORKDIR'])
