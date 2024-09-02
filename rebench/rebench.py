@@ -302,8 +302,8 @@ Argument:
             return True
         else:
             if self._config.artifact_review:
-                self.ui.output("Executing benchmarks for Artifact Review"
-                                + " using the reported settings.")
+                self.ui.output("Executing benchmarks for Artifact Review" +
+                               " using the reported settings.")
             return executor.execute()
 
 

@@ -347,9 +347,10 @@ class Executor(object):
                 cmdline += "--without-nice "
             if not self._use_shielding:
                 cmdline += "--without-shielding "
+            elif denoise_paths.has_cset():
+                cmdline += "--cset-path " + denoise_paths.get_cset() + " "
             if run_id.is_profiling():
                 cmdline += "--for-profiling "
-            cmdline += "--cset-path " + denoise_paths.get_cset() + " "
             cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id)

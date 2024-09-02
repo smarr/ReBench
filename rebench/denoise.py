@@ -9,7 +9,7 @@ from math import log, floor
 from multiprocessing import Pool
 from cpuinfo import get_cpu_info
 
-from .ui import escape_braces
+from .ui import escape_braces, UIError
 from .subprocess_with_timeout import output_as_str  # pylint: disable=cyclic-import
 from .subprocess_kill import kill_process  # pylint: disable=cyclic-import
 
@@ -23,33 +23,82 @@ class CommandsPaths:
     """Hold the path information for commands."""
 
     def __init__(self):
-        self.cset_path = None
-        self.denoise_path = None
+        self._cset_path = None
+        self._denoise_path = None
+        self._which_path = None
 
-    def absolute_path_for_command(self, command):
-        """Find and return the canonical absolute path to make sudo happy"""
+    def get_which(self):
+        if not self._which_path:
+            if os.path.isfile('/usr/bin/which'):
+                self._which_path = '/usr/bin/which'
+            else:
+                raise UIError("The basic `which` command was not found." +
+                              " In many systems it is available at /usr/bin/which." +
+                              " If it is elsewhere rebench-denoise will need to be" +
+                              " adapted to support a different location.\n", None)
+
+        return self._which_path
+
+    def _absolute_path_for_command(self, command, arguments_for_successful_exe):
+        """
+        Find and return the canonical absolute path to make sudo happy.
+        If the command is not found or does not execute successfully, return None.
+        """
         try:
             selected_cmd = output_as_str(
-                subprocess.check_output(['which', command], shell=True)).strip()
-            return os.path.realpath(selected_cmd)
+                subprocess.check_output(
+                    [self.get_which(), command],
+                    shell=False, stderr=subprocess.DEVNULL)).strip()
+            result_cmd = os.path.realpath(selected_cmd)
         except subprocess.CalledProcessError:
-            return command
+            result_cmd = command
+
+        try:
+            subprocess.check_output(
+                    [result_cmd] + arguments_for_successful_exe,
+                    shell=False, stderr=subprocess.DEVNULL)
+            return result_cmd
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    def has_cset(self):
+        if self._cset_path is None:
+            self._cset_path = self._absolute_path_for_command('cset', ['--help'])
+
+        return self._cset_path is not None and self._cset_path is not False
 
     def get_cset(self):
-        if not self.cset_path:
-            self.cset_path = self.absolute_path_for_command('cset')
-        return self.cset_path
+        if not self.has_cset():
+            raise UIError("cset command not found." +
+                          " cset is part of the cpuset package on Debian, Ubuntu," +
+                          " and OpenSuSE. The code is maintained here:" +
+                          " https://github.com/SUSE/cpuset\n" +
+                          " \nTo use ReBench without cset, use the --no-denoise option.\n", None)
+        return self._cset_path
 
     def set_cset(self, cset_path):
-        self.cset_path = cset_path
+        self._cset_path = cset_path
+
+    def has_denoise(self):
+        if self._denoise_path is None:
+            self._denoise_path = self._absolute_path_for_command('rebench-denoise', ['--version'])
+
+        return self._denoise_path is not None and self._denoise_path is not False
 
     def get_denoise(self):
-        if not self.denoise_path:
-            self.denoise_path = self.absolute_path_for_command('rebench-denoise')
-        return self.denoise_path
+        if not self.has_denoise():
+            raise UIError("rebench-denoise not found. " +
+                          "Was ReBench installed so that `rebench` and `rebench-denoise` " +
+                          "are on the PATH? Python's bin directory for packages " +
+                          "may need to be added to PATH manually.\n\n" +
+                          "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
+                          None)
+
+        return self._denoise_path
 
 
 paths = CommandsPaths()
+
 
 class DenoiseResult:
 
@@ -67,7 +116,9 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     cmd = ['sudo', '-n', paths.get_denoise()]
     if for_profiling:
         cmd += ['--for-profiling']
-    cmd += ['--cset-path', paths.get_cset()]
+
+    if paths.has_cset():
+        cmd += ['--cset-path', paths.get_cset()]
     cmd += ['--json', 'minimize']
 
     try:
@@ -202,6 +253,10 @@ def _activate_shielding(num_cores):
     min_cores = _shield_lower_bound(num_cores)
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
+
+    if not paths.has_cset():
+        return False
+
     try:
         output = subprocess.check_output([paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
                                          stderr=subprocess.STDOUT)
@@ -340,7 +395,7 @@ def _restore_standard_settings(num_cores, use_shielding):
 
 def _exec(num_cores, use_nice, use_shielding, args):
     cmdline = []
-    if use_shielding:
+    if use_shielding and paths.has_cset():
         cmdline += [paths.get_cset(), "shield", "--exec", "--"]
     if use_nice:
         cmdline += ["nice", "-n-20"]
@@ -351,10 +406,11 @@ def _exec(num_cores, use_nice, use_shielding, args):
 
     # communicate the used core spec to executed command as part of its environment
     env = os.environ.copy()
-    min_cores = _shield_lower_bound(num_cores)
-    max_cores = _shield_upper_bound(num_cores)
-    core_spec = "%d-%d" % (min_cores, max_cores)
-    env['REBENCH_DENOISE_CORE_SET'] = core_spec
+    if use_shielding and paths.has_cset():
+        min_cores = _shield_lower_bound(num_cores)
+        max_cores = _shield_upper_bound(num_cores)
+        core_spec = "%d-%d" % (min_cores, max_cores)
+        env['REBENCH_DENOISE_CORE_SET'] = core_spec
 
     os.execvpe(cmd, cmdline, env)
 
