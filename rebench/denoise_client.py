@@ -88,17 +88,22 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     use_shielding = False
 
     if got_json:
+        use_nice = result.get("can_set_nice", False)
+        use_shielding = result.get("shielding", False)
+
         failed = ''
 
         for k, value in result.items():
             if value == "failed":
                 failed += '{ind}{ind} - ' + k + '\n'
 
+        if not use_nice:
+            failed += '{ind}{ind} - nice was not used\n'
+        if not use_shielding:
+            failed += '{ind}{ind} - core shielding was not used\n'
+
         if failed:
             msg += '{ind}Failed to set:\n' + failed + '\n'
-
-        use_nice = result.get("can_set_nice", False)
-        use_shielding = result.get("shielding", False)
 
         if not use_nice and show_warnings:
             msg += ("{ind}Process niceness could not be set.\n"
