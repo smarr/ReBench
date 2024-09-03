@@ -5,7 +5,7 @@ from time import sleep
 from http.client import HTTPException
 from urllib.request import urlopen, Request as HttpRequest
 
-from .ui import UIError
+from .output import UIError
 
 
 def get_current_time():

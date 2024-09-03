@@ -7,8 +7,7 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 
-from .ui import UIError
-from .output import output_as_str
+from .output import output_as_str, UIError
 from .subprocess_kill import kill_process
 
 try:

@@ -169,25 +169,6 @@ class UI(object):
             self._output(text, 'red', faint=True, **kw)
 
 
-class UIError(Exception):
-
-    def __init__(self, message, exception):
-        super(UIError, self).__init__()
-        self._message = message
-        self._exception = exception
-
-    @property
-    def message(self):
-        return self._message
-
-    @property
-    def source_exception(self):
-        return self._exception
-
-    def __str__(self):
-        return self._message
-
-
 class TestDummyUI(object):
 
     def init(self, _verbose, _debug):

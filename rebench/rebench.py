@@ -41,7 +41,8 @@ from .rebenchdb      import get_current_time
 from .reporter       import CliReporter
 from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
-from .ui import UIError, UI
+from .output import UIError
+from .ui import UI
 
 
 class ReBench(object):

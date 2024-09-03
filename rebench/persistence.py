@@ -31,8 +31,8 @@ from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.profile_data import ProfileData
 from .model.run_id      import RunId
+from .output            import UIError
 from .rebenchdb         import get_current_time
-from .ui                import UIError
 
 _START_TIME_LINE = "# Execution Start: "
 

@@ -23,8 +23,8 @@ import shlex
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
+from ..output import UIError
 from ..statistics import StatisticProperties, SampleCounter
-from ..ui import UIError
 
 
 class RunId(object):

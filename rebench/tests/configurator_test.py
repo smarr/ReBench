@@ -21,7 +21,7 @@ import unittest
 
 from ..configurator     import Configurator, load_config, validate_gauge_adapters
 from ..persistence      import DataStore
-from ..ui               import UIError
+from ..output           import UIError
 from .rebench_test_case import ReBenchTestCase
 
 

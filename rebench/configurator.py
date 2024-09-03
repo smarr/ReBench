@@ -28,8 +28,9 @@ from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
 from .model.executor import Executor
+from .output import UIError
 from .rebenchdb import ReBenchDB
-from .ui import UIError, escape_braces
+from .ui import escape_braces
 
 # Disable most logging for pykwalify
 logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
