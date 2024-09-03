@@ -1,6 +1,6 @@
 from unittest import TestCase, skipIf
 
-from ..denoise import DenoiseResult
+from ..denoise_client import DenoiseResult
 from ..environment import determine_source_details, determine_environment,\
     init_environment, extract_base, git_not_available, git_repo_not_initialized
 from ..ui import TestDummyUI

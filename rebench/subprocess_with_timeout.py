@@ -6,18 +6,14 @@ from time       import time
 import sys
 import signal
 
+from .denoise_client import deliver_kill_signal
+from .output import output_as_str
 from .subprocess_kill import kill_process
 
 
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
 
-
-def output_as_str(string_like):
-    if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode('utf-8')
-    else:
-        return string_like
 
 _signals_setup = False
 
@@ -146,7 +142,8 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
 
     if (timeout != -1 or was_interrupted) and thread.is_alive():
         assert thread.get_pid() is not None
-        result = kill_process(thread.get_pid(), kill_tree, thread, uses_sudo)
+        result = kill_process(thread.get_pid(), kill_tree, thread,
+                              deliver_kill_signal if uses_sudo else None)
         if was_interrupted:
             raise KeyboardInterrupt()
         return result

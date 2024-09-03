@@ -1,4 +1,3 @@
-import getpass
 import json
 import os
 import subprocess
@@ -7,11 +6,10 @@ import sys
 from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
-from cpuinfo import get_cpu_info
 
-from .ui import escape_braces, UIError
-from .subprocess_with_timeout import output_as_str  # pylint: disable=cyclic-import
-from .subprocess_kill import kill_process  # pylint: disable=cyclic-import
+from .ui import UIError
+from .output import output_as_str
+from .subprocess_kill import kill_process
 
 try:
     from . import __version__ as rebench_version
@@ -106,155 +104,13 @@ class CommandsPaths:
             for path in active_python_path:
                 if current_file.startswith(path):
                     self._denoise_python_path = path
-                    return path
+                    break
 
         return self._denoise_python_path
 
 
 paths = CommandsPaths()
 
-
-class DenoiseResult:
-
-    def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
-        self.succeeded = succeeded
-        self.warn_msg = warn_msg
-        self.use_nice = use_nice
-        self.use_shielding = use_shielding
-        self.details = details
-
-
-def get_env_with_python_path_for_denoise():
-    return add_denoise_python_path_to_env(os.environ)
-
-
-def add_denoise_python_path_to_env(env):
-    env = env.copy()
-    if 'PYTHONPATH' in env and env['PYTHONPATH']:
-        env['PYTHONPATH'] += os.pathsep + paths.get_denoise_python_path()
-    else:
-        env['PYTHONPATH'] = paths.get_denoise_python_path()
-    return env
-
-
-def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
-    result = {}
-
-    env = get_env_with_python_path_for_denoise()
-    cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise()]
-    if for_profiling:
-        cmd += ['--for-profiling']
-
-    if paths.has_cset():
-        cmd += ['--cset-path', paths.get_cset()]
-    cmd += ['--json', 'minimize']
-
-    try:
-        output = output_as_str(subprocess.check_output(cmd,
-                                                       stderr=subprocess.STDOUT,
-                                                       env=env))
-        try:
-            result = json.loads(output)
-            got_json = True
-        except ValueError:
-            got_json = False
-    except subprocess.CalledProcessError as e:
-        output = output_as_str(e.output)
-        got_json = False
-    except FileNotFoundError as e:
-        output = str(e)
-        got_json = False
-
-    msg = 'Minimizing noise with rebench-denoise failed\n'
-    msg += '{ind}possibly causing benchmark results to vary more.\n\n'
-
-    success = False
-    use_nice = False
-    use_shielding = False
-
-    if got_json:
-
-        failed = ''
-
-        for k, value in result.items():
-            if value == "failed":
-                failed += '{ind}{ind} - ' + k + '\n'
-
-        if failed:
-            msg += '{ind}Failed to set:\n' + failed + '\n'
-
-        use_nice = result.get("can_set_nice", False)
-        use_shielding = result.get("shielding", False)
-
-        if not use_nice and show_warnings:
-            msg += ("{ind}Process niceness could not be set.\n"
-                    + "{ind}{ind}`nice` is used to elevate the priority of the benchmark,\n"
-                    + "{ind}{ind}without it, other processes my interfere with it"
-                    + " nondeterministically.\n")
-
-        if not use_shielding and show_warnings:
-            msg += ("{ind}Core shielding could not be set up.\n"
-                    + "{ind}{ind}Shielding is used to restrict the use of cores to"
-                    + " benchmarking.\n"
-                    + "{ind}{ind}Without it, there my be more nondeterministic interference.\n")
-
-        if use_nice and use_shielding and not failed:
-            success = True
-    else:
-        if 'password is required' in output:
-            msg += '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
-                   + ' can be used without password.\n'
-            msg += '{ind}To be able to run rebench-denoise without password,\n'
-            msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
-            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
-                   + paths.get_denoise() + '\n'
-        elif 'command not found' in output:
-            msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
-        elif "No such file or directory: 'sudo'" in output:
-            msg += '{ind}sudo is not available. Can\'t use rebench-denoise to manage the system.\n'
-        else:
-            msg += '{ind}Error: ' + escape_braces(output)
-
-    if not success and show_warnings:
-        ui.warning(msg)
-
-    return DenoiseResult(success, msg, use_nice, use_shielding, result)
-
-
-def restore_noise(denoise_result, show_warning, ui):
-    if not denoise_result:
-        # likely has failed completely. And without details, just no-op
-        return
-
-    env = get_env_with_python_path_for_denoise()
-    values = set(denoise_result.details.values())
-    if len(values) == 1 and "failed" in values:
-        # everything failed, don't need to try to restore things
-        pass
-    else:
-        try:
-            cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json']
-            if not denoise_result.use_shielding:
-                cmd += ['--without-shielding']
-            if not denoise_result.use_nice:
-                cmd += ['--without-nice']
-            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT, env=env)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
-
-    if not denoise_result.succeeded and show_warning:
-        # warn a second time at the end of the execution
-        ui.error(denoise_result.warn_msg)
-
-
-def deliver_kill_signal(pid):
-    env = get_env_with_python_path_for_denoise()
-
-    try:
-        cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
 
 def _can_set_niceness():
     """
@@ -449,7 +305,7 @@ def _exec(num_cores, use_nice, use_shielding, args):
 
 
 def _kill(proc_id):
-    kill_process(int(proc_id), True, None, False)
+    kill_process(int(proc_id), True, None, None)
 
 
 def _calculate(core_id):
@@ -502,6 +358,7 @@ def _shell_options():
     parser.add_argument('--for-profiling', action='store_true', default=False,
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
     parser.add_argument('--cset-path', help="Absolute path to cset", default=None)
+    parser.add_argument('--num-cores', help="Number of cores. Is required.", default=None)
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
                               "`minimize` sets system to reduce noise. " +
@@ -521,22 +378,24 @@ def main_func():
 
     paths.set_cset(args.cset_path)
 
-    cpu_info = get_cpu_info()
-    num_cores = cpu_info["count"]
+    num_cores = int(args.num_cores) if args.num_cores else None
     result = {}
 
-    if args.command == 'minimize':
+    if args.command == 'minimize' and num_cores is not None:
         result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling)
-    elif args.command == 'restore':
+    elif args.command == 'restore' and num_cores is not None:
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
         _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
     elif args.command == 'kill':
         _kill(remaining_args[0])
-    elif args.command == 'test':
+    elif args.command == 'test' and num_cores is not None:
         _test(num_cores)
     else:
         arg_parser.print_help()
+        if num_cores is None:
+            print("The --num-cores must be provided.")
+            return -2
         return -1
 
     if args.json:

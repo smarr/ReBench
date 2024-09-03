@@ -34,7 +34,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 from . import __version__ as rebench_version
 from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
     RandomScheduler, BenchmarkThreadExceptions
-from .denoise import minimize_noise, restore_noise
+from .denoise_client import minimize_noise, restore_noise
 from .environment import init_environment
 from .persistence    import DataStore
 from .rebenchdb      import get_current_time

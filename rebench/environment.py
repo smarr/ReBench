@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from cpuinfo.cpuinfo import _get_cpu_info_internal
 from psutil import virtual_memory
 
-from .subprocess_with_timeout import output_as_str
+from .output import output_as_str
 
 
 def _encode_str(out):

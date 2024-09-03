@@ -1,5 +1,5 @@
 from .rebench_test_case import ReBenchTestCase
-from ..denoise import minimize_noise, restore_noise
+from ..denoise_client import minimize_noise, restore_noise
 
 
 class DenoiseTest(ReBenchTestCase):

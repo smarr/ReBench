@@ -28,7 +28,8 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise import paths as denoise_paths, add_denoise_python_path_to_env
+from .denoise import paths as denoise_paths
+from .denoise_client import add_denoise_python_path_to_env, get_number_of_cores
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .ui import escape_braces
@@ -336,6 +337,7 @@ class Executor(object):
         return scheduler(self, self.ui, print_execution_plan)
 
     def _construct_cmdline(self, run_id, gauge_adapter):
+        num_cores = get_number_of_cores()
         env = add_denoise_python_path_to_env(run_id.env)
         cmdline = ""
 
@@ -352,6 +354,7 @@ class Executor(object):
                 cmdline += "--cset-path " + denoise_paths.get_cset() + " "
             if run_id.is_profiling():
                 cmdline += "--for-profiling "
+            cmdline += '--num-cores ' + str(num_cores) + " "
             cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id)
@@ -530,7 +533,8 @@ class Executor(object):
                 location = os.path.expanduser(location)
 
             (return_code, output, _) = subprocess_timeout.run(
-                cmdline, env=add_denoise_python_path_to_env(run_id.env), cwd=location, stdout=subprocess.PIPE,
+                cmdline, env=add_denoise_python_path_to_env(run_id.env),
+                cwd=location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive,
