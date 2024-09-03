@@ -66,12 +66,6 @@ class CommandsPaths:
         return self._cset_path is not None and self._cset_path is not False
 
     def get_cset(self):
-        if not self.has_cset():
-            raise UIError("cset command not found." +
-                          " cset is part of the cpuset package on Debian, Ubuntu," +
-                          " and OpenSuSE. The code is maintained here:" +
-                          " https://github.com/SUSE/cpuset\n" +
-                          " \nTo use ReBench without cset, use the --no-denoise option.\n", None)
         return self._cset_path
 
     def set_cset(self, cset_path):
@@ -373,6 +367,12 @@ def _shell_options():
     return parser
 
 
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_CHANGING_SETTINGS_FAILED = 1
+EXIT_CODE_NUM_CORES_UNSET = 2
+EXIT_CODE_NO_COMMAND_SELECTED = 3
+
+
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
@@ -396,8 +396,8 @@ def main_func():
         arg_parser.print_help()
         if num_cores is None:
             print("The --num-cores must be provided.")
-            return -2
-        return -1
+            return EXIT_CODE_NUM_CORES_UNSET
+        return EXIT_CODE_NO_COMMAND_SELECTED
 
     if args.json:
         print(json.dumps(result))
@@ -412,9 +412,9 @@ def main_func():
         print("Can set niceness:                   ", result.get("can_set_nice", False))
 
     if "failed" in result.values():
-        return -1
+        return EXIT_CODE_CHANGING_SETTINGS_FAILED
     else:
-        return 0
+        return EXIT_CODE_SUCCESS
 
 
 if __name__ == "__main__":

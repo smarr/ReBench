@@ -66,19 +66,18 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     cmd += ['--num-cores', str(num_cores)]
 
     try:
-        output = output_as_str(subprocess.check_output(cmd,
-                                                       stderr=subprocess.STDOUT,
-                                                       env=env))
-        try:
-            result = json.loads(output)
-            got_json = True
-        except ValueError:
-            got_json = False
+        output = output_as_str(
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env))
     except subprocess.CalledProcessError as e:
         output = output_as_str(e.output)
-        got_json = False
     except FileNotFoundError as e:
+        print("FileNotFoundError")
         output = str(e)
+
+    try:
+        result = json.loads(output)
+        got_json = True
+    except ValueError:
         got_json = False
 
     msg = 'Minimizing noise with rebench-denoise failed\n'
@@ -89,7 +88,6 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     use_shielding = False
 
     if got_json:
-
         failed = ''
 
         for k, value in result.items():
@@ -109,10 +107,21 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
                     + " nondeterministically.\n")
 
         if not use_shielding and show_warnings:
-            msg += ("{ind}Core shielding could not be set up.\n"
-                    + "{ind}{ind}Shielding is used to restrict the use of cores to"
+            msg += "{ind}Core shielding could not be set up"
+
+            if not paths.has_cset():
+                msg += ", because the cset command was not found.\n"
+            else:
+                msg += ".\n"
+
+            msg += ("{ind}{ind}Shielding is used to restrict the use of cores to"
                     + " benchmarking.\n"
                     + "{ind}{ind}Without it, there my be more nondeterministic interference.\n")
+
+            if not paths.has_cset():
+                msg += ("{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu," +
+                        " and OpenSuSE. The code is maintained here:" +
+                        " https://github.com/SUSE/cpuset\n")
 
         if use_nice and use_shielding and not failed:
             success = True
