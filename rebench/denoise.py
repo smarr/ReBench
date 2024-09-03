@@ -102,9 +102,11 @@ class CommandsPaths:
 
             # find the element in active_python_path that has the start of the current file path
             for path in active_python_path:
-                if current_file.startswith(path):
+                if current_file.startswith(path) and 'rebench' in path.lower():
                     self._denoise_python_path = path
-                    break
+                    return path
+
+            self._denoise_python_path = False
 
         return self._denoise_python_path
 

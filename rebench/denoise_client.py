@@ -26,11 +26,17 @@ def _get_env_with_python_path_for_denoise():
 
 
 def add_denoise_python_path_to_env(env):
+    path = paths.get_denoise_python_path()
+
+    # did not find it, just leave the env unmodified
+    if path is False:
+        return env
+
     env = env.copy()
     if 'PYTHONPATH' in env and env['PYTHONPATH']:
-        env['PYTHONPATH'] += os.pathsep + paths.get_denoise_python_path()
+        env['PYTHONPATH'] += os.pathsep + path
     else:
-        env['PYTHONPATH'] = paths.get_denoise_python_path()
+        env['PYTHONPATH'] = path
     return env
 
 
