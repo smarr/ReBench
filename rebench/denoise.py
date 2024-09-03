@@ -26,6 +26,7 @@ class CommandsPaths:
         self._cset_path = None
         self._denoise_path = None
         self._which_path = None
+        self._denoise_python_path = None
 
     def get_which(self):
         if not self._which_path:
@@ -96,6 +97,19 @@ class CommandsPaths:
 
         return self._denoise_path
 
+    def get_denoise_python_path(self):
+        if self._denoise_python_path is None:
+            active_python_path = sys.path
+            current_file = os.path.abspath(__file__)
+
+            # find the element in active_python_path that has the start of the current file path
+            for path in active_python_path:
+                if current_file.startswith(path):
+                    self._denoise_python_path = path
+                    return path
+
+        return self._denoise_python_path
+
 
 paths = CommandsPaths()
 
@@ -110,10 +124,24 @@ class DenoiseResult:
         self.details = details
 
 
+def get_env_with_python_path_for_denoise():
+    return add_denoise_python_path_to_env(os.environ)
+
+
+def add_denoise_python_path_to_env(env):
+    env = env.copy()
+    if 'PYTHONPATH' in env and env['PYTHONPATH']:
+        env['PYTHONPATH'] += os.pathsep + paths.get_denoise_python_path()
+    else:
+        env['PYTHONPATH'] = paths.get_denoise_python_path()
+    return env
+
+
 def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
     result = {}
 
-    cmd = ['sudo', '-n', paths.get_denoise()]
+    env = get_env_with_python_path_for_denoise()
+    cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise()]
     if for_profiling:
         cmd += ['--for-profiling']
 
@@ -122,7 +150,9 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     cmd += ['--json', 'minimize']
 
     try:
-        output = output_as_str(subprocess.check_output(cmd, stderr=subprocess.STDOUT))
+        output = output_as_str(subprocess.check_output(cmd,
+                                                       stderr=subprocess.STDOUT,
+                                                       env=env))
         try:
             result = json.loads(output)
             got_json = True
@@ -196,18 +226,19 @@ def restore_noise(denoise_result, show_warning, ui):
         # likely has failed completely. And without details, just no-op
         return
 
+    env = get_env_with_python_path_for_denoise()
     values = set(denoise_result.details.values())
     if len(values) == 1 and "failed" in values:
         # everything failed, don't need to try to restore things
         pass
     else:
         try:
-            cmd = ['sudo', '-n', paths.get_denoise(), '--json']
+            cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json']
             if not denoise_result.use_shielding:
                 cmd += ['--without-shielding']
             if not denoise_result.use_nice:
                 cmd += ['--without-nice']
-            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT, env=env)
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 
@@ -217,9 +248,11 @@ def restore_noise(denoise_result, show_warning, ui):
 
 
 def deliver_kill_signal(pid):
+    env = get_env_with_python_path_for_denoise()
+
     try:
-        cmd = ['sudo', '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
