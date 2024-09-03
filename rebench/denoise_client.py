@@ -163,6 +163,8 @@ def restore_noise(denoise_result, show_warning, ui):
             cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json']
             if not denoise_result.use_shielding:
                 cmd += ['--without-shielding']
+            elif paths.has_cset():
+                cmd += ['--cset-path', paths.get_cset()]
             if not denoise_result.use_nice:
                 cmd += ['--without-nice']
             cmd += ['--num-cores', str(num_cores)]
