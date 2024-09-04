@@ -113,24 +113,24 @@ class ConfiguratorTest(ReBenchTestCase):
         runs = cnf.get_runs()
         self.assertEqual(2 * 2, len(runs))
 
-    def test_machine_filter_m1(self):
-        filter_args = ['m:machine1']
+    def test_tag_filter_m1(self):
+        filter_args = ['t:machine1']
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
                            self.ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(24, len(runs))
 
-    def test_machine_filter_m2(self):
-        filter_args = ['m:machine2']
+    def test_tag_filter_m2(self):
+        filter_args = ['t:machine2']
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
                            self.ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
         self.assertEqual(14, len(runs))
 
-    def test_machine_filter_m1_and_m2(self):
-        filter_args = ['m:machine1', 'm:machine2']
+    def test_tag_filter_m1_and_m2(self):
+        filter_args = ['t:machine1', 't:machine2']
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
                            self.ui, run_filter=filter_args)
 

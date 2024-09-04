@@ -289,8 +289,8 @@ class PersistencyTest(ReBenchTestCase):
         self.assertEqual(run_id['varValue'], run_id_obj.var_value)
         self.assertIsNone(run_id['varValue'])
 
-        self.assertEqual(run_id['machine'], run_id_obj.machine)
-        self.assertIsNone(run_id['machine'])
+        self.assertEqual(run_id['tag'], run_id_obj.tag)
+        self.assertIsNone(run_id['tag'])
 
         self.assertEqual(run_id['location'], run_id_obj.location)
         self.assertEqual(run_id['inputSize'], run_id_obj.input_size)

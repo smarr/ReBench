@@ -69,13 +69,13 @@ class _BenchmarkFilter(_SuiteFilter):
         return bench.name == self._benchmark_name
 
 
-class _MachineFilter(object):
+class _TagFilter(object):
 
-    def __init__(self, machine):
-        self._machine = machine
+    def __init__(self, tag):
+        self._tag = tag
 
-    def matches(self, machine):
-        return machine == self._machine
+    def matches(self, tag):
+        return tag == self._tag
 
 
 class _RunFilter(object):
@@ -83,7 +83,7 @@ class _RunFilter(object):
     def __init__(self, run_filters):
         self._executor_filters = []
         self._suite_filters = []
-        self._machine_filters = []
+        self._tag_filters = []
 
         if not run_filters:
             return
@@ -96,8 +96,8 @@ class _RunFilter(object):
                 self._suite_filters.append(_SuiteFilter(parts[1]))
             elif parts[0] == "s" and len(parts) == 3:
                 self._suite_filters.append(_BenchmarkFilter(parts[1], parts[2]))
-            elif parts[0] == "m" and len(parts) == 2:
-                self._machine_filters.append(_MachineFilter(parts[1]))
+            elif parts[0] == "t" and len(parts) == 2:
+                self._tag_filters.append(_TagFilter(parts[1]))
             else:
                 raise RuntimeError("Unknown filter expression: " + run_filter)
 
@@ -105,8 +105,8 @@ class _RunFilter(object):
         return (self._match(self._executor_filters, bench) and
                 self._match(self._suite_filters, bench))
 
-    def applies_to_machine(self, machine):
-        return self._match(self._machine_filters, machine)
+    def applies_to_tag(self, tag):
+        return self._match(self._tag_filters, tag)
 
     @staticmethod
     def _match(filters, bench):
