@@ -156,26 +156,26 @@ options:
 
 #### Continuous Performance Tracking
 
-ReBench supports [Codespeed][1] as platform for continuous performance
-tracking. To report data to a Codespeed setup, the [configuration](config.md#codespeed)
+ReBench supports [Codespeed][1] and [ReBenchDB][2] as platforms for continuous performance
+tracking. To report data to such a setup, the [configuration](config.md#reporting)
 needs to have the corresponding details.
 
-And, Codespeed needs details on the concrete execution:
+Additionally, Codespeed and ReBenchDB need details on the concrete execution:
 
 ```text
---commit-id=COMMIT_ID     MANDATORY: when Codespeed reporting is  used, the
+--commit-id COMMIT_ID     MANDATORY: when Codespeed reporting is  used, the
                           commit-id has to be specified.
 
---environment=ENVIRONMENT MANDATORY: name the machine on which the results are
+--environment ENVIRONMENT MANDATORY: name the machine on which the results are
                           obtained.
 
---branch=BRANCH           The branch for which the results have to be recorded,
+--branch BRANCH           The branch for which the results have to be recorded,
                           i.e., to which the commit belongs. Default: HEAD
 
---executable=EXECUTABLE   The executable name given to Codespeed. Default: The
+--executable EXECUTABLE   The executable name given to Codespeed. Default: The
                           name used for the executor.
 
---project=PROJECT         The project name given to Codespeed. Default: Value
+--project PROJECT         The project name given to Codespeed. Default: Value
                           given in the config file.
 
 -I, --disable-inc-report  Creates a final report at the end instead of reporting
@@ -183,6 +183,11 @@ And, Codespeed needs details on the concrete execution:
 
 -R, --disable-data-reporting Override the configuration and disable any reporting
                           to Codespeed and ReBenchDB.
+
+--git-repo GIT_REPO       Path to the git repository that contains the source of this experiment.
+                          This is useful when the experiment is run from a different path
+                          without the `.git` folder.
 ```
 
-[1]: https://github.com/tobami/codespeed/
+[1]: https://github.com/tobami/codespeed
+[2]: https://github.com/smarr/ReBenchDB
