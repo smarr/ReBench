@@ -7,11 +7,9 @@ from subprocess import PIPE, Popen
 E_TIMEOUT = -9
 
 
-def _kill(proc_id, uses_sudo):
-    if uses_sudo:
-        from .denoise import deliver_kill_signal  # pylint: disable=import-outside-toplevel
-
-        deliver_kill_signal(proc_id)
+def _kill(proc_id, sudo_kill_delivery_fn):
+    if sudo_kill_delivery_fn:
+        sudo_kill_delivery_fn(proc_id)
         return
 
     try:
@@ -22,13 +20,13 @@ def _kill(proc_id, uses_sudo):
         pass
 
 
-def kill_process(pid, recursively, thread, uses_sudo):
+def kill_process(pid, recursively, thread, sudo_kill_delivery_fn):
     pids = [pid]
     if recursively:
         pids.extend(_get_process_children(pid))
 
     for proc_id in pids:
-        _kill(proc_id, uses_sudo)
+        _kill(proc_id, sudo_kill_delivery_fn)
 
     if thread:
         thread.join()

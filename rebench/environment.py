@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from cpuinfo.cpuinfo import _get_cpu_info_internal
 from psutil import virtual_memory
 
-from .subprocess_with_timeout import output_as_str
+from .output import output_as_str
 
 
 def _encode_str(out):
@@ -132,8 +132,8 @@ def init_environment(denoise_result, ui):
         pass
 
     if 'cpu' not in result:
-        ui.warning('Was not able to determine the type of CPU used and its clock speed.'
-                   + ' Thus, these details will not be recorded with the data.')
+        ui.warning('Was not able to determine the type of CPU used and its clock speed.' +
+                   ' Thus, these details will not be recorded with the data.\n')
 
     result['software'] = []
     result['software'].append({'name': 'kernel', 'version': u_name[3]})

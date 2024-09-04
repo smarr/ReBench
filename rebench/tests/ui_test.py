@@ -2,7 +2,8 @@ from pykwalify.errors import SchemaError
 from yaml import YAMLError
 
 from ..configurator import load_config
-from ..ui import UI, UIError, escape_braces
+from ..output import UIError
+from ..ui import UI, escape_braces
 
 from .rebench_test_case import ReBenchTestCase
 

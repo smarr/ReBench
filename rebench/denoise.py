@@ -1,4 +1,3 @@
-import getpass
 import json
 import os
 import subprocess
@@ -7,11 +6,9 @@ import sys
 from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
-from cpuinfo import get_cpu_info
 
-from .ui import escape_braces
-from .subprocess_with_timeout import output_as_str  # pylint: disable=cyclic-import
-from .subprocess_kill import kill_process  # pylint: disable=cyclic-import
+from .output import output_as_str, UIError
+from .subprocess_kill import kill_process
 
 try:
     from . import __version__ as rebench_version
@@ -23,154 +20,92 @@ class CommandsPaths:
     """Hold the path information for commands."""
 
     def __init__(self):
-        self.cset_path = None
-        self.denoise_path = None
+        self._cset_path = None
+        self._denoise_path = None
+        self._which_path = None
+        self._denoise_python_path = None
 
-    def absolute_path_for_command(self, command):
-        """Find and return the canonical absolute path to make sudo happy"""
+    def get_which(self):
+        if not self._which_path:
+            if os.path.isfile('/usr/bin/which'):
+                self._which_path = '/usr/bin/which'
+            else:
+                raise UIError("The basic `which` command was not found." +
+                              " In many systems it is available at /usr/bin/which." +
+                              " If it is elsewhere rebench-denoise will need to be" +
+                              " adapted to support a different location.\n", None)
+
+        return self._which_path
+
+    def _absolute_path_for_command(self, command, arguments_for_successful_exe):
+        """
+        Find and return the canonical absolute path to make sudo happy.
+        If the command is not found or does not execute successfully, return None.
+        """
         try:
             selected_cmd = output_as_str(
-                subprocess.check_output(['which', command], shell=True)).strip()
-            return os.path.realpath(selected_cmd)
+                subprocess.check_output(
+                    [self.get_which(), command],
+                    shell=False, stderr=subprocess.DEVNULL)).strip()
+            result_cmd = os.path.realpath(selected_cmd)
         except subprocess.CalledProcessError:
-            return command
+            result_cmd = command
+
+        try:
+            subprocess.check_output(
+                    [result_cmd] + arguments_for_successful_exe,
+                    shell=False, stderr=subprocess.DEVNULL)
+            return result_cmd
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    def has_cset(self):
+        if self._cset_path is None:
+            self._cset_path = self._absolute_path_for_command('cset', ['--help'])
+
+        return self._cset_path is not None and self._cset_path is not False
 
     def get_cset(self):
-        if not self.cset_path:
-            self.cset_path = self.absolute_path_for_command('cset')
-        return self.cset_path
+        return self._cset_path
 
     def set_cset(self, cset_path):
-        self.cset_path = cset_path
+        self._cset_path = cset_path
+
+    def has_denoise(self):
+        if self._denoise_path is None:
+            self._denoise_path = self._absolute_path_for_command('rebench-denoise', ['--version'])
+
+        return self._denoise_path is not None and self._denoise_path is not False
 
     def get_denoise(self):
-        if not self.denoise_path:
-            self.denoise_path = self.absolute_path_for_command('rebench-denoise')
-        return self.denoise_path
+        if not self.has_denoise():
+            raise UIError("rebench-denoise not found. " +
+                          "Was ReBench installed so that `rebench` and `rebench-denoise` " +
+                          "are on the PATH? Python's bin directory for packages " +
+                          "may need to be added to PATH manually.\n\n" +
+                          "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
+                          None)
+
+        return self._denoise_path
+
+    def get_denoise_python_path(self):
+        if self._denoise_python_path is None:
+            active_python_path = sys.path
+            current_file = os.path.abspath(__file__)
+
+            # find the element in active_python_path that has the start of the current file path
+            for path in active_python_path:
+                if current_file.startswith(path) and 'rebench' in path.lower():
+                    self._denoise_python_path = path
+                    return path
+
+            self._denoise_python_path = False
+
+        return self._denoise_python_path
 
 
 paths = CommandsPaths()
 
-class DenoiseResult:
-
-    def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
-        self.succeeded = succeeded
-        self.warn_msg = warn_msg
-        self.use_nice = use_nice
-        self.use_shielding = use_shielding
-        self.details = details
-
-
-def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
-    result = {}
-
-    cmd = ['sudo', '-n', paths.get_denoise()]
-    if for_profiling:
-        cmd += ['--for-profiling']
-    cmd += ['--cset-path', paths.get_cset()]
-    cmd += ['--json', 'minimize']
-
-    try:
-        output = output_as_str(subprocess.check_output(cmd, stderr=subprocess.STDOUT))
-        try:
-            result = json.loads(output)
-            got_json = True
-        except ValueError:
-            got_json = False
-    except subprocess.CalledProcessError as e:
-        output = output_as_str(e.output)
-        got_json = False
-    except FileNotFoundError as e:
-        output = str(e)
-        got_json = False
-
-    msg = 'Minimizing noise with rebench-denoise failed\n'
-    msg += '{ind}possibly causing benchmark results to vary more.\n\n'
-
-    success = False
-    use_nice = False
-    use_shielding = False
-
-    if got_json:
-
-        failed = ''
-
-        for k, value in result.items():
-            if value == "failed":
-                failed += '{ind}{ind} - ' + k + '\n'
-
-        if failed:
-            msg += '{ind}Failed to set:\n' + failed + '\n'
-
-        use_nice = result.get("can_set_nice", False)
-        use_shielding = result.get("shielding", False)
-
-        if not use_nice and show_warnings:
-            msg += ("{ind}Process niceness could not be set.\n"
-                    + "{ind}{ind}`nice` is used to elevate the priority of the benchmark,\n"
-                    + "{ind}{ind}without it, other processes my interfere with it"
-                    + " nondeterministically.\n")
-
-        if not use_shielding and show_warnings:
-            msg += ("{ind}Core shielding could not be set up.\n"
-                    + "{ind}{ind}Shielding is used to restrict the use of cores to"
-                    + " benchmarking.\n"
-                    + "{ind}{ind}Without it, there my be more nondeterministic interference.\n")
-
-        if use_nice and use_shielding and not failed:
-            success = True
-    else:
-        if 'password is required' in output:
-            msg += '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
-                   + ' can be used without password.\n'
-            msg += '{ind}To be able to run rebench-denoise without password,\n'
-            msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
-            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
-                   + paths.get_denoise() + '\n'
-        elif 'command not found' in output:
-            msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
-        elif "No such file or directory: 'sudo'" in output:
-            msg += '{ind}sudo is not available. Can\'t use rebench-denoise to manage the system.\n'
-        else:
-            msg += '{ind}Error: ' + escape_braces(output)
-
-    if not success and show_warnings:
-        ui.warning(msg)
-
-    return DenoiseResult(success, msg, use_nice, use_shielding, result)
-
-
-def restore_noise(denoise_result, show_warning, ui):
-    if not denoise_result:
-        # likely has failed completely. And without details, just no-op
-        return
-
-    values = set(denoise_result.details.values())
-    if len(values) == 1 and "failed" in values:
-        # everything failed, don't need to try to restore things
-        pass
-    else:
-        try:
-            cmd = ['sudo', '-n', paths.get_denoise(), '--json']
-            if not denoise_result.use_shielding:
-                cmd += ['--without-shielding']
-            if not denoise_result.use_nice:
-                cmd += ['--without-nice']
-            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
-
-    if not denoise_result.succeeded and show_warning:
-        # warn a second time at the end of the execution
-        ui.error(denoise_result.warn_msg)
-
-
-def deliver_kill_signal(pid):
-    try:
-        cmd = ['sudo', '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
 
 def _can_set_niceness():
     """
@@ -202,6 +137,10 @@ def _activate_shielding(num_cores):
     min_cores = _shield_lower_bound(num_cores)
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
+
+    if not paths.has_cset():
+        return False
+
     try:
         output = subprocess.check_output([paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
                                          stderr=subprocess.STDOUT)
@@ -340,7 +279,7 @@ def _restore_standard_settings(num_cores, use_shielding):
 
 def _exec(num_cores, use_nice, use_shielding, args):
     cmdline = []
-    if use_shielding:
+    if use_shielding and paths.has_cset():
         cmdline += [paths.get_cset(), "shield", "--exec", "--"]
     if use_nice:
         cmdline += ["nice", "-n-20"]
@@ -351,16 +290,17 @@ def _exec(num_cores, use_nice, use_shielding, args):
 
     # communicate the used core spec to executed command as part of its environment
     env = os.environ.copy()
-    min_cores = _shield_lower_bound(num_cores)
-    max_cores = _shield_upper_bound(num_cores)
-    core_spec = "%d-%d" % (min_cores, max_cores)
-    env['REBENCH_DENOISE_CORE_SET'] = core_spec
+    if use_shielding and paths.has_cset():
+        min_cores = _shield_lower_bound(num_cores)
+        max_cores = _shield_upper_bound(num_cores)
+        core_spec = "%d-%d" % (min_cores, max_cores)
+        env['REBENCH_DENOISE_CORE_SET'] = core_spec
 
     os.execvpe(cmd, cmdline, env)
 
 
 def _kill(proc_id):
-    kill_process(int(proc_id), True, None, False)
+    kill_process(int(proc_id), True, None, None)
 
 
 def _calculate(core_id):
@@ -413,6 +353,7 @@ def _shell_options():
     parser.add_argument('--for-profiling', action='store_true', default=False,
                         dest='for_profiling', help="Don't restrict CPU usage by profiler")
     parser.add_argument('--cset-path', help="Absolute path to cset", default=None)
+    parser.add_argument('--num-cores', help="Number of cores. Is required.", default=None)
     parser.add_argument('command',
                         help=("`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
                               "`minimize` sets system to reduce noise. " +
@@ -426,29 +367,37 @@ def _shell_options():
     return parser
 
 
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_CHANGING_SETTINGS_FAILED = 1
+EXIT_CODE_NUM_CORES_UNSET = 2
+EXIT_CODE_NO_COMMAND_SELECTED = 3
+
+
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
 
     paths.set_cset(args.cset_path)
 
-    cpu_info = get_cpu_info()
-    num_cores = cpu_info["count"]
+    num_cores = int(args.num_cores) if args.num_cores else None
     result = {}
 
-    if args.command == 'minimize':
+    if args.command == 'minimize' and num_cores is not None:
         result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling)
-    elif args.command == 'restore':
+    elif args.command == 'restore' and num_cores is not None:
         result = _restore_standard_settings(num_cores, args.use_shielding)
     elif args.command == 'exec':
         _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
     elif args.command == 'kill':
         _kill(remaining_args[0])
-    elif args.command == 'test':
+    elif args.command == 'test' and num_cores is not None:
         _test(num_cores)
     else:
         arg_parser.print_help()
-        return -1
+        if num_cores is None:
+            print("The --num-cores must be provided.")
+            return EXIT_CODE_NUM_CORES_UNSET
+        return EXIT_CODE_NO_COMMAND_SELECTED
 
     if args.json:
         print(json.dumps(result))
@@ -463,9 +412,9 @@ def main_func():
         print("Can set niceness:                   ", result.get("can_set_nice", False))
 
     if "failed" in result.values():
-        return -1
+        return EXIT_CODE_CHANGING_SETTINGS_FAILED
     else:
-        return 0
+        return EXIT_CODE_SUCCESS
 
 
 if __name__ == "__main__":

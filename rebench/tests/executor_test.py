@@ -26,8 +26,8 @@ from ..rebench           import ReBench
 from ..executor          import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
 from ..configurator      import Configurator, load_config
 from ..model.measurement import Measurement
+from ..output            import UIError
 from ..persistence       import DataStore
-from ..ui import UIError
 from ..reporter          import Reporter
 
 
