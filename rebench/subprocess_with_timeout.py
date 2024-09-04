@@ -148,6 +148,9 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
             raise KeyboardInterrupt()
         return result
 
+    if was_interrupted:
+        raise KeyboardInterrupt()
+
     if not thread.is_alive():
         exp = thread.exception
         if exp:
