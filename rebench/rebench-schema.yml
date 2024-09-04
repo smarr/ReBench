@@ -91,9 +91,6 @@ schema;reporting_type:
         project_name:
           type: str
           desc: Project name to be used by ReBenchDB.
-        repo_base_branch:
-          type: str
-          desc: The name of the base branch for comparisons.
         record_all:
           type: bool
           desc: All experiments should be stored in the ReBenchDB

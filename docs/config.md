@@ -143,7 +143,7 @@ default_data_file: my-experiment.data
 **artifact_review:**
 
 Enable [artifact evaluation](https://www.artifact-eval.org/) mode.
-This mode does report less warnings and errors, but does not change
+This mode reports fewer warnings and errors, but does not change
 how benchmarking is done. Experience shows that reviewers may misunderstand
 possibly chatty warnings and misinterpret them as a signs for an artifact of
 insufficient quality.
@@ -419,17 +419,19 @@ runs:
   retries_after_failure: 3
 ```
 
+---
+
 ## Reporting
 
-Currently, [Codespeed] is the only supported system for continuous
-performance monitoring. It is configured with the `reporting` key. 
+[Codespeed] and [ReBenchDB] are the currently supported system for continuous
+performance monitoring. They are configured with the `reporting` key. 
 
 **codespeed:**
 
 Send results to Codespeed for continuous performance tracking.
 The settings define the project that is configured in Codespeed, and the
 URL to which the results will be reported. Codespeed requires more information,
-but since these details depend on the environment, other settings are passed via
+but since these details depend on the environment, additional details are passed via
 the [command line](usage.md#continuous-performance-tracking). 
 
 Example:
@@ -439,6 +441,23 @@ reporting:
   codespeed:
     project: MyVM
     url: http://example.org/result/add/json/
+```
+
+---
+
+**rebenchdb:**
+
+Send results to a ReBenchDB server for continuous performance tracking.
+The use of ReBenchDB will also require additional details that are passed via
+the [command line](usage.md#continuous-performance-tracking).
+
+```yaml
+reporting:
+  rebenchdb:
+    db_url:       https://example.org/rebenchdb
+    repo_url:     https://example.org/project.git
+    project_name: Some Project that Wants Good Performance
+    record_all:   true
 ```
 
 ---
