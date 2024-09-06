@@ -40,8 +40,8 @@ class Experiment(object):
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
                                       configurator.options, configurator.ui)
 
-        run_details = ExpRunDetails.compile(exp, configurator.run_details)
-        variables = ExpVariables.compile(exp, ExpVariables.empty())
+        run_details = ExpRunDetails.compile(exp, configurator.base_run_details)
+        variables = ExpVariables.compile(exp, configurator.base_variables)
 
         executions = exp.get("executions")
         suites = exp.get("suites")
