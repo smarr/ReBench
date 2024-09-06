@@ -44,12 +44,15 @@ setup(name='ReBench',
           'py-cpuinfo==9.0.0',
           'psutil>=5.9.5'
       ],
-      entry_points = {
-          'console_scripts' : [
+      test_require=[
+          'pytest>=7.2.2'
+      ],
+      entry_points={
+          'console_scripts': [
               'rebench = rebench.rebench:main_func',
               'rebench-denoise = rebench.denoise:main_func'
           ]
       },
-      test_suite = 'rebench.tests',
-      license = 'MIT'
+      test_suite='rebench.tests',
+      license='MIT'
 )
