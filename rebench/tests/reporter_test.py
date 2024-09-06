@@ -68,7 +68,7 @@ class ReporterTest(ReBenchTestCase):
         self.assertEqual(38, len(sorted_rows))
         self.assertEqual(len(reporter.expected_columns) - 1, len(sorted_rows[0]))
         self.assertEqual(['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Machine', 'Mean (ms)'], used_cols)
+             'Tag', 'Mean (ms)'], used_cols)
         self.assertEqual('#Samples', summary[0][0])
         self.assertEqual(0, summary[0][1])
 

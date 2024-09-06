@@ -26,15 +26,15 @@ class ExpVariables(object):
         input_sizes = config.get('input_sizes', defaults.input_sizes)
         cores = config.get('cores', defaults.cores)
         variable_values = config.get('variable_values', defaults.variable_values)
-        machines = config.get('machines', defaults.machines)
-        return ExpVariables(input_sizes, cores, variable_values, machines)
+        tags = config.get('tags', defaults.tags)
+        return ExpVariables(input_sizes, cores, variable_values, tags)
 
     @classmethod
     def empty(cls):
         return ExpVariables([''], [1], [''], [None])
 
-    def __init__(self, input_sizes, cores, variable_values, machines):
+    def __init__(self, input_sizes, cores, variable_values, tags):
         self.input_sizes = input_sizes
         self.cores = cores
         self.variable_values = variable_values
-        self.machines = machines
+        self.tags = tags

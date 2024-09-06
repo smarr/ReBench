@@ -134,7 +134,7 @@ schema;variables:
       # default: ['']  # that's the semantics, but pykwalify does not support it
       sequence:
         - type: scalar
-    machines:
+    tags:
       type: seq
       desc: Another dimension by which the benchmark execution can be varied.
       # default: ['']  # that's the semantics, but pykwalify does not support it

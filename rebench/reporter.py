@@ -60,7 +60,7 @@ class TextReporter(Reporter):
     def __init__(self):
         super(TextReporter, self).__init__()
         self.expected_columns = ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Machine', '#Samples', 'Mean (ms)']
+             'Tag', '#Samples', 'Mean (ms)']
 
     @staticmethod
     def _path_to_string(path):

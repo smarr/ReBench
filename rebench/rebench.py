@@ -54,7 +54,7 @@ class ReBench(object):
         self.ui = UI()
 
     def shell_options(self):
-        usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
+        usage = """%(prog)s [options] <config> [exp_name] [e:$]* [s:$]* [t:$]*
 
 Argument:
   config    required argument, file containing the experiment to be executed
@@ -70,7 +70,7 @@ Argument:
             Note, filters are combined with `or` semantics in the same group,
             i.e., executor or suite, and at least one filter needs to match per group.
             The suite name can also be given as * to match all possible suites.
-  m:$       filter experiments to only include the named machines, example: m:machine1 m:machine2
+  t:$       filter experiments to only include the given tag, example: t:machine1 t:tagFoo
 """
 
         parser = ArgumentParser(
@@ -224,10 +224,10 @@ Argument:
         exp_name = filters[0] if filters and (
             not filters[0].startswith("e:") and
             not filters[0].startswith("s:") and
-            not filters[0].startswith("m:")) else None
+            not filters[0].startswith("t:")) else None
         exp_filter = [f for f in filters if (f.startswith("e:") or
                                              f.startswith("s:") or
-                                             f.startswith("m:"))]
+                                             f.startswith("t:"))]
         return exp_name, exp_filter
 
     def _report_completion(self):

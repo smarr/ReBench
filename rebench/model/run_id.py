@@ -29,12 +29,12 @@ from ..statistics import StatisticProperties, SampleCounter
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value, machine):
+    def __init__(self, benchmark, cores, input_size, var_value, tag):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
-        self.machine = machine
+        self.tag = tag
 
         self._reporters = set()
         self._persistence = set()
@@ -115,8 +115,8 @@ class RunId(object):
         return '' if self.var_value is None else str(self.var_value)
 
     @property
-    def machine_as_str(self):
-        return '' if self.machine is None else str(self.machine)
+    def tag_as_str(self):
+        return '' if self.tag is None else str(self.tag)
 
     @property
     def location(self):
@@ -249,7 +249,7 @@ class RunId(object):
     def as_simple_string(self):
         return "%s %s %s %s %s" % (
             self.benchmark.as_simple_string(),
-            self.cores, self.input_size, self.var_value, self.machine)
+            self.cores, self.input_size, self.var_value, self.tag)
 
     def _expand_vars(self, string):
         try:
@@ -264,7 +264,7 @@ class RunId(object):
                              'invocation': '%(invocation)s',
                              'suite': self.benchmark.suite.name,
                              'variable': self.var_value_as_str,
-                             'machine': self.machine_as_str,
+                             'tag': self.tag_as_str,
                              'warmup': self.benchmark.run_details.warmup}
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
@@ -352,7 +352,7 @@ class RunId(object):
         result.append(self.cores_as_str)
         result.append(self.input_size_as_str)
         result.append(self.var_value_as_str)
-        result.append(self.machine_as_str)
+        result.append(self.tag_as_str)
 
         return result
 
@@ -363,7 +363,7 @@ class RunId(object):
             'cores': self.cores,
             'inputSize': self.input_size,
             'varValue': self.var_value,
-            'machine': self.machine,
+            'tag': self.tag,
             'extraArgs': extra_args if extra_args is None else str(extra_args),
             'cmdline': self.cmdline(),
             'location': self.location
@@ -378,7 +378,7 @@ class RunId(object):
     @classmethod
     def get_column_headers(cls):
         benchmark_headers = Benchmark.get_column_headers()
-        return benchmark_headers + ["cores", "inputSize", "varValue", "machine"]
+        return benchmark_headers + ["cores", "inputSize", "varValue", "tag"]
 
     def __str__(self):
         return "RunId(%s, %s, %s, %s, %s, %s, %d)" % (
@@ -387,5 +387,5 @@ class RunId(object):
             self.benchmark.extra_args,
             self.input_size or '',
             self.var_value  or '',
-            self.machine or '',
+            self.tag or '',
             self.benchmark.run_details.warmup or 0)
