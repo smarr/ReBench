@@ -26,6 +26,7 @@ import yaml
 from .configuration_error import ConfigurationError
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
+from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.executor import Executor
 from .output import UIError
@@ -181,15 +182,17 @@ def validate_gauge_adapters(raw_config):
 class Configurator(object):
 
     def __init__(self, raw_config, data_store, ui, cli_options=None, cli_reporter=None,
-                 exp_name=None, data_file=None, build_log=None, run_filter=None):
+                 exp_name=None, data_file=None, build_log=None, run_filter=None, machine=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self.build_log = build_log or raw_config.get("build_log", "build.log")
-        self.data_file = data_file or raw_config.get("default_data_file", "rebench.data")
-        self._exp_name = exp_name or raw_config.get("default_experiment", "all")
-        self.artifact_review = raw_config.get("artifact_review", False)
-        self.config_dir = raw_config.get("__dir__", None)
-        self.config_file = raw_config.get("__file__", None)
+        self.build_log = build_log or raw_config.get('build_log', 'build.log')
+        self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
+        self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
+        self.artifact_review = raw_config.get('artifact_review', False)
+        self.machine = machine
+        self.machines = raw_config.get('machines', {})
+        self.config_dir = raw_config.get('__dir__', None)
+        self.config_file = raw_config.get('__file__', None)
 
         self._rebench_db_connector = None
 
@@ -201,9 +204,19 @@ class Configurator(object):
                 invocations = 1
                 iterations = 1
 
-        self._root_run_details = ExpRunDetails.compile(
-            raw_config.get('runs', {}), ExpRunDetails.default(
-                invocations, iterations))
+        raw_machine_config = raw_config.get('machines', {})
+        if machine and machine not in raw_machine_config:
+            raise ValueError(
+                ("The machine configuration '%s' was selected " +
+                 "but not found under the 'machines:' key.") % machine)
+
+        self.base_run_details = self._assemble_base_run_details(
+            raw_machine_config.get(machine, {}),
+            raw_config.get('runs', {}), invocations, iterations)
+
+        self.base_variables = ExpVariables.compile(
+            raw_machine_config.get(machine, {}), ExpVariables.empty())
+
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
@@ -234,6 +247,13 @@ class Configurator(object):
 
         experiments = raw_config.get("experiments", {})
         self._experiments = self._compile_experiments(experiments)
+
+    def _assemble_base_run_details(self, machine_raw, run_config, invocations, iterations):
+        machine_config = ExpRunDetails.compile(
+            machine_raw, ExpRunDetails.default(invocations, iterations))
+
+        return ExpRunDetails.compile(
+            run_config, machine_config)
 
     @property
     def use_rebench_db(self):
@@ -289,10 +309,6 @@ class Configurator(object):
     @property
     def reporting(self):
         return self._root_reporting
-
-    @property
-    def run_details(self):
-        return self._root_run_details
 
     def has_executor(self, executor_name):
         return executor_name in self._executors

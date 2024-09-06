@@ -115,6 +115,8 @@ Argument:
             '-B', '--without-building', action='store_false', dest='do_builds',
             help='Disables execution of build commands for executors and suites.',
             default=True)
+        execution.add_argument('-m', '--machine', action='store', dest='machine',
+                               default=None, help='Name of the machine configuration to be used.')
         execution.add_argument(
             '-s', '--scheduler', action='store', dest='scheduler',
             default='batch',
@@ -251,7 +253,7 @@ Argument:
             config = load_config(args.config[0])
             self._config = Configurator(config, data_store, self.ui, args,
                                         cli_reporter, exp_name, args.data_file,
-                                        args.build_log, exp_filter)
+                                        args.build_log, exp_filter, args.machine)
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
         except ValueError as exc:
