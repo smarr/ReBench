@@ -118,31 +118,24 @@ class _RunFilter(object):
         return False
 
 
+def validate_config(data, validator_list = None):
+    validator = Core(
+        source_data=data,
+        schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+    if validator_list is not None:
+        validator_list.append(validator)
+    validator.validate(raise_exception=True)
+
+
 def load_config(file_name):
     """
     Load the file, verify that it conforms to the schema,
     and return the configuration.
     """
+    config_data = None
     try:
-        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
-            data = yaml.safe_load(conf_file)
-            validator = Core(
-                source_data=data,
-                schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-            try:
-                validator.validate(raise_exception=True)
-                validate_gauge_adapters(data)
-
-                # add file name and directory to config to be able to use it when loading
-                # for instance gauge adapters
-                data["__file__"] = file_name
-                data["__dir__"] = dirname(abspath(file_name))
-            except SchemaError as err:
-                errors = [escape_braces(val_err) for val_err in validator.validation_errors]
-                raise UIError(
-                    "Validation of " + file_name + " failed.\n{ind}" +
-                    "\n{ind}".join(errors) + "\n", err)
-            return data
+        with open(file_name, 'r') as conf_file:  # pylint: disable=unspecified-encoding
+            config_data = yaml.safe_load(conf_file)
     except IOError as err:
         if err.errno == 2:
             assert err.strerror == "No such file or directory"
@@ -152,6 +145,22 @@ def load_config(file_name):
     except yaml.YAMLError as err:
         raise UIError("Parsing of the config file "
                       + file_name + " failed.\nError " + str(err) + "\n", err)
+
+    try:
+        validators = []
+        validate_config(config_data, validators)
+        validate_gauge_adapters(config_data)
+
+        # add file name and directory to config to be able to use it when loading
+        # for instance gauge adapters
+        config_data['__file__'] = file_name
+        config_data['__dir__'] = dirname(abspath(file_name))
+    except SchemaError as err:
+        errors = [escape_braces(val_err) for val_err in validators[0].validation_errors]
+        raise UIError(
+            "Validation of " + file_name + " failed.\n{ind}" +
+            "\n{ind}".join(errors) + "\n", err)
+    return config_data
 
 
 def validate_gauge_adapters(raw_config):
