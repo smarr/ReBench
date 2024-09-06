@@ -85,7 +85,7 @@ class Experiment(object):
                             if not configurator.run_filter.applies_to_tag(tag):
                                 continue
                             run = self._data_store.create_run_id(
-                                bench, cores, input_size, var_val, tag)
+                                bench, cores, input_size, var_val, tag, configurator.machine)
                             runs.add(run)
                             run.add_reporting(self._reporting)
                             run.add_persistence(self._persistence)

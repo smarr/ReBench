@@ -117,7 +117,7 @@ _SAME_FIELD_TEST_CASES = [
     ),
     _P(
         RunId,
-        {"cores", "input_size", "var_value", "tag", "benchmark"},
+        {"cores", "input_size", "var_value", "tag", "benchmark", "machine"},
         {"as_dict": {"cmdline", "location"}},
     ),
     _P(

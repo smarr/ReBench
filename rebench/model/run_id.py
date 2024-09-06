@@ -43,12 +43,13 @@ class RunId(object):
 
     def __init__(self, benchmark: Benchmark, cores: Optional[Union[str, int]],
                  input_size: Optional[str], var_value: Optional[str],
-                 tag: Optional[str]):
+                 tag: Optional[str], machine: Optional[str]):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
         self.tag = tag
+        self.machine = machine
 
         self._reporters: set[Reporter] = set()
         self._persistence: set[AbstractPersistence] = set()
@@ -136,6 +137,10 @@ class RunId(object):
     @property
     def tag_as_str(self):
         return "" if self.tag is None else str(self.tag)
+
+    @property
+    def machine_as_str(self):
+        return '' if self.machine is None else self.machine
 
     @property
     def location(self):
@@ -265,7 +270,7 @@ class RunId(object):
     def __hash__(self):
         if self._hash is None:
             self._hash = hash((self.benchmark, self.cores, self.input_size, self.var_value,
-                               self.tag))
+                               self.tag, self.machine))
         return self._hash
 
     def as_simple_string(self):
@@ -354,7 +359,8 @@ class RunId(object):
             self.input_size == other.input_size and
             self.var_value == other.var_value and
             self.tag == other.tag and
-            self.benchmark == other.benchmark)
+            self.benchmark == other.benchmark and
+            self.machine == other.machine)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -379,7 +385,10 @@ class RunId(object):
         if self.var_value != other.var_value:
             return self.var_value < other.var_value
 
-        return self.tag < other.tag
+        if self.tag != other.tag:
+            return self.tag < other.tag
+
+        return self.machine < other.machine
 
     def _report_format_issue_and_exit(self, cmdline, err):
         msg = ("The configuration of the benchmark %s contains an improper Python format string.\n"
@@ -404,6 +413,7 @@ class RunId(object):
         result.append(self.input_size_as_str)
         result.append(self.var_value_as_str)
         result.append(self.tag_as_str)
+        result.append(self.machine_as_str)
         result.append(str(persisted_run_id))
 
         return result
@@ -431,6 +441,8 @@ class RunId(object):
             result['tag'] = self.tag
         if extra_args is not None:
             result['extraArgs'] = str(extra_args)
+        if self.machine is not None:
+            result["machine"] = self.machine
 
         return result
 
@@ -440,7 +452,7 @@ class RunId(object):
             benchmark = Benchmark.from_dict(data['benchmark'])
         run_id = RunId(benchmark, data.get('cores', None), data.get('inputSize', None),
                        data.get('varValue', None),
-                       data.get('tag', None))
+                       data.get('tag', None), data.get("machine", None))
 
         run_id._cmdline = data['cmdline']
         return run_id
@@ -456,14 +468,15 @@ class RunId(object):
     @classmethod
     def get_column_headers(cls):
         benchmark_headers = Benchmark.get_column_headers()
-        return benchmark_headers + ["cores", "inputSize", "varValue", "tag", "runId"]
+        return benchmark_headers + ["cores", "inputSize", "varValue", "tag", "machine", "runId"]
 
     def __str__(self):
-        return "RunId(%s, %s, %s, %s, %s, %s, %d)" % (
+        return "RunId(%s, %s, %s, %s, %s, %s, %s, %d)" % (
             self.benchmark.name,
             self.cores,
             self.benchmark.extra_args,
             self.input_size or '',
             self.var_value  or '',
             self.tag or '',
+            self.machine or '',
             self.benchmark.run_details.warmup or 0)

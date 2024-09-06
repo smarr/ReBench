@@ -39,7 +39,7 @@ class Issue4RunEquality(unittest.TestCase):
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
                               '3', ExpRunDetails.empty(), None)
-        return RunId(benchmark, 1, 2, None, None)
+        return RunId(benchmark, 1, 2, None, None, None)
 
     @staticmethod
     def _create_hardcoded_run_id():
@@ -49,7 +49,7 @@ class Issue4RunEquality(unittest.TestCase):
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite,
                               None, None, ExpRunDetails.empty(), None)
-        return RunId(benchmark, 1, None, None, None)
+        return RunId(benchmark, 1, None, None, None, None)
 
     def test_hardcoded_equals_template_constructed(self):
         hard_coded = self._create_hardcoded_run_id()
