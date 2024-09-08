@@ -19,6 +19,7 @@
 # IN THE SOFTWARE.
 from . import none_or_int, none_or_float, none_or_bool, none_or_dict, \
     remove_important, prefer_important
+from .denoise import Denoise
 
 
 class ExpRunDetails(object):
@@ -45,23 +46,26 @@ class ExpRunDetails(object):
                                                        defaults.retries_after_failure))
         env = none_or_dict(config.get('env', defaults.env))
 
+        denoise = Denoise.compile(config.get('denoise', {}), defaults.denoise)
+
         return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
                              max_invocation_time, ignore_timeouts, parallel_interference_factor,
-                             execute_exclusively, retries_after_failure, env,
+                             execute_exclusively, retries_after_failure, env, denoise,
                              defaults.invocations_override, defaults.iterations_override)
 
     @classmethod
     def empty(cls):
-        return ExpRunDetails(None, None, None, None, None, None, None, None, None, None, None, None)
+        return ExpRunDetails(None, None, None, None, None, None, None, None, None,
+                             None, None, None, None)
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {},
+        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {}, Denoise.default(),
                              invocations_override, iterations_override)
 
     def __init__(self, invocations, iterations, warmup, min_iteration_time,
                  max_invocation_time, ignore_timeouts, parallel_interference_factor,
-                 execute_exclusively, retries_after_failure, env,
+                 execute_exclusively, retries_after_failure, env, denoise,
                  invocations_override, iterations_override):
         self.invocations = invocations
         self.iterations = iterations
@@ -74,6 +78,7 @@ class ExpRunDetails(object):
         self.execute_exclusively = execute_exclusively
         self.retries_after_failure = retries_after_failure
         self.env = env
+        self.denoise = denoise
 
         self.invocations_override = invocations_override
         self.iterations_override = iterations_override
