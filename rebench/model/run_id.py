@@ -95,6 +95,10 @@ class RunId(object):
         return self._expandend_env
 
     @property
+    def denoise(self):
+        return self.benchmark.run_details.denoise
+
+    @property
     def completed_invocations(self):
         return self._max_invocation
 
@@ -359,14 +363,15 @@ class RunId(object):
     def as_dict(self):
         extra_args = self.benchmark.extra_args
         return {
-            "benchmark": self.benchmark.as_dict(),
-            "cores": self.cores,
-            "inputSize": self.input_size,
-            "varValue": self.var_value,
-            "tag": self.tag,
-            "extraArgs": extra_args if extra_args is None else str(extra_args),
-            "cmdline": self.cmdline(),
-            "location": self.location,
+            'benchmark': self.benchmark.as_dict(),
+            'cores': self.cores,
+            'inputSize': self.input_size,
+            'varValue': self.var_value,
+            'tag': self.tag,
+            'extraArgs': extra_args if extra_args is None else str(extra_args),
+            'cmdline': self.cmdline(),
+            'location': self.location,
+            'denoise': self.denoise.as_dict()
         }
 
     @classmethod
