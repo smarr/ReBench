@@ -52,7 +52,7 @@ class PersistencyTest(ReBenchTestCase):
                               suite, None, None, ExpRunDetails.default(None, None),
                               None, data_store)
 
-        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'machine-22')
+        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'tag11', 'machine-22')
         measurement = Measurement(43, 45, 2222.2222, 'ms', run_id, 'foobar crit')
 
         serialized = measurement.as_str_list()
