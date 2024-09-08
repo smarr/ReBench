@@ -29,12 +29,13 @@ from ..statistics import StatisticProperties, SampleCounter
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value, tag):
+    def __init__(self, benchmark, cores, input_size, var_value, tag, machine):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
         self.tag = tag
+        self.machine = machine
 
         self._reporters = set()
         self._persistence = set()
@@ -121,6 +122,10 @@ class RunId(object):
     @property
     def tag_as_str(self):
         return "" if self.tag is None else str(self.tag)
+
+    @property
+    def machine_as_str(self):
+        return '' if self.machine is None else self.machine
 
     @property
     def location(self):
@@ -357,6 +362,7 @@ class RunId(object):
         result.append(self.input_size_as_str)
         result.append(self.var_value_as_str)
         result.append(self.tag_as_str)
+        result.append(self.machine_as_str)
 
         return result
 
@@ -368,6 +374,7 @@ class RunId(object):
             'inputSize': self.input_size,
             'varValue': self.var_value,
             'tag': self.tag,
+            'machine': self.machine,
             'extraArgs': extra_args if extra_args is None else str(extra_args),
             'cmdline': self.cmdline(),
             'location': self.location,
@@ -376,21 +383,22 @@ class RunId(object):
 
     @classmethod
     def from_str_list(cls, data_store, str_list):
-        benchmark = Benchmark.from_str_list(data_store, str_list[:-4])
+        benchmark = Benchmark.from_str_list(data_store, str_list[:-5])
         return data_store.create_run_id(
-            benchmark, str_list[-4], str_list[-3], str_list[-2], str_list[-1])
+            benchmark, str_list[-5], str_list[-4], str_list[-3], str_list[-2], str_list[-1])
 
     @classmethod
     def get_column_headers(cls):
         benchmark_headers = Benchmark.get_column_headers()
-        return benchmark_headers + ["cores", "inputSize", "varValue", "tag"]
+        return benchmark_headers + ["cores", "inputSize", "varValue", "tag", "machine"]
 
     def __str__(self):
-        return "RunId(%s, %s, %s, %s, %s, %s, %d)" % (
+        return "RunId(%s, %s, %s, %s, %s, %s, %s, %d)" % (
             self.benchmark.name,
             self.cores,
             self.benchmark.extra_args,
             self.input_size or '',
             self.var_value  or '',
             self.tag or '',
+            self.machine or '',
             self.benchmark.run_details.warmup or 0)
