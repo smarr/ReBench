@@ -494,6 +494,9 @@ class Executor(object):
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)
 
+
+        # TODO: activate the new denoise configuration
+
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,

@@ -36,6 +36,7 @@ from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
     RandomScheduler, BenchmarkThreadExceptions
 from .denoise_client import minimize_noise, restore_noise
 from .environment import init_environment
+from .model.denoise import Denoise
 from .persistence    import DataStore
 from .rebenchdb      import get_current_time
 from .reporter       import CliReporter
@@ -278,13 +279,17 @@ Argument:
 
         runs = self._config.get_runs()
         does_profiling = any(r.is_profiling() for r in runs)
-        if not self._config.options.use_denoise:
+        used_denoise_features = self.identify_used_denoise_features(runs)
+
+        if not self._config.options.use_denoise or not used_denoise_features.needs_denoise():
             return self.load_data_and_execute_experiments(runs, data_store, False, False, None)
         else:
             denoise_result = None
             show_denoise_warnings = not (self._config.artifact_review
                                          or self._config.options.execution_plan)
             try:
+                denoise_defaults_and_capabilities = get_initial_settings_and_capabilities(used_denoise_features)
+
                 denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
                 use_nice = denoise_result.use_nice
                 use_shielding = denoise_result.use_shielding
@@ -298,6 +303,13 @@ Argument:
         init_environment(denoise_result, self.ui)
         data_store.load_data(runs, self._config.options.do_rerun)
         return self.execute_experiment(runs, use_nice, use_shielding)
+
+    @staticmethod
+    def identify_used_denoise_features(runs):
+        result = Denoise.system_default()
+        for run in runs:
+            result = Denoise.max_union(result, run.denoise)
+        return result
 
     def execute_experiment(self, runs, use_nice, use_shielding):
         self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
