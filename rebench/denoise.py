@@ -357,6 +357,8 @@ def _test(num_cores):
 
 
 def _shell_options():
+    # TODO: should have a new command that determines initial settings and capabilities
+    # should use that at the start of rebench to find out what we can and can't set
     parser = ArgumentParser()
     parser.add_argument('--version', action='version',
                         version="%(prog)s " + rebench_version)
