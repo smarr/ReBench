@@ -177,9 +177,19 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
+def read_scaling_governor() -> str | None:
+    try:
+        with open(
+            "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r", encoding="utf-8"
+        ) as gov_file:
+            return gov_file.read().strip()
+    except IOError:
+        return None
+
+
 def _set_scaling_governor(governor, num_cores) -> str:
     assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE), (
-        "The scaling governor is expected to be performance or powersave, but was "
+        "The scaling governor is expected to be 'performance' or 'powersave', but was "
         + governor
     )
 
@@ -192,6 +202,15 @@ def _set_scaling_governor(governor, num_cores) -> str:
         return "failed"
 
     return governor
+
+
+def read_no_turbo():
+    try:
+        # pylint: disable-next=unspecified-encoding
+        with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
+            return nt_file.read().strip() == "1"
+    except IOError:
+        return None
 
 
 def _set_no_turbo(with_no_turbo):
@@ -357,6 +376,8 @@ def _test(num_cores):
 
 
 def _shell_options():
+    # TODO: should have a new command that determines initial settings and capabilities
+    # should use that at the start of rebench to find out what we can and can't set
     parser = ArgumentParser()
     parser.add_argument(
         "--json",

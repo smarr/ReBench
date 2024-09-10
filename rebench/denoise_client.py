@@ -5,7 +5,7 @@ import subprocess
 
 from cpuinfo import get_cpu_info
 
-from .denoise import paths
+from .denoise import paths, read_no_turbo, read_scaling_governor
 from .output import output_as_str
 from .ui import escape_braces
 
@@ -29,6 +29,27 @@ class DenoiseResult:
         self.use_nice = use_nice
         self.use_shielding = use_shielding
         self.details = details
+
+
+class DenoiseInitialSettings:
+    def __init__(self, requested):
+        self.requested = requested
+
+        self.can_set_nice = can_set_nice
+        self.can_set_shield = can_set_shield
+        self.can_minimize_perf_sampling = can_minimize_perf_sampling
+
+        self.default_scaling_governor = default_scaling_governor
+        self.default_no_turbo = default_no_turbo
+
+def get_initial_settings_and_capabilities(requested):
+    if requested.use_nice:
+
+    check_capabilities(requested.use_nice, requested.shield)
+
+    no_turbo = read_no_turbo()
+    scaling_governor = read_scaling_governor()
+    return DenoiseInitialSettings(no_turbo, scaling_governor)
 
 
 def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
