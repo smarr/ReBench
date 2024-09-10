@@ -333,6 +333,15 @@ class RunId(object):
         return self._cmdline
 
     def __eq__(self, other):
+        # TODO: need to really consider everythign
+        # the cmdline does not include the env, machine, denoise settings
+        # previously, this was nice, and the right thing to do, because
+        # the cmdline would encode all settings that are actually used
+        # so, there's now the challenge of figuring out what is actually
+        # used, and which configurations boil down to the exact same execution
+        # maybe, I just want to give up on that feature and ask the user to figure it out
+        # that also makes some use cases easier, repetion was desired but prevented by ReBench
+        # for instance, we introduced that invocation number for that reason
         return (isinstance(other, self.__class__) and
                 self.cmdline() == other.cmdline())
 
