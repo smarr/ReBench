@@ -17,7 +17,7 @@ schema;denoise_type:
         using the same format as the `cset` command.
         
         Special values:
-         - disabled: do not use CPU shielding
+         - no_change: do not use CPU shielding
          - basic: leave a small number of CPUs for the system
     scaling_governor:
       type: str
@@ -25,20 +25,29 @@ schema;denoise_type:
       desc: |
         The scaling governor to be used for the benchmark.
         Special values:
-         - unset: do not change the scaling governor
+         - no_change: do not change the scaling governor
          - performance: run the CPU at the maximum frequency
          - powersave: run the CPU at the minimum frequency
          - ondemand: scale dynamically, jump to the highest frequency and back off when idle
          - conservative: scale dynamically, more gradually than ondemand
-    set_no_turbo:
-      type: bool
+    no_turbo:
+      type: scalar
       # default: true  # can't specify this, because defaults override settings
-      desc: Set the CPU to run without Turbo Boost.
+      desc: |
+        Set the CPU to run with or without Turbo Boost.
+        Possible values are:
+        - true: disable Turbo Boost
+        - false: enable Turbo Boost
+        - no_change: do not change the Turbo Boost setting
     minimize_perf_sampling:
-      type: bool
+      type: scalar
       # default: true  # can't specify this, because defaults override settings
       desc: |
           Minimize perf settings to reduce any possible overhead.
+          Possible values are:
+            - true: minimize perf settings
+            - false: do not minimize perf settings
+            - no_change: do not change the perf settings
 
 schema;runs_type:
   type: map
