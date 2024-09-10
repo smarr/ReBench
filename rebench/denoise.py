@@ -174,6 +174,14 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
+def read_scaling_governor():
+    try:
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r") as gov_file:
+            return gov_file.read().strip()
+    except IOError:
+        return None
+
+
 def _set_scaling_governor(governor, num_cores):
     assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE),\
         "The scaling governor is expected to be performance or powersave, but was " + governor
@@ -187,6 +195,14 @@ def _set_scaling_governor(governor, num_cores):
         return "failed"
 
     return governor
+
+
+def read_no_turbo():
+    try:
+        with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
+            return nt_file.read().strip() == "1"
+    except IOError:
+        return None
 
 
 def _set_no_turbo(with_no_turbo):
