@@ -53,13 +53,13 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         return persistence.get_data_points()
 
     def test_records_multiple_data_points_from_single_execution_10(self):
-        self._records_data_points('Test1', 10)
+        self._records_data_points("Test1", 10)
 
     def test_records_multiple_data_points_from_single_execution_20(self):
-        self._records_data_points('Test2', 20)
+        self._records_data_points("Test2", 20)
 
     def test_associates_measurements_and_data_points_correctly(self):
-        data_points = self._records_data_points('Test1', 10)
+        data_points = self._records_data_points("Test1", 10)
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 
@@ -69,9 +69,9 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
                 self.assertEqual(i, int(measurement.value))
 
     def test_not_every_criterion_has_to_be_present_for_all_iterations(self):
-        yaml = load_config(self._path + '/issue_16.conf')
-        yaml['executors']['TestRunner']['executable'] = 'issue_16_vm2.py'
-        data_points = self._records_data_points('Test1', 10, yaml)
+        yaml = load_config(self._path + "/issue_16.conf")
+        yaml["executors"]["TestRunner"]["executable"] = "issue_16_vm2.py"
+        data_points = self._records_data_points("Test1", 10, yaml)
         for point, i in zip(data_points, list(range(0, 10))):
             criteria = []
             if i % 2 == 0:

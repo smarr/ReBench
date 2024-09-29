@@ -19,7 +19,7 @@ class AbstractAdapter(GaugeAdapter):
         self._other_error_definitions = [re_compile("FAILED")]
 
     def _make_measurement(self, run_id, invocation, iteration, value, criterion):
-        return Measurement(invocation, iteration, value, 'ms', run_id, criterion)
+        return Measurement(invocation, iteration, value, "ms", run_id, criterion)
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
@@ -50,9 +50,9 @@ class AbstractAdapter(GaugeAdapter):
 
 class MyTestAdapter(AbstractAdapter):
     def _make_measurement(self, run_id, invocation, iteration, value, criterion):
-        return Measurement(invocation, iteration, value + 1, 'ms', run_id, criterion)
+        return Measurement(invocation, iteration, value + 1, "ms", run_id, criterion)
 
 
 class MyTestAdapter2(AbstractAdapter):
     def _make_measurement(self, run_id, invocation, iteration, value, criterion):
-        return Measurement(invocation, iteration, value + 2, 'ms', run_id, criterion)
+        return Measurement(invocation, iteration, value + 2, "ms", run_id, criterion)

@@ -104,19 +104,19 @@ class RunId(object):
 
     @property
     def cores_as_str(self):
-        return '' if self.cores is None else str(self.cores)
+        return "" if self.cores is None else str(self.cores)
 
     @property
     def input_size_as_str(self):
-        return '' if self.input_size is None else str(self.input_size)
+        return "" if self.input_size is None else str(self.input_size)
 
     @property
     def var_value_as_str(self):
-        return '' if self.var_value is None else str(self.var_value)
+        return "" if self.var_value is None else str(self.var_value)
 
     @property
     def tag_as_str(self):
-        return '' if self.tag is None else str(self.tag)
+        return "" if self.tag is None else str(self.tag)
 
     @property
     def location(self):
@@ -290,15 +290,15 @@ class RunId(object):
         parts = shlex.split(possible_path)
         for i, part in enumerate(parts):
             expanded = os.path.expanduser(part)
-            if '~' in expanded and ':' in expanded:
-                path_list = expanded.split(':')
-                expanded = ':'.join([os.path.expanduser(p) for p in path_list])
+            if "~" in expanded and ":" in expanded:
+                path_list = expanded.split(":")
+                expanded = ":".join([os.path.expanduser(p) for p in path_list])
             parts[i] = expanded
         return shlex.join(parts)
 
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
-        cmdline = self.cmdline() % {'invocation': self.completed_invocations + 1}
+        cmdline = self.cmdline() % {"invocation": self.completed_invocations + 1}
         cmdline = self._expand_user(cmdline)
         return cmdline
 
@@ -320,7 +320,7 @@ class RunId(object):
         cmdline = self._expand_vars(cmdline)
 
         self._cmdline = cmdline.strip()
-        self.executable = cmdline.split(' ')[0]
+        self.executable = cmdline.split(" ")[0]
         return self._cmdline
 
     def __eq__(self, other):
@@ -359,14 +359,14 @@ class RunId(object):
     def as_dict(self):
         extra_args = self.benchmark.extra_args
         return {
-            'benchmark': self.benchmark.as_dict(),
-            'cores': self.cores,
-            'inputSize': self.input_size,
-            'varValue': self.var_value,
-            'tag': self.tag,
-            'extraArgs': extra_args if extra_args is None else str(extra_args),
-            'cmdline': self.cmdline(),
-            'location': self.location
+            "benchmark": self.benchmark.as_dict(),
+            "cores": self.cores,
+            "inputSize": self.input_size,
+            "varValue": self.var_value,
+            "tag": self.tag,
+            "extraArgs": extra_args if extra_args is None else str(extra_args),
+            "cmdline": self.cmdline(),
+            "location": self.location,
         }
 
     @classmethod

@@ -33,10 +33,10 @@ def add_denoise_python_path_to_env(env):
         return env
 
     env = env.copy()
-    if 'PYTHONPATH' in env and env['PYTHONPATH']:
-        env['PYTHONPATH'] += os.pathsep + path
+    if "PYTHONPATH" in env and env["PYTHONPATH"]:
+        env["PYTHONPATH"] += os.pathsep + path
     else:
-        env['PYTHONPATH'] = path
+        env["PYTHONPATH"] = path
     return env
 
 
@@ -56,14 +56,14 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     result = {}
 
     env = _get_env_with_python_path_for_denoise()
-    cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise()]
+    cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise()]
     if for_profiling:
-        cmd += ['--for-profiling']
+        cmd += ["--for-profiling"]
 
     if paths.has_cset():
-        cmd += ['--cset-path', paths.get_cset()]
-    cmd += ['--json', 'minimize']
-    cmd += ['--num-cores', str(num_cores)]
+        cmd += ["--cset-path", paths.get_cset()]
+    cmd += ["--json", "minimize"]
+    cmd += ["--num-cores", str(num_cores)]
 
     try:
         output = output_as_str(
@@ -80,8 +80,8 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
     except ValueError:
         got_json = False
 
-    msg = 'Minimizing noise with rebench-denoise failed\n'
-    msg += '{ind}possibly causing benchmark results to vary more.\n\n'
+    msg = "Minimizing noise with rebench-denoise failed\n"
+    msg += "{ind}possibly causing benchmark results to vary more.\n\n"
 
     success = False
     use_nice = False
@@ -91,19 +91,19 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
         use_nice = result.get("can_set_nice", False)
         use_shielding = result.get("shielding", False)
 
-        failed = ''
+        failed = ""
 
         for k, value in result.items():
             if value == "failed":
-                failed += '{ind}{ind} - ' + k + '\n'
+                failed += "{ind}{ind} - " + k + "\n"
 
         if not use_nice:
-            failed += '{ind}{ind} - nice was not used\n'
+            failed += "{ind}{ind} - nice was not used\n"
         if not use_shielding:
-            failed += '{ind}{ind} - core shielding was not used\n'
+            failed += "{ind}{ind} - core shielding was not used\n"
 
         if failed:
-            msg += '{ind}Failed to set:\n' + failed + '\n'
+            msg += "{ind}Failed to set:\n" + failed + "\n"
 
         if not use_nice and show_warnings:
             msg += ("{ind}Process niceness could not be set.\n"
@@ -141,9 +141,9 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
         elif 'command not found' in output:
             msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
         elif "No such file or directory: 'sudo'" in output:
-            msg += '{ind}sudo is not available. Can\'t use rebench-denoise to manage the system.\n'
+            msg += "{ind}sudo is not available. Can't use rebench-denoise to manage the system.\n"
         else:
-            msg += '{ind}Error: ' + escape_braces(output)
+            msg += "{ind}Error: " + escape_braces(output)
 
     if not success and show_warnings:
         ui.warning(msg)
@@ -165,15 +165,15 @@ def restore_noise(denoise_result, show_warning, ui):
         pass
     else:
         try:
-            cmd = ['sudo', '--preserve-env=PYTHONPATH', '-n', paths.get_denoise(), '--json']
+            cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise(), "--json"]
             if not denoise_result.use_shielding:
-                cmd += ['--without-shielding']
+                cmd += ["--without-shielding"]
             elif paths.has_cset():
-                cmd += ['--cset-path', paths.get_cset()]
+                cmd += ["--cset-path", paths.get_cset()]
             if not denoise_result.use_nice:
-                cmd += ['--without-nice']
-            cmd += ['--num-cores', str(num_cores)]
-            subprocess.check_output(cmd + ['restore'], stderr=subprocess.STDOUT, env=env)
+                cmd += ["--without-nice"]
+            cmd += ["--num-cores", str(num_cores)]
+            subprocess.check_output(cmd + ["restore"], stderr=subprocess.STDOUT, env=env)
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 

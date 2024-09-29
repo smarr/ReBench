@@ -16,4 +16,4 @@ class Issue54Test(ReBenchTestCase):
 
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
-        self.assertIn('INPUT_SIZE', list(runs)[0].cmdline())
+        self.assertIn("INPUT_SIZE", list(runs)[0].cmdline())

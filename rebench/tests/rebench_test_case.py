@@ -36,7 +36,7 @@ class ReBenchTestCase(TestCase):
         init_env_for_test()
 
     def setUp(self):
-        logging.getLogger('pykwalify').addHandler(logging.NullHandler())
+        logging.getLogger("pykwalify").addHandler(logging.NullHandler())
 
         self._set_path(__file__)
         self._tmp_file = mkstemp()[1]  # just use the file name

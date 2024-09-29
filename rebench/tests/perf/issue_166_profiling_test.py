@@ -56,8 +56,8 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         # depends where we want to OS-dependent bits to come in...
 
     def _load_config_and_use_tmp_as_data_file(self):
-        raw_config = load_config(self._path + '/issue_166.conf')
-        raw_config['experiments']['profile']['data_file'] = self._tmp_file
+        raw_config = load_config(self._path + "/issue_166.conf")
+        raw_config["experiments"]["profile"]["data_file"] = self._tmp_file
         return raw_config
 
     def test_persist_profile_data(self):
@@ -168,7 +168,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
             'record_all': True}
 
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['--experiment=Test', 'ignored'])
+        cmd_config = option_parser.parse_args(["--experiment=Test", "ignored"])
 
         try:
             cnf = Configurator(

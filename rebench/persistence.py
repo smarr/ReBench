@@ -61,13 +61,13 @@ class DataStore(object):
                 source['repoURL'] = configurator.rebench_db['repo_url']
 
             if configurator.options and configurator.options.branch:
-                source['branchOrTag'] = configurator.options.branch
+                source["branchOrTag"] = configurator.options.branch
 
             if action == "profile":
                 p = _ProfileFilePersistence(filename, self, configurator, self.ui)
             else:
                 p = _FilePersistence(filename, self, configurator, self.ui)
-            self.ui.debug_output_info('ReBenchDB enabled: {e}\n', e=configurator.use_rebench_db)
+            self.ui.debug_output_info("ReBenchDB enabled: {e}\n", e=configurator.use_rebench_db)
 
             if configurator.use_rebench_db:
                 if action == "profile":
@@ -82,9 +82,9 @@ class DataStore(object):
     def create_run_id(self, benchmark, cores, input_size, var_value, tag):
         if isinstance(cores, str) and cores.isdigit():
             cores = int(cores)
-        if input_size == '':
+        if input_size == "":
             input_size = None
-        if var_value == '':
+        if var_value == "":
             var_value = None
 
         run = RunId(benchmark, cores, input_size, var_value, tag)
@@ -200,7 +200,7 @@ class _FilePersistence(_ConcretePersistence):
     @staticmethod
     def _truncate_file(filename):
         # pylint: disable-next=unspecified-encoding
-        with open(filename, 'w'):
+        with open(filename, "w"):
             pass
 
     def _read_start_time(self):
@@ -208,17 +208,17 @@ class _FilePersistence(_ConcretePersistence):
             self._start_time = None
             return
         # pylint: disable-next=unspecified-encoding
-        with open(self._data_filename, 'r') as data_file:
+        with open(self._data_filename, "r") as data_file:
             self._start_time = self._read_first_meta_block(data_file)
 
     @staticmethod
     def _read_first_meta_block(data_file):
         for line in data_file:
-            if not line.startswith('#'):
+            if not line.startswith("#"):
                 # really only read the first set of commented lines, i.e. the first meta block
                 return None
             if line.startswith(_START_TIME_LINE):
-                return line[len(_START_TIME_LINE):].strip()
+                return line[len(_START_TIME_LINE) :].strip()
         return None
 
     def load_data(self, runs, discard_run_data):
@@ -232,15 +232,15 @@ class _FilePersistence(_ConcretePersistence):
 
         try:
             if current_runs:
-                with NamedTemporaryFile('w', delete=False) as target:
+                with NamedTemporaryFile("w", delete=False) as target:
                     # pylint: disable-next=unspecified-encoding
-                    with open(self._data_filename, 'r') as data_file:
+                    with open(self._data_filename, "r") as data_file:
                         self._process_lines(data_file, current_runs, target)
                     os.unlink(self._data_filename)
                     shutil.move(target.name, self._data_filename)
             else:
                 # pylint: disable-next=unspecified-encoding
-                with open(self._data_filename, 'r') as data_file:
+                with open(self._data_filename, "r") as data_file:
                     self._process_lines(data_file, current_runs, None)
         except IOError:
             self.ui.debug_error_info("No data loaded, since %s does not exist.\n"
@@ -258,7 +258,7 @@ class _FilePersistence(_ConcretePersistence):
         previous_run_id = None
         line_number = 0
         for line in data_file:
-            if line.startswith('#'):  # skip comments, and shebang lines
+            if line.startswith("#"):  # skip comments, and shebang lines
                 line_number += 1
                 if filtered_data_file:
                     filtered_data_file.write(line)
@@ -322,7 +322,7 @@ class _FilePersistence(_ConcretePersistence):
 
         try:
             # pylint: disable-next=unspecified-encoding,consider-using-with
-            data_file = open(self._data_filename, 'a+')
+            data_file = open(self._data_filename, "a+")
             is_empty = data_file.tell() == 0
             data_file.write(shebang_with_metadata)
             if is_empty:
@@ -440,7 +440,7 @@ class _ReBenchDB(_ConcretePersistence):
             dp_data = []
             for dp in data_points:
                 measurements = dp.measurements_as_dict(criteria)
-                num_measurements += len(measurements['m'])
+                num_measurements += len(measurements["m"])
                 dp_data.append(measurements)
             all_data.append({
                 'runId': run_id.as_dict(),
@@ -449,7 +449,7 @@ class _ReBenchDB(_ConcretePersistence):
 
         criteria_index = []
         for c, idx in criteria.items():
-            criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+            criteria_index.append({"c": c[0], "u": c[1], "i": idx})
 
         return all_data, criteria_index, num_measurements
 
@@ -468,7 +468,7 @@ class _ReBenchDB(_ConcretePersistence):
 
         criteria_index = []
         for c, idx in criteria.items():
-            criteria_index.append({'c': c[0], 'u': c[1], 'i': idx})
+            criteria_index.append({"c": c[0], "u": c[1], "i": idx})
 
         return all_data, criteria_index, num_measurements
 

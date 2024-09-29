@@ -30,19 +30,19 @@ class Executor(object):
 
     @classmethod
     def compile(cls, executor_name, executor, run_details, variables, build_commands, action):
-        path = executor.get('path')
-        if path and not path.startswith('~'):
+        path = executor.get("path")
+        if path and not path.startswith("~"):
             path = os.path.abspath(path)
-        executable = executor.get('executable')
-        args = executor.get('args')
+        executable = executor.get("executable")
+        args = executor.get("args")
 
-        build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
+        build = BuildCommand.create_commands(executor.get("build"), build_commands, path)
 
-        description = executor.get('description')
-        desc = executor.get('desc')
-        env = executor.get('env')
+        description = executor.get("description")
+        desc = executor.get("desc")
+        env = executor.get("env")
 
-        profiler = Profiler.compile(executor.get('profiler'))
+        profiler = Profiler.compile(executor.get("profiler"))
 
         run_details = ExpRunDetails.compile(executor, run_details)
         variables = ExpVariables.compile(executor, variables)
@@ -80,5 +80,5 @@ class Executor(object):
             'desc': self.description
         }
         if self.build:
-            result['build'] = [b.as_dict() for b in self.build]
+            result["build"] = [b.as_dict() for b in self.build]
         return result

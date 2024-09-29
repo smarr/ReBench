@@ -61,7 +61,7 @@ class Issue19OneDataPointAtATime(ReBenchTestCase):
 
 class OneMeasurementAtATime(Issue19OneDataPointAtATime):
 
-    def __init__(self, method_name='runTest'):
+    def __init__(self, method_name="runTest"):
         super(OneMeasurementAtATime, self).__init__(method_name)
         self._run_id = None
         self._run_count = {}

@@ -32,8 +32,8 @@ class Issue81UnicodeSuite(ReBenchTestCase):
     def setUp(self):
         super(Issue81UnicodeSuite, self).setUp()
         self._set_path(__file__)
-        if os.path.exists(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        if os.path.exists(self._path + "/build.log"):
+            os.remove(self._path + "/build.log")
 
     def test_building(self):
         cnf = Configurator(load_config(self._path + '/issue_81.conf'), DataStore(self.ui),
@@ -47,9 +47,9 @@ class Issue81UnicodeSuite(ReBenchTestCase):
         self.assertEqual("Bench1", runs[0].benchmark.name)
         self.assertEqual(2, runs[0].get_number_of_data_points())
 
-        self.assertTrue(os.path.exists(self._path + '/build.log'))
+        self.assertTrue(os.path.exists(self._path + "/build.log"))
 
-        with open_with_enc(self._path + '/build.log', 'r', encoding='utf-8') as build_file:
+        with open_with_enc(self._path + "/build.log", "r", encoding="utf-8") as build_file:
             log = build_file.read()
 
         unicode_char = chr(22234)
@@ -60,5 +60,5 @@ class Issue81UnicodeSuite(ReBenchTestCase):
         self.assertGreaterEqual(log.find(unicode_char, 42), 61)  # S:Suite1|STD:
         self.assertGreaterEqual(log.find(unicode_char, 70), 86)  # S:Suite1|ERR:
 
-        if os.path.exists(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        if os.path.exists(self._path + "/build.log"):
+            os.remove(self._path + "/build.log")

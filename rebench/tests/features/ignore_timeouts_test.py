@@ -41,7 +41,7 @@ class IgnoreTimeoutsTest(ReBenchTestCase):
 
     def test_ignore_timeouts_globally(self):
         # test that the flag is set correctly on the runs
-        _, _, runs = self._init('GlobalSettings')
+        _, _, runs = self._init("GlobalSettings")
 
         self.assertTrue(runs[0].ignore_timeouts)
         self.assertFalse(runs[1].ignore_timeouts)
@@ -54,7 +54,7 @@ class IgnoreTimeoutsTest(ReBenchTestCase):
         self.assertTrue(runs[8].ignore_timeouts)
 
     def test_ignore_timeouts_accepts_data_after_timeout_and_does_not_cause_warnings(self):
-        _, cnf, runs = self._init('Exec')
+        _, cnf, runs = self._init("Exec")
         self.assertEqual(1, len(runs))
 
         ex = Executor(runs, False, self.ui)

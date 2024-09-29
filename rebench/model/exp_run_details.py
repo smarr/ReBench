@@ -93,7 +93,7 @@ class ExpRunDetails(object):
 
     def as_dict(self):
         return {
-            'warmup': self.warmup,
-            'minIterationTime': self.min_iteration_time,
-            'maxInvocationTime': self.max_invocation_time
+            "warmup": self.warmup,
+            "minIterationTime": self.min_iteration_time,
+            "maxInvocationTime": self.max_invocation_time,
         }

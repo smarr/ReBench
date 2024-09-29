@@ -67,9 +67,9 @@ class RebenchLogAdapter(GaugeAdapter):
                 time = float(match.group("runtime"))
                 if match.group("unit") == "u":
                     time /= 1000
-                criterion = (match.group(2) or 'total').strip()
+                criterion = (match.group(2) or "total").strip()
 
-                measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
+                measure = Measurement(invocation, iteration, time, "ms", run_id, criterion)
 
             else:
                 match = self.re_extra_criterion_log_line.match(line)

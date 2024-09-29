@@ -28,8 +28,8 @@ class PerfProfiler(Profiler):
 
     def __init__(self, name, cfg):
         super(PerfProfiler, self).__init__(name, "Perf")
-        self.record_args = cfg.get('record_args') + " --output=profile.perf "
-        self.report_args = cfg.get('report_args') + " --input=profile.perf "
+        self.record_args = cfg.get("record_args") + " --output=profile.perf "
+        self.report_args = cfg.get("report_args") + " --input=profile.perf "
         self.command = "perf"
 
     def _construct_report_cmdline(self, executor):

@@ -68,7 +68,7 @@ class DataPoint(object):
             criterion = (m.criterion, m.unit)
             if criterion not in criteria:
                 criteria[criterion] = len(criteria)
-            data.append({'v': m.value, 'c': criteria[criterion]})
+            data.append({"v": m.value, "c": criteria[criterion]})
         assert self.invocation == invocation
 
         return {
@@ -93,12 +93,12 @@ class DataPoint(object):
                 iteration = m.iteration
                 invocation = m.invocation
                 for d in data:
-                    if d['in'] == invocation:
-                        ms = d['m']
+                    if d["in"] == invocation:
+                        ms = d["m"]
                         break
                 if ms is None:
                     ms = []
-                    data.append({'in': invocation, 'm': ms})
+                    data.append({"in": invocation, "m": ms})
                     for _ in criteria:
                         ms.append([])
             else:

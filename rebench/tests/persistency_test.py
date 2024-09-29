@@ -125,7 +125,7 @@ class PersistencyTest(ReBenchTestCase):
         "git source info not available, but needed for reporting to ReBenchDB")
     def test_rebenchdb(self):
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(["--experiment=Test", "persistency.conf"])
 
         server = MockHTTPServer()
 
@@ -141,7 +141,7 @@ class PersistencyTest(ReBenchTestCase):
         "git source info not available, but needed for reporting to ReBenchDB")
     def test_rebenchdb_400_error(self):
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['--experiment=Test', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(["--experiment=Test", "persistency.conf"])
 
         server = MockHTTPServer(test_error_handling=True)
 
@@ -155,7 +155,7 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_disabled_rebench_db(self):
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['--experiment=Test', '-R', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(["--experiment=Test", "-R", "persistency.conf"])
 
         server = MockHTTPServer()
 
@@ -196,21 +196,21 @@ class PersistencyTest(ReBenchTestCase):
     def test_check_file_lines(self):
         self._load_config_and_run()
 
-        with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
+        with open(self._tmp_file, "r") as file:  # pylint: disable=unspecified-encoding
             lines = file.readlines()
 
-        command = self.get_line_after_char('#!', lines[0])
+        command = self.get_line_after_char("#!", lines[0])
         self.assertEqual(command, subprocess.list2cmdline(sys.argv))
 
-        time = self.get_line_after_char('Start:', lines[1])
+        time = self.get_line_after_char("Start:", lines[1])
         self.assertTrue(self.is_valid_time(time))
 
-        self.assertIsNotNone(json.loads(self.get_line_after_char('Environment:', lines[2])))
-        self.assertIsNotNone(json.loads(self.get_line_after_char('Source:', lines[3])))
+        self.assertIsNotNone(json.loads(self.get_line_after_char("Environment:", lines[2])))
+        self.assertIsNotNone(json.loads(self.get_line_after_char("Source:", lines[3])))
 
         column_headers = lines[4].split("\t")
         # remove the newline character from the last column header
-        column_headers[-1] = column_headers[-1].rstrip('\n')
+        column_headers[-1] = column_headers[-1].rstrip("\n")
 
         expected_headers = Measurement.get_column_headers()
         self.assertEqual(column_headers, expected_headers)
@@ -226,7 +226,7 @@ class PersistencyTest(ReBenchTestCase):
 
     def is_valid_time(self, time_str):
         try:
-            datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+            datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S.%f%z")
             return True
         except ValueError:
             return False
@@ -246,14 +246,14 @@ class PersistencyTest(ReBenchTestCase):
 
         # second run, requesting more invocations
         opt_parser = ReBench().shell_options()
-        args = opt_parser.parse_args(['-in', '20', '-R', self._path + '/persistency.conf'])
+        args = opt_parser.parse_args(["-in", "20", "-R", self._path + "/persistency.conf"])
         self._load_config_and_run(args)
 
-        with open(self._tmp_file, 'r') as file: # pylint: disable=unspecified-encoding
+        with open(self._tmp_file, "r") as file:  # pylint: disable=unspecified-encoding
             lines = file.readlines()
 
         # count the number of lines starting with 'invocation'
-        invocation_lines = [line for line in lines if line.startswith('invocation')]
+        invocation_lines = [line for line in lines if line.startswith("invocation")]
         self.assertEqual(len(invocation_lines), 1)
 
     def _create_dummy_rebench_db_persistence(self):
@@ -279,51 +279,51 @@ class PersistencyTest(ReBenchTestCase):
         return {list(runs)[0]: persistence.get_data_points()}, run_id_obj
 
     def _assert_criteria_index_structure(self, criteria_index):
-        criteria = ['bar', 'baz', 'total', 'foo']
+        criteria = ["bar", "baz", "total", "foo"]
         for i, c in enumerate(criteria_index):
-            self.assertEqual(i, c['i'])
-            self.assertEqual(criteria[i], c['c'])
-            self.assertEqual('ms', c['u'])
+            self.assertEqual(i, c["i"])
+            self.assertEqual(criteria[i], c["c"])
+            self.assertEqual("ms", c["u"])
 
     def _assert_run_id_structure(self, run_id, run_id_obj):
-        self.assertEqual(run_id['varValue'], run_id_obj.var_value)
-        self.assertIsNone(run_id['varValue'])
+        self.assertEqual(run_id["varValue"], run_id_obj.var_value)
+        self.assertIsNone(run_id["varValue"])
 
-        self.assertEqual(run_id['tag'], run_id_obj.tag)
-        self.assertIsNone(run_id['tag'])
+        self.assertEqual(run_id["tag"], run_id_obj.tag)
+        self.assertIsNone(run_id["tag"])
 
-        self.assertEqual(run_id['location'], run_id_obj.location)
-        self.assertEqual(run_id['inputSize'], run_id_obj.input_size)
+        self.assertEqual(run_id["location"], run_id_obj.location)
+        self.assertEqual(run_id["inputSize"], run_id_obj.input_size)
 
-        self.assertEqual(run_id['extraArgs'], run_id_obj.benchmark.extra_args)
-        self.assertIsNone(run_id['extraArgs'])
+        self.assertEqual(run_id["extraArgs"], run_id_obj.benchmark.extra_args)
+        self.assertIsNone(run_id["extraArgs"])
 
-        self.assertEqual(run_id['cores'], run_id_obj.cores)
-        self.assertEqual(1, run_id['cores'])
+        self.assertEqual(run_id["cores"], run_id_obj.cores)
+        self.assertEqual(1, run_id["cores"])
 
-        self.assertEqual(run_id['cmdline'], run_id_obj.cmdline())
+        self.assertEqual(run_id["cmdline"], run_id_obj.cmdline())
 
     def _assert_benchmark_structure(self, run_id, run_id_obj):
-        benchmark = run_id['benchmark']
+        benchmark = run_id["benchmark"]
 
-        self.assertEqual(benchmark['name'], run_id_obj.benchmark.name)
-        run_details = benchmark['runDetails']
-        self.assertEqual(-1, run_details['maxInvocationTime'])
-        self.assertEqual(50, run_details['minIterationTime'])
-        self.assertIsNone(run_details['warmup'])
+        self.assertEqual(benchmark["name"], run_id_obj.benchmark.name)
+        run_details = benchmark["runDetails"]
+        self.assertEqual(-1, run_details["maxInvocationTime"])
+        self.assertEqual(50, run_details["minIterationTime"])
+        self.assertIsNone(run_details["warmup"])
 
-        suite = benchmark['suite']
-        self.assertIsNone(suite['desc'])
-        self.assertEqual('Suite', suite['name'])
-        executor = suite['executor']
-        self.assertIsNone(executor['desc'])
-        self.assertEqual('TestRunner', executor['name'])
+        suite = benchmark["suite"]
+        self.assertIsNone(suite["desc"])
+        self.assertEqual("Suite", suite["name"])
+        executor = suite["executor"]
+        self.assertIsNone(executor["desc"])
+        self.assertEqual("TestRunner", executor["name"])
 
     def _assert_data_point_structure(self, data):
         self.assertEqual(10, len(data))
         for point, i in zip(data, list(range(0, 10))):
-            self.assertEqual(1, point['in'])
-            self.assertEqual(i + 1, point['it'])
+            self.assertEqual(1, point["in"])
+            self.assertEqual(i + 1, point["it"])
 
             criteria = []
             if i % 2 == 0:
@@ -334,12 +334,12 @@ class PersistencyTest(ReBenchTestCase):
                 criteria.append(3)
             criteria.append(2)
 
-            for criterion, m in zip(criteria, point['m']):
-                self.assertEqual(criterion, m['c'])
-                self.assertEqual(i, int(m['v']))
+            for criterion, m in zip(criteria, point["m"]):
+                self.assertEqual(criterion, m["c"])
+                self.assertEqual(i, int(m["v"]))
 
     def _create_dummy_rebench_db_adapter(self):
-        return ReBenchDB('http://localhost', '', '', self.ui)
+        return ReBenchDB("http://localhost", "", "", self.ui)
 
     def test_data_conversion_to_rebench_db_api(self):
         cache, run_id_obj = self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
@@ -350,8 +350,8 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_criteria_index_structure(criteria_index)
 
-        run_id = all_data[0]['runId']
-        data = all_data[0]['d']
+        run_id = all_data[0]["runId"]
+        data = all_data[0]["d"]
 
         self._assert_run_id_structure(run_id, run_id_obj)
         self._assert_benchmark_structure(run_id, run_id_obj)
@@ -374,10 +374,10 @@ class PersistencyTest(ReBenchTestCase):
     def _assert_data_point_structure_v20(self, data):
         self.assertEqual(1, len(data))
         in1 = data[0]
-        self.assertEqual(1, in1['in'])
-        self.assertEqual(4, len(in1['m']))  # 4 criteria
+        self.assertEqual(1, in1["in"])
+        self.assertEqual(4, len(in1["m"]))  # 4 criteria
 
-        ms = in1['m']
+        ms = in1["m"]
         for i in range(0, 10):
             if i % 2 == 0:
                 self.assertEqual(i, int(ms[0][i]))
@@ -403,8 +403,8 @@ class PersistencyTest(ReBenchTestCase):
 
         self.assertEqual(24, num_measurements)
 
-        run_id = all_data[0]['runId']
-        data = all_data[0]['d']
+        run_id = all_data[0]["runId"]
+        data = all_data[0]["d"]
 
         self._assert_criteria_index_structure(criteria_index)
         self._assert_run_id_structure(run_id, run_id_obj)

@@ -47,7 +47,7 @@ class Issue216CurrentInvocation(ReBenchTestCase):
         return persistence.get_data_points()
 
     def test_associates_measurements_and_data_points_correctly(self):
-        data_points = self._records_data_points('Test', 4)
+        data_points = self._records_data_points("Test", 4)
         for point, i in zip(data_points, range(4)):
             self.assertEqual(1, len(point.get_measurements()))
             self.assertEqual(i + 1, int(point.get_measurements()[0].value))

@@ -27,8 +27,8 @@ class CommandsPaths:
 
     def get_which(self):
         if not self._which_path:
-            if os.path.isfile('/usr/bin/which'):
-                self._which_path = '/usr/bin/which'
+            if os.path.isfile("/usr/bin/which"):
+                self._which_path = "/usr/bin/which"
             else:
                 raise UIError("The basic `which` command was not found." +
                               " In many systems it is available at /usr/bin/which." +
@@ -61,7 +61,7 @@ class CommandsPaths:
 
     def has_cset(self):
         if self._cset_path is None:
-            self._cset_path = self._absolute_path_for_command('cset', ['--help'])
+            self._cset_path = self._absolute_path_for_command("cset", ["--help"])
 
         return self._cset_path is not None and self._cset_path is not False
 
@@ -73,7 +73,7 @@ class CommandsPaths:
 
     def has_denoise(self):
         if self._denoise_path is None:
-            self._denoise_path = self._absolute_path_for_command('rebench-denoise', ['--version'])
+            self._denoise_path = self._absolute_path_for_command("rebench-denoise", ["--version"])
 
         return self._denoise_path is not None and self._denoise_path is not False
 
@@ -95,7 +95,7 @@ class CommandsPaths:
 
             # find the element in active_python_path that has the start of the current file path
             for path in active_python_path:
-                if current_file.startswith(path) and 'rebench' in path.lower():
+                if current_file.startswith(path) and "rebench" in path.lower():
                     self._denoise_python_path = path
                     return path
 
@@ -294,7 +294,7 @@ def _exec(num_cores, use_nice, use_shielding, args):
         min_cores = _shield_lower_bound(num_cores)
         max_cores = _shield_upper_bound(num_cores)
         core_spec = "%d-%d" % (min_cores, max_cores)
-        env['REBENCH_DENOISE_CORE_SET'] = core_spec
+        env["REBENCH_DENOISE_CORE_SET"] = core_spec
 
     os.execvpe(cmd, cmdline, env)
 
@@ -324,7 +324,7 @@ def _test(num_cores):
     print("Test on %d cores" % core_cnt)
 
     core_spec = "%d-%d" % (lower, upper)
-    env_spec = os.environ.get('REBENCH_DENOISE_CORE_SET', None)
+    env_spec = os.environ.get("REBENCH_DENOISE_CORE_SET", None)
     if core_spec != env_spec:
         print("Core Spec set by denoise was: ", env_spec)
         print("Locally determined one was: ", core_spec)
@@ -382,15 +382,15 @@ def main_func():
     num_cores = int(args.num_cores) if args.num_cores else None
     result = {}
 
-    if args.command == 'minimize' and num_cores is not None:
+    if args.command == "minimize" and num_cores is not None:
         result = _minimize_noise(num_cores, args.use_nice, args.use_shielding, args.for_profiling)
-    elif args.command == 'restore' and num_cores is not None:
+    elif args.command == "restore" and num_cores is not None:
         result = _restore_standard_settings(num_cores, args.use_shielding)
-    elif args.command == 'exec':
+    elif args.command == "exec":
         _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
-    elif args.command == 'kill':
+    elif args.command == "kill":
         _kill(remaining_args[0])
-    elif args.command == 'test' and num_cores is not None:
+    elif args.command == "test" and num_cores is not None:
         _test(num_cores)
     else:
         arg_parser.print_help()

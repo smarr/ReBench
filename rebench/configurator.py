@@ -33,8 +33,8 @@ from .rebenchdb import ReBenchDB
 from .ui import escape_braces
 
 # Disable most logging for pykwalify
-logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
-logging.getLogger('pykwalify').addHandler(logging.NullHandler())
+logging.getLogger("pykwalify").setLevel(logging.CRITICAL)
+logging.getLogger("pykwalify").addHandler(logging.NullHandler())
 
 
 class _ExecutorFilter(object):
@@ -124,7 +124,7 @@ def load_config(file_name):
     and return the configuration.
     """
     try:
-        with open(file_name, 'r') as conf_file:  # pylint: disable=unspecified-encoding
+        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
             data = yaml.safe_load(conf_file)
             validator = Core(
                 source_data=data,
@@ -135,8 +135,8 @@ def load_config(file_name):
 
                 # add file name and directory to config to be able to use it when loading
                 # for instance gauge adapters
-                data['__file__'] = file_name
-                data['__dir__'] = dirname(abspath(file_name))
+                data["__file__"] = file_name
+                data["__dir__"] = dirname(abspath(file_name))
             except SchemaError as err:
                 errors = [escape_braces(val_err) for val_err in validator.validation_errors]
                 raise UIError(
@@ -155,9 +155,9 @@ def load_config(file_name):
 
 
 def validate_gauge_adapters(raw_config):
-    benchmark_suites = raw_config.get('benchmark_suites', {})
+    benchmark_suites = raw_config.get("benchmark_suites", {})
     for suite_name, suite in benchmark_suites.items():
-        adapter = suite['gauge_adapter']
+        adapter = suite["gauge_adapter"]
         if not isinstance(adapter, (dict, str)):
             raise UIError(("Gauge adapter for suite %s must be a string or a dictionary," +
                            "but is %s.\n") % (suite_name, type(adapter).__name__), None)
@@ -175,12 +175,12 @@ class Configurator(object):
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self.build_log = build_log or raw_config.get('build_log', 'build.log')
-        self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
-        self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
-        self.artifact_review = raw_config.get('artifact_review', False)
-        self.config_dir = raw_config.get('__dir__', None)
-        self.config_file = raw_config.get('__file__', None)
+        self.build_log = build_log or raw_config.get("build_log", "build.log")
+        self.data_file = data_file or raw_config.get("default_data_file", "rebench.data")
+        self._exp_name = exp_name or raw_config.get("default_experiment", "all")
+        self.artifact_review = raw_config.get("artifact_review", False)
+        self.config_dir = raw_config.get("__dir__", None)
+        self.config_file = raw_config.get("__file__", None)
 
         self._rebench_db_connector = None
 
@@ -199,17 +199,17 @@ class Configurator(object):
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
         # Construct ReBenchDB config
-        rdb_cfg = raw_config.get('reporting', None)
+        rdb_cfg = raw_config.get("reporting", None)
         if rdb_cfg:
-            rdb_cfg = rdb_cfg.get('rebenchdb', None)
+            rdb_cfg = rdb_cfg.get("rebenchdb", None)
         if rdb_cfg:
             self.rebench_db = rdb_cfg
         else:
             self.rebench_db = {}
         if cli_options:
             if cli_options.db_server:
-                self.rebench_db['db_url'] = cli_options.db_server
-            self.rebench_db['send_to_rebench_db'] = cli_options.send_to_rebench_db
+                self.rebench_db["db_url"] = cli_options.db_server
+            self.rebench_db["send_to_rebench_db"] = cli_options.send_to_rebench_db
 
         self.options = cli_options
         self.ui = ui
@@ -220,10 +220,10 @@ class Configurator(object):
 
         self.run_filter = _RunFilter(run_filter)
 
-        self._executors = raw_config.get('executors', {})
-        self._suites_config = raw_config.get('benchmark_suites', {})
+        self._executors = raw_config.get("executors", {})
+        self._suites_config = raw_config.get("benchmark_suites", {})
 
-        experiments = raw_config.get('experiments', {})
+        experiments = raw_config.get("experiments", {})
         self._experiments = self._compile_experiments(experiments)
 
     @property
@@ -333,7 +333,7 @@ class Configurator(object):
     def _compile_experiments(self, experiments):
         results = {}
 
-        if self._exp_name == 'all':
+        if self._exp_name == "all":
             for exp_name in experiments:
                 results[exp_name] = self._compile_experiment(exp_name, experiments[exp_name])
         else:

@@ -29,13 +29,13 @@ class Experiment(object):
 
     @classmethod
     def compile(cls, name, exp, configurator):
-        action = exp.get('action')
-        description = exp.get('description')
-        desc = exp.get('desc')
-        if action == 'profile':
-            data_file = exp.get('data_file') or configurator.data_file + ".profiles"
+        action = exp.get("action")
+        description = exp.get("description")
+        desc = exp.get("desc")
+        if action == "profile":
+            data_file = exp.get("data_file") or configurator.data_file + ".profiles"
         else:
-            data_file = exp.get('data_file') or configurator.data_file
+            data_file = exp.get("data_file") or configurator.data_file
 
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
                                       configurator.options, configurator.ui)
@@ -43,10 +43,10 @@ class Experiment(object):
         run_details = ExpRunDetails.compile(exp, configurator.run_details)
         variables = ExpVariables.compile(exp, ExpVariables.empty())
 
-        executions = exp.get('executions')
-        suites = exp.get('suites')
+        executions = exp.get("executions")
+        suites = exp.get("suites")
 
-        env = exp.get('env')
+        env = exp.get("env")
 
         return Experiment(name, description or desc, action, env, data_file, reporting,
                           run_details, variables, configurator, executions, suites)
@@ -104,7 +104,7 @@ class Experiment(object):
             if executor_details:
                 run_details = ExpRunDetails.compile(executor_details, run_details)
                 variables = ExpVariables.compile(executor_details, variables)
-                suites_for_executor = executor_details.get('suites', suites)
+                suites_for_executor = executor_details.get("suites", suites)
             else:
                 suites_for_executor = suites
 

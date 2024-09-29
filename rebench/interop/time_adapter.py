@@ -63,7 +63,7 @@ class TimeAdapter(GaugeAdapter):
         return self._create_command(command)
 
     def _check_which_time_command_is_available(self):
-        time_bin = '/usr/bin/time'
+        time_bin = "/usr/bin/time"
         try:
             formatted_output = subprocess.call(
                 ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
@@ -77,7 +77,7 @@ class TimeAdapter(GaugeAdapter):
                     ['/opt/local/bin/gtime', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 if formatted_output == 0:
-                    time_bin = '/opt/local/bin/gtime'
+                    time_bin = "/opt/local/bin/gtime"
             except OSError:
                 formatted_output = 1
 
@@ -101,11 +101,11 @@ class TimeAdapter(GaugeAdapter):
                 match2 = self.re_formatted_time.match(line)
                 if match1:
                     mem_kb = float(match1.group(1))
-                    measure = Measurement(invocation, iteration, mem_kb, 'kb', run_id, 'MaxRSS')
+                    measure = Measurement(invocation, iteration, mem_kb, "kb", run_id, "MaxRSS")
                     current.add_measurement(measure)
                 elif match2:
                     time = float(match2.group(1)) * 1000
-                    measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
+                    measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
                     current.add_measurement(measure)
                     data_points.append(current)
                     current = DataPoint(run_id)

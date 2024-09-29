@@ -23,15 +23,15 @@ class ExpVariables(object):
 
     @classmethod
     def compile(cls, config, defaults):
-        input_sizes = config.get('input_sizes', defaults.input_sizes)
-        cores = config.get('cores', defaults.cores)
-        variable_values = config.get('variable_values', defaults.variable_values)
-        tags = config.get('tags', defaults.tags)
+        input_sizes = config.get("input_sizes", defaults.input_sizes)
+        cores = config.get("cores", defaults.cores)
+        variable_values = config.get("variable_values", defaults.variable_values)
+        tags = config.get("tags", defaults.tags)
         return ExpVariables(input_sizes, cores, variable_values, tags)
 
     @classmethod
     def empty(cls):
-        return ExpVariables([''], [1], [''], [None])
+        return ExpVariables([""], [1], [""], [None])
 
     def __init__(self, input_sizes, cores, variable_values, tags):
         self.input_sizes = input_sizes

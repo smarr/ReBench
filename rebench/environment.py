@@ -11,14 +11,14 @@ from .output import output_as_str
 
 def _encode_str(out):
     as_string = output_as_str(out)
-    if as_string and as_string[-1] == '\n':
+    if as_string and as_string[-1] == "\n":
         as_string = as_string[:-1]
     return as_string
 
 
 def _exec(cmd):
     try:
-        with open(os.devnull, 'w') as dev_null_f:  # pylint: disable=unspecified-encoding
+        with open(os.devnull, "w") as dev_null_f:  # pylint: disable=unspecified-encoding
             out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
@@ -32,18 +32,18 @@ _source = None
 
 def extract_base(branch_or_tag):
     # in local working copies things may look like HEAD -> branch, remote/branch, otherBranch
-    if ',' in branch_or_tag:
-        branch_or_tag = branch_or_tag.split(',')[0]
+    if "," in branch_or_tag:
+        branch_or_tag = branch_or_tag.split(",")[0]
 
-    return branch_or_tag.replace('HEAD -> ', '')
+    return branch_or_tag.replace("HEAD -> ", "")
 
 
 def git_not_available():
-    return _exec(['git', '--version']) is None
+    return _exec(["git", "--version"]) is None
 
 
 def git_repo_not_initialized():
-    return _exec(['git', 'rev-parse']) is None
+    return _exec(["git", "rev-parse"]) is None
 
 
 def determine_source_details(configurator):
@@ -52,26 +52,26 @@ def determine_source_details(configurator):
         return _source
 
     result = {}
-    git_cmd = ['git']
+    git_cmd = ["git"]
     if configurator and configurator.options and configurator.options.git_repo:
-        git_cmd += ['-C', configurator.options.git_repo]
+        git_cmd += ["-C", configurator.options.git_repo]
 
-    is_git_repo = _exec(git_cmd + ['rev-parse']) is not None
+    is_git_repo = _exec(git_cmd + ["rev-parse"]) is not None
     if not is_git_repo:
-        result['repoURL'] = None
-        result['branchOrTag'] = None
-        result['commitId'] = None
-        result['commitMsg'] = None
-        result['authorName'] = None
-        result['committerName'] = None
-        result['authorEmail'] = None
-        result['committerEmail'] = None
+        result["repoURL"] = None
+        result["branchOrTag"] = None
+        result["commitId"] = None
+        result["commitMsg"] = None
+        result["authorName"] = None
+        result["committerName"] = None
+        result["authorEmail"] = None
+        result["committerEmail"] = None
         _source = result
         return result
 
-    repo_url = _exec(git_cmd + ['ls-remote', '--get-url']) if is_git_repo else None
+    repo_url = _exec(git_cmd + ["ls-remote", "--get-url"]) if is_git_repo else None
     if repo_url is None:
-        repo_url = ''
+        repo_url = ""
 
     parsed = urlparse(repo_url)
     if parsed.password:
@@ -106,17 +106,17 @@ def init_env_for_test():
 def init_environment(denoise_result, ui):
     u_name = os.uname()
     result = {
-        'userName': getpass.getuser(),
-        'manualRun': not ('CI' in os.environ and os.environ['CI'] == 'true'),
-        'hostName': u_name[1],
-        'osType': u_name[0],
-        'memory': virtual_memory().total,
-        'denoise': {} if denoise_result is None else denoise_result.details
+        "userName": getpass.getuser(),
+        "manualRun": not ("CI" in os.environ and os.environ["CI"] == "true"),
+        "hostName": u_name[1],
+        "osType": u_name[0],
+        "memory": virtual_memory().total,
+        "denoise": {} if denoise_result is None else denoise_result.details,
     }
 
     try:
-        if 'PATH' not in os.environ:
-            os.environ['PATH'] = ''
+        if "PATH" not in os.environ:
+            os.environ["PATH"] = ""
 
         cpu_info = _get_cpu_info_internal()
 
@@ -127,7 +127,7 @@ def init_environment(denoise_result, ui):
                 result['clockSpeed'] = (cpu_info['hz_advertised'][0]
                                         * (10 ** cpu_info['hz_advertised'][1]))
             else:
-                result['clockSpeed'] = 0
+                result["clockSpeed"] = 0
     except ValueError:
         pass
 
@@ -135,10 +135,10 @@ def init_environment(denoise_result, ui):
         ui.warning('Was not able to determine the type of CPU used and its clock speed.' +
                    ' Thus, these details will not be recorded with the data.\n')
 
-    result['software'] = []
-    result['software'].append({'name': 'kernel', 'version': u_name[3]})
-    result['software'].append({'name': 'kernel-release', 'version': u_name[2]})
-    result['software'].append({'name': 'architecture', 'version': u_name[4]})
+    result["software"] = []
+    result["software"].append({"name": "kernel", "version": u_name[3]})
+    result["software"].append({"name": "kernel-release", "version": u_name[2]})
+    result["software"].append({"name": "architecture", "version": u_name[4]})
 
     global _environment  # pylint: disable=global-statement
     _environment = result

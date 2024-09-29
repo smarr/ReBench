@@ -36,10 +36,10 @@ class ExecutorTest(ReBenchTestCase):
 
     def setUp(self):
         super(ExecutorTest, self).setUp()
-        os.chdir(self._path + '/../')
+        os.chdir(self._path + "/../")
 
     def test_setup_and_run_benchmark(self):
-        options = ReBench().shell_options().parse_args(['dummy'])
+        options = ReBench().shell_options().parse_args(["dummy"])
 
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
                            self.ui, options,
@@ -60,16 +60,16 @@ class ExecutorTest(ReBenchTestCase):
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
     def _remove_executors_with_missing_exe(self, scheduler):
-        yaml = load_config(self._path + '/test.conf')
+        yaml = load_config(self._path + "/test.conf")
 
         # change config to use executable that doesn't exist
-        self.assertEqual(yaml['executors']['TestRunner1']['executable'], 'test-vm1.py %(cores)s')
-        yaml['executors']['TestRunner1']['executable'] = 'does_not_exist'
+        self.assertEqual(yaml["executors"]["TestRunner1"]["executable"], "test-vm1.py %(cores)s")
+        yaml["executors"]["TestRunner1"]["executable"] = "does_not_exist"
 
         # the test.conf has some extra compilcations that we don't want
         # by setting this to true, we avoid running things in parallel on multiple threads
-        yaml['executors']['TestRunner1']['execute_exclusively'] = True
-        yaml['executors']['TestRunner2']['execute_exclusively'] = True
+        yaml["executors"]["TestRunner1"]["execute_exclusively"] = True
+        yaml["executors"]["TestRunner2"]["execute_exclusively"] = True
 
         cnf = Configurator(yaml, DataStore(self.ui),
                            self.ui, exp_name='Test', data_file=self._tmp_file)
@@ -142,7 +142,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_execution_with_quick_set(self):
         self._set_path(__file__)
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['-R', '-q', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(["-R", "-q", "persistency.conf"])
         self.assertTrue(cmd_config.quick)
 
         cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
@@ -159,7 +159,7 @@ class ExecutorTest(ReBenchTestCase):
     def test_execution_with_invocation_and_iteration_set(self):
         self._set_path(__file__)
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(['-R', '-in=2', '-it=2', 'persistency.conf'])
+        cmd_config = option_parser.parse_args(["-R", "-in=2", "-it=2", "persistency.conf"])
         self.assertEqual(2, cmd_config.invocations)
         self.assertEqual(2, cmd_config.iterations)
 
@@ -176,18 +176,18 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_shell_options_without_filters(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf'])
+        args = option_parser.parse_args(["-d", "-v", "some.conf"])
         self.assertEqual(args.exp_filter, [])
 
     def test_shell_options_with_filters(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'exp_name'])
-        self.assertEqual(args.exp_filter, ['exp_name'])
+        args = option_parser.parse_args(["-d", "-v", "some.conf", "exp_name"])
+        self.assertEqual(args.exp_filter, ["exp_name"])
 
     def test_shell_options_with_executor_filter(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'e:foo'])
-        self.assertEqual(args.exp_filter, ['e:foo'])
+        args = option_parser.parse_args(["-d", "-v", "some.conf", "e:foo"])
+        self.assertEqual(args.exp_filter, ["e:foo"])
 
     def test_determine_exp_name_and_filters_empty(self):
         empty = []
@@ -196,28 +196,28 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all(self):
-        filters = ['all']
+        filters = ["all"]
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_some_name(self):
-        filters = ['foo']
+        filters = ["foo"]
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "foo")
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all_and_other(self):
-        filters = ['all', 'e:bar', 's:b']
+        filters = ["all", "e:bar", "s:b"]
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['e:bar', 's:b'])
+        self.assertEqual(exp_filter, ["e:bar", "s:b"])
 
     def test_determine_exp_name_and_filters_only_others(self):
-        filters = ['e:bar', 's:b']
+        filters = ["e:bar", "s:b"]
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, None)
-        self.assertEqual(exp_filter, ['e:bar', 's:b'])
+        self.assertEqual(exp_filter, ["e:bar", "s:b"])
 
 
 class _TestReporter(Reporter):
@@ -245,4 +245,4 @@ def test_suite():
 
 
 if __name__ == "__main__":
-    unittest.main(defaultTest='test_suite')
+    unittest.main(defaultTest="test_suite")

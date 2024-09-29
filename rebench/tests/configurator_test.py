@@ -35,7 +35,7 @@ class ConfiguratorTest(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/test.conf'),
                            DataStore(self.ui), self.ui, None, 'Test')
 
-        self.assertEqual('Test', cnf.experiment_name)
+        self.assertEqual("Test", cnf.experiment_name)
 
     def test_experiment_name_from_config_file(self):
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
@@ -184,4 +184,4 @@ def test_suite():
 
 
 if __name__ == "__main__":
-    unittest.main(defaultTest='test_suite')
+    unittest.main(defaultTest="test_suite")

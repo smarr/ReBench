@@ -22,7 +22,7 @@ class ReBenchDB(object):
             raise UIError("ReBenchDB expected server address, but got: %s" % server_base_url, None)
 
         # A user warning that old style configuration is detected
-        if server_base_url.endswith('/results'):
+        if server_base_url.endswith("/results"):
             raise UIError(
                 "The URL to ReBenchDB should exclude '/results' but was '%s'" % server_base_url,
                 None)
@@ -39,7 +39,7 @@ class ReBenchDB(object):
         if self._api_v2 is None:
             api_version = self._get_api_version()
             if api_version:
-                major = api_version.split('.')[0]
+                major = api_version.split(".")[0]
                 if int(major) == 2:
                     self._api_v2 = True
 
@@ -49,7 +49,7 @@ class ReBenchDB(object):
         return self._api_v2
 
     def send_results(self, benchmark_data, num_items):
-        success, response = self._send_to_rebench_db(benchmark_data, '/results')
+        success, response = self._send_to_rebench_db(benchmark_data, "/results")
 
         if success:
             self.ui.verbose_output_info(
@@ -59,7 +59,7 @@ class ReBenchDB(object):
         return success, response
 
     def send_completion(self, end_time):
-        success, response = self._send_to_rebench_db({'endTime': end_time}, '/completion')
+        success, response = self._send_to_rebench_db({"endTime": end_time}, "/completion")
 
         if success:
             self.ui.verbose_output_info(
@@ -81,22 +81,22 @@ class ReBenchDB(object):
             return response
 
     def _get_api_version(self):
-        url = self._server_base_url + '/results'
-        req = HttpRequest(url, method='OPTIONS')
+        url = self._server_base_url + "/results"
+        req = HttpRequest(url, method="OPTIONS")
         try:
             with urlopen(req) as socket:
                 socket.read()
-                return socket.getheader('X-ReBenchDB-Result-API-Version')
+                return socket.getheader("X-ReBenchDB-Result-API-Version")
         except:  # pylint: disable=bare-except
             # some error, so no API version available
             return None
 
     def convert_data_to_json(self, data):
-        return json.dumps(data, separators=(',', ':'), ensure_ascii=True)
+        return json.dumps(data, separators=(",", ":"), ensure_ascii=True)
 
     def _send_to_rebench_db(self, payload_data, operation):
-        payload_data['projectName'] = self._project_name
-        payload_data['experimentName'] = self._experiment_name
+        payload_data["projectName"] = self._project_name
+        payload_data["experimentName"] = self._experiment_name
         url = self._server_base_url + operation
 
         payload = self.convert_data_to_json(payload_data)
@@ -105,7 +105,7 @@ class ReBenchDB(object):
         with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding
             text_file.write(payload)
 
-        return self._send_with_retries(payload.encode('utf-8'), url)
+        return self._send_with_retries(payload.encode("utf-8"), url)
 
     def _send_with_retries(self, payload_bytes, url):
         attempts = 4
@@ -121,7 +121,7 @@ class ReBenchDB(object):
                 return False, None
             except (IOError, HTTPException) as error:
                 # pylint: disable-next=no-member
-                is_client_error = hasattr(error, 'status') and 400 <= error.status < 500
+                is_client_error = hasattr(error, "status") and 400 <= error.status < 500
                 if not is_client_error and attempts > 0:
                     # let's retry, the benchmark server might just time out, as usual
                     # but let it breath a little

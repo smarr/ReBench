@@ -39,7 +39,7 @@ class RebenchAdapterTest(TestCase):
     def test_simple_name(self):
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 557ms", None, 1)
-        self._assert_basics(data, 557, 'ms', 'total', True)
+        self._assert_basics(data, 557, "ms", "total", True)
 
     def test_doted_name(self):
         adapter = RebenchLogAdapter(True, None)
@@ -122,14 +122,14 @@ Savina.Chameneos: iterations=1 runtime: 48581us""", None, 13)
 
         self.assertFalse(measure.is_total())
         self.assertEqual(3903398, measure.value)
-        self.assertEqual('trace size', measure.criterion)
-        self.assertEqual('byte', measure.unit)
+        self.assertEqual("trace size", measure.criterion)
+        self.assertEqual("byte", measure.unit)
 
         measure = point.get_measurements()[1]
         self.assertFalse(measure.is_total())
         self.assertEqual(40, measure.value)
-        self.assertEqual('external data', measure.criterion)
-        self.assertEqual('byte', measure.unit)
+        self.assertEqual("external data", measure.criterion)
+        self.assertEqual("byte", measure.unit)
 
     def test_other_data_with_float_values(self):
         adapter = RebenchLogAdapter(True, None)
@@ -141,36 +141,36 @@ Savina.Chameneos: iterations=1 runtime: 64208us""", None, 13)
         measure = point.get_measurements()[0]
 
         self.assertEqual(5.7, measure.value)
-        self.assertEqual('some metrics', measure.criterion)
-        self.assertEqual('foobar', measure.unit)
+        self.assertEqual("some metrics", measure.criterion)
+        self.assertEqual("foobar", measure.unit)
 
         measure = point.get_measurements()[1]
         self.assertEqual(52, measure.value)
-        self.assertEqual('external data', measure.criterion)
-        self.assertEqual('GB', measure.unit)
+        self.assertEqual("external data", measure.criterion)
+        self.assertEqual("GB", measure.unit)
 
     def test_float_value(self):
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 557.123ms", None, 1)
-        self._assert_basics(data, 557.123, 'ms', 'total', True)
+        self._assert_basics(data, 557.123, "ms", "total", True)
 
     def test_float_value_in_scientific_notation(self):
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123e2ms", None, 1)
-        self._assert_basics(data, 557.123, 'ms', 'total', True)
+        self._assert_basics(data, 557.123, "ms", "total", True)
 
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123e-2ms", None, 1)
-        self._assert_basics(data, 0.0557123, 'ms', 'total', True)
+        self._assert_basics(data, 0.0557123, "ms", "total", True)
 
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 5.57123E-2ms", None, 1)
-        self._assert_basics(data, 0.0557123, 'ms', 'total', True)
+        self._assert_basics(data, 0.0557123, "ms", "total", True)
 
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: .57ms", None, 1)
-        self._assert_basics(data, 0.57, 'ms', 'total', True)
+        self._assert_basics(data, 0.57, "ms", "total", True)
 
         adapter = RebenchLogAdapter(True, None)
         data = adapter.parse_data("Dispatch: iterations=1 runtime: 57.ms", None, 1)
-        self._assert_basics(data, 57, 'ms', 'total', True)
+        self._assert_basics(data, 57, "ms", "total", True)

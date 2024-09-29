@@ -12,7 +12,7 @@ class Issue209CustomAdapter(ReBenchTestCase):
         super(Issue209CustomAdapter, self).setUp()
         self._set_path(__file__)
         self._data_store = DataStore(self.ui)
-        self._cli_options = ReBench().shell_options().parse_args(['Exp1'])
+        self._cli_options = ReBench().shell_options().parse_args(["Exp1"])
 
     def test_custom_adapter_gives_data(self):
         raw_config = load_config(self._path + '/issue_209.conf')
