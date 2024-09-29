@@ -31,7 +31,7 @@ class Benchmark(object):
         """
         name, details = value_with_optional_details(bench, {})
 
-        command = details.get('command', name)
+        command = details.get("command", name)
 
         gauge_adapter = details.get('gauge_adapter',
                                     suite.gauge_adapter)
@@ -98,9 +98,9 @@ class Benchmark(object):
 
     def as_dict(self):
         return {
-            'name': self.name,
-            'runDetails': self.run_details.as_dict(),
-            'suite': self.suite.as_dict()
+            "name": self.name,
+            "runDetails": self.run_details.as_dict(),
+            "suite": self.suite.as_dict(),
         }
 
     @classmethod

@@ -127,7 +127,7 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
     killed.
     """
     _setup_signal_handling_if_needed()
-    executable_name = args.split(' ', 1)[0]
+    executable_name = args.split(" ", 1)[0]
 
     thread = _SubprocessThread(executable_name, args, env, shell, cwd, verbose, stdout,
                                stderr, stdin_input)

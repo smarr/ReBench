@@ -36,12 +36,12 @@ class Issue58BuildExecutor(ReBenchTestCase):
         self._cleanup_log()
 
     def _cleanup_log(self):
-        if os.path.isfile(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        if os.path.isfile(self._path + "/build.log"):
+            os.remove(self._path + "/build.log")
 
     def _read_log(self):
         # pylint: disable-next=unspecified-encoding
-        with open(self._path + '/build.log', 'r') as log_file:
+        with open(self._path + "/build.log", "r") as log_file:
             return log_file.read()
 
     def test_build_executor_simple_cmd(self):
@@ -56,9 +56,9 @@ class Issue58BuildExecutor(ReBenchTestCase):
         try:
             self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(10, runs[0].get_number_of_data_points())
-            self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
+            self.assertTrue(os.path.isfile(self._path + "/vm_58a.sh"))
         finally:
-            os.remove(self._path + '/vm_58a.sh')
+            os.remove(self._path + "/vm_58a.sh")
 
     def test_build_executor_cmd_list(self):
         cnf = Configurator(load_config(self._path + '/issue_58.conf'), DataStore(self.ui),
@@ -72,9 +72,9 @@ class Issue58BuildExecutor(ReBenchTestCase):
         try:
             self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(10, runs[0].get_number_of_data_points())
-            self.assertTrue(os.path.isfile(self._path + '/vm_58b.sh'))
+            self.assertTrue(os.path.isfile(self._path + "/vm_58b.sh"))
         finally:
-            os.remove(self._path + '/vm_58b.sh')
+            os.remove(self._path + "/vm_58b.sh")
 
     def test_build_output_in_log(self):
         self.test_build_executor_simple_cmd()
@@ -97,9 +97,9 @@ class Issue58BuildExecutor(ReBenchTestCase):
         try:
             self.assertEqual("Bench1", runs[0].benchmark.name)
             self.assertEqual(0, runs[0].get_number_of_data_points())
-            self.assertTrue(os.path.isfile(self._path + '/vm_58a.sh'))
+            self.assertTrue(os.path.isfile(self._path + "/vm_58a.sh"))
         finally:
-            os.remove(self._path + '/vm_58a.sh')
+            os.remove(self._path + "/vm_58a.sh")
 
         log = self._read_log()
 
@@ -116,7 +116,7 @@ class Issue58BuildExecutor(ReBenchTestCase):
         ex = Executor(runs, True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
-        os.remove(self._path + '/vm_58a.sh')
+        os.remove(self._path + "/vm_58a.sh")
 
         log = self._read_log()
 

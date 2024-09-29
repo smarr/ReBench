@@ -14,11 +14,11 @@ class ReporterTest(ReBenchTestCase):
     def _run_benchmarks_and_do_reporting(self, rebench_db=True):
         option_parser = ReBench().shell_options()
         if rebench_db:
-            args = ['--commit-id=id', '--environment=test', '--project=test', 'persistency.conf']
-            config = load_config(self._path + '/persistency.conf')
+            args = ["--commit-id=id", "--environment=test", "--project=test", "persistency.conf"]
+            config = load_config(self._path + "/persistency.conf")
         else:
-            args = ['-R', 'test.conf', 'Test']
-            config = load_config(self._path + '/test.conf')
+            args = ["-R", "test.conf", "Test"]
+            config = load_config(self._path + "/test.conf")
 
         cmd_config = option_parser.parse_args(args)
         cnf = Configurator(config, DataStore(self.ui),

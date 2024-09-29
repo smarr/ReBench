@@ -20,9 +20,9 @@ class ProfileData(object):
 
     def as_dict(self):
         return {
-            'd': self.processed_data,
-            'nit': self.num_iterations,
-            'in': self.invocation
+            "d": self.processed_data,
+            "nit": self.num_iterations,
+            "in": self.invocation,
         }
 
     def as_str_list(self):

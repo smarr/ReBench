@@ -38,7 +38,7 @@ class SavinaLogAdapter(GaugeAdapter):
             match = self.re_log_line.match(line)
             if match:
                 time = float(match.group(2))
-                measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
+                measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
                 current = DataPoint(run_id)
                 current.add_measurement(measure)
                 data_points.append(current)

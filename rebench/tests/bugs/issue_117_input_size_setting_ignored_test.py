@@ -46,10 +46,10 @@ class Issue117Test(ReBenchTestCase):
                              "expected input_size at idx %d" % i)
 
     def test_input_size_setting_on_experiment(self):
-        self._test('ExpSetting', 6, [0, 10, 1, 2, 3, 4])
+        self._test("ExpSetting", 6, [0, 10, 1, 2, 3, 4])
 
     def test_input_size_setting_on_experiment_execution_detail(self):
-        self._test('ExecSetting', 6, [0, 10, 1, 2, 5, 6])
+        self._test("ExecSetting", 6, [0, 10, 1, 2, 5, 6])
 
     def test_input_size_setting_on_benchmark(self):
-        self._test('BaseSetting', 5, [0, 10, 1, 2, None])
+        self._test("BaseSetting", 5, [0, 10, 1, 2, None])

@@ -10,7 +10,7 @@ class ReBenchDBTest(ReBenchTestCase):
             port = server.get_free_port()
             server.start()
 
-            db = ReBenchDB('http://localhost:' + str(port), 'project', 'experiment', self.ui)
+            db = ReBenchDB("http://localhost:" + str(port), "project", "experiment", self.ui)
             self.assertTrue(db.is_api_v2())
         finally:
             server.process_and_shutdown()
@@ -21,7 +21,7 @@ class ReBenchDBTest(ReBenchTestCase):
             port = server.get_free_port()
             server.start()
 
-            db = ReBenchDB('http://localhost:' + str(port), 'project', 'experiment', self.ui)
+            db = ReBenchDB("http://localhost:" + str(port), "project", "experiment", self.ui)
             self.assertFalse(db.is_api_v2())
         finally:
             server.process_and_shutdown()

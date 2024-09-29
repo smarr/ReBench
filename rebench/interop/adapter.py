@@ -94,7 +94,7 @@ def instantiate_adapter(adapter_cfg, include_faulty, executor):
 
 def _search_in_rebench_modules(name, include_faulty, executor):
     adapter_name = name + "Adapter"
-    root = sys.modules['rebench.interop'].__path__
+    root = sys.modules["rebench.interop"].__path__
 
     for _, module_name, _ in pkgutil.walk_packages(root):
         # depending on how ReBench was executed, name might one of the two
@@ -124,11 +124,11 @@ def _get_adapter_case_insensitively_from_module(mod, adapter_name):
 def _load_directly(adapter_cfg, include_faulty, executor):
     name, path = next(iter(adapter_cfg.items()))
     full_path = join(executor.config_dir, path)
-    with open(full_path, 'r') as adapter_file:  # pylint: disable=unspecified-encoding
+    with open(full_path, "r") as adapter_file:  # pylint: disable=unspecified-encoding
         file_content = adapter_file.read()
 
-    module_globals = {'__name__': name}
-    code = compile(file_content, full_path, 'exec')
+    module_globals = {"__name__": name}
+    code = compile(file_content, full_path, "exec")
     exec(code, module_globals)  # pylint: disable=exec-used
 
     cls = _get_adapter_case_insensitively_from_module(module_globals, name)

@@ -36,7 +36,7 @@ def kill_process(pid, recursively, thread, sudo_kill_delivery_fn):
 
 def _get_process_children(pid):
     # pylint: disable-next=consider-using-with
-    proc = Popen('pgrep -P %d' % pid, shell=True, stdout=PIPE, stderr=PIPE)
+    proc = Popen("pgrep -P %d" % pid, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, _stderr = proc.communicate()
     result = [int(p) for p in stdout.split()]
     for child in result[:]:

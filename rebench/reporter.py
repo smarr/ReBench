@@ -108,7 +108,7 @@ class TextReporter(Reporter):
         return self._filter_columns(sorted_rows, column_value_sets)
 
     def _filter_columns(self, sorted_rows, column_value_sets):
-        assert self.expected_columns[-1] == 'Mean (ms)'
+        assert self.expected_columns[-1] == "Mean (ms)"
         last_column_idx = len(self.expected_columns) - 1
 
         summary = []
@@ -201,37 +201,38 @@ class CodespeedReporter(Reporter):
     def _result_data_template(self):
         # all None values have to be filled in
         return {
-            'commitid': self._cfg.commit_id,
-            'project': self._cfg.project,
-            'executable':   None,
-            'benchmark':    None,
-            'environment':  self._cfg.environment,
-            'branch':       self._cfg.branch,
-            'result_value': None,
-            'std_dev':      None,
-            'max':          None,
-            'min':          None}
+            "commitid": self._cfg.commit_id,
+            "project": self._cfg.project,
+            "executable": None,
+            "benchmark": None,
+            "environment": self._cfg.environment,
+            "branch": self._cfg.branch,
+            "result_value": None,
+            "std_dev": None,
+            "max": None,
+            "min": None,
+        }
 
     @staticmethod
     def _beautify_benchmark_name(name):
         """
         Currently just remove all bench, or benchmark strings.
         """
-        replace = re.compile('bench(mark)?', re.IGNORECASE)
-        return replace.sub('', name)
+        replace = re.compile("bench(mark)?", re.IGNORECASE)
+        return replace.sub("", name)
 
     def _format_for_codespeed(self, run_id, stats=None):
         result = self._result_data_template()
 
         if stats and not run_id.run_failed():
-            result['min'] = stats.min
-            result['max'] = stats.max
-            result['std_dev'] = stats.std_dev
-            result['result_value'] = stats.mean
+            result["min"] = stats.min
+            result["max"] = stats.max
+            result["std_dev"] = stats.std_dev
+            result["result_value"] = stats.mean
         else:
-            result['result_value'] = -1
+            result["result_value"] = -1
 
-        result['executable'] = self._cfg.executable or run_id.benchmark.suite.executor.name
+        result["executable"] = self._cfg.executable or run_id.benchmark.suite.executor.name
 
         if run_id.benchmark.codespeed_name:
             name = run_id.benchmark.codespeed_name
@@ -244,7 +245,7 @@ class CodespeedReporter(Reporter):
                        'input_sizes' : run_id.input_size_as_str,
                        'extra_args'  : run_id.benchmark.extra_args}
 
-        result['benchmark'] = name
+        result["benchmark"] = name
 
         return result
 
@@ -254,7 +255,7 @@ class CodespeedReporter(Reporter):
             return response
 
     def _send_to_codespeed(self, results, run_id):
-        payload = urlencode({'json': json.dumps(results)})
+        payload = urlencode({"json": json.dumps(results)})
 
         try:
             self._send_payload(payload)

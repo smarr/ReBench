@@ -53,7 +53,7 @@ class PlainSecondsLogAdapter(GaugeAdapter):
 
             try:
                 time = float(line) * 1000
-                measure = Measurement(invocation, iteration, time, 'ms', run_id, 'total')
+                measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
                 current.add_measurement(measure)
 
                 data_points.append(current)

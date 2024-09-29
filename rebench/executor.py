@@ -344,7 +344,7 @@ class Executor(object):
         if self.use_denoise:
             cmdline += "sudo "
             if env:
-                cmdline += "--preserve-env=" + ','.join(env.keys()) + " "
+                cmdline += "--preserve-env=" + ",".join(env.keys()) + " "
             cmdline += denoise_paths.get_denoise() + " "
             if not self._use_nice:
                 cmdline += "--without-nice "
@@ -354,7 +354,7 @@ class Executor(object):
                 cmdline += "--cset-path " + denoise_paths.get_cset() + " "
             if run_id.is_profiling():
                 cmdline += "--for-profiling "
-            cmdline += '--num-cores ' + str(num_cores) + " "
+            cmdline += "--num-cores " + str(num_cores) + " "
             cmdline += "exec -- "
 
         cmdline += gauge_adapter.acquire_command(run_id)
@@ -439,12 +439,12 @@ class Executor(object):
         build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
-        with open_with_enc(self.build_log, 'a', encoding='utf-8') as log_file:
+        with open_with_enc(self.build_log, "a", encoding="utf-8") as log_file:
             if stdout_result:
-                log_file.write(name + '|STD:')
+                log_file.write(name + "|STD:")
                 log_file.write(stdout_result)
             if stderr_result:
-                log_file.write(name + '|ERR:')
+                log_file.write(name + "|ERR:")
                 log_file.write(stderr_result)
 
     def without_missing_binaries(self, run_exe_missing, runs):

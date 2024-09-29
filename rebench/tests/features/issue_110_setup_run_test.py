@@ -30,29 +30,29 @@ from ...rebench import ReBench
 class Issue110Test(ReBenchTestCase):
 
     def _cleanup_file(self, file_name):
-        if os.path.isfile(self._path + '/' + file_name):
-            os.remove(self._path + '/' + file_name)
+        if os.path.isfile(self._path + "/" + file_name):
+            os.remove(self._path + "/" + file_name)
 
     def setUp(self):
         super(Issue110Test, self).setUp()
         self._set_path(__file__)
-        self._cleanup_file('build.log')
-        self._cleanup_file('rebench.data')
+        self._cleanup_file("build.log")
+        self._cleanup_file("rebench.data")
         self._data_store = DataStore(self.ui)
-        self._cli_options = ReBench().shell_options().parse_args(['-d', '--setup-only', 'dummy'])
+        self._cli_options = ReBench().shell_options().parse_args(["-d", "--setup-only", "dummy"])
 
     def tearDown(self):
-        self._cleanup_file('rebench.data')
-        self._cleanup_file('build.log')
-        self._cleanup_file('vm_110a.sh')
-        self._cleanup_file('vm_110b.sh')
+        self._cleanup_file("rebench.data")
+        self._cleanup_file("build.log")
+        self._cleanup_file("vm_110a.sh")
+        self._cleanup_file("vm_110b.sh")
 
     def _read_log(self):
-        file_name = 'build.log'
-        file_path = self._path + '/' + file_name
+        file_name = "build.log"
+        file_path = self._path + "/" + file_name
         if os.path.isfile(file_path):
             # pylint: disable-next=unspecified-encoding
-            with open(file_path, 'r') as log_file:
+            with open(file_path, "r") as log_file:
                 lines = log_file.read().strip().split("\n")
                 return set(lines)
         return None

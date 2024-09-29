@@ -46,13 +46,13 @@ class Issue112Test(ReBenchTestCase):
         self._assert_runs(cnf, 1, exp_result, exp_result)
 
     def test_invocation_setting_on_experiment(self):
-        self._test('ExpSetting', 10)
+        self._test("ExpSetting", 10)
 
     def test_invocation_setting_on_experiment_execution_detail(self):
-        self._test('ExecSetting', 7)
+        self._test("ExecSetting", 7)
 
     def test_invocation_setting_for_global_run_details(self):
-        self._test('GlobalSetting', 5)
+        self._test("GlobalSetting", 5)
 
     def test_invocation_setting_in_suite(self):
-        self._test('SuiteSetting', 3)
+        self._test("SuiteSetting", 3)

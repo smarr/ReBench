@@ -49,16 +49,16 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         return persistence.get_data_points()
 
     def test_records_multiple_data_points_from_single_execution_10(self):
-        self._records_data_points('Test1', 10)
+        self._records_data_points("Test1", 10)
 
     def test_records_multiple_data_points_from_single_execution_20(self):
-        self._records_data_points('Test2', 20)
+        self._records_data_points("Test2", 20)
 
     def test_records_multiple_data_points_from_single_execution_30(self):
-        self._records_data_points('Test3', 10)
+        self._records_data_points("Test3", 10)
 
     def test_associates_measurements_and_data_points_correctly(self):
-        data_points = self._records_data_points('Test1', 10)
+        data_points = self._records_data_points("Test1", 10)
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 
@@ -70,7 +70,7 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
                 self.assertEqual(unit, measurement.unit)
 
     def test_is_compatible_to_issue16_format(self):
-        data_points = self._records_data_points('Test3', 10)
+        data_points = self._records_data_points("Test3", 10)
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 

@@ -28,17 +28,17 @@ class BenchmarkSuite(object):
 
     @classmethod
     def compile(cls, suite_name, suite, executor, build_commands):
-        gauge_adapter = suite.get('gauge_adapter')
-        command = suite.get('command')
+        gauge_adapter = suite.get("gauge_adapter")
+        command = suite.get("command")
 
-        location = suite.get('location', executor.path)
-        if location and not location.startswith('~'):
+        location = suite.get("location", executor.path)
+        if location and not location.startswith("~"):
             location = os.path.abspath(location)
-        build = BuildCommand.create_commands(suite.get('build'), build_commands, location)
-        benchmarks_config = suite.get('benchmarks')
+        build = BuildCommand.create_commands(suite.get("build"), build_commands, location)
+        benchmarks_config = suite.get("benchmarks")
 
-        description = suite.get('description')
-        desc = suite.get('desc')
+        description = suite.get("description")
+        desc = suite.get("desc")
 
         run_details = ExpRunDetails.compile(suite, executor.run_details)
         variables = ExpVariables.compile(suite, executor.variables)
@@ -68,10 +68,10 @@ class BenchmarkSuite(object):
 
     def as_dict(self):
         result = {
-            'name': self.name,
-            'executor': self.executor.as_dict(),
-            'desc': self._desc
+            "name": self.name,
+            "executor": self.executor.as_dict(),
+            "desc": self._desc,
         }
         if self.build:
-            result['build'] = [b.as_dict() for b in self.build]
+            result["build"] = [b.as_dict() for b in self.build]
         return result

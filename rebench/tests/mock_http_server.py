@@ -27,7 +27,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.server.options_requests += 1
 
-    def log_request(self, code='-', size='-'):
+    def log_request(self, code="-", size="-"):
         pass
 
 
@@ -53,7 +53,7 @@ class MockHTTPServer(object):
 
     def get_free_port(self):
         s = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
-        s.bind(('localhost', 0))
+        s.bind(("localhost", 0))
         _address, port = s.getsockname()
         s.close()
 
@@ -61,7 +61,7 @@ class MockHTTPServer(object):
         return port
 
     def start(self):
-        self._server = HTTPServerWithCounter(('localhost', self._port), _RequestHandler)
+        self._server = HTTPServerWithCounter(("localhost", self._port), _RequestHandler)
         self._server.api_v2 = self.api_v2
         if self._test_error_handling:
             self._server.status_code = 400

@@ -34,7 +34,7 @@ class Measurement(object):
         self.filename = filename
 
     def is_total(self):
-        return self.criterion == 'total'
+        return self.criterion == "total"
 
     def as_str_list(self):
         if isinstance(self.value, float):
@@ -65,11 +65,11 @@ class Measurement(object):
 
     def as_dict(self):
         return {
-            'c': self.criterion,
-            'in': self.invocation,
-            'it': self.iteration,
-            'u': self.unit,
-            'v': self.value
+            "c": self.criterion,
+            "in": self.invocation,
+            "it": self.iteration,
+            "u": self.unit,
+            "v": self.value,
         }
 
     def __repr__(self):

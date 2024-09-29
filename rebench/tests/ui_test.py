@@ -30,12 +30,12 @@ class UITest(ReBenchTestCase):
 
     def test_config_not_validating(self):
         with self.assertRaises(UIError) as err:
-            load_config(self._path + '/broken-schema.conf')
+            load_config(self._path + "/broken-schema.conf")
         self.assertIsInstance(err.exception.source_exception, SchemaError)
 
     def test_config_not_proper_yaml(self):
         with self.assertRaises(UIError) as err:
-            load_config(self._path + '/broken-yaml.conf')
+            load_config(self._path + "/broken-yaml.conf")
         self.assertIsInstance(err.exception.source_exception, YAMLError)
 
     def test_is_first_error_with(self):

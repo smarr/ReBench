@@ -50,12 +50,12 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         self._cleanup_log()
 
     def _cleanup_log(self):
-        if os.path.isfile(self._path + '/build.log'):
-            os.remove(self._path + '/build.log')
+        if os.path.isfile(self._path + "/build.log"):
+            os.remove(self._path + "/build.log")
 
     def _read_log(self):
         # pylint: disable-next=unspecified-encoding
-        with open(self._path + '/build.log', 'r') as log_file:
+        with open(self._path + "/build.log", "r") as log_file:
             return log_file.read()
 
     def test_env_vars_are_set_as_expected(self):
@@ -100,12 +100,12 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         ex.execute()
 
         log = self._read_log()
-        parts = log.split('|', 2)
+        parts = log.split("|", 2)
         self.assertEqual("E:exe-with-build-and-env", parts[0])
 
-        env_parts = parts[1].split(':')
-        env = sorted(env_parts[1].split('\n'))
-        self.assertEqual('', env[0])
+        env_parts = parts[1].split(":")
+        env = sorted(env_parts[1].split("\n"))
+        self.assertEqual("", env[0])
         self.assertTrue(env[1].startswith("PWD="))
         if env[2].startswith("SHLVL"):  # Platform differences
             self.assertEqual("SHLVL=1", env[2])
@@ -126,7 +126,7 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         ex.execute()
 
         log = self._read_log()
-        parts = log.split('|', 2)
+        parts = log.split("|", 2)
         self.assertEqual("E:exe-with-build-but-not-env", parts[0])
         self._assert_empty_standard_env(parts[1])
 
@@ -151,11 +151,11 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
                          r" --preserve-env=VAR1,VAR3,PYTHONPATH [^\s]*rebench-denoise")
 
     def _assert_empty_standard_env(self, log_remainder):
-        env_parts = log_remainder.split(':')
+        env_parts = log_remainder.split(":")
         self.assertEqual("STD", env_parts[0])
 
-        env = sorted(env_parts[1].split('\n'))
-        self.assertEqual('', env[0])
+        env = sorted(env_parts[1].split("\n"))
+        self.assertEqual("", env[0])
         self.assertTrue(env[1].startswith("PWD="))
         if len(env) > 2:
             self.assertEqual("SHLVL=1", env[2])
@@ -180,4 +180,4 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(defaultTest='test_suite')
+    unittest.main(defaultTest="test_suite")

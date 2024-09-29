@@ -26,11 +26,11 @@ from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_enc
 from humanfriendly.terminal.spinners import Spinner
 
 _DETAIL_INDENT = "    "
-_ERASE_LINE = '\r\x1b[2K'
+_ERASE_LINE = "\r\x1b[2K"
 
 
 def escape_braces(string):
-    return string.replace('{', '{{').replace('}', '}}')
+    return string.replace("{", "{{").replace("}", "}}")
 
 
 class UI(object):
@@ -111,7 +111,7 @@ class UI(object):
 
     def output(self, text, *args, **kw):
         self._erase_spinner()
-        auto_encode(sys.stdout, text + '\n', *args, **kw)
+        auto_encode(sys.stdout, text + "\n", *args, **kw)
         sys.stdout.flush()
 
     def _output_on_stream(self, tmp_stream, out_stream, text, color, *args, **kw):
@@ -127,11 +127,11 @@ class UI(object):
 
     def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
         self._output_detail_header(run_id, cmd, cwd)
-        self._output(text, 'magenta', **kw)
+        self._output(text, "magenta", **kw)
 
     def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
         self._output_detail_header(run_id, cmd, cwd)
-        self._output(text, 'red', **kw)
+        self._output(text, "red", **kw)
 
     def _is_first_error_with(self, text):
         if text not in self._error_once_cache:
@@ -141,12 +141,12 @@ class UI(object):
 
     def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
         stream = StringIO("")
-        self._output_on_stream(stream, sys.stdout, text, 'red', **kw)
+        self._output_on_stream(stream, sys.stdout, text, "red", **kw)
         stream_str = stream.getvalue()
 
         if self._is_first_error_with(stream_str):
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'red', **kw)
+            self._output(text, "red", **kw)
 
     def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
@@ -156,7 +156,7 @@ class UI(object):
     def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'red', faint=True, **kw)
+            self._output(text, "red", faint=True, **kw)
 
     def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
@@ -166,7 +166,7 @@ class UI(object):
     def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
         if self._debug:
             self._output_detail_header(run_id, cmd, cwd)
-            self._output(text, 'red', faint=True, **kw)
+            self._output(text, "red", faint=True, **kw)
 
 
 class TestDummyUI(object):

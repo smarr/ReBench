@@ -1,8 +1,8 @@
 from recommonmark.parser import CommonMarkParser
 
 source_parsers = {
-    '.md': CommonMarkParser,
+    ".md": CommonMarkParser,
 }
 
-source_suffix = ['.md']
-html_theme = 'gitbook'
+source_suffix = [".md"]
+html_theme = "gitbook"
