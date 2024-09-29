@@ -6,8 +6,8 @@ import sys
 
 test = sys.argv[2]
 
-env = os.environ.items()
-env = sorted(env, key=lambda el: el[0])
+env_items = os.environ.items()
+env = sorted(env_items, key=lambda el: el[0])
 print(test)
 print(env)
 
