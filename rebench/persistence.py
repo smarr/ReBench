@@ -113,7 +113,7 @@ class DataStore(object):
         return cfg
 
 
-class _AbstractPersistence(object):
+class AbstractPersistence(object):
 
     def load_data(self, runs, discard_run_data):
         """
@@ -135,7 +135,7 @@ class _AbstractPersistence(object):
         """Needs to be implemented by subclass"""
 
 
-class _ConcretePersistence(_AbstractPersistence):
+class _ConcretePersistence(AbstractPersistence):
 
     def __init__(self, data_store, ui):
         self._data_store = data_store
@@ -143,7 +143,7 @@ class _ConcretePersistence(_AbstractPersistence):
         self.ui = ui
 
 
-class _CompositePersistence(_AbstractPersistence):
+class _CompositePersistence(AbstractPersistence):
 
     def __init__(self, file_pers, rebench_db):
         self._file = file_pers

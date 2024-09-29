@@ -41,7 +41,7 @@ class Element(object):
         return result
 
 
-def _create_element(m):
+def _create_element(m) -> Element:
     percent = float(m.group(1))
     binary = m.group(2)
     shared_object = m.group(3)
@@ -59,9 +59,9 @@ class PerfParser(object):
     re_child = re.compile(r"^\s+(?:\|\s*)*--(\d+\.\d\d)%--(\S+)$")
     re_stack_elements = re.compile(r"^\s+(?:\|\s+)*(?:---)?(\S+)$")
 
-    def __init__(self, filename=None):
+    def __init__(self, filename: str | None = None):
         self._filename = filename
-        self._elements = []
+        self._elements: list[Element] = []
 
     def parse_lines(self, lines):
         try:
@@ -75,7 +75,7 @@ class PerfParser(object):
 
     def _parse_lines(self, lines):
         top_elements = self._elements
-        stack = []
+        stack: list[Element] = []
         prev_divider = ""
 
         for line in lines:
@@ -136,6 +136,9 @@ class PerfParser(object):
                     continue
 
     def parse(self):
+        if self._filename is None:
+            return
+
         with open(self._filename) as perf_file:  # pylint: disable=unspecified-encoding
             self.parse_lines(perf_file)
 

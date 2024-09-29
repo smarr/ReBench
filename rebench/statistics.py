@@ -20,7 +20,12 @@
 import math
 
 
-class SampleCounter(object):
+class WithSamples(object):
+    def add_sample(self, _sample):
+        pass
+
+
+class SampleCounter(WithSamples):
 
     def __init__(self):
         self.num_samples = 0
@@ -30,7 +35,7 @@ class SampleCounter(object):
         self.num_samples += 1
 
 
-class StatisticProperties(object):
+class StatisticProperties(WithSamples):
     """
     The class maintains running statistics for the added data points.
     Data points can be added one by one, or as lists of values.

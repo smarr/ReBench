@@ -20,24 +20,34 @@
 import os
 import re
 import shlex
+from typing import TYPE_CHECKING
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
 from ..output import UIError
 from ..statistics import StatisticProperties, SampleCounter
 
+if TYPE_CHECKING:
+    from ..persistence import AbstractPersistence
+    from ..reporter import Reporter
+    from ..statistics import WithSamples
+
 
 class RunId(object):
 
-    def __init__(self, benchmark, cores, input_size, var_value, tag):
+    def __init__(self, benchmark: Benchmark, cores : str,
+                 input_size: str, var_value: str, tag: str):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
         self.var_value = var_value
         self.tag = tag
 
-        self._reporters = set()
-        self._persistence = set()
+        self._reporters: set[Reporter] = set()
+        self._persistence: set[AbstractPersistence] = set()
+
+        self.statistics: WithSamples
+
         if self.is_profiling():
             self.statistics = SampleCounter()
         else:

@@ -17,9 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import TYPE_CHECKING
+
 from . import value_with_optional_details
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
+
+if TYPE_CHECKING:
+    from .benchmark_suite import BenchmarkSuite
+    from .run_id import RunId
+    from ..interop.adapter import GaugeAdapter
+    from ..persistence import DataStore
 
 
 class Benchmark(object):
@@ -46,8 +54,9 @@ class Benchmark(object):
                          variables, extra_args, run_details, codespeed_name,
                          data_store)
 
-    def __init__(self, name, command, gauge_adapter, suite, variables, extra_args,
-                 run_details, codespeed_name, data_store):
+    def __init__(self, name: str, command: str, gauge_adapter: "GaugeAdapter",
+                 suite: "BenchmarkSuite", variables: str, extra_args: str,
+                 run_details: "ExpRunDetails", codespeed_name: str, data_store: "DataStore"):
         assert run_details is None or isinstance(run_details, ExpRunDetails)
         self.name = name
 
@@ -70,7 +79,7 @@ class Benchmark(object):
         self.variables = variables
 
         # the compiled runs, these might be shared with other benchmarks/suites
-        self._runs = set()
+        self._runs: set[RunId] = set()
 
         data_store.register_config(self)
 

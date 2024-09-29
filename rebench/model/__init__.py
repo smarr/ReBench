@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import Optional, Any
 
 
 def prefer_important(val, default):
@@ -29,7 +30,7 @@ def prefer_important(val, default):
     return val
 
 
-def is_marked_important(val):
+def is_marked_important(val) -> bool:
     if isinstance(val, int):
         return False
     return str(val)[-1] == "!"
@@ -47,25 +48,25 @@ def remove_important(val):
     return int(val)
 
 
-def none_or_int(value):
+def none_or_int(value) -> Optional[int]:
     if value:
         return int(value)
     return value
 
 
-def none_or_float(value):
+def none_or_float(value) -> Optional[float]:
     if value:
         return float(value)
     return value
 
 
-def none_or_bool(value):
+def none_or_bool(value) -> Optional[bool]:
     if value:
         return bool(value)
     return value
 
 
-def none_or_dict(value):
+def none_or_dict(value) -> Optional[dict[str, Any]]:
     if value:
         assert isinstance(value, dict)
     return value

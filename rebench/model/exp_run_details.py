@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import Optional
 from . import none_or_int, none_or_float, none_or_bool, none_or_dict, \
     remove_important, prefer_important
 
@@ -59,8 +60,9 @@ class ExpRunDetails(object):
         return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {},
                              invocations_override, iterations_override)
 
-    def __init__(self, invocations, iterations, warmup, min_iteration_time,
-                 max_invocation_time, ignore_timeouts, parallel_interference_factor,
+    def __init__(self, invocations: Optional[int], iterations: Optional[int], warmup: Optional[int],
+                 min_iteration_time: Optional[int], max_invocation_time: Optional[int],
+                 ignore_timeouts, parallel_interference_factor,
                  execute_exclusively, retries_after_failure, env,
                  invocations_override, iterations_override):
         self.invocations = invocations

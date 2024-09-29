@@ -82,7 +82,7 @@ class TextReporter(Reporter):
 
         We also show always the last column, which is the mean of the total values.
         """
-        column_value_sets = [set() for _ in self.expected_columns]
+        column_value_sets: list[set[str]] = [set() for _ in self.expected_columns]
 
         rows = []
 
