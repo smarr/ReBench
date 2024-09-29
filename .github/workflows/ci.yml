@@ -44,6 +44,12 @@ jobs:
           pylint rebench
         if: matrix.python-version == '3.12'
 
+      - name: Install and run black
+        run: |
+          pip install black
+          black --check rebench
+        if: matrix.python-version == '3.12'
+
       - name: Upload coverage results to Coveralls
         run: coveralls
         env:
