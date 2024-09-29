@@ -17,10 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .run_id import RunId
+    from ..ui import UI
 
 
 class TerminationCheck(object):
-    def __init__(self, run_id, ui):
+    def __init__(self, run_id: "RunId", ui: "UI"):
         self._run_id = run_id
         self.ui = ui
         self._consecutive_erroneous_executions = 0

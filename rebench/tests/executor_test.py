@@ -190,7 +190,7 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(args.exp_filter, ["e:foo"])
 
     def test_determine_exp_name_and_filters_empty(self):
-        empty = []
+        empty: list[str] = []  # type: ignore
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(empty)
         self.assertEqual(exp_name, None)
         self.assertEqual(exp_filter, [])

@@ -174,7 +174,7 @@ def validate_gauge_adapters(raw_config):
 
 class Configurator(object):
 
-    def __init__(self, raw_config, data_store, ui, cli_options=None, cli_reporter=None,
+    def __init__(self, raw_config: Mapping, data_store, ui, cli_options=None, cli_reporter=None,
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
