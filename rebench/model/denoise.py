@@ -50,7 +50,7 @@ class Denoise(object):
 
     @property
     def requested_no_turbo(self):
-        return self.no_turbo is not "no_change"
+        return self.no_turbo != "no_change"
 
     @property
     def requested_minimize_perf_sampling(self):
