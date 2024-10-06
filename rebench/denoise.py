@@ -1,11 +1,11 @@
 import json
 import os
-import subprocess
 import sys
 
 from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
+from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
 
 from .output import output_as_str, UIError
 from .subprocess_kill import kill_process
@@ -30,10 +30,13 @@ class CommandsPaths:
             if os.path.isfile("/usr/bin/which"):
                 self._which_path = "/usr/bin/which"
             else:
-                raise UIError("The basic `which` command was not found." +
-                              " In many systems it is available at /usr/bin/which." +
-                              " If it is elsewhere rebench-denoise will need to be" +
-                              " adapted to support a different location.\n", None)
+                raise UIError(
+                    "The basic `which` command was not found."
+                    + " In many systems it is available at /usr/bin/which."
+                    + " If it is elsewhere rebench-denoise will need to be"
+                    + " adapted to support a different location.\n",
+                    None,
+                )
 
         return self._which_path
 
@@ -44,19 +47,20 @@ class CommandsPaths:
         """
         try:
             selected_cmd = output_as_str(
-                subprocess.check_output(
-                    [self.get_which(), command],
-                    shell=False, stderr=subprocess.DEVNULL)).strip()
+                check_output([self.get_which(), command], shell=False, stderr=DEVNULL)
+            ).strip()
             result_cmd = os.path.realpath(selected_cmd)
-        except subprocess.CalledProcessError:
+        except CalledProcessError:
             result_cmd = command
 
         try:
-            subprocess.check_output(
-                    [result_cmd] + arguments_for_successful_exe,
-                    shell=False, stderr=subprocess.DEVNULL)
+            check_output(
+                [result_cmd] + arguments_for_successful_exe,
+                shell=False,
+                stderr=DEVNULL,
+            )
             return result_cmd
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except (CalledProcessError, FileNotFoundError):
             return False
 
     def has_cset(self):
@@ -73,18 +77,21 @@ class CommandsPaths:
 
     def has_denoise(self):
         if self._denoise_path is None:
-            self._denoise_path = self._absolute_path_for_command("rebench-denoise", ["--version"])
+            self._denoise_path = self._absolute_path_for_command(
+                "rebench-denoise", ["--version"]
+            )
 
         return self._denoise_path is not None and self._denoise_path is not False
 
     def get_denoise(self):
         if not self.has_denoise():
-            raise UIError("rebench-denoise not found. " +
-                          "Was ReBench installed so that `rebench` and `rebench-denoise` " +
-                          "are on the PATH? Python's bin directory for packages " +
-                          "may need to be added to PATH manually.\n\n" +
-                          "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
-                          None)
+            raise UIError(
+                "rebench-denoise not found. "
+                "Was ReBench installed so that `rebench` and `rebench-denoise` are on the PATH? "
+                "Python's bin directory for packages may need to be added to PATH manually.\n\n"
+                "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
+                None,
+            )
 
         return self._denoise_path
 
@@ -107,14 +114,13 @@ class CommandsPaths:
 paths = CommandsPaths()
 
 
-def _can_set_niceness():
+def _can_set_niceness() -> bool:
     """
     Check whether we can ask the operating system to influence the priority of
     our benchmarks.
     """
     try:
-        output = subprocess.check_output(["nice", "-n-20", "echo", "test"],
-                                         stderr=subprocess.STDOUT)
+        output = check_output(["nice", "-n-20", "echo", "test"], stderr=STDOUT)
         output = output_as_str(output)
     except OSError:
         return False
@@ -142,8 +148,10 @@ def _activate_shielding(num_cores):
         return False
 
     try:
-        output = subprocess.check_output([paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
-                                         stderr=subprocess.STDOUT)
+        output = check_output(
+            [paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
+            stderr=STDOUT,
+        )
         output = output_as_str(output)
     except OSError:
         return False
@@ -159,13 +167,12 @@ def _activate_shielding(num_cores):
 
 def _reset_shielding():
     try:
-        output = subprocess.check_output([paths.get_cset(), "shield", "-r"],
-                                         stderr=subprocess.STDOUT)
+        output = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
         output = output_as_str(output)
         return "cset: done" in output
     except OSError:
         return False
-    except subprocess.CalledProcessError:
+    except CalledProcessError:
         return False
 
 
@@ -174,22 +181,28 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
-def read_scaling_governor():
+def read_scaling_governor() -> str | None:
     try:
-        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r") as gov_file:
+        # pylint: disable-next=unspecified-encoding
+        with open(
+            "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r"
+        ) as gov_file:
             return gov_file.read().strip()
     except IOError:
         return None
 
 
-def _set_scaling_governor(governor, num_cores):
-    assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE),\
-        "The scaling governor is expected to be performance or powersave, but was " + governor
+def _set_scaling_governor(governor, num_cores) -> str:
+    assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE), (
+        "The scaling governor is expected to be 'performance' or 'powersave', but was "
+        + governor
+    )
 
     try:
         for cpu_i in range(num_cores):
-            filename = "/sys/devices/system/cpu/cpu" + str(cpu_i) + "/cpufreq/scaling_governor"
-            with open(filename, "w") as gov_file:  # pylint: disable=unspecified-encoding
+            filename = f"/sys/devices/system/cpu/cpu{cpu_i}/cpufreq/scaling_governor"
+            # pylint: disable-next=unspecified-encoding
+            with open(filename, "w") as gov_file:
                 gov_file.write(governor + "\n")
     except IOError:
         return "failed"
@@ -199,6 +212,7 @@ def _set_scaling_governor(governor, num_cores):
 
 def read_no_turbo():
     try:
+        # pylint: disable-next=unspecified-encoding
         with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
             return nt_file.read().strip() == "1"
     except IOError:
@@ -220,7 +234,7 @@ def _set_no_turbo(with_no_turbo):
     return with_no_turbo
 
 
-def _configure_perf_sampling(for_profiling):
+def _configure_perf_sampling(for_profiling: bool) -> int | str:
     try:
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
@@ -248,7 +262,7 @@ def _configure_perf_sampling(for_profiling):
         return 1
 
 
-def _restore_perf_sampling():
+def _restore_perf_sampling() -> str:
     try:
         # pylint: disable-next=unspecified-encoding
         with open("/proc/sys/kernel/perf_cpu_time_max_percent", "w") as perc_file:
@@ -274,11 +288,13 @@ def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
     can_nice = _can_set_niceness() if use_nice else False
     shielding = _activate_shielding(num_cores) if use_shielding else False
 
-    return {"scaling_governor": governor,
-            "no_turbo": no_turbo,
-            "perf_event_max_sample_rate": perf,
-            "can_set_nice": can_nice,
-            "shielding": shielding}
+    return {
+        "scaling_governor": governor,
+        "no_turbo": no_turbo,
+        "perf_event_max_sample_rate": perf,
+        "can_set_nice": can_nice,
+        "shielding": shielding,
+    }
 
 
 def _restore_standard_settings(num_cores, use_shielding):
@@ -287,10 +303,12 @@ def _restore_standard_settings(num_cores, use_shielding):
     perf = _restore_perf_sampling()
     shielding = _reset_shielding() if use_shielding else False
 
-    return {"scaling_governor": governor,
-            "no_turbo": no_turbo,
-            "perf_event_max_sample_rate": perf,
-            "shielding": shielding}
+    return {
+        "scaling_governor": governor,
+        "no_turbo": no_turbo,
+        "perf_event_max_sample_rate": perf,
+        "shielding": shielding,
+    }
 
 
 def _exec(num_cores, use_nice, use_shielding, args):
@@ -360,10 +378,6 @@ def _shell_options():
     # TODO: should have a new command that determines initial settings and capabilities
     # should use that at the start of rebench to find out what we can and can't set
     parser = ArgumentParser()
-    parser.add_argument('--version', action='version',
-                        version="%(prog)s " + rebench_version)
-    parser.add_argument('--json', action='store_true', default=False,
-                        help='Output results as JSON for processing')
     parser.add_argument('--without-nice', action='store_false', default=True,
                         dest='use_nice', help="Don't try setting process niceness")
     parser.add_argument('--without-shielding', action='store_false', default=True,
@@ -382,6 +396,15 @@ def _shell_options():
                               "`test` executes a computation for 20 seconds in parallel. " +
                               "it is only useful to test rebench-denoise itself."),
                         default=None)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + rebench_version
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output results as JSON for processing",
+    )
     return parser
 
 
