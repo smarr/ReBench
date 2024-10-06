@@ -176,7 +176,7 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
-def read_scaling_governor() -> str | None:
+def _read_scaling_governor() -> str | None:
     try:
         with open(
             "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r", encoding="utf-8"
@@ -203,7 +203,7 @@ def _set_scaling_governor(governor, num_cores) -> str:
     return governor
 
 
-def read_no_turbo():
+def _read_no_turbo() -> bool | None:
     try:
         # pylint: disable-next=unspecified-encoding
         with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
@@ -278,6 +278,59 @@ def _restore_perf_sampling() -> str:
     except IOError:
         return "failed"
     return "restored"
+
+
+def _initial_settings_and_capabilities(num_cores: int, args) -> dict:
+    result = {}
+
+    if args.use_nice:
+        result["can_set_nice"] = _can_set_niceness()
+
+    if args.use_shielding:
+        if paths.has_cset():
+            can_use_shielding = _activate_shielding(num_cores)
+            if can_use_shielding:
+                _reset_shielding()
+        else:
+            can_use_shielding = False
+        result["can_set_shield"] = can_use_shielding
+
+    if args.use_no_turbo:
+        initial_no_turbo = _read_no_turbo()
+        can_set_no_turbo = False
+
+        if initial_no_turbo is not None and not initial_no_turbo:
+            result = _set_no_turbo(True)
+            can_set_no_turbo = result is True
+            if can_set_no_turbo:
+                _set_no_turbo(False)
+
+        result["can_set_no_turbo"] = can_set_no_turbo
+        result["initial_no_turbo"] = initial_no_turbo
+
+    if args.use_scaling_governor:
+        initial_governor = _read_scaling_governor()
+        can_set_governor = False
+
+        if (
+            initial_governor is not None
+            and initial_governor != SCALING_GOVERNOR_PERFORMANCE
+        ):
+            result = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
+            can_set_governor = result == SCALING_GOVERNOR_PERFORMANCE
+
+        result["can_set_scaling_governor"] = can_set_governor
+        result["initial_scaling_governor"] = initial_governor
+
+    if args.use_mini_perf_sampling:
+        can_minimize_perf_sampling = (
+            _configure_perf_sampling(args.for_profiling) != "failed"
+        )
+        if can_minimize_perf_sampling:
+            _restore_perf_sampling()
+        result["can_minimize_perf_sampling"] = can_minimize_perf_sampling
+
+    return result
 
 
 def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
@@ -375,8 +428,6 @@ def _test(num_cores):
 
 
 def _shell_options():
-    # TODO: should have a new command that determines initial settings and capabilities
-    # should use that at the start of rebench to find out what we can and can't set
     parser = ArgumentParser()
     parser.add_argument(
         "--json",
@@ -385,6 +436,7 @@ def _shell_options():
         help="Output results as JSON for processing",
     )
     parser.add_argument(
+        "-N",
         "--without-nice",
         action="store_false",
         default=True,
@@ -392,6 +444,7 @@ def _shell_options():
         help="Don't try setting process niceness",
     )
     parser.add_argument(
+        "-S",
         "--without-shielding",
         action="store_false",
         default=True,
@@ -399,6 +452,31 @@ def _shell_options():
         help="Don't try shielding cores",
     )
     parser.add_argument(
+        "-T",
+        "--without-no-turbo",
+        action="store_false",
+        default=True,
+        dest="use_no_turbo",
+        help="Don't try setting no_turbo",
+    )
+    parser.add_argument(
+        "-G",
+        "--without-scaling-governor",
+        action="store_false",
+        default=True,
+        dest="use_scaling_governor",
+        help="Don't try setting scaling governor",
+    )
+    parser.add_argument(
+        "-P",
+        "--without-min-perf-sampling",
+        action="store_false",
+        default=True,
+        dest="use_mini_perf_sampling",
+        help="Don't try to minimize perf sampling",
+    )
+    parser.add_argument(
+        "-p",
         "--for-profiling",
         action="store_true",
         default=False,
@@ -412,7 +490,8 @@ def _shell_options():
     parser.add_argument(
         "command",
         help=(
-            "`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
+            "`init`|`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
+            "`init` determines initial settings and capabilities. "
             "`minimize` sets system to reduce noise. "
             "`restore` sets system to the assumed original settings. "
             "`exec -- ` executes the given arguments. "
@@ -432,6 +511,56 @@ EXIT_CODE_NUM_CORES_UNSET = 2
 EXIT_CODE_NO_COMMAND_SELECTED = 3
 
 
+def _report_init(result: dict, args):
+    if args.use_nice:
+        print("Can set niceness: ", result.get("can_set_nice", "Unknown"))
+
+    if args.use_shielding:
+        print("Can use shielding: ", result.get("can_set_shield", "Unknown"))
+
+    if args.use_no_turbo:
+        print("Can set no_turbo: ", result.get("can_set_no_turbo", "Unknown"))
+        print("Initial no_turbo: ", result.get("initial_no_turbo", "Unknown"))
+
+    if args.use_scaling_governor:
+        print(
+            "Can set scaling_governor: ",
+            result.get("can_set_scaling_governor", "Unknown"),
+        )
+        print(
+            "Initial scaling_governor: ",
+            result.get("initial_scaling_governor", "Unknown"),
+        )
+
+    if args.use_mini_perf_sampling:
+        print(
+            "Can minimize perf sampling: ",
+            result.get("can_minimize_perf_sampling", "Unknown"),
+        )
+
+
+def _report(result: dict, args):
+    if args.use_nice:
+        print("Can set niceness:                   ", result.get("can_set_nice", False))
+
+    if args.use_shielding:
+        print("Enabled core shielding:             ", result.get("shielding", False))
+
+    if args.use_scaling_governor:
+        print(
+            "Setting scaling_governor:           ", result.get("scaling_governor", None)
+        )
+
+    if args.use_no_turbo:
+        print("Setting no_turbo:                   ", result.get("no_turbo", False))
+
+    if args.use_mini_perf_sampling:
+        print(
+            "Setting perf_event_max_sample_rate: ",
+            result.get("perf_event_max_sample_rate", None),
+        )
+
+
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
@@ -441,7 +570,9 @@ def main_func():
     num_cores = int(args.num_cores) if args.num_cores else None
     result = {}
 
-    if args.command == "minimize" and num_cores is not None:
+    if args.command == "init" and num_cores is not None:
+        result = _initial_settings_and_capabilities(num_cores, args)
+    elif args.command == "minimize" and num_cores is not None:
         result = _minimize_noise(
             num_cores, args.use_nice, args.use_shielding, args.for_profiling
         )
@@ -463,18 +594,10 @@ def main_func():
     if args.json:
         print(json.dumps(result))
     else:
-        print(
-            "Setting scaling_governor:           ", result.get("scaling_governor", None)
-        )
-        print("Setting no_turbo:                   ", result.get("no_turbo", False))
-        print(
-            "Setting perf_event_max_sample_rate: ",
-            result.get("perf_event_max_sample_rate", None),
-        )
-        print("")
-        print("Enabled core shielding:             ", result.get("shielding", False))
-        print("")
-        print("Can set niceness:                   ", result.get("can_set_nice", False))
+        if args.command == "init":
+            _report_init(result, args)
+        else:
+            _report(result, args)
 
     if "failed" in result.values():
         return EXIT_CODE_CHANGING_SETTINGS_FAILED
