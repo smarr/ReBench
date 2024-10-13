@@ -110,7 +110,7 @@ class CommandsPaths:
 paths = CommandsPaths()
 
 
-def _can_set_niceness() -> bool:
+def _can_set_niceness() -> bool | str:
     """
     Check whether we can ask the operating system to influence the priority of
     our benchmarks.
@@ -119,10 +119,10 @@ def _can_set_niceness() -> bool:
         output = check_output(["nice", "-n-20", "echo", "test"], stderr=STDOUT)
         output = output_as_str(output)
     except OSError:
-        return False
+        return "failed: OSError"
 
     if "cannot set niceness" in output or "Permission denied" in output:
-        return False
+        return "failed: permission denied"
     else:
         return True
 
@@ -135,40 +135,51 @@ def _shield_upper_bound(num_cores):
     return num_cores - 1
 
 
-def _activate_shielding(num_cores):
+def _get_core_spec(num_cores) -> str:
     min_cores = _shield_lower_bound(num_cores)
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
+    return core_spec
+
+
+def _activate_shielding(num_cores) -> str:
+    if not num_cores:
+        return "failed: num-cores not set"
+
+    core_spec = _get_core_spec(num_cores)
 
     if not paths.has_cset():
-        return False
+        return "failed: cset-path not set"
 
     try:
         output = check_output(
             [paths.get_cset(), "shield", "-c", core_spec, "-k", "on"], stderr=STDOUT
         )
         output = output_as_str(output)
-    except OSError:
-        return False
+    except OSError as e:
+        return "failed: " + str(e)
 
     if "Permission denied" in output:
-        return False
+        return "failed: Permission denied"
 
     if "kthread shield activated" in output:
         return core_spec
 
-    return False
+    return output
 
 
-def _reset_shielding():
+def _reset_shielding() -> str | bool:
+    if not paths.has_cset():
+        return "failed: cset-path not set"
+
     try:
         output = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
         output = output_as_str(output)
         return "cset: done" in output
     except OSError:
-        return False
+        return "failed: OSError"
     except CalledProcessError:
-        return False
+        return "failed: CalledProcessError"
 
 
 # For intel_pstate systems, there's only powersave and performance
@@ -192,13 +203,16 @@ def _set_scaling_governor(governor, num_cores) -> str:
         + governor
     )
 
+    if not num_cores:
+        return "failed: num-cores not set"
+
     try:
         for cpu_i in range(num_cores):
             filename = f"/sys/devices/system/cpu/cpu{cpu_i}/cpufreq/scaling_governor"
             with open(filename, "w", encoding="utf-8") as gov_file:
                 gov_file.write(governor + "\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
 
     return governor
 
@@ -212,7 +226,7 @@ def _read_no_turbo() -> bool | None:
         return None
 
 
-def _set_no_turbo(with_no_turbo):
+def _set_no_turbo(with_no_turbo: bool) -> bool | str:
     if with_no_turbo:
         value = "1"
     else:
@@ -224,7 +238,8 @@ def _set_no_turbo(with_no_turbo):
         ) as nt_file:
             nt_file.write(value + "\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
+
     return with_no_turbo
 
 
@@ -251,7 +266,7 @@ def _configure_perf_sampling(for_profiling: bool) -> int | str:
             ) as perf_file:
                 perf_file.write("-1\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
 
     if for_profiling:
         return 0
@@ -276,18 +291,19 @@ def _restore_perf_sampling() -> str:
         ) as perf_file:
             perf_file.write("3\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
     return "restored"
 
 
-def _initial_settings_and_capabilities(num_cores: int, args) -> dict:
+def _initial_settings_and_capabilities(args) -> dict:
     result = {}
 
     if args.use_nice:
         result["can_set_nice"] = _can_set_niceness()
 
     if args.use_shielding:
-        if paths.has_cset():
+        num_cores = int(args.num_cores) if args.num_cores else None
+        if paths.has_cset() and num_cores:
             can_use_shielding = _activate_shielding(num_cores)
             if can_use_shielding:
                 _reset_shielding()
@@ -333,61 +349,83 @@ def _initial_settings_and_capabilities(num_cores: int, args) -> dict:
     return result
 
 
-def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
-    governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
-    no_turbo = _set_no_turbo(True)
-    perf = _configure_perf_sampling(for_profiling)
+def _minimize_noise(args) -> dict:
+    num_cores = int(args.num_cores) if args.num_cores else None
+    result = {}
 
-    can_nice = _can_set_niceness() if use_nice else False
-    shielding = _activate_shielding(num_cores) if use_shielding else False
+    if args.use_shielding:
+        result["shielding"] = _activate_shielding(num_cores)
 
-    return {
-        "scaling_governor": governor,
-        "no_turbo": no_turbo,
-        "perf_event_max_sample_rate": perf,
-        "can_set_nice": can_nice,
-        "shielding": shielding,
-    }
+    if args.use_no_turbo:
+        result["no_turbo"] = _set_no_turbo(True)
 
+    if args.use_scaling_governor:
+        result["scaling_governor"] = _set_scaling_governor(
+            SCALING_GOVERNOR_PERFORMANCE, num_cores
+        )
 
-def _restore_standard_settings(num_cores, use_shielding):
-    governor = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
-    no_turbo = _set_no_turbo(False)
-    perf = _restore_perf_sampling()
-    shielding = _reset_shielding() if use_shielding else False
+    if args.use_mini_perf_sampling:
+        result["perf_event_max_sample_rate"] = _configure_perf_sampling(
+            args.for_profiling
+        )
 
-    return {
-        "scaling_governor": governor,
-        "no_turbo": no_turbo,
-        "perf_event_max_sample_rate": perf,
-        "shielding": shielding,
-    }
+    return result
 
 
-def _exec(num_cores, use_nice, use_shielding, args):
+def _restore_standard_settings(args):
+    num_cores = int(args.num_cores) if args.num_cores else None
+    result = {}
+
+    if args.use_shielding:
+        result["shielding"] = _reset_shielding()
+
+    if args.use_no_turbo:
+        result["no_turbo"] = _set_no_turbo(False)
+
+    if args.use_scaling_governor:
+        result["scaling_governor"] = _set_scaling_governor(
+            SCALING_GOVERNOR_POWERSAVE, num_cores
+        )
+
+    if args.use_mini_perf_sampling:
+        result["perf_event_max_sample_rate"] = _restore_perf_sampling()
+
+    return result
+
+
+# pylint: disable-next=inconsistent-return-statements
+def _exec(args, remaining_args) -> str:
+    num_cores = int(args.num_cores) if args.num_cores else None
+
     cmdline = []
-    if use_shielding and paths.has_cset():
+    if args.use_shielding:
+        if not paths.has_cset():
+            return "cset-path not set"
+        if not num_cores:
+            return "num-cores not set"
+
         cmdline += [paths.get_cset(), "shield", "--exec", "--"]
-    if use_nice:
+
+    if args.use_nice:
         cmdline += ["nice", "-n-20"]
-    cmdline += args
+    cmdline += remaining_args
 
     # the first element of cmdline is ignored as argument, since it's the file argument, too
     cmd = cmdline[0]
 
     # communicate the used core spec to executed command as part of its environment
     env = os.environ.copy()
-    if use_shielding and paths.has_cset():
-        min_cores = _shield_lower_bound(num_cores)
-        max_cores = _shield_upper_bound(num_cores)
-        core_spec = "%d-%d" % (min_cores, max_cores)
+    if args.use_shielding:
+        assert paths.has_cset()
+        assert num_cores
+        core_spec = _get_core_spec(num_cores)
         env["REBENCH_DENOISE_CORE_SET"] = core_spec
 
     os.execvpe(cmd, cmdline, env)
 
 
 def _kill(proc_id):
-    kill_process(int(proc_id), True, None, None)
+    return kill_process(int(proc_id), True, None, None)
 
 
 def _calculate(core_id):
@@ -483,9 +521,15 @@ def _shell_options():
         dest="for_profiling",
         help="Don't restrict CPU usage by profiler",
     )
-    parser.add_argument("--cset-path", help="Absolute path to cset", default=None)
     parser.add_argument(
-        "--num-cores", help="Number of cores. Is required.", default=None
+        "--cset-path",
+        help="Absolute path to cset. Needed for `init`, `minimize`, and `restore`.",
+        default=None,
+    )
+    parser.add_argument(
+        "--num-cores",
+        help="Number of cores. Needed for `init`, `minimize`, and `restore`.",
+        default=None,
     )
     parser.add_argument(
         "command",
@@ -494,11 +538,11 @@ def _shell_options():
             "`init` determines initial settings and capabilities. "
             "`minimize` sets system to reduce noise. "
             "`restore` sets system to the assumed original settings. "
-            "`exec -- ` executes the given arguments. "
+            "`exec -- ` executes the given command with arguments. "
             "`kill pid` send kill signal to the process with given id "
             "and all child processes. "
             "`test` executes a computation for 20 seconds in parallel. "
-            "it is only useful to test rebench-denoise itself."
+            "It is only useful to test rebench-denoise itself."
         ),
         default=None,
     )
@@ -509,6 +553,7 @@ EXIT_CODE_SUCCESS = 0
 EXIT_CODE_CHANGING_SETTINGS_FAILED = 1
 EXIT_CODE_NUM_CORES_UNSET = 2
 EXIT_CODE_NO_COMMAND_SELECTED = 3
+EXIT_CODE_EXEC_FAILED = 4
 
 
 def _report_init(result: dict, args):
@@ -539,8 +584,12 @@ def _report_init(result: dict, args):
         )
 
 
-def _report(result: dict, args):
-    if args.use_nice:
+def _report(result: str | dict, args):
+    if isinstance(result, str):
+        print(result)
+        return
+
+    if args.use_nice and args.command == "exec":
         print("Can set niceness:                   ", result.get("can_set_nice", False))
 
     if args.use_shielding:
@@ -561,34 +610,32 @@ def _report(result: dict, args):
         )
 
 
+def _any_failed(result: dict):
+    return any(str(v).startswith("failed") for v in result.values())
+
+
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
 
     paths.set_cset(args.cset_path)
 
-    num_cores = int(args.num_cores) if args.num_cores else None
     result = {}
 
-    if args.command == "init" and num_cores is not None:
-        result = _initial_settings_and_capabilities(num_cores, args)
-    elif args.command == "minimize" and num_cores is not None:
-        result = _minimize_noise(
-            num_cores, args.use_nice, args.use_shielding, args.for_profiling
-        )
-    elif args.command == "restore" and num_cores is not None:
-        result = _restore_standard_settings(num_cores, args.use_shielding)
+    if args.command == "init":
+        result = _initial_settings_and_capabilities(args)
+    elif args.command == "minimize":
+        result = _minimize_noise(args)
+    elif args.command == "restore":
+        result = _restore_standard_settings(args)
     elif args.command == "exec":
-        _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
+        result = _exec(args, remaining_args)
     elif args.command == "kill":
         _kill(remaining_args[0])
-    elif args.command == "test" and num_cores is not None:
-        _test(num_cores)
+    elif args.command == "test":
+        _test(args)
     else:
         arg_parser.print_help()
-        if num_cores is None:
-            print("The --num-cores must be provided.")
-            return EXIT_CODE_NUM_CORES_UNSET
         return EXIT_CODE_NO_COMMAND_SELECTED
 
     if args.json:
@@ -596,10 +643,14 @@ def main_func():
     else:
         if args.command == "init":
             _report_init(result, args)
+        if args.command == "exec":
+            # should not have returned
+            print(result)
+            return EXIT_CODE_EXEC_FAILED
         else:
             _report(result, args)
 
-    if "failed" in result.values():
+    if _any_failed(result):
         return EXIT_CODE_CHANGING_SETTINGS_FAILED
     else:
         return EXIT_CODE_SUCCESS
