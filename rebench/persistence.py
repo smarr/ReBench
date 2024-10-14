@@ -269,7 +269,7 @@ class _FilePersistence(_ConcretePersistence):
             try:
                 data_point, previous_run_id = self._parse_data_line(
                     data_point, line, line_number, runs, filtered_data_file, previous_run_id)
-            except ValueError as err:
+            except (ValueError, IndexError) as err:
                 msg = str(err)
                 if not errors:
                     self.ui.debug_error_info("Failed loading data from data file: "

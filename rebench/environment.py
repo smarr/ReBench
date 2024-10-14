@@ -8,6 +8,11 @@ from psutil import virtual_memory
 
 from .output import output_as_str
 
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from .denoise_client import DenoiseInitialSettings
+
 
 def _encode_str(out):
     as_string = output_as_str(out)
@@ -103,7 +108,7 @@ def init_env_for_test():
     }
 
 
-def init_environment(denoise_result, ui):
+def init_environment(initial_denoise: Optional["DenoiseInitialSettings"], ui):
     u_name = os.uname()
     result = {
         "userName": getpass.getuser(),
@@ -111,7 +116,7 @@ def init_environment(denoise_result, ui):
         "hostName": u_name[1],
         "osType": u_name[0],
         "memory": virtual_memory().total,
-        "denoise": {} if denoise_result is None else denoise_result.details,
+        "denoise": initial_denoise.as_dict() if initial_denoise else None,
     }
 
     try:

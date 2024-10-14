@@ -149,7 +149,7 @@ class RunId(object):
             return adapter
         return next(iter(adapter))  # get the first key in the dict
 
-    def is_profiling(self):
+    def is_profiling(self) -> bool:
         return self.benchmark.suite.executor.action == "profile"
 
     def build_commands(self):

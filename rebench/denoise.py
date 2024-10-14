@@ -170,7 +170,7 @@ def _activate_shielding(num_cores) -> str:
     if "kthread shield activated" in output:
         return core_spec
 
-    return output
+    return "failed: " + output
 
 
 def _reset_shielding() -> str | bool:

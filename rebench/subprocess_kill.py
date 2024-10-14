@@ -20,7 +20,7 @@ def _kill(proc_id, sudo_kill_delivery_fn):
         pass
 
 
-def kill_process(pid, recursively, thread, sudo_kill_delivery_fn):
+def kill_process(pid, recursively, thread, sudo_kill_delivery_fn) -> (int, str | None, str | None):
     pids = [pid]
     if recursively:
         pids.extend(_get_process_children(pid))
