@@ -1,6 +1,6 @@
 from . import none_or_bool
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from ..denoise_client import DenoiseInitialSettings
@@ -27,8 +27,8 @@ class Denoise(object):
         use_nice: bool,
         shield: str,
         scaling_governor: str,
-        no_turbo: bool | str,
-        minimize_perf_sampling: bool | str,
+        no_turbo: Union[bool, str],
+        minimize_perf_sampling: Union[bool, str],
     ):
         self.use_nice = use_nice
         self.shield = shield

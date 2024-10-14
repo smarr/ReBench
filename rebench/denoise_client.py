@@ -4,6 +4,7 @@ import os
 
 from cpuinfo import get_cpu_info
 from subprocess import check_output, STDOUT, CalledProcessError
+from typing import Optional
 
 from .denoise import paths
 from .model.denoise import Denoise
@@ -46,7 +47,7 @@ class DenoiseInitialSettings:
     This class is used to store the initial system settings that are changed by rebench-denoise.
     """
 
-    def __init__(self, requested: "Denoise", result: dict, warn_msg: str | None):
+    def __init__(self, requested: "Denoise", result: dict, warn_msg: Optional[str]):
         self.requested = requested
 
         can_set = [v for k, v in result.items() if k.startswith("can_")]
@@ -166,7 +167,7 @@ def _exec_denoise_and_parse_result(cmd: list[str]) -> (dict, bool, str):
     return result, got_json, output
 
 
-def get_initial_settings_and_capabilities(show_warnings, ui, requested: "Denoise") -> DenoiseInitialSettings | None:
+def get_initial_settings_and_capabilities(show_warnings, ui, requested: "Denoise") -> Optional[DenoiseInitialSettings]:
     if not requested.needs_denoise():
         return None
 

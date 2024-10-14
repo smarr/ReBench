@@ -1,7 +1,7 @@
 from os         import kill
 from signal     import SIGKILL
 from subprocess import PIPE, Popen
-
+from typing     import Optional
 
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
@@ -20,7 +20,7 @@ def _kill(proc_id, sudo_kill_delivery_fn):
         pass
 
 
-def kill_process(pid, recursively, thread, sudo_kill_delivery_fn) -> (int, str | None, str | None):
+def kill_process(pid, recursively, thread, sudo_kill_delivery_fn) -> (int, Optional[str], Optional[str]):
     pids = [pid]
     if recursively:
         pids.extend(_get_process_children(pid))

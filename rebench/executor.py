@@ -34,7 +34,7 @@ from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, O
     ResultsIndicatedAsInvalid
 from .ui import escape_braces
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .model.run_id import RunId
@@ -306,7 +306,7 @@ class Executor(object):
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
                  artifact_review=False,
-                 initials_and_capabilities: DenoiseInitialSettings | None = None,
+                 initials_and_capabilities: Optional[DenoiseInitialSettings] = None,
                  show_denoise_warnings: bool = False,
                  print_execution_plan=False, config_dir=None,
                  use_denoise=True):
