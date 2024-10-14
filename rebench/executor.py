@@ -29,14 +29,14 @@ from time import time
 from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise_client import construct_path, \
-    add_denoise_exec_options, DenoiseInitialSettings, minimize_noise, restore_noise
+from .denoise_client import DenoiseInitialSettings, minimize_noise, restore_noise, \
+    construct_denoise_exec_prefix
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .model.build_cmd import BuildCommand
 from .ui import escape_braces
 
-from typing import TYPE_CHECKING, Optional
+
 
 if TYPE_CHECKING:
     from .model.run_id import RunId
@@ -324,8 +324,8 @@ class Executor(object):
             self._denoise_initial = DenoiseInitialSettings.system_default()
 
         self._show_denoise_warnings = show_denoise_warnings
-        self._active_denoise_cfg = None
-        self._active_for_profiling = None
+        self._active_denoise_cfg: Optional[Denoise] = None
+        self._active_for_profiling: Optional[bool] = None
 
         self._print_execution_plan = print_execution_plan
 
@@ -354,21 +354,11 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
-    @staticmethod
-    def _construct_denoise_cmd(run_id: "RunId", possible_settings: "Denoise") -> (list[str], dict):
-        env = run_id.env
-        cmd = construct_path(run_id.is_profiling(), env.keys())
-
-        add_denoise_exec_options(cmd, possible_settings)
-
-        cmd += ["exec", "--"]
-
-        return " ".join(cmd) + " ", env
-
     def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         if possible_settings.needs_denoise():
-            cmdline, env = self._construct_denoise_cmd(run_id, possible_settings)
+            cmdline, env = construct_denoise_exec_prefix(
+                run_id.env, run_id.is_profiling(), possible_settings)
         else:
             cmdline = ""
             env = run_id.env
@@ -538,18 +528,21 @@ class Executor(object):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         for_profiling = run_id.is_profiling()
 
-        if self._active_denoise_cfg == possible_settings and self._active_for_profiling == for_profiling:
+        if (self._active_denoise_cfg == possible_settings and
+                self._active_for_profiling == for_profiling):
             # denoise is already configured as required, and possible
             return
 
-        self._active_denoise_cfg = minimize_noise(possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
+        self._active_denoise_cfg = minimize_noise(
+            possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
         self._active_for_profiling = for_profiling
 
     def _ensure_denoise_is_inactive(self):
         if self._active_denoise_cfg and not self._active_denoise_cfg.needs_denoise():
             return
 
-        self._active_denoise_cfg = restore_noise(self._denoise_initial, self._show_denoise_warnings, self.ui)
+        self._active_denoise_cfg = restore_noise(
+            self._denoise_initial, self._show_denoise_warnings, self.ui)
         self._active_for_profiling = None
 
     def _generate_data_point(self, cmdline, env, gauge_adapter, run_id: "RunId",
