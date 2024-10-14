@@ -2,9 +2,9 @@ import getpass
 import json
 import os
 
-from cpuinfo import get_cpu_info
 from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional
+from cpuinfo import get_cpu_info
 
 from .denoise import paths
 from .model.denoise import Denoise
@@ -32,6 +32,7 @@ def _add_denoise_python_path_to_env(env: dict[str, str]) -> dict[str, str]:
 
     # did not find it, just leave the env unmodified
     if path is False:
+        print("Could not find the Python path for rebench-denoise.")
         return env
 
     env = env.copy()
@@ -165,7 +166,8 @@ def _exec_denoise_and_parse_result(cmd: list[str]) -> (dict, bool, str):
     return result, got_json, output
 
 
-def get_initial_settings_and_capabilities(show_warnings, ui, requested: "Denoise") -> Optional[DenoiseInitialSettings]:
+def get_initial_settings_and_capabilities(
+        show_warnings, ui, requested: "Denoise") -> Optional[DenoiseInitialSettings]:
     if not requested.needs_denoise():
         return None
 
@@ -228,7 +230,8 @@ def _report_on_failure(output):
         return "{ind}Error: " + escape_braces(output)
 
 
-def _process_denoise_result(result, got_json, raw_output, msg, show_warnings, ui, possible_settings):
+def _process_denoise_result(
+        result, got_json, raw_output, msg, show_warnings, ui, possible_settings):
     success = True
 
     if got_json:
@@ -265,10 +268,12 @@ def minimize_noise(possible_settings: "Denoise", for_profiling: bool, show_warni
 
     msg = "Minimizing noise with rebench-denoise failed\n"
     msg += "{ind}possibly causing benchmark results to vary more.\n\n"
-    return _process_denoise_result(result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
+    return _process_denoise_result(
+        result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
 
 
-def construct_denoise_exec_prefix(env, for_profiling, possible_settings: "Denoise") -> (list[str], dict):
+def construct_denoise_exec_prefix(
+        env, for_profiling, possible_settings: "Denoise") -> (list[str], dict):
     env = _add_denoise_python_path_to_env(env)
     cmd = _construct_path(for_profiling, env.keys())
 

@@ -3,12 +3,13 @@ import os
 import subprocess
 
 from urllib.parse import urlparse
+from typing import TYPE_CHECKING, Optional
 from cpuinfo.cpuinfo import _get_cpu_info_internal
 from psutil import virtual_memory
 
 from .output import output_as_str
 
-from typing import TYPE_CHECKING, Optional
+
 
 if TYPE_CHECKING:
     from .denoise_client import DenoiseInitialSettings

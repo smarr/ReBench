@@ -26,6 +26,7 @@ import random
 import subprocess
 from threading import Thread, RLock
 from time import time
+from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .denoise_client import DenoiseInitialSettings, minimize_noise, restore_noise, \
@@ -34,7 +35,7 @@ from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, O
     ResultsIndicatedAsInvalid
 from .ui import escape_braces
 
-from typing import TYPE_CHECKING, Optional
+
 
 if TYPE_CHECKING:
     from .model.run_id import RunId
@@ -352,7 +353,8 @@ class Executor(object):
     def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         if possible_settings.needs_denoise():
-            cmdline, env = construct_denoise_exec_prefix(run_id.env, run_id.is_profiling(), possible_settings)
+            cmdline, env = construct_denoise_exec_prefix(
+                run_id.env, run_id.is_profiling(), possible_settings)
         else:
             cmdline = ""
             env = run_id.env
@@ -522,18 +524,21 @@ class Executor(object):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         for_profiling = run_id.is_profiling()
 
-        if self._active_denoise_cfg == possible_settings and self._active_for_profiling == for_profiling:
+        if (self._active_denoise_cfg == possible_settings and
+                self._active_for_profiling == for_profiling):
             # denoise is already configured as required, and possible
             return
 
-        self._active_denoise_cfg = minimize_noise(possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
+        self._active_denoise_cfg = minimize_noise(
+            possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
         self._active_for_profiling = for_profiling
 
     def _ensure_denoise_is_inactive(self):
         if self._active_denoise_cfg and not self._active_denoise_cfg.needs_denoise():
             return
 
-        self._active_denoise_cfg = restore_noise(self._denoise_initial, self._show_denoise_warnings, self.ui)
+        self._active_denoise_cfg = restore_noise(
+            self._denoise_initial, self._show_denoise_warnings, self.ui)
         self._active_for_profiling = None
 
     def _generate_data_point(self, cmdline, env, gauge_adapter, run_id: "RunId",

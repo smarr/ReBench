@@ -30,11 +30,12 @@
 import sys
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
+from typing import TYPE_CHECKING, Optional
 
 from . import __version__ as rebench_version
 from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
     RandomScheduler, BenchmarkThreadExceptions
-from .denoise_client import minimize_noise, restore_noise, get_initial_settings_and_capabilities
+from .denoise_client import restore_noise, get_initial_settings_and_capabilities
 from .environment import init_environment
 from .model.denoise import Denoise
 from .persistence    import DataStore
@@ -44,8 +45,6 @@ from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
 from .output import UIError
 from .ui import UI
-
-from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .denoise_client import DenoiseInitialSettings
@@ -287,9 +286,10 @@ Argument:
             finally:
                 restore_noise(initials_and_capabilities, show_denoise_warnings, self.ui)
 
-    def load_data_and_execute_experiments(self, runs, data_store,
-                                          initials_and_capabilities: Optional["DenoiseInitialSettings"],
-                                          show_denoise_warnings: bool):
+    def load_data_and_execute_experiments(
+            self, runs, data_store,
+            initials_and_capabilities: Optional["DenoiseInitialSettings"],
+            show_denoise_warnings: bool):
         init_environment(initials_and_capabilities, self.ui)
         data_store.load_data(runs, self._config.options.do_rerun)
         return self.execute_experiment(runs, initials_and_capabilities, show_denoise_warnings)
@@ -301,7 +301,9 @@ Argument:
             result = Denoise.max_union(result, run.denoise)
         return result
 
-    def execute_experiment(self, runs, initials_and_capabilities: "DenoiseInitialSettings", show_denoise_warnings: bool):
+    def execute_experiment(self, runs,
+                           initials_and_capabilities: "DenoiseInitialSettings",
+                           show_denoise_warnings: bool):
         self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
 
         scheduler_class = {'batch':       BatchScheduler,
@@ -314,7 +316,9 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log, self._config.artifact_review,
-                            initials_and_capabilities, show_denoise_warnings, self._config.options.execution_plan,
+                            initials_and_capabilities,
+                            show_denoise_warnings,
+                            self._config.options.execution_plan,
                             self._config.config_dir)
 
         if self._config.options.no_execution:

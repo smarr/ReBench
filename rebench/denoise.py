@@ -98,7 +98,6 @@ class CommandsPaths:
 
     def get_denoise_python_path(self):
         if self._denoise_python_path is None:
-            active_python_path = sys.path
             current_file = os.path.abspath(__file__)
             self._denoise_python_path = os.path.dirname(os.path.dirname(current_file))
 

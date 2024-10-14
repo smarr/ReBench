@@ -1,6 +1,6 @@
-from . import none_or_bool
-
 from typing import TYPE_CHECKING, Union
+
+from . import none_or_bool
 
 if TYPE_CHECKING:
     from ..denoise_client import DenoiseInitialSettings
