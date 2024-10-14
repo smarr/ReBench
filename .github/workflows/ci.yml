@@ -8,9 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.12", "pypy3.10"]
+        python-version: ["3.9", "3.13", "pypy3.10"]
         include:
-          - python-version: 3.8
+          - python-version: 3.9
             coverage: "--cov=rebench"
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
@@ -42,13 +42,13 @@ jobs:
         run: |
           pip install pylint
           pylint rebench
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
 
       - name: Install and run black
         run: |
           pip install black
           black --check rebench
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
 
       - name: Upload coverage results to Coveralls
         run: coveralls
@@ -58,7 +58,7 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
-    name: "macOS: Python 3.11"
+    name: "macOS: Python 3.12"
     steps:
       - name: Checkout ReBench
         uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install PyTest
         run: pip install pytest

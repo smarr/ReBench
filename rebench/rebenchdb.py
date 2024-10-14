@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from time import sleep
 
 from http.client import HTTPException
@@ -7,10 +6,23 @@ from urllib.request import urlopen, Request as HttpRequest
 
 from .output import UIError
 
+try:
+    from datetime import datetime, UTC
 
-def get_current_time():
-    """Return the current time as string for use with ReBenchDB and other persistency backends."""
-    return datetime.utcnow().isoformat() + "+00:00"
+    def get_current_time():
+        """
+        Return the current time as string for use with ReBenchDB and other persistency backends.
+        """
+        return datetime.now(UTC).isoformat()
+
+except ImportError:
+    from datetime import datetime
+
+    def get_current_time():
+        """
+        Return the current time as string for use with ReBenchDB and other persistency backends.
+        """
+        return datetime.utcnow().isoformat() + "+00:00"
 
 
 class ReBenchDB(object):
