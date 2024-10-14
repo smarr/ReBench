@@ -1,11 +1,13 @@
 import getpass
 import json
 import os
-import subprocess
 
 from cpuinfo import get_cpu_info
+from subprocess import check_output, STDOUT, CalledProcessError
+from typing import Optional
 
-from .denoise import paths, read_no_turbo, read_scaling_governor
+from .denoise import paths
+from .model.denoise import Denoise
 from .output import output_as_str
 from .ui import escape_braces
 
@@ -25,7 +27,7 @@ def _get_env_with_python_path_for_denoise():
     return add_denoise_python_path_to_env(os.environ)
 
 
-def add_denoise_python_path_to_env(env):
+def add_denoise_python_path_to_env(env: dict[str, str]) -> dict[str, str]:
     path = paths.get_denoise_python_path()
 
     # did not find it, just leave the env unmodified
@@ -40,175 +42,271 @@ def add_denoise_python_path_to_env(env):
     return env
 
 
-class DenoiseResult:
-
-    def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
-        self.succeeded = succeeded
-        self.warn_msg = warn_msg
-        self.use_nice = use_nice
-        self.use_shielding = use_shielding
-        self.details = details
-
-
 class DenoiseInitialSettings:
-    def __init__(self, requested):
+    """
+    This class is used to store the initial system settings that are changed by rebench-denoise.
+    """
+
+    def __init__(self, requested: "Denoise", result: dict, warn_msg: Optional[str]):
         self.requested = requested
 
-        self.can_set_nice = can_set_nice
-        self.can_set_shield = can_set_shield
-        self.can_minimize_perf_sampling = can_minimize_perf_sampling
+        can_set = [v for k, v in result.items() if k.startswith("can_")]
+        self.nothing_set = not any(can_set)
 
-        self.default_scaling_governor = default_scaling_governor
-        self.default_no_turbo = default_no_turbo
+        self.can_set_nice = result.get("can_set_nice", None)
+        self.can_set_shield = result.get("can_set_shield", None)
+        self.can_set_no_turbo = result.get("can_set_no_turbo", None)
+        self.can_set_scaling_governor = result.get("can_set_scaling_governor", None)
+        self.can_minimize_perf_sampling = result.get("can_minimize_perf_sampling", None)
 
-def get_initial_settings_and_capabilities(requested):
-    if requested.use_nice:
+        self.initial_no_turbo = result.get("initial_no_turbo", None)
+        self.initial_scaling_governor = result.get("initial_scaling_governor", None)
 
-    check_capabilities(requested.use_nice, requested.shield)
+        self.warn_msg = warn_msg
 
-    no_turbo = read_no_turbo()
-    scaling_governor = read_scaling_governor()
-    return DenoiseInitialSettings(no_turbo, scaling_governor)
+        self._restore_init = None
+
+    def as_dict(self):
+        return {
+            "can_set_nice": self.can_set_nice,
+            "can_set_shield": self.can_set_shield,
+            "can_set_no_turbo": self.can_set_no_turbo,
+            "can_set_scaling_governor": self.can_set_scaling_governor,
+            "can_minimize_perf_sampling": self.can_minimize_perf_sampling,
+
+            "initial_no_turbo": self.initial_no_turbo,
+            "initial_scaling_governor": self.initial_scaling_governor
+        }
+
+    def restore_initial(self) -> "Denoise":
+        if self._restore_init is None:
+            self._restore_init = self.requested.restore_initial(self)
+        return self._restore_init
+
+    @staticmethod
+    def system_default() -> "DenoiseInitialSettings":
+        return DenoiseInitialSettings(Denoise.system_default(), {}, None)
 
 
-def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-many-statements
+def _construct_basic_path(env_keys: list[str]) -> list[str]:
+    assert len(env_keys) > 0
+    return ["sudo", "--preserve-env=" + ",".join(env_keys), "-n", paths.get_denoise(), "--json"]
+
+
+def construct_path(for_profiling: bool, env_keys: list[str]) -> list[str]:
     num_cores = get_number_of_cores()
-
-    result = {}
-
-    env = _get_env_with_python_path_for_denoise()
-    cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise()]
-    if for_profiling:
-        cmd += ["--for-profiling"]
+    cmd = _construct_basic_path(env_keys)
+    cmd += ["--num-cores", str(num_cores)]
 
     if paths.has_cset():
         cmd += ["--cset-path", paths.get_cset()]
-    cmd += ["--json", "minimize"]
-    cmd += ["--num-cores", str(num_cores)]
 
+    if for_profiling:
+        cmd += ["--for-profiling"]
+
+    return cmd
+
+
+def _add_denoise_options(cmd: list[str], requested: "Denoise"):
+    """This function is used for initializing and minimizing noise."""
+    assert requested.needs_denoise()
+
+    options_to_disable = ""
+
+    if not requested.requested_nice:
+        options_to_disable += "N"
+    if not requested.requested_shield:
+        options_to_disable += "S"
+    if not requested.requested_scaling_governor:
+        options_to_disable += "G"
+    if not requested.requested_no_turbo:
+        options_to_disable += "T"
+    if not requested.requested_minimize_perf_sampling:
+        options_to_disable += "P"
+
+    if options_to_disable:
+        cmd.append("-" + options_to_disable)
+
+
+def add_denoise_exec_options(cmd: list[str], requested: "Denoise"):
+    """This function is used for executing a command."""
+    assert requested.needs_denoise()
+
+    options_to_disable = ""
+
+    if not requested.requested_nice:
+        options_to_disable += "N"
+    if not requested.requested_shield:
+        options_to_disable += "S"
+
+    if options_to_disable:
+        cmd.append("-" + options_to_disable)
+
+
+def _exec_denoise(cmd: list[str]):
+    env = _get_env_with_python_path_for_denoise()
     try:
-        output = output_as_str(
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env))
-    except subprocess.CalledProcessError as e:
+        output = output_as_str(check_output(cmd, stderr=STDOUT, env=env))
+    except CalledProcessError as e:
         output = output_as_str(e.output)
     except FileNotFoundError as e:
-        print("FileNotFoundError")
         output = str(e)
+    return output
+
+
+def _exec_denoise_and_parse_result(cmd: list[str]) -> (dict, bool, str):
+    output = _exec_denoise(cmd)
 
     try:
         result = json.loads(output)
         got_json = True
     except ValueError:
+        result = {}
         got_json = False
 
-    msg = "Minimizing noise with rebench-denoise failed\n"
-    msg += "{ind}possibly causing benchmark results to vary more.\n\n"
+    return result, got_json, output
+
+
+def get_initial_settings_and_capabilities(show_warnings, ui, requested: "Denoise") -> Optional[DenoiseInitialSettings]:
+    if not requested.needs_denoise():
+        return None
+
+    cmd = construct_path(False, ["PYTHONPATH"])
+    _add_denoise_options(cmd, requested)
+    cmd += ["init"]
+
+    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
 
     success = False
-    use_nice = False
-    use_shielding = False
 
     if got_json:
-        use_nice = result.get("can_set_nice", False)
-        use_shielding = result.get("shielding", False)
-
-        failed = ""
-
+        msg = ""
+        success = True
         for k, value in result.items():
-            if value == "failed":
-                failed += "{ind}{ind} - " + k + "\n"
+            if k.startswith("can_") and value is False:
+                if success:
+                    msg = "Minimizing noise with rebench-denoise was not complete.\n" \
+                          "{ind}This may cause benchmark results to vary more.\n\n"
 
-        if not use_nice:
-            failed += "{ind}{ind} - nice was not used\n"
-        if not use_shielding:
-            failed += "{ind}{ind} - core shielding was not used\n"
-
-        if failed:
-            msg += "{ind}Failed to set:\n" + failed + "\n"
-
-        if not use_nice and show_warnings:
-            msg += ("{ind}Process niceness could not be set.\n"
-                    + "{ind}{ind}`nice` is used to elevate the priority of the benchmark,\n"
-                    + "{ind}{ind}without it, other processes my interfere with it"
-                    + " nondeterministically.\n")
-
-        if not use_shielding and show_warnings:
-            msg += "{ind}Core shielding could not be set up"
-
-            if not paths.has_cset():
-                msg += ", because the cset command was not found.\n"
-            else:
-                msg += ".\n"
-
-            msg += ("{ind}{ind}Shielding is used to restrict the use of cores to"
-                    + " benchmarking.\n"
-                    + "{ind}{ind}Without it, there my be more nondeterministic interference.\n")
-
-            if not paths.has_cset():
-                msg += ("{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu," +
-                        " and OpenSuSE. The code is maintained here:" +
-                        " https://github.com/SUSE/cpuset\n")
-
-        if use_nice and use_shielding and not failed:
-            success = True
+                success = False
+                if k == "can_set_nice":
+                    msg += "{ind}Process niceness could not be set.\n"
+                elif k == "can_set_shield":
+                    msg += "{ind}Core shielding could not be set up.\n"
+                    if not paths.has_cset():
+                        msg += ("{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu,"
+                                " and OpenSuSE. The code is maintained here:"
+                                " https://github.com/SUSE/cpuset\n")
+                elif k == "can_set_no_turbo":
+                    msg += "{ind}Turbo mode could not be disabled.\n"
+                elif k == "can_set_scaling_governor":
+                    msg += "{ind}Scaling governor could not be set.\n"
+                elif k == "can_minimize_perf_sampling":
+                    msg += "{ind}Perf sampling frequency could not be minimized.\n"
+                else:
+                    msg += "{ind}Unknown capability: " + k + "\n"
     else:
-        if 'password is required' in output:
-            msg += '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
-                   + ' can be used without password.\n'
-            msg += '{ind}To be able to run rebench-denoise without password,\n'
-            msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
-            msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
-                   + paths.get_denoise() + '\n'
-        elif 'command not found' in output:
-            msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
-        elif "No such file or directory: 'sudo'" in output:
-            msg += "{ind}sudo is not available. Can't use rebench-denoise to manage the system.\n"
-        else:
-            msg += "{ind}Error: " + escape_braces(output)
+        msg = _report_on_failure(raw_output)
 
     if not success and show_warnings:
         ui.warning(msg)
 
-    return DenoiseResult(success, msg, use_nice, use_shielding, result)
+    return DenoiseInitialSettings(requested, result, msg)
 
 
-def restore_noise(denoise_result, show_warning, ui):
-    if not denoise_result:
-        # likely has failed completely. And without details, just no-op
-        return
-
-    num_cores = get_number_of_cores()
-
-    env = _get_env_with_python_path_for_denoise()
-    values = set(denoise_result.details.values())
-    if len(values) == 1 and "failed" in values:
-        # everything failed, don't need to try to restore things
-        pass
+def _report_on_failure(output):
+    if 'password is required' in output:
+        return '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
+               ' can be used without password.\n' \
+               '{ind}To be able to run rebench-denoise without password,\n' \
+               '{ind}add the following to the end of your sudoers file (using visudo):\n' \
+               '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: ' \
+               + paths.get_denoise() + '\n'
+    elif 'command not found' in output:
+        return '{ind}Please make sure `rebench-denoise` is on the PATH\n'
+    elif "No such file or directory: 'sudo'" in output:
+        return "{ind}sudo is not available. Can't use rebench-denoise to manage the system.\n"
     else:
-        try:
-            cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise(), "--json"]
-            if not denoise_result.use_shielding:
-                cmd += ["--without-shielding"]
-            elif paths.has_cset():
-                cmd += ["--cset-path", paths.get_cset()]
-            if not denoise_result.use_nice:
-                cmd += ["--without-nice"]
-            cmd += ["--num-cores", str(num_cores)]
-            subprocess.check_output(cmd + ["restore"], stderr=subprocess.STDOUT, env=env)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
+        return "{ind}Error: " + escape_braces(output)
 
-    if not denoise_result.succeeded and show_warning:
+
+def _process_denoise_result(result, got_json, raw_output, msg, show_warnings, ui, possible_settings):
+    success = True
+
+    if got_json:
+        failed = ""
+
+        for k, value in result.items():
+            if isinstance(value, str) and value.startswith("failed"):
+                failed += "{ind}{ind} - " + k + " " + value + "\n"
+                success = False
+
+        if not success:
+            msg += "{ind}Failed to set:\n" + failed + "\n"
+    else:
+        msg += _report_on_failure(raw_output)
+
+    if not success and show_warnings:
+        ui.warning(msg)
+
+    if success:
+        return possible_settings
+    else:
+        return None
+
+
+def minimize_noise(possible_settings: "Denoise", for_profiling: bool, show_warnings: bool, ui):
+    if not possible_settings.needs_denoise():
+        return possible_settings
+
+    cmd = construct_path(for_profiling, ["PYTHONPATH"])
+    _add_denoise_options(cmd, possible_settings)
+    cmd += ["minimize"]
+
+    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+
+    msg = "Minimizing noise with rebench-denoise failed\n"
+    msg += "{ind}possibly causing benchmark results to vary more.\n\n"
+    return _process_denoise_result(result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
+
+
+def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
+    if denoise_result.nothing_set:
+        # if nothing was set, then nothing to restore
+
+        if show_warning and denoise_result.warn_msg:
+            # warn a second time at the end of the execution
+            ui.error(denoise_result.warn_msg)
+        return Denoise.system_default()
+
+    restore = denoise_result.restore_initial()
+    if not restore.needs_denoise():
+        # nothing to restore
+
+        if show_warning and denoise_result.warn_msg:
+            # warn a second time at the end of the execution
+            ui.error(denoise_result.warn_msg)
+        return Denoise.system_default()
+
+    cmd = construct_path(False, ["PYTHONPATH"])
+    _add_denoise_options(cmd, restore)
+    cmd += ["restore"]
+
+    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+
+    restored = _process_denoise_result(
+        result, got_json, raw_output,
+        "Restoring system defaults with rebench-denoise failed.\n", False, ui,
+        Denoise.system_default())
+
+    if show_warning and denoise_result.warn_msg:
         # warn a second time at the end of the execution
         ui.error(denoise_result.warn_msg)
 
+    return restored
+
 
 def deliver_kill_signal(pid):
-    env = _get_env_with_python_path_for_denoise()
-
-    try:
-        cmd = ['sudo', '--preserve-env=PYTHONPATH',
-               '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+    cmd = _construct_basic_path(["PYTHONPATH"])
+    cmd += ["kill", str(pid)]
+    _exec_denoise(cmd)

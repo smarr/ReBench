@@ -1,5 +1,6 @@
+from ..model.denoise import Denoise
 from .rebench_test_case import ReBenchTestCase
-from ..denoise_client import minimize_noise, restore_noise
+from ..denoise_client import minimize_noise
 
 
 class DenoiseTest(ReBenchTestCase):
@@ -9,11 +10,7 @@ class DenoiseTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_minimize(self):
-        result = minimize_noise(False, self.ui, True)
-        self.assertIsInstance(result.succeeded, bool)
-        self.assertIsInstance(result.use_nice, bool)
-        self.assertIsInstance(result.use_shielding, bool)
+        result = minimize_noise(Denoise.system_default(), False, False, self.ui)
 
-        # if it was successful, try to restore normal settings
-        if result.succeeded:
-            restore_noise(result, False, self.ui)
+        self.assertEqual(result, Denoise.system_default())
+        assert not result.needs_denoise()
