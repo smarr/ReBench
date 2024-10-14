@@ -1,6 +1,6 @@
 from unittest import TestCase, skipIf
 
-from ..denoise_client import DenoiseResult
+from ..denoise_client import DenoiseInitialSettings
 from ..environment import determine_source_details, determine_environment,\
     init_environment, extract_base, git_not_available, git_repo_not_initialized
 from ..ui import TestDummyUI
@@ -24,7 +24,7 @@ class EnvironmentTest(TestCase):
         self.assertGreaterEqual(len(details["repoURL"]), 0)
 
     def test_environment(self):
-        init_environment(DenoiseResult(True, "", False, False, {}), TestDummyUI())
+        init_environment(DenoiseInitialSettings(None, {}, None), TestDummyUI())
         env = determine_environment()
 
         self.assertGreater(len(env["userName"]), 0)
