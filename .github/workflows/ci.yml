@@ -8,9 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.12", "pypy3.10"]
+        python-version: ["3.9", "3.12", "pypy3.10"]
         include:
-          - python-version: 3.8
+          - python-version: 3.9
             coverage: "--cov=rebench"
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
