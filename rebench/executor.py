@@ -28,8 +28,8 @@ from threading import Thread, RLock
 from time import time
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise_client import add_denoise_python_path_to_env, construct_path, \
-    add_denoise_exec_options, DenoiseInitialSettings, minimize_noise, restore_noise
+from .denoise_client import DenoiseInitialSettings, minimize_noise, restore_noise, \
+    construct_denoise_exec_prefix
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .ui import escape_braces
@@ -349,21 +349,10 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
-    @staticmethod
-    def _construct_denoise_cmd(run_id: "RunId", possible_settings: "Denoise") -> (list[str], dict):
-        env = add_denoise_python_path_to_env(run_id.env)
-        cmd = construct_path(run_id.is_profiling(), env.keys())
-
-        add_denoise_exec_options(cmd, possible_settings)
-
-        cmd += ["exec", "--"]
-
-        return " ".join(cmd) + " ", env
-
     def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         if possible_settings.needs_denoise():
-            cmdline, env = self._construct_denoise_cmd(run_id, possible_settings)
+            cmdline, env = construct_denoise_exec_prefix(run_id.env, run_id.is_profiling(), possible_settings)
         else:
             cmdline = ""
             env = run_id.env

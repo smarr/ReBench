@@ -1,3 +1,5 @@
+from .denoise import Denoise
+from ..denoise_client import construct_denoise_exec_prefix
 from ..interop.adapter import ExecutionDeliveredNoResults
 from ..interop.perf_parser import PerfParser
 from ..subprocess_with_timeout import run
@@ -28,20 +30,22 @@ class PerfProfiler(Profiler):
 
     def __init__(self, name, cfg):
         super(PerfProfiler, self).__init__(name, "Perf")
-        self.record_args = cfg.get("record_args") + " --output=profile.perf "
-        self.report_args = cfg.get("report_args") + " --input=profile.perf "
-        self.command = "perf"
+        self.record_args: str = cfg.get("record_args") + " --output=profile.perf "
+        self.report_args: str = cfg.get("report_args") + " --input=profile.perf "
+        self.command: str = "perf"
 
-    def _construct_report_cmdline(self, executor):
+    def _construct_report_cmdline_and_env(self, executor, run_id):
         # need to use sudo, otherwise, the profile.perf file won't be accessible
         cmd = ""
+        env = run_id.env
         if executor.use_denoise:
-            cmd += "sudo rebench-denoise --without-nice --without-shielding exec -- "
-        return cmd + self.command + " " + self.report_args
+            cmd, env = construct_denoise_exec_prefix(run_id.env, True, Denoise.system_default())
+
+        return cmd + self.command + " " + self.report_args, env
 
     def process_profile(self, run_id, executor):
-        cmdline = self._construct_report_cmdline(executor)
-        (return_code, output, _) = run(cmdline, run_id.env, cwd=run_id.location, shell=True,
+        cmdline, env = self._construct_report_cmdline_and_env(executor, run_id)
+        (return_code, output, _) = run(cmdline, env, cwd=run_id.location, shell=True,
                                        verbose=executor.debug)
 
         if return_code != 0:

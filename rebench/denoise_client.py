@@ -24,10 +24,10 @@ def get_number_of_cores():
 
 
 def _get_env_with_python_path_for_denoise():
-    return add_denoise_python_path_to_env(os.environ)
+    return _add_denoise_python_path_to_env(os.environ)
 
 
-def add_denoise_python_path_to_env(env: dict[str, str]) -> dict[str, str]:
+def _add_denoise_python_path_to_env(env: dict[str, str]) -> dict[str, str]:
     path = paths.get_denoise_python_path()
 
     # did not find it, just leave the env unmodified
@@ -93,7 +93,7 @@ def _construct_basic_path(env_keys: list[str]) -> list[str]:
     return ["sudo", "--preserve-env=" + ",".join(env_keys), "-n", paths.get_denoise(), "--json"]
 
 
-def construct_path(for_profiling: bool, env_keys: list[str]) -> list[str]:
+def _construct_path(for_profiling: bool, env_keys: list[str]) -> list[str]:
     num_cores = get_number_of_cores()
     cmd = _construct_basic_path(env_keys)
     cmd += ["--num-cores", str(num_cores)]
@@ -128,10 +128,8 @@ def _add_denoise_options(cmd: list[str], requested: "Denoise"):
         cmd.append("-" + options_to_disable)
 
 
-def add_denoise_exec_options(cmd: list[str], requested: "Denoise"):
+def _add_denoise_exec_options(cmd: list[str], requested: "Denoise"):
     """This function is used for executing a command."""
-    assert requested.needs_denoise()
-
     options_to_disable = ""
 
     if not requested.requested_nice:
@@ -171,7 +169,7 @@ def get_initial_settings_and_capabilities(show_warnings, ui, requested: "Denoise
     if not requested.needs_denoise():
         return None
 
-    cmd = construct_path(False, ["PYTHONPATH"])
+    cmd = _construct_path(False, ["PYTHONPATH"])
     _add_denoise_options(cmd, requested)
     cmd += ["init"]
 
@@ -259,7 +257,7 @@ def minimize_noise(possible_settings: "Denoise", for_profiling: bool, show_warni
     if not possible_settings.needs_denoise():
         return possible_settings
 
-    cmd = construct_path(for_profiling, ["PYTHONPATH"])
+    cmd = _construct_path(for_profiling, ["PYTHONPATH"])
     _add_denoise_options(cmd, possible_settings)
     cmd += ["minimize"]
 
@@ -269,6 +267,15 @@ def minimize_noise(possible_settings: "Denoise", for_profiling: bool, show_warni
     msg += "{ind}possibly causing benchmark results to vary more.\n\n"
     return _process_denoise_result(result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
 
+
+def construct_denoise_exec_prefix(env, for_profiling, possible_settings: "Denoise") -> (list[str], dict):
+    env = _add_denoise_python_path_to_env(env)
+    cmd = _construct_path(for_profiling, env.keys())
+
+    _add_denoise_exec_options(cmd, possible_settings)
+
+    cmd += ["exec", "--"]
+    return " ".join(cmd) + " ", env
 
 def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     if denoise_result.nothing_set:
@@ -288,7 +295,7 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
             ui.error(denoise_result.warn_msg)
         return Denoise.system_default()
 
-    cmd = construct_path(False, ["PYTHONPATH"])
+    cmd = _construct_path(False, ["PYTHONPATH"])
     _add_denoise_options(cmd, restore)
     cmd += ["restore"]
 
