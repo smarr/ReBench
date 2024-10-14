@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
+from typing import Optional, Union
 
 denoise_py = os.path.abspath(__file__)
 
@@ -110,7 +111,7 @@ class CommandsPaths:
 paths = CommandsPaths()
 
 
-def _can_set_niceness() -> bool | str:
+def _can_set_niceness() -> Union[bool, str]:
     """
     Check whether we can ask the operating system to influence the priority of
     our benchmarks.
@@ -165,10 +166,10 @@ def _activate_shielding(num_cores) -> str:
     if "kthread shield activated" in output:
         return core_spec
 
-    return output
+    return "failed: " + output
 
 
-def _reset_shielding() -> str | bool:
+def _reset_shielding() -> Union[str, bool]:
     if not paths.has_cset():
         return "failed: cset-path not set"
 
@@ -187,7 +188,7 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
-def _read_scaling_governor() -> str | None:
+def _read_scaling_governor() -> Optional[str]:
     try:
         with open(
             "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r", encoding="utf-8"
@@ -217,7 +218,7 @@ def _set_scaling_governor(governor, num_cores) -> str:
     return governor
 
 
-def _read_no_turbo() -> bool | None:
+def _read_no_turbo() -> Optional[bool]:
     try:
         # pylint: disable-next=unspecified-encoding
         with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
@@ -226,7 +227,7 @@ def _read_no_turbo() -> bool | None:
         return None
 
 
-def _set_no_turbo(with_no_turbo: bool) -> bool | str:
+def _set_no_turbo(with_no_turbo: bool) -> Union[bool, str]:
     if with_no_turbo:
         value = "1"
     else:
@@ -243,7 +244,7 @@ def _set_no_turbo(with_no_turbo: bool) -> bool | str:
     return with_no_turbo
 
 
-def _configure_perf_sampling(for_profiling: bool) -> int | str:
+def _configure_perf_sampling(for_profiling: bool) -> Union[int, str]:
     try:
         with open(
             "/proc/sys/kernel/perf_cpu_time_max_percent", "w", encoding="utf-8"
@@ -584,7 +585,7 @@ def _report_init(result: dict, args):
         )
 
 
-def _report(result: str | dict, args):
+def _report(result: Union[str, dict], args):
     if isinstance(result, str):
         print(result)
         return

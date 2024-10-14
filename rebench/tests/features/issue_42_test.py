@@ -21,7 +21,9 @@ import os
 import unittest
 from unittest import skip
 
+from rebench.model.denoise import Denoise
 from ...configurator import Configurator, load_config
+from ...denoise_client import DenoiseInitialSettings
 from ...executor import Executor
 from ...interop.time_adapter import TimeManualAdapter
 from ...persistence import DataStore
@@ -134,21 +136,37 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
                            self.ui, data_file=self._tmp_file, exp_name='test-set-as-expected')
         runs = list(cnf.get_runs())
-        ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
+        ex = Executor(runs, True, self.ui,
+                      initials_and_capabilities=self._denoise_initial_for_testing(),
+                      use_denoise=True)
 
+        cmdline, _ = ex._construct_cmdline_and_env(runs[0], TimeManualAdapter(False, ex))
         self.assertRegex(
-            ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
-            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT " +
+            cmdline,
+            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT -n " +
             r"[^\s]*denoise\.py")
+
+
+    @staticmethod
+    def _denoise_initial_for_testing():
+        return DenoiseInitialSettings(Denoise.default(),
+                                      {"can_set_nice": True,
+                                       "can_set_shield": True,
+                                       "can_set_scaling_governor": True,
+                                       "can_set_no_turbo": True,
+                                       "can_set_minimize_perf_sampling": True}, None)
 
     def test_construct_cmdline_build_with_env(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
                            self.ui, data_file=self._tmp_file, exp_name='build-with-env')
         runs = list(cnf.get_runs())
-        ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
+        ex = Executor(runs, True, self.ui,
+                      initials_and_capabilities=self._denoise_initial_for_testing(),
+                      use_denoise=True)
 
-        self.assertRegex(ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
-                         r" --preserve-env=VAR1,VAR3 [^\s]*denoise\.py")
+        cmdline, _ = ex._construct_cmdline_and_env(runs[0], TimeManualAdapter(False, ex))
+        self.assertRegex(cmdline,
+                         r" --preserve-env=VAR1,VAR3 -n [^\s]*denoise\.py")
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(":")
