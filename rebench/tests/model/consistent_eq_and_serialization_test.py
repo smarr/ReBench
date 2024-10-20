@@ -7,6 +7,7 @@ import pytest
 from ...model.benchmark import Benchmark
 from ...model.benchmark_suite import BenchmarkSuite
 from ...model.build_cmd import BuildCommand
+from ...model.denoise import Denoise
 from ...model.executor import Executor
 from ...model.exp_variables import ExpVariables
 from ...model.exp_run_details import ExpRunDetails
@@ -98,6 +99,7 @@ _SAME_FIELD_TEST_CASES = [
         ExpRunDetails,
         {
             "env",
+            "denoise",
             "warmup",
             "max_invocation_time",
             "min_iteration_time",
@@ -114,6 +116,16 @@ _SAME_FIELD_TEST_CASES = [
     _P(
         ExpVariables,
         {"input_sizes", "cores", "variable_values", "tags"},
+    ),
+    _P(
+        Denoise,
+        {
+            "use_nice",
+            "shield",
+            "scaling_governor",
+            "no_turbo",
+            "minimize_perf_sampling",
+        },
     ),
     _P(
         RunId,
@@ -154,8 +166,17 @@ def test_access_same_fields(p):
         assert accessed_fields == expected_fields, "Method " + str(m_name)
 
 
+_DENOISE_DATA = {
+    "use_nice": True,
+    "shield": "basic",
+    "scaling_governor": "performance",
+    "no_turbo": True,
+    "minimize_perf_sampling": True,
+}
+
 _EXP_RUN_DETAILS_DATA = {
     "env": {"a": "b"},
+    "denoise": _DENOISE_DATA,
     "warmup": 1,
     "maxInvocationTime": 2,
     "minIterationTime": 3,
@@ -210,11 +231,13 @@ _RUN_ID_DATA = {
     "inputSize": "an input-size",
     "varValue": "a-varval",
     "tag": "a-tag",
+    "machine": "a-machine",
     "extraArgs": "some extra args",
     "location": "/suite-path",
 }
 
 _SER_TEST_CASES = [
+    [Denoise, [_DENOISE_DATA]],
     [ExpRunDetails, [_EXP_RUN_DETAILS_DATA]],
     [Benchmark, [_BENCHMARK_DATA]],
     [Executor, [_EXECUTOR_DATA]],
