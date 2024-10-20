@@ -300,6 +300,8 @@ def _initial_settings_and_capabilities(args) -> dict:
         num_cores = int(args.num_cores) if args.num_cores else None
         if paths.has_cset() and num_cores:
             can_use_shielding = _activate_shielding(num_cores)
+            # TODO: check that it didn't return "failed"
+            # TODO: think about whether can_use_shield below being set to False is a problem
             if can_use_shielding:
                 _reset_shielding()
         else:
