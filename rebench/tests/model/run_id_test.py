@@ -17,7 +17,7 @@ class RunIdTest(ReBenchTestCase):
 
     def test_basic_equality(self):
         # this one is a bit silly, because get_runs() returns a set...
-        num_runs = 24
+        num_runs = 28
         self.assertEqual(len(self._runs), num_runs)
         for i in range(0, num_runs):
             for j in range(0, num_runs):
@@ -78,6 +78,38 @@ class RunIdTest(ReBenchTestCase):
 
         self.assertNotEqual(run1.var_value, run2.var_value)
 
+    def test_different_denoise_settings_make_difference(self):
+        """
+        The TestBenchmark2 experiment changes the denoise settings, so we expect separate run_ids.
+        """
+        has_basic_shield = False
+        has_explicit_shield = False
+
+        run1 = None
+        run2 = None
+
+        for run in self._runs:
+            if (
+                run.benchmark.name == "Bench1"
+                and run.benchmark.suite.executor.name == "TestRunner1"
+                and run.var_value == "var1"
+            ):
+                if run.denoise.shield == "basic":
+                    has_basic_shield = True
+                    run1 = run
+                elif run.denoise.shield == "4,7-9":
+                    has_explicit_shield = True
+                    run2 = run
+
+        self.assertTrue(has_basic_shield)
+        self.assertTrue(has_explicit_shield)
+
+        # trivially true, because they come out of a set
+        self.assertNotEqual(run1, run2)
+
+        self.assertNotEqual(run1.denoise.shield, run2.denoise.shield)
+        self.assertNotEqual(run1.denoise.use_nice, run2.denoise.use_nice)
+
     def test_action_makes_difference(self):
         """We expect one run_id for action=profile and one for action=benchmark."""
         has_profile = False
@@ -113,6 +145,13 @@ class RunIdTest(ReBenchTestCase):
                     "command": "Bench1",
                     "name": "Bench1",
                     "runDetails": {
+                        "denoise": {
+                            "minimize_perf_sampling": True,
+                            "no_turbo": True,
+                            "scaling_governor": "performance",
+                            "shield": "4,7-9",
+                            "use_nice": False,
+                        },
                         "env": {"PATH": "/usr/bin:/bin:~/bin", "WORKDIR": "~/work"},
                         "execute_exclusively": True,
                         "invocations": 10,
@@ -131,6 +170,13 @@ class RunIdTest(ReBenchTestCase):
                             "name": "TestRunner1",
                             "path": "~/tests",
                             "runDetails": {
+                                "denoise": {
+                                    "minimize_perf_sampling": True,
+                                    "no_turbo": True,
+                                    "scaling_governor": "performance",
+                                    "shield": "4,7-9",
+                                    "use_nice": False,
+                                },
                                 "env": {
                                     "PATH": "/usr/bin:/bin:~/bin",
                                     "WORKDIR": "~/work",
