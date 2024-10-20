@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Mapping, Optional
 
 from . import none_or_bool
 
@@ -36,8 +36,8 @@ class Denoise(object):
         self.no_turbo = no_turbo
         self.minimize_perf_sampling = minimize_perf_sampling
 
-        self._initial_capabilities = None
-        self._possible = None
+        self._initial_capabilities: Optional["DenoiseInitialSettings"] = None
+        self._possible: Optional[Denoise] = None
 
     def __eq__(self, other):
         if other is None:
@@ -49,6 +49,35 @@ class Denoise(object):
             and self.scaling_governor == other.scaling_governor
             and self.no_turbo == other.no_turbo
             and self.minimize_perf_sampling == other.minimize_perf_sampling
+        )
+
+    def __lt__(self, other):
+        if other is None:
+            return False
+
+        if self.use_nice != other.use_nice:
+            return self.use_nice < other.use_nice
+
+        if self.shield != other.shield:
+            return self.shield < other.shield
+
+        if self.scaling_governor != other.scaling_governor:
+            return self.scaling_governor < other.scaling_governor
+
+        if self.no_turbo != other.no_turbo:
+            return self.no_turbo < other.no_turbo
+
+        return self.minimize_perf_sampling < other.minimize_perf_sampling
+
+    def __hash__(self):
+        return hash(
+            (
+                self.use_nice,
+                self.shield,
+                self.scaling_governor,
+                self.no_turbo,
+                self.minimize_perf_sampling,
+            )
         )
 
     @classmethod
@@ -98,6 +127,19 @@ class Denoise(object):
             "minimize_perf_sampling": self.minimize_perf_sampling,
         }
 
+    @classmethod
+    def from_dict(cls, data: Optional[Mapping]):
+        if data is None:
+            return None
+
+        return Denoise(
+            data["use_nice"],
+            data["shield"],
+            data["scaling_governor"],
+            data["no_turbo"],
+            data["minimize_perf_sampling"],
+        )
+
     def possible_settings(self, capabilities: "DenoiseInitialSettings"):
         if self._initial_capabilities != capabilities:
             assert self._initial_capabilities is None
@@ -119,7 +161,7 @@ class Denoise(object):
             )
         return self._possible
 
-    def restore_initial(self, capabilities: "DenoiseInitialSettings"):
+    def restore_initial(self, capabilities: "DenoiseInitialSettings") -> "Denoise":
         return Denoise(
             False,
             self.shield if capabilities.can_set_shield is True else "no_change",
