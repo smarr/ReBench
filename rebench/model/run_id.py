@@ -20,9 +20,7 @@
 import os
 import re
 import shlex
-from typing import TYPE_CHECKING, Any
-
-from typing import Optional, Mapping, Union
+from typing import TYPE_CHECKING, Any, Optional, Mapping, Union
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
