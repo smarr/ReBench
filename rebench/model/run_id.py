@@ -147,10 +147,10 @@ class RunId(object):
         commands = set()
         builds = self.benchmark.suite.executor.build
         if builds:
-            commands.update(builds)
+            commands.add(builds)
         builds = self.benchmark.suite.build
         if builds:
-            commands.update(builds)
+            commands.add(builds)
         return commands
 
     def requires_warmup(self):

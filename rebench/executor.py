@@ -370,18 +370,14 @@ class Executor(object):
         build = run_id.benchmark.suite.build
         self._process_builds(build, name, run_id)
 
-    def _process_builds(self, builds, name, run_id):
-        if not builds:
+    def _process_builds(self, build, name, run_id):
+        if not build or build.is_built:
             return
 
-        for build in builds:
-            if build.is_built:
-                continue
-
-            if build.build_failed:
-                run_id.fail_immediately()
-                raise FailedBuilding(name, build)
-            self._execute_build_cmd(build, name, run_id)
+        if build.build_failed:
+            run_id.fail_immediately()
+            raise FailedBuilding(name, build)
+        self._execute_build_cmd(build, name, run_id)
 
     def _execute_build_cmd(self, build_command, name, run_id):
         path = build_command.location
