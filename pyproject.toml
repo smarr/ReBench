@@ -1,3 +1,15 @@
+[tool.mypy]
+warn_unused_configs = true
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "cpuinfo.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pykwalify.*"
+ignore_missing_imports = true
+
 [tool.black]
 extend-exclude = '''
   /rebench/interop/jmh_adapter.py

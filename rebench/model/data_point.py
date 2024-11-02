@@ -17,20 +17,26 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import TYPE_CHECKING, Optional
+
 from ..output import UIError
+
+if TYPE_CHECKING:
+    from ..model.measurement import Measurement
+    from ..model.run_id import RunId
 
 
 class DataPoint(object):
-    def __init__(self, run_id):
-        self.run_id = run_id
-        self._measurements = []
-        self._total = None
+    def __init__(self, run_id: "RunId"):
+        self.run_id: "RunId" = run_id
+        self._measurements: list["Measurement"] = []
+        self._total: Optional["Measurement"] = None
         self.invocation = -1
 
     def number_of_measurements(self):
         return len(self._measurements)
 
-    def add_measurement(self, measurement):
+    def add_measurement(self, measurement: "Measurement"):
         if self.invocation == -1:
             self.invocation = measurement.invocation
         elif self.invocation != measurement.invocation:

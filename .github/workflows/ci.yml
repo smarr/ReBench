@@ -50,6 +50,13 @@ jobs:
           black --check rebench
         if: matrix.python-version == '3.13'
 
+      - name: Install and run mypy
+        run: |
+          pip install mypy
+          mypy --install-types --non-interactive rebench
+          mypy rebench
+        if: matrix.python-version == '3.13'
+
       - name: Upload coverage results to Coveralls
         run: coveralls
         env:

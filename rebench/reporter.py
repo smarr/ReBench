@@ -28,6 +28,8 @@ from urllib.parse import urlencode
 from humanfriendly.tables import format_pretty_table
 from humanfriendly.terminal import ansi_wrap
 
+from rebench.model.run_id import RunId
+
 
 class Reporter(object):
 
@@ -70,7 +72,7 @@ class TextReporter(Reporter):
                 out.append(str(item))
         return " ".join(out) + " "
 
-    def _generate_all_output(self, run_ids):
+    def _generate_all_output(self, run_ids: set[RunId]):
         """
         Collect all values to generate overview table.
 
@@ -82,7 +84,7 @@ class TextReporter(Reporter):
 
         We also show always the last column, which is the mean of the total values.
         """
-        column_value_sets = [set() for _ in self.expected_columns]
+        column_value_sets: list[set[str]] = [set() for _ in self.expected_columns]
 
         rows = []
 

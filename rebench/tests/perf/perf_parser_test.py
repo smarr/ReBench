@@ -8,7 +8,7 @@ from ...interop.perf_parser import PerfParser
 class PerfParserTest(TestCase):
 
     def setUp(self):
-        self.p = None
+        self.p: PerfParser = None  # type: ignore
 
     def _assert_json_is_serializable(self):
         data = self.p.to_json()
