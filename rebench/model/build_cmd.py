@@ -17,24 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+from typing import Optional, Mapping
 
 
 class BuildCommand(object):
 
     @classmethod
-    def create_commands(cls, commands, build_commands, location):
+    def create(cls, commands: Optional[list[str]], location: Optional[str],
+               deduplicated_build_commands: Mapping["BuildCommand", "BuildCommand"]
+               ) -> Optional["BuildCommand"]:
         if not commands:
             return None
 
-        return [BuildCommand.create(cmd, build_commands, location) for cmd in commands]
+        command = "\n".join(commands)
 
-    @classmethod
-    def create(cls, cmd, build_commands, location):
-        assert cmd
-
-        build_command = BuildCommand(cmd, location)
-        if build_command in build_commands:
-            return build_commands[build_command]
+        build_command = BuildCommand(command, location)
+        if build_command in deduplicated_build_commands:
+            return deduplicated_build_commands[build_command]
         return build_command
 
     def __init__(self, cmd, location):

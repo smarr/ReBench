@@ -27,14 +27,14 @@ from .exp_variables import ExpVariables
 class BenchmarkSuite(object):
 
     @classmethod
-    def compile(cls, suite_name, suite, executor, build_commands):
+    def compile(cls, suite_name, suite, executor, deduplicated_build_commands):
         gauge_adapter = suite.get("gauge_adapter")
         command = suite.get("command")
 
         location = suite.get("location", executor.path)
         if location and not location.startswith("~"):
             location = os.path.abspath(location)
-        build = BuildCommand.create_commands(suite.get("build"), build_commands, location)
+        build = BuildCommand.create(suite.get("build"), location, deduplicated_build_commands)
         benchmarks_config = suite.get("benchmarks")
 
         description = suite.get("description")

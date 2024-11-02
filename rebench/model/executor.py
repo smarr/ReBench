@@ -29,14 +29,15 @@ from ..configuration_error import ConfigurationError
 class Executor(object):
 
     @classmethod
-    def compile(cls, executor_name, executor, run_details, variables, build_commands, action):
+    def compile(cls, executor_name, executor, run_details,
+                variables, deduplicated_build_commands, action):
         path = executor.get("path")
         if path and not path.startswith("~"):
             path = os.path.abspath(path)
         executable = executor.get("executable")
         args = executor.get("args")
 
-        build = BuildCommand.create_commands(executor.get("build"), build_commands, path)
+        build = BuildCommand.create(executor.get("build"), path, deduplicated_build_commands)
 
         description = executor.get("description")
         desc = executor.get("desc")

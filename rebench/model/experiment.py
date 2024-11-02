@@ -114,7 +114,7 @@ class Experiment(object):
             for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(
                     suite_name, configurator.get_suite(suite_name), executor,
-                    configurator.build_commands)
+                    configurator.deduplicated_build_commands)
                 results.append(suite)
 
         return results

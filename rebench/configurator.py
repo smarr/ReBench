@@ -19,11 +19,14 @@
 # IN THE SOFTWARE.
 import logging
 from os.path import dirname, abspath
+from typing import Mapping
+
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
 import yaml
 
 from .configuration_error import ConfigurationError
+from .model.build_cmd import BuildCommand
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
 from .model.reporting import Reporting
@@ -216,7 +219,7 @@ class Configurator(object):
         self.data_store = data_store
         self._process_cli_options()
 
-        self.build_commands = {}
+        self.deduplicated_build_commands: Mapping[BuildCommand, BuildCommand] = {}
 
         self.run_filter = _RunFilter(run_filter)
 
@@ -295,7 +298,7 @@ class Configurator(object):
 
         executor = Executor.compile(
             executor_name, self._executors[executor_name],
-            run_details, variables, self.build_commands, action)
+            run_details, variables, self.deduplicated_build_commands, action)
         return executor
 
     def get_suite(self, suite_name):
