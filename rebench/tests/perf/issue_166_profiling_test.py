@@ -34,10 +34,7 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(execs['TestRunner2']['profiler']['perf']['report_args'],
                          "report custom-args")
 
-    def test_run_id_includes_profiling_details(self):
-        cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
-        run_id = list(cnf.get_runs())[0]
+    def _assert_prof_details(self, run_id, record_args, report_args):
         profilers = run_id.benchmark.suite.executor.profiler
         self.assertEqual(len(profilers), 1)
 
@@ -45,10 +42,23 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
 
         self.assertEqual(profiler.name, "perf")
         self.assertEqual(profiler.command, "perf")
-        self.assertEqual(profiler.record_args,
-                         "record -g -F 9999 --call-graph lbr --output=profile.perf ")
-        self.assertEqual(profiler.report_args,
-                         "report -g graph --no-children --stdio --input=profile.perf ")
+        self.assertEqual(profiler.record_args, record_args)
+        self.assertEqual(profiler.report_args, report_args)
+
+    def test_run_id_includes_profiling_details(self):
+        cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
+                           self.ui, data_file=self._tmp_file)
+        runs = sorted(list(cnf.get_runs()))
+        self.assertEqual(2, len(runs))
+
+        self._assert_prof_details(
+            runs[0],
+            "record -g -F 9999 --call-graph lbr --output=profile.perf ",
+            "report -g graph --no-children --stdio --input=profile.perf ")
+        self._assert_prof_details(
+            runs[1],
+            "record custom-args --output=profile.perf ",
+            "report custom-args --input=profile.perf ")
 
         # TODO: how do we deal with having multiple profilers defined?
         # this is something for when we support more than one

@@ -17,23 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping, Any, Optional
 
 from . import value_with_optional_details
+from .benchmark_suite import BenchmarkSuite
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
 
 if TYPE_CHECKING:
-    from .benchmark_suite import BenchmarkSuite
-    from .run_id import RunId
     from ..interop.adapter import GaugeAdapter
-    from ..persistence import DataStore
 
 
 class Benchmark(object):
 
     @classmethod
-    def compile(cls, bench, suite, data_store):
+    def compile(cls, bench, suite):
         """Specialization of the configurations which get executed by using the
            suite definitions.
         """
@@ -51,12 +49,11 @@ class Benchmark(object):
         variables = ExpVariables.compile(details, suite.variables)
 
         return Benchmark(name, command, gauge_adapter, suite,
-                         variables, extra_args, run_details, codespeed_name,
-                         data_store)
+                         variables, extra_args, run_details, codespeed_name)
 
-    def __init__(self, name: str, command: str, gauge_adapter: "GaugeAdapter",
-                 suite: "BenchmarkSuite", variables: str, extra_args: str,
-                 run_details: "ExpRunDetails", codespeed_name: str, data_store: "DataStore"):
+    def __init__(self, name: str, command: str, gauge_adapter: Optional["GaugeAdapter"],
+                 suite: "BenchmarkSuite", variables: Optional[ExpVariables], extra_args: str,
+                 run_details: "ExpRunDetails", codespeed_name: Optional[str]):
         assert run_details is None or isinstance(run_details, ExpRunDetails)
         self.name = name
 
@@ -77,18 +74,48 @@ class Benchmark(object):
         self.suite = suite
 
         self.variables = variables
-
-        # the compiled runs, these might be shared with other benchmarks/suites
-        self._runs: set[RunId] = set()
-
-        data_store.register_config(self)
-
-    def add_run(self, run):
-        self._runs.add(run)
+        self._hash = None
 
     @property
     def execute_exclusively(self):
         return self.run_details.execute_exclusively
+
+    def __eq__(self, other) -> bool:
+        return self is other or (
+            self.name == other.name and
+            self.command == other.command and
+            self.extra_args == other.extra_args and
+            self.run_details == other.run_details and
+            self.variables == other.variables and
+            self.suite == other.suite)
+
+    # pylint: disable-next=too-many-return-statements
+    def __lt__(self, other) -> bool:
+        if self is other:
+            return False
+
+        if self.name != other.name:
+            return self.name < other.name
+
+        if self.command != other.command:
+            return self.command < other.command
+
+        if self.suite != other.suite:
+            return self.suite < other.suite
+
+        if self.extra_args != other.extra_args:
+            return self.extra_args < other.extra_args
+
+        if self.run_details != other.run_details:
+            return self.run_details < other.run_details
+
+        return self.variables < other.variables
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = hash((self.name, self.command, self.extra_args, self.run_details,
+                               self.variables, self.suite))
+        return self._hash
 
     def __str__(self):
         return "%s, executor:%s, suite:%s, args:'%s'" % (
@@ -106,16 +133,27 @@ class Benchmark(object):
                 '' if self.extra_args is None else str(self.extra_args)]
 
     def as_dict(self):
-        return {
+        result = {
             "name": self.name,
+            "command": self.command,
             "runDetails": self.run_details.as_dict(),
             "suite": self.suite.as_dict(),
+            "variables": self.variables.as_dict()
         }
 
+        if self.extra_args is not None:
+            result["extra_args"] = self.extra_args
+        return result
+
     @classmethod
-    def from_str_list(cls, data_store, str_list):
-        return data_store.get_config(str_list[0], str_list[1], str_list[2],
-                                     None if str_list[3] == '' else str_list[3])
+    def from_dict(cls, data: Mapping[str, Any]) -> "Benchmark":
+        run_details = ExpRunDetails.from_dict(data["runDetails"])
+        suite = BenchmarkSuite.from_dict(data["suite"])
+        variables = ExpVariables.from_dict(data.get("variables", None))
+
+        return Benchmark(data["name"], data["command"], None, suite, variables,
+                         data.get("extra_args", None), run_details, None)
+
     @classmethod
     def get_column_headers(cls):
         return ["benchmark", "executor", "suite", "extraArgs"]

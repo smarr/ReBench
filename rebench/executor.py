@@ -26,13 +26,20 @@ import random
 import subprocess
 from threading import Thread, RLock
 from time import time
+from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .denoise import paths as denoise_paths
 from .denoise_client import add_denoise_python_path_to_env, get_number_of_cores
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
+from .model.build_cmd import BuildCommand
 from .ui import escape_braces
+
+
+
+if TYPE_CHECKING:
+    from .model.run_id import RunId
 
 
 class FailedBuilding(Exception):
@@ -109,9 +116,10 @@ class RunScheduler(object):
         self.ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
-        run_id_names = run_id.as_str_list()
+        exe_name = run_id.benchmark.suite.executor.name
+        suite_name = run_id.benchmark.suite.name
         self.ui.step_spinner(
-            self._runs_completed, "Run build for %s %s" % (run_id_names[1], run_id_names[2]))
+            self._runs_completed, f"Run build for {exe_name} {suite_name}")
 
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
@@ -361,26 +369,31 @@ class Executor(object):
 
         return cmdline
 
-    def _build_executor_and_suite(self, run_id):
+    def _build_executor_and_suite(self, run_id: "RunId"):
         name = "E:" + run_id.benchmark.suite.executor.name
         build = run_id.benchmark.suite.executor.build
-        self._process_builds(build, name, run_id)
+        self._process_builds(build, run_id.benchmark.suite.executor.path, name, run_id)
 
         name = "S:" + run_id.benchmark.suite.name
         build = run_id.benchmark.suite.build
-        self._process_builds(build, name, run_id)
+        self._process_builds(build, run_id.benchmark.suite.location, name, run_id)
 
-    def _process_builds(self, build, name, run_id):
+    def _process_builds(self, build: Optional[BuildCommand], location, name, run_id):
         if not build or build.is_built:
             return
 
         if build.build_failed:
             run_id.fail_immediately()
             raise FailedBuilding(name, build)
-        self._execute_build_cmd(build, name, run_id)
+        self._execute_build_cmd(build, location, name, run_id)
 
-    def _execute_build_cmd(self, build_command, name, run_id):
-        path = build_command.location
+    def _execute_build_cmd(self, build_command: BuildCommand, location: Optional[str],
+                           name: str, run_id: "RunId"):
+        assert build_command.location == location,\
+            "The location of the BuildCommand is only used for equality. "\
+            "And should always be equal to the one coming from the suite or executor"
+
+        path = location
         if not path or path == ".":
             path = os.getcwd()
 

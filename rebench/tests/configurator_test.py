@@ -127,7 +127,7 @@ class ConfiguratorTest(ReBenchTestCase):
                            self.ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
-        self.assertEqual(14, len(runs))
+        self.assertEqual(16, len(runs))
 
     def test_tag_filter_m1_and_m2(self):
         filter_args = ['t:machine1', 't:machine2']
@@ -135,7 +135,7 @@ class ConfiguratorTest(ReBenchTestCase):
                            self.ui, run_filter=filter_args)
 
         runs = cnf.get_runs()
-        self.assertEqual(14 + 24, len(runs))
+        self.assertEqual(16 + 24, len(runs))
 
     def test_validate_gauge_adapters_with_all_correct_settings(self):
         result = validate_gauge_adapters({

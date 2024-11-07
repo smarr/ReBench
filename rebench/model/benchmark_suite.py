@@ -18,8 +18,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import os
+from typing import Mapping, Optional
 
 from .build_cmd import BuildCommand
+from .executor import Executor
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
 
@@ -27,7 +29,7 @@ from .exp_variables import ExpVariables
 class BenchmarkSuite(object):
 
     @classmethod
-    def compile(cls, suite_name, suite, executor, deduplicated_build_commands):
+    def compile(cls, suite_name, suite, executor: Executor, deduplicated_build_commands):
         gauge_adapter = suite.get("gauge_adapter")
         command = suite.get("command")
 
@@ -46,7 +48,8 @@ class BenchmarkSuite(object):
         return BenchmarkSuite(suite_name, executor, gauge_adapter, command, location,
                               build, benchmarks_config, description or desc, run_details, variables)
 
-    def __init__(self, suite_name, executor, gauge_adapter, command, location, build,
+    def __init__(self, suite_name, executor: "Executor", gauge_adapter, command, location,
+                 build: Optional[BuildCommand],
                  benchmarks_config, desc, run_details, variables):
         """Specialize the benchmark suite for the given executor"""
         self.name = suite_name
@@ -63,15 +66,68 @@ class BenchmarkSuite(object):
         self.run_details = run_details
         self.variables = variables
 
+    def __eq__(self, other) -> bool:
+        return self is other or (
+            self.name == other.name and
+            self.command == other.command and
+            self.location == other.location and
+            self._desc == other._desc and
+            self.build == other.build and
+            self.executor == other.executor)
+
+    # pylint: disable-next=too-many-return-statements
+    def __lt__(self, other: "BenchmarkSuite") -> bool:
+        if self is other:
+            return False
+
+        if self.name != other.name:
+            return self.name < other.name
+
+        if self.command != other.command:
+            return self.command < other.command
+
+        if self.location != other.location:
+            return self.location < other.location
+
+        if self._desc != other._desc:
+            return self._desc < other._desc
+
+        if self.build != other.build:
+            if self.build is None:
+                return True
+            return self.build < other.build
+
+        return self.executor < other.executor
+
+    def __hash__(self):
+        return hash((self.name, self.command, self.location, self._desc, self.build, self.executor))
+
     def __str__(self):
         return "Suite(%s, %s)" % (self.name, self.command)
 
     def as_dict(self):
         result = {
             "name": self.name,
+            "command": self.command,
             "executor": self.executor.as_dict(),
-            "desc": self._desc,
         }
-        if self.build:
-            result["build"] = [b.as_dict() for b in self.build]
+
+        if self.location is not None:
+            result["location"] = self.location
+
+        if self._desc is not None:
+            result["desc"] = self._desc
+
+        if self.build is not None:
+            result["build"] = self.build.as_dict()
         return result
+
+    @classmethod
+    def from_dict(cls, data: Mapping) -> "BenchmarkSuite":
+        executor = Executor.from_dict(data["executor"])
+        location = data.get("location", None)
+        build = BuildCommand.from_dict(data.get("build", None), location)
+
+        return BenchmarkSuite(data["name"], executor, None, data["command"],
+                              location,
+                              build, None, data.get("desc", None), None, None)

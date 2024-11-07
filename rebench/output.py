@@ -22,3 +22,6 @@ class UIError(Exception):
 
     def __str__(self):
         return self._message
+
+    def __repr__(self):
+        return f"UIError({self._message})"

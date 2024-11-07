@@ -1,3 +1,5 @@
+from typing import Mapping, Optional, Sequence
+
 from ..interop.adapter import ExecutionDeliveredNoResults
 from ..interop.perf_parser import PerfParser
 from ..subprocess_with_timeout import run
@@ -6,10 +8,10 @@ from ..subprocess_with_timeout import run
 class Profiler(object):
 
     @classmethod
-    def compile(cls, profiler_data):
+    def compile(cls, profiler_data) -> Optional[Sequence["Profiler"]]:
         profilers = []
-        if profiler_data is None:
-            return profilers
+        if not profiler_data:
+            return None
 
         for k, v in profiler_data.items():
             if k == "perf":
@@ -23,14 +25,65 @@ class Profiler(object):
         self.name = name
         self.gauge_adapter_name = gauge_name
 
+    def as_dict(self):
+        raise NotImplementedError("as_dict() must be implemented by subclasses")
+
+    @classmethod
+    def from_dict(cls, data: Optional[list[Mapping]]) -> Optional[list["Profiler"]]:
+        if not data:
+            return None
+
+        result: list["Profiler"] = []
+        for p in data:
+            ## we keep it simple for now, because we only have PerfProfiler
+            result.append(PerfProfiler.from_dict(p))
+        return result
+
+_PERF_OUT = " --output=profile.perf "
+_PERF_IN = " --input=profile.perf "
 
 class PerfProfiler(Profiler):
 
-    def __init__(self, name, cfg):
+    def __init__(self, name, cfg: Mapping):
         super(PerfProfiler, self).__init__(name, "Perf")
-        self.record_args = cfg.get("record_args") + " --output=profile.perf "
-        self.report_args = cfg.get("report_args") + " --input=profile.perf "
-        self.command = "perf"
+        self.record_args: str = cfg.get("record_args", "") + _PERF_OUT
+        self.report_args: str = cfg.get("report_args", "") + _PERF_IN
+        self.command: str = "perf"
+
+    @classmethod
+    def from_dict(cls, data: Mapping) -> "PerfProfiler": # type: ignore[override]
+        return PerfProfiler(data["name"], data)
+
+    def as_dict(self):
+        record = self.record_args.replace(_PERF_OUT, "")
+        report = self.report_args.replace(_PERF_IN, "")
+        result = { "name": self.name }
+
+        if record:
+            result["record_args"] = record
+        if report:
+            result["report_args"] = report
+
+        return result
+
+    def __eq__(self, other):
+        return self is other or (
+                isinstance(other, self.__class__) and
+                self.name == other.name and
+                self.record_args == other.record_args and
+                self.report_args == other.report_args)
+
+    def __hash__(self):
+        return hash((self.name, self.record_args, self.report_args))
+
+    def __lt__(self, other):
+        if self.name != other.name:
+            return self.name < other.name
+
+        if self.record_args != other.record_args:
+            return self.record_args < other.record_args
+
+        return self.report_args < other.report_args
 
     def _construct_report_cmdline(self, executor):
         # need to use sudo, otherwise, the profile.perf file won't be accessible

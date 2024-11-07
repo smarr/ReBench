@@ -19,21 +19,25 @@
 # IN THE SOFTWARE.
 import logging
 from os.path import dirname, abspath
-from typing import Mapping
+from typing import Mapping, TYPE_CHECKING
 
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
 import yaml
 
 from .configuration_error import ConfigurationError
-from .model.build_cmd import BuildCommand
 from .model.experiment import Experiment
 from .model.exp_run_details import ExpRunDetails
+from .model.exp_variables import ExpVariables
 from .model.reporting import Reporting
 from .model.executor import Executor
+from .model.run_id import RunId
 from .output import UIError
 from .rebenchdb import ReBenchDB
 from .ui import escape_braces
+
+if TYPE_CHECKING:
+    from .model.build_cmd import BuildCommand
 
 # Disable most logging for pykwalify
 logging.getLogger("pykwalify").setLevel(logging.CRITICAL)
@@ -121,31 +125,24 @@ class _RunFilter(object):
         return False
 
 
+def validate_config(data, validator_list = None):
+    validator = Core(
+        source_data=data,
+        schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+    if validator_list is not None:
+        validator_list.append(validator)
+    validator.validate(raise_exception=True)
+
+
 def load_config(file_name):
     """
     Load the file, verify that it conforms to the schema,
     and return the configuration.
     """
+    config_data = None
     try:
-        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
-            data = yaml.safe_load(conf_file)
-            validator = Core(
-                source_data=data,
-                schema_files=[dirname(__file__) + "/rebench-schema.yml"])
-            try:
-                validator.validate(raise_exception=True)
-                validate_gauge_adapters(data)
-
-                # add file name and directory to config to be able to use it when loading
-                # for instance gauge adapters
-                data["__file__"] = file_name
-                data["__dir__"] = dirname(abspath(file_name))
-            except SchemaError as err:
-                errors = [escape_braces(val_err) for val_err in validator.validation_errors]
-                raise UIError(
-                    "Validation of " + file_name + " failed.\n{ind}" +
-                    "\n{ind}".join(errors) + "\n", err)
-            return data
+        with open(file_name, 'r') as conf_file:  # pylint: disable=unspecified-encoding
+            config_data = yaml.safe_load(conf_file)
     except IOError as err:
         if err.errno == 2:
             assert err.strerror == "No such file or directory"
@@ -155,6 +152,22 @@ def load_config(file_name):
     except yaml.YAMLError as err:
         raise UIError("Parsing of the config file "
                       + file_name + " failed.\nError " + str(err) + "\n", err)
+
+    try:
+        validators = []
+        validate_config(config_data, validators)
+        validate_gauge_adapters(config_data)
+
+        # add file name and directory to config to be able to use it when loading
+        # for instance gauge adapters
+        config_data['__file__'] = file_name
+        config_data['__dir__'] = dirname(abspath(file_name))
+    except SchemaError as err:
+        errors = [escape_braces(val_err) for val_err in validators[0].validation_errors]
+        raise UIError(
+            "Validation of " + file_name + " failed.\n{ind}" +
+            "\n{ind}".join(errors) + "\n", err)
+    return config_data
 
 
 def validate_gauge_adapters(raw_config):
@@ -178,12 +191,12 @@ class Configurator(object):
                  exp_name=None, data_file=None, build_log=None, run_filter=None):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self.build_log = build_log or raw_config.get("build_log", "build.log")
-        self.data_file = data_file or raw_config.get("default_data_file", "rebench.data")
-        self._exp_name = exp_name or raw_config.get("default_experiment", "all")
-        self.artifact_review = raw_config.get("artifact_review", False)
-        self.config_dir = raw_config.get("__dir__", None)
-        self.config_file = raw_config.get("__file__", None)
+        self.build_log = build_log or raw_config.get('build_log', 'build.log')
+        self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
+        self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
+        self.artifact_review = raw_config.get('artifact_review', False)
+        self.config_dir = raw_config.get('__dir__', None)
+        self.config_file = raw_config.get('__file__', None)
 
         self._rebench_db_connector = None
 
@@ -195,9 +208,10 @@ class Configurator(object):
                 invocations = 1
                 iterations = 1
 
-        self._root_run_details = ExpRunDetails.compile(
-            raw_config.get('runs', {}), ExpRunDetails.default(
-                invocations, iterations))
+        self.base_run_details = self._assemble_base_run_details(
+            raw_config.get('runs', {}), invocations, iterations)
+        self.base_variables = ExpVariables.empty()
+
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 
@@ -219,7 +233,7 @@ class Configurator(object):
         self.data_store = data_store
         self._process_cli_options()
 
-        self.deduplicated_build_commands: Mapping[BuildCommand, BuildCommand] = {}
+        self.deduplicated_build_commands: dict[BuildCommand, BuildCommand] = {}
 
         self.run_filter = _RunFilter(run_filter)
 
@@ -228,6 +242,9 @@ class Configurator(object):
 
         experiments = raw_config.get("experiments", {})
         self._experiments = self._compile_experiments(experiments)
+
+    def _assemble_base_run_details(self, run_config, invocations, iterations):
+        return ExpRunDetails.compile(run_config, ExpRunDetails.default(invocations, iterations))
 
     @property
     def use_rebench_db(self):
@@ -284,10 +301,6 @@ class Configurator(object):
     def reporting(self):
         return self._root_reporting
 
-    @property
-    def run_details(self):
-        return self._root_run_details
-
     def has_executor(self, executor_name):
         return executor_name in self._executors
 
@@ -315,7 +328,7 @@ class Configurator(object):
     def get_experiment(self, name):
         return self._experiments[name]
 
-    def get_runs(self):
+    def get_runs(self) -> set[RunId]:
         runs = set()
         for exp in list(self._experiments.values()):
             runs |= exp.runs
@@ -323,7 +336,7 @@ class Configurator(object):
         if self.options and self.options.setup_only:
             # filter out runs we don't need to trigger a build
             runs_with_builds = set()
-            build_commands = set()
+            build_commands: set[BuildCommand] = set()
 
             for run in runs:
                 commands = run.build_commands()

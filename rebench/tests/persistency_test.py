@@ -43,20 +43,21 @@ from ..rebench import ReBench
 
 class PersistencyTest(ReBenchTestCase):
     def test_de_serialization(self):
-        data_store = DataStore(self.ui)
         executor = ExecutorConf("MyVM", '', '',
                                 None, None, None, None, None, None, "benchmark", {})
         suite = BenchmarkSuite("MySuite", executor, '', '', None, None,
                                None, None, None, None)
         benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
                               suite, None, None, ExpRunDetails.default(None, None),
-                              None, data_store)
+                              None)
 
-        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'machine-22')
+        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'tag11')
         measurement = Measurement(43, 45, 2222.2222, 'ms', run_id, 'foobar crit')
 
-        serialized = measurement.as_str_list()
-        deserialized = Measurement.from_str_list(data_store, serialized)
+        id_to_run_id = [run_id]
+
+        serialized = measurement.as_str_list(0)
+        deserialized = Measurement.from_str_list(id_to_run_id, serialized)
 
         self.assertEqual(deserialized.criterion, measurement.criterion)
         self.assertEqual(deserialized.value, measurement.value)
@@ -215,7 +216,9 @@ class PersistencyTest(ReBenchTestCase):
         expected_headers = Measurement.get_column_headers()
         self.assertEqual(column_headers, expected_headers)
 
-        self.assertEqual(len((lines[5]).split("\t")), len(column_headers),
+        a_line_that_has_data = lines[-1]
+        num_data_columns = len(a_line_that_has_data.split("\t"))
+        self.assertEqual(num_data_columns, len(column_headers),
                          'expected same number of column headers as data columns')
 
     def get_line_after_char(self, char, line):
@@ -285,18 +288,18 @@ class PersistencyTest(ReBenchTestCase):
             self.assertEqual(criteria[i], c["c"])
             self.assertEqual("ms", c["u"])
 
-    def _assert_run_id_structure(self, run_id, run_id_obj):
-        self.assertEqual(run_id["varValue"], run_id_obj.var_value)
-        self.assertIsNone(run_id["varValue"])
+    def _assert_run_id_structure(self, run_id, run_id_obj: RunId):
+        self.assertIsNone(run_id_obj.var_value)
+        self.assertNotIn("varValue", run_id)
 
-        self.assertEqual(run_id["tag"], run_id_obj.tag)
-        self.assertIsNone(run_id["tag"])
+        self.assertIsNone(run_id_obj.tag)
+        self.assertNotIn("tag", run_id)
 
         self.assertEqual(run_id["location"], run_id_obj.location)
         self.assertEqual(run_id["inputSize"], run_id_obj.input_size)
 
-        self.assertEqual(run_id["extraArgs"], run_id_obj.benchmark.extra_args)
-        self.assertIsNone(run_id["extraArgs"])
+        self.assertIsNone(run_id_obj.benchmark.extra_args)
+        self.assertNotIn("extraArgs", run_id)
 
         self.assertEqual(run_id["cores"], run_id_obj.cores)
         self.assertEqual(1, run_id["cores"])
@@ -310,13 +313,20 @@ class PersistencyTest(ReBenchTestCase):
         run_details = benchmark["runDetails"]
         self.assertEqual(-1, run_details["maxInvocationTime"])
         self.assertEqual(50, run_details["minIterationTime"])
-        self.assertIsNone(run_details["warmup"])
+
+        self.assertIsNone(run_id_obj.warmup_iterations)
+        self.assertNotIn("warmup", run_details)
 
         suite = benchmark["suite"]
-        self.assertIsNone(suite["desc"])
+
+        self.assertIsNone(run_id_obj.benchmark.suite._desc)
+        self.assertNotIn("desc", suite)
+
         self.assertEqual("Suite", suite["name"])
+
         executor = suite["executor"]
-        self.assertIsNone(executor["desc"])
+        self.assertIsNone(run_id_obj.benchmark.suite.executor.description)
+        self.assertNotIn("desc", executor)
         self.assertEqual("TestRunner", executor["name"])
 
     def _assert_data_point_structure(self, data):

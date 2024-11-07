@@ -17,14 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from typing import Optional, Mapping
+from typing import Optional
 
 
 class BuildCommand(object):
 
     @classmethod
     def create(cls, commands: Optional[list[str]], location: Optional[str],
-               deduplicated_build_commands: Mapping["BuildCommand", "BuildCommand"]
+               deduplicated_build_commands: dict["BuildCommand", "BuildCommand"]
                ) -> Optional["BuildCommand"]:
         if not commands:
             return None
@@ -34,9 +34,11 @@ class BuildCommand(object):
         build_command = BuildCommand(command, location)
         if build_command in deduplicated_build_commands:
             return deduplicated_build_commands[build_command]
+
+        deduplicated_build_commands[build_command] = build_command
         return build_command
 
-    def __init__(self, cmd, location):
+    def __init__(self, cmd: str, location: Optional[str]):
         self.command = cmd
         self.location = location
         self.is_built = False
@@ -49,9 +51,15 @@ class BuildCommand(object):
         self.build_failed = True
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__) and
+        return self is other or (
+                isinstance(other, self.__class__) and
                 self.command == other.command and
                 self.location == other.location)
+
+    def __lt__(self, other):
+        if self.command != other.commands:
+            return self.command < other.commands
+        return self.location < other.location
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -60,7 +68,11 @@ class BuildCommand(object):
         return hash((self.command, self.location))
 
     def as_dict(self):
-        return {
-            'cmd': self.command,
-            'location': self.location
-        }
+        return self.command
+
+    @classmethod
+    def from_dict(cls, command: Optional[str], location: Optional[str]) -> Optional["BuildCommand"]:
+        if command is None:
+            return None
+
+        return BuildCommand(command, location)
