@@ -1,6 +1,6 @@
 def output_as_str(string_like):
     if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode("utf-8")
+        return string_like.decode("utf-8", errors="replace")
     else:
         return string_like
 
@@ -22,3 +22,6 @@ class UIError(Exception):
 
     def __str__(self):
         return self._message
+
+    def __repr__(self):
+        return f"UIError({self._message})"

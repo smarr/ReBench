@@ -22,7 +22,7 @@ from .run_id import RunId
 
 class Measurement(object):
     def __init__(self, invocation, iteration, value, unit,
-                 run_id, criterion='total', line_number=None, filename=None):
+                 run_id: RunId, criterion='total', line_number=None, filename=None):
         self.invocation = invocation
         self.iteration = iteration
         self.value = value
@@ -36,7 +36,7 @@ class Measurement(object):
     def is_total(self):
         return self.criterion == "total"
 
-    def as_str_list(self):
+    def as_str_list(self, persisted_run_id: int):
         if isinstance(self.value, float):
             val = "%f" % self.value
         else:
@@ -45,16 +45,16 @@ class Measurement(object):
         return [str(self.invocation), str(self.iteration),
                 val,
                 self.unit,
-                self.criterion] + self.run_id.as_str_list()
+                self.criterion] + self.run_id.as_str_list(persisted_run_id)
 
     @classmethod
-    def from_str_list(cls, data_store, str_list, line_number=None, filename=None):
+    def from_str_list(cls, id_to_run_id: list[RunId], str_list, line_number=None, filename=None):
         invocation = int(str_list[0])
         iteration = int(str_list[1])
         value = float(str_list[2])
         unit = str_list[3]
         criterion = str_list[4]
-        run_id = RunId.from_str_list(data_store, str_list[5:])
+        run_id = RunId.from_str_list(id_to_run_id, str_list[5:])
 
         return Measurement(invocation, iteration, value, unit, run_id,
                            criterion, line_number, filename)

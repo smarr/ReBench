@@ -25,16 +25,17 @@ class ProfileData(object):
             "in": self.invocation,
         }
 
-    def as_str_list(self):
+    def as_str_list(self, persisted_run_id: int):
         as_json = json.dumps(self.processed_data)
         return ([str(self.invocation), str(self.num_iterations)]
-                + self.run_id.as_str_list() + [as_json])
+                + self.run_id.as_str_list(persisted_run_id) + [as_json])
 
     @classmethod
-    def from_str_list(cls, data_store, str_list, _line_number=None, _filename=None):
+    def from_str_list(cls, id_to_run_id: list["RunId"], str_list, _line_number=None,
+                      _filename=None):
         invocation = int(str_list[0])
         num_iterations = int(str_list[1])
-        run_id = RunId.from_str_list(data_store, str_list[2:-1])
+        run_id = RunId.from_str_list(id_to_run_id, str_list[2:-1])
         processed_data = str_list[-1]
 
         return ProfileData(run_id, processed_data, num_iterations, invocation)

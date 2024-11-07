@@ -82,9 +82,9 @@ class ExecutorTest(ReBenchTestCase):
 
         ex = Executor(initial_runs, False, self.ui, False, False, scheduler)
         ex.execute()
-        self.assertEqual(len(reporter.runs_completed), 28)
+        self.assertEqual(len(reporter.runs_completed), 40)
         self.assertEqual(len(reporter.runs_failed), 1)
-        self.assertEqual(len(reporter.runs_failed_without_return_code), 13)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 23)
 
     def test_remove_executors_with_missing_exe_batch(self):
         self._remove_executors_with_missing_exe(BatchScheduler)

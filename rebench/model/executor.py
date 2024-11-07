@@ -19,6 +19,8 @@
 # IN THE SOFTWARE.
 import os
 
+from typing import Optional, Mapping
+
 from .build_cmd import BuildCommand
 from .exp_run_details import ExpRunDetails
 from .exp_variables import ExpVariables
@@ -55,8 +57,9 @@ class Executor(object):
         return Executor(executor_name, path, executable, args, build, description or desc,
                         profiler, run_details, variables, action, env)
 
-    def __init__(self, name, path, executable, args, build, description,
-                 profiler, run_details, variables, action, env):
+    def __init__(self, name, path, executable, args, build: Optional[BuildCommand], description,
+                 profiler: Optional[list[Profiler]], run_details: ExpRunDetails,
+                 variables: ExpVariables, action, env):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions
         """
@@ -75,11 +78,79 @@ class Executor(object):
 
         self.action = action
 
+    def __eq__(self, other) -> bool:
+        return self is other or (
+            self.name == other.name and
+            self.description == other.description and
+            self.action == other.action and
+            self.path == other.path and
+            self.executable == other.executable and
+            self.args == other.args and
+            self.build == other.build and
+            self.run_details == other.run_details and
+            self.variables == other.variables)
+
+    # pylint: disable-next=too-many-return-statements
+    def __lt__(self, other) -> bool:
+        if self is other:
+            return False
+
+        if self.name != other.name:
+            return self.name < other.name
+
+        if self.description != other.description:
+            return self.description < other.description
+
+        if self.action != other.action:
+            return self.action < other.action
+
+        if self.path != other.path:
+            return self.path < other.path
+
+        if self.executable != other.executable:
+            return self.executable < other.executable
+
+        if self.args != other.args:
+            return self.args < other.args
+
+        if self.build != other.build:
+            return self.build < other.build
+
+        if self.run_details != other.run_details:
+            return self.run_details < other.run_details
+
+        return self.variables < other.variables
+
+    def __hash__(self):
+        return hash((self.name, self.description, self.action, self.path, self.executable,
+                     self.args, self.build, self.run_details, self.variables))
+
     def as_dict(self):
         result = {
             'name': self.name,
-            'desc': self.description
+            'executable': self.executable,
+            'action': self.action,
+            'runDetails': self.run_details.as_dict(),
+            'variables': self.variables.as_dict(),
         }
-        if self.build:
-            result["build"] = [b.as_dict() for b in self.build]
+        if self.path is not None:
+            result['path'] = self.path
+        if self.args is not None:
+            result['args'] = self.args
+        if self.description is not None:
+            result['desc'] = self.description
+        if self.build is not None:
+            result["build"] = self.build.as_dict()
         return result
+
+    @classmethod
+    def from_dict(cls, data: Mapping) -> "Executor":
+        path = data.get("path", None)
+        build = BuildCommand.from_dict(data.get("build", None), path)
+        return Executor(data["name"], path, data["executable"],
+                        data.get("args", None), build, data.get("desc", None),
+                        Profiler.from_dict(data.get("profiler", None)),
+                        ExpRunDetails.from_dict(data.get("runDetails", None)),
+                        ExpVariables.from_dict(data.get("variables", None)),
+                        data.get("action", None),
+                        data.get("env", None))

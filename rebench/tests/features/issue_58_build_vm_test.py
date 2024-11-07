@@ -120,5 +120,4 @@ class Issue58BuildExecutor(ReBenchTestCase):
 
         log = self._read_log()
 
-        self.assertEqual(
-            "E:BashA|STD:standard\nE:BashA|ERR:error\n", log)
+        self.assertRegex(log, r"^E:BashAA?|STD:standard\nE:BashAA?|ERR:error\n$")

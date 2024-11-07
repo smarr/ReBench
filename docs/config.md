@@ -104,7 +104,7 @@ So, in the case of the `input_sizes` example, the setting for `benchmark`
 overrides the settings in a suite or executor.
 
 These priorities and the ability to define different benchmarks, suites, VMs, etc,
-hopefully provides sufficient flexibility to encode all desired experiments.
+hopefully provide sufficient flexibility to encode all desired experiments.
 
 ## Root Elements
 

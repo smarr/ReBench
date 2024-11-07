@@ -91,8 +91,8 @@ class TextReporter(Reporter):
         for run_id in run_ids:
             mean = run_id.get_mean_of_totals()
             num_samples = run_id.get_number_of_data_points()
-            out = run_id.as_str_list()
-            out.append(num_samples)
+            out = run_id.as_str_list(0)
+            out[-1] = num_samples # can just overwrite the last value, which is the run_id_id
             if num_samples == 0:
                 out.append("Failed")
             else:

@@ -24,8 +24,6 @@ from ...model.benchmark_suite  import BenchmarkSuite
 from ...model.run_id           import RunId
 from ...model.exp_run_details  import ExpRunDetails
 from ...model.executor  import Executor
-from ...persistence            import DataStore
-from ...ui                     import TestDummyUI
 
 
 class Issue4RunEquality(unittest.TestCase):
@@ -40,7 +38,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite = BenchmarkSuite("MySuite", executor, '', '%(benchmark)s %(cores)s %(input)s',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite, None,
-                              '3', ExpRunDetails.empty(), None, DataStore(TestDummyUI()))
+                              '3', ExpRunDetails.empty(), None)
         return RunId(benchmark, 1, 2, None, None)
 
     @staticmethod
@@ -50,7 +48,7 @@ class Issue4RunEquality(unittest.TestCase):
         suite = BenchmarkSuite('MySuite', executor, '', '%(benchmark)s %(cores)s 2 3',
                                None, None, [], None, None, None)
         benchmark = Benchmark("TestBench", "TestBench", None, suite,
-                              None, None, ExpRunDetails.empty(), None, DataStore(TestDummyUI()))
+                              None, None, ExpRunDetails.empty(), None)
         return RunId(benchmark, 1, None, None, None)
 
     def test_hardcoded_equals_template_constructed(self):
@@ -58,6 +56,11 @@ class Issue4RunEquality(unittest.TestCase):
         template = self._create_template_run_id()
 
         self.assertEqual(hard_coded.cmdline(), template.cmdline())
-        self.assertEqual(hard_coded, template)
-        self.assertTrue(hard_coded == template)
         self.assertFalse(hard_coded is template)
+
+        # While it would be fantastic to recognize these as equal, it is simpler to break
+        # this feature for the moment and consider them different. This way,
+        # we have one consistent way of detecting equality of run_ids, that includes all,
+        # and not only the command-line-based configuration details.
+        self.assertNotEqual(hard_coded, template)
+        self.assertFalse(hard_coded == template)

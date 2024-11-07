@@ -40,8 +40,8 @@ class Experiment(object):
         reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
                                       configurator.options, configurator.ui)
 
-        run_details = ExpRunDetails.compile(exp, configurator.run_details)
-        variables = ExpVariables.compile(exp, ExpVariables.empty())
+        run_details = ExpRunDetails.compile(exp, configurator.base_run_details)
+        variables = ExpVariables.compile(exp, configurator.base_variables)
 
         executions = exp.get("executions")
         suites = exp.get("suites")
@@ -86,7 +86,6 @@ class Experiment(object):
                                 continue
                             run = self._data_store.create_run_id(
                                 bench, cores, input_size, var_val, tag)
-                            bench.add_run(run)
                             runs.add(run)
                             run.add_reporting(self._reporting)
                             run.add_persistence(self._persistence)
@@ -123,6 +122,5 @@ class Experiment(object):
         bench_cfgs = []
         for suite in self._suites:
             for bench in suite.benchmarks_config:
-                bench_cfgs.append(Benchmark.compile(
-                    bench, suite, self._data_store))
+                bench_cfgs.append(Benchmark.compile(bench, suite))
         return bench_cfgs

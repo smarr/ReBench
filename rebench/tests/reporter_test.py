@@ -65,7 +65,8 @@ class ReporterTest(ReBenchTestCase):
         self._run_benchmarks_and_do_reporting(False)
         reporter = TextReporter()
         sorted_rows, used_cols, summary = reporter._generate_all_output(self._runs)
-        self.assertEqual(38, len(sorted_rows))
+        self.assertEqual(40, len(sorted_rows))
+        self.assertEqual(1, len(summary))
         self.assertEqual(len(reporter.expected_columns) - 1, len(sorted_rows[0]))
         self.assertEqual(['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
              'Tag', 'Mean (ms)'], used_cols)

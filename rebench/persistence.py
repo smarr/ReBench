@@ -22,11 +22,14 @@ import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from tempfile import NamedTemporaryFile
 from threading import Lock
 from time import time
+from typing import TYPE_CHECKING
 
 from .environment import determine_environment, determine_source_details
+from .model.benchmark import Benchmark
 from .model.data_point  import DataPoint
 from .model.measurement import Measurement
 from .model.profile_data import ProfileData
@@ -34,15 +37,18 @@ from .model.run_id      import RunId
 from .output            import UIError
 from .rebenchdb         import get_current_time
 
+if TYPE_CHECKING:
+    from .ui import UI
+
 _START_TIME_LINE = "# Execution Start: "
 
 
 class DataStore(object):
 
-    def __init__(self, ui):
-        self._files = {}
-        self._run_ids = {}
-        self._bench_cfgs = {}
+    def __init__(self, ui: "UI"):
+        self._files: dict[str, "AbstractPersistence"] = {}
+        self._run_ids: dict[RunId, RunId] = {}
+        self._benchmarks: dict[Benchmark, Benchmark] = {}
         self.ui = ui
 
     def load_data(self, runs, discard_run_data):
@@ -79,38 +85,37 @@ class DataStore(object):
             self._files[filename] = p
         return self._files[filename]
 
-    def create_run_id(self, benchmark, cores, input_size, var_value, tag):
+    def create_run_id(self, benchmark: Benchmark, cores, input_size, var_value, tag):
         if isinstance(cores, str) and cores.isdigit():
             cores = int(cores)
         if input_size == "":
             input_size = None
         if var_value == "":
             var_value = None
-
         run = RunId(benchmark, cores, input_size, var_value, tag)
-        if run in self._run_ids:
-            return self._run_ids[run]
-        else:
-            self._run_ids[run] = run
-            return run
+        return self._ensure_run_id_objects_are_unique(run)
 
-    def get_config(self, name, executor_name, suite_name, extra_args):
-        key = (name, executor_name, suite_name,
-               '' if extra_args is None else str(extra_args))
+    def create_benchmark_from_dict(self, d):
+        bench = Benchmark.from_dict(d)
+        return self._ensure_benchmarks_are_unique(bench)
 
-        if key not in self._bench_cfgs:
-            raise ValueError("Requested configuration is not available: " +
-                             str(key))
+    def create_run_id_from_dict(self, d: Mapping, benchmark: Benchmark):
+        run = RunId.from_dict(d, benchmark)
+        return self._ensure_run_id_objects_are_unique(run)
 
-        return self._bench_cfgs[key]
+    def _ensure_run_id_objects_are_unique(self, run_id: RunId):
+        if run_id in self._run_ids:
+            return self._run_ids[run_id]
 
-    def register_config(self, cfg):
-        key = tuple(cfg.as_str_list())
-        if key in self._bench_cfgs:
-            raise ValueError("Two identical BenchmarkConfig tried to " +
-                             "register. This seems to be wrong: " + str(key))
-        self._bench_cfgs[key] = cfg
-        return cfg
+        self._run_ids[run_id] = run_id
+        return run_id
+
+    def _ensure_benchmarks_are_unique(self, benchmark: Benchmark):
+        if benchmark in self._benchmarks:
+            return self._benchmarks[benchmark]
+
+        self._benchmarks[benchmark] = benchmark
+        return benchmark
 
 
 class AbstractPersistence(object):
@@ -137,7 +142,7 @@ class AbstractPersistence(object):
 
 class _ConcretePersistence(AbstractPersistence):
 
-    def __init__(self, data_store, ui):
+    def __init__(self, data_store: DataStore, ui):
         self._data_store = data_store
         self._start_time = None
         self.ui = ui
@@ -175,9 +180,15 @@ class _CompositePersistence(AbstractPersistence):
             self._closed = True
 
 
+def _to_json(data):
+    return json.dumps(data, separators=(",", ":"), ensure_ascii=True)
+
+_METADATA_RUN_ID = "# run_id: "
+_METADATA_BENCHMARK = "# benchmark: "
+
 class _FilePersistence(_ConcretePersistence):
 
-    def __init__(self, data_filename, data_store, configurator, ui):
+    def __init__(self, data_filename, data_store: DataStore, configurator, ui):
         super(_FilePersistence, self).__init__(data_store, ui)
         if not data_filename:
             raise ValueError("DataPointPersistence expects a filename " +
@@ -193,6 +204,12 @@ class _FilePersistence(_ConcretePersistence):
             self._start_time = get_current_time()
 
         self._configurator = configurator
+
+        self._run_ids_in_file: dict[RunId, int] = {}
+        self._id_to_run_id: list[RunId] = []
+
+        self._benchmarks_in_file: dict[Benchmark, int] = {}
+        self._id_to_benchmark: list[Benchmark] = []
 
     def _discard_old_data(self):
         self._truncate_file(self._data_filename)
@@ -254,20 +271,47 @@ class _FilePersistence(_ConcretePersistence):
         """
         errors = set()
         data_point = None
+        csv_header = self._get_csv_header()
 
         previous_run_id = None
         line_number = 0
         for line in data_file:
-            if line.startswith("#"):  # skip comments, and shebang lines
+            if line.startswith("#"):  # skip comments, and shebang lines, but read run_ids
                 line_number += 1
                 if filtered_data_file:
                     filtered_data_file.write(line)
+
+                if line.startswith(_METADATA_BENCHMARK):
+                    rest_line = line[len(_METADATA_BENCHMARK):]
+                    bench_id, bench_json = rest_line.split("=", 1)
+                    bench_dict = json.loads(bench_json)
+                    benchmark = self._data_store.create_benchmark_from_dict(bench_dict)
+                    assert benchmark not in self._benchmarks_in_file
+                    self._benchmarks_in_file[benchmark] = int(bench_id)
+                    assert len(self._id_to_benchmark) == int(bench_id)
+                    self._id_to_benchmark.append(benchmark)
+
+                elif line.startswith(_METADATA_RUN_ID):
+                    rest_line = line[len(_METADATA_RUN_ID):]
+                    run_id_id, run_json = rest_line.split("=", 1)
+                    run_dict = json.loads(run_json)
+                    assert "benchmark_id" in run_dict
+                    benchmark_id = int(run_dict["benchmark_id"])
+                    benchmark = self._id_to_benchmark[benchmark_id]
+
+                    run_id = self._data_store.create_run_id_from_dict(run_dict, benchmark)
+                    self._run_ids_in_file[run_id] = int(run_id_id)
+                    assert len(self._id_to_run_id) == int(run_id_id)
+                    self._id_to_run_id.append(run_id)
+                continue
+
+            if line == csv_header:
                 continue
 
             try:
                 data_point, previous_run_id = self._parse_data_line(
                     data_point, line, line_number, runs, filtered_data_file, previous_run_id)
-            except ValueError as err:
+            except (ValueError, IndexError) as err:
                 msg = str(err)
                 if not errors:
                     self.ui.debug_error_info("Failed loading data from data file: "
@@ -280,7 +324,7 @@ class _FilePersistence(_ConcretePersistence):
     def _parse_data_line(
             self, data_point, line, line_number, runs, filtered_data_file, previous_run_id):
         measurement = Measurement.from_str_list(
-            self._data_store, line.rstrip('\n').split(self._SEP),
+            self._id_to_run_id, line.rstrip('\n').split(self._SEP),
             line_number, self._data_filename)
 
         run_id = measurement.run_id
@@ -306,6 +350,9 @@ class _FilePersistence(_ConcretePersistence):
 
     _SEP = "\t"  # separator between serialized parts of a measurement
 
+    def _get_csv_header(self):
+        return self._SEP.join(Measurement.get_column_headers()) + "\n"
+
     def _open_file_and_append_execution_comment(self):
         """
         Append a shebang (#!/path/to/executable) to the data file.
@@ -314,11 +361,11 @@ class _FilePersistence(_ConcretePersistence):
         """
         shebang_with_metadata = "#!%s\n" % (subprocess.list2cmdline(sys.argv))
         shebang_with_metadata += _START_TIME_LINE + self._start_time + "\n"
-        shebang_with_metadata += "# Environment: " + json.dumps(determine_environment()) + "\n"
-        shebang_with_metadata += "# Source: " + json.dumps(
+        shebang_with_metadata += "# Environment: " + _to_json(determine_environment()) + "\n"
+        shebang_with_metadata += "# Source: " + _to_json(
             determine_source_details(self._configurator)) + "\n"
 
-        csv_header = self._SEP.join(Measurement.get_column_headers()) + "\n"
+        csv_header = self._get_csv_header()
 
         try:
             # pylint: disable-next=unspecified-encoding,consider-using-with
@@ -335,13 +382,35 @@ class _FilePersistence(_ConcretePersistence):
                     os.getcwd(), err),
                 err)
 
+    def _ensure_benchark_is_persisted(self, benchmark: Benchmark) -> int:
+        if benchmark not in self._benchmarks_in_file:
+            bench_id = len(self._benchmarks_in_file)
+            line = _METADATA_BENCHMARK + str(bench_id) + "=" + _to_json(benchmark.as_dict()) + "\n"
+            self._file.write(line) # type: ignore
+            self._benchmarks_in_file[benchmark] = bench_id
+        return self._benchmarks_in_file[benchmark]
 
-    def _persists_data_point_in_open_file(self, data_point):
+    def _ensure_run_id_is_persisted(self, run_id: RunId) -> int:
+        if run_id not in self._run_ids_in_file:
+            run_id_id = len(self._run_ids_in_file)
+            benchmark_id = self._ensure_benchark_is_persisted(run_id.benchmark)
+
+            run = run_id.as_dict(True)
+            run["benchmark_id"] = benchmark_id
+            assert "benchmark" not in run
+
+            line = _METADATA_RUN_ID + str(run_id_id) + "=" + _to_json(run) + "\n"
+            self._file.write(line) # type: ignore
+            self._run_ids_in_file[run_id] = run_id_id
+        return self._run_ids_in_file[run_id]
+
+    def _persists_data_point_in_open_file(self, data_point: DataPoint):
+        run_id_id = self._ensure_run_id_is_persisted(data_point.run_id)
         for measurement in data_point.get_measurements():
-            line = self._SEP.join(measurement.as_str_list())
-            self._file.write(line + "\n")
+            line = self._SEP.join(measurement.as_str_list(run_id_id))
+            self._file.write(line + "\n") # type: ignore
 
-    def persist_data_point(self, data_point):
+    def persist_data_point(self, data_point: DataPoint):
         """
         Serialize all measurements of the data point and persist them
         in the data file.
@@ -349,7 +418,7 @@ class _FilePersistence(_ConcretePersistence):
         with self._lock:
             self._open_file_to_add_new_data()
             self._persists_data_point_in_open_file(data_point)
-            self._file.flush()
+            self._file.flush() # type: ignore
 
     def run_completed(self):
         """Nothing to be done."""
@@ -366,8 +435,9 @@ class _FilePersistence(_ConcretePersistence):
 
 class _ProfileFilePersistence(_FilePersistence):
     def _persists_data_point_in_open_file(self, data_point):
+        run_id_id = self._ensure_run_id_is_persisted(data_point.run_id)
         assert isinstance(data_point, ProfileData)
-        line = self._SEP.join(data_point.as_str_list())
+        line = self._SEP.join(data_point.as_str_list(run_id_id))
         assert "\n" not in line, "The newline character is now allowed in a data line"
         self._file.write(line + "\n")
 
@@ -376,7 +446,7 @@ class _ProfileFilePersistence(_FilePersistence):
         str_list = line.rstrip('\n').split(self._SEP)
 
         data_point = ProfileData.from_str_list(
-            self._data_store, str_list, line_number, self._data_filename)
+            self._id_to_run_id, str_list, line_number, self._data_filename)
 
         run_id = data_point.run_id
         if filtered_data_file and runs and run_id in runs:
