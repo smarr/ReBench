@@ -47,11 +47,11 @@ class ConfiguratorTest(ReBenchTestCase):
                            self.ui, None)
         self.assertEqual(1, len(cnf.get_experiments()))
 
-    @unittest.skip("needs to be fixed, see #21")
     def test_number_of_experiments_testconf(self):
         cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
                            self.ui, None, None, 'all')
-        self.assertEqual(6, len(cnf.get_experiments()))
+        self.assertEqual(5, len(cnf.get_experiments()))
+        self.assertEqual(53, len(cnf.get_runs()))
 
     def _get_experiment(self):
         cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self.ui),
