@@ -14,6 +14,7 @@ CONFIG_ELEMENTS = [
     "experiment",
     "experiments",
     "runs",
+    "machine",
 ]
 
 
@@ -28,7 +29,7 @@ def create_list_of_pairs_to_check():
 
 def test_precedence_order_pairs():
     pairs = create_list_of_pairs_to_check()
-    assert len(pairs) == 15
+    assert len(pairs) == 21
 
 
 # the run details, with a low priority [0] and a high priority [1] setting
@@ -73,6 +74,7 @@ def create_raw_configuration():
                 ],
             }
         },
+        "machines": {"testMachine": {}},
         "executors": {"TestExec": {"path": "path", "executable": "exec"}},
         "experiments": {
             "testExp": {"suites": ["TestSuite"], "executions": [{"TestExec": {}}]}
@@ -93,6 +95,8 @@ def add_setting(config, elem_name, key, value):
         config["experiments"]["testExp"][key] = value
     elif elem_name == "runs":
         config["runs"] = {key: value}
+    elif elem_name == "machine":
+        config["machines"]["testMachine"][key] = value
 
 
 def create_test_input():
@@ -135,7 +139,7 @@ def test_experiment_with_higher_priority_setting(
 
 
 def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_val):
-    cnf = Configurator(raw_config, data_store, ui)
+    cnf = Configurator(raw_config, data_store, ui, machine="testMachine")
     runs = list(cnf.get_runs())
     assert len(runs) == 1
 
@@ -158,3 +162,22 @@ def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_va
         high_val = high_val[0]
 
     assert getattr(run, val_key) == high_val
+
+
+def create_machine_test_input():
+    result = []
+
+    for key, value in RUN_DETAILS.items():
+        result.append((key, value[1]))
+
+    for key, value in VARIABLES.items():
+        result.append((key, value[1]))
+    return result
+
+
+@pytest.mark.parametrize("key, value", create_machine_test_input())
+def test_machine_settings_being_used(ui, data_store, key, value):
+    raw_config = create_raw_configuration()
+    add_setting(raw_config, "machine", key, value)
+
+    assert_expected_value_in_config(ui, data_store, raw_config, key, value)

@@ -51,7 +51,7 @@ class PersistencyTest(ReBenchTestCase):
                               suite, None, None, ExpRunDetails.default(None, None),
                               None)
 
-        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'tag11')
+        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'tag11', 'machine-22')
         measurement = Measurement(43, 45, 2222.2222, 'ms', run_id, 'foobar crit')
 
         id_to_run_id = [run_id]

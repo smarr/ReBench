@@ -141,6 +141,19 @@ schema;variables:
       sequence:
         - type: scalar
 
+schema;machine_type:
+  desc: |
+    settings for a specific machine
+  type: map
+  mapping:
+    <<: [ *EXP_RUN_DETAILS, *EXP_VARIABLES ]
+    description:
+      type: str
+      desc: Description of the machine
+    desc:
+      type: str
+      desc: Description of the machine
+
 schema;benchmark_type_str:
   type: str
   desc: The name of a benchmark, can be simply the name.
@@ -352,6 +365,11 @@ mapping:
     include: runs_type
   reporting:
     include: reporting_type
+  machines:
+    type: map
+    mapping:
+      regex;(.+):
+        include: machine_type
   benchmark_suites:
     type: map
     mapping:

@@ -62,7 +62,7 @@ class TextReporter(Reporter):
     def __init__(self):
         super(TextReporter, self).__init__()
         self.expected_columns = ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Tag', '#Samples', 'Mean (ms)']
+             'Tag', 'Machine', '#Samples', 'Mean (ms)']
 
     @staticmethod
     def _path_to_string(path):
@@ -102,7 +102,7 @@ class TextReporter(Reporter):
                 column_value_sets[i].add(v)
             rows.append(out)
 
-        sorted_rows = sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7))
+        sorted_rows = sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7, 8))
 
         if len(sorted_rows) <= 4:
             return sorted_rows, self.expected_columns, None

@@ -99,6 +99,7 @@ The priorities are, starting with highest:
 4. experiment
 5. experiments
 6. runs (as defined by the [root element](#root-elements))
+7. machine
 
 So, in the case of the `input_sizes` example, the setting for `benchmark`
 overrides the settings in a suite or executor.
@@ -179,6 +180,7 @@ be used, and each contains structural elements further detailed below.
 
 - `runs`
 - `reporting`
+- `machines`
 - `benchmark_suites`
 - `executors`
 - `experiments`
@@ -458,6 +460,28 @@ reporting:
     repo_url:     https://example.org/project.git
     project_name: Some Project that Wants Good Performance
     record_all:   true
+```
+
+---
+
+## Machines
+
+The `machines` key defines machine-specific configuration.
+This configuration is applied when `rebench` is run with the `-m|--machine` option.
+
+The configuration for a machine can contain a brief description
+to document the purpose of the machine, as well as the keys for [run details](#runs) and
+[variables](#benchmark).
+
+For example, for experiments that show scalability, one may want to configure different
+number of cores to run on:
+
+```yaml
+machines:
+  small-machine:
+    cores: [1, 2, 4, 8]
+  large-machine:
+    cores: [1, 2, 4, 8, 16, 32, 64, 128]
 ```
 
 ---
