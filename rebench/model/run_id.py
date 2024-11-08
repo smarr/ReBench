@@ -137,6 +137,10 @@ class RunId(object):
         return self._expandend_env
 
     @property
+    def denoise(self):
+        return self.benchmark.run_details.denoise
+
+    @property
     def completed_invocations(self):
         return self._max_invocation
 
