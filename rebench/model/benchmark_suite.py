@@ -48,7 +48,7 @@ class BenchmarkSuite(object):
         return BenchmarkSuite(suite_name, executor, gauge_adapter, command, location,
                               build, benchmarks_config, description or desc, run_details, variables)
 
-    def __init__(self, suite_name, executor: "Executor", gauge_adapter, command, location,
+    def __init__(self, suite_name, executor: Executor, gauge_adapter, command, location,
                  build: Optional[BuildCommand],
                  benchmarks_config, desc, run_details, variables):
         """Specialize the benchmark suite for the given executor"""
