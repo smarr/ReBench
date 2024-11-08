@@ -1,6 +1,9 @@
-def output_as_str(string_like):
+from typing import Union, Optional
+
+
+def output_as_str(string_like: Optional[Union[str, bytes]]) -> Optional[str]:
     if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode("utf-8", errors="replace")
+        return string_like.decode("utf-8", errors="replace") # type: ignore
     else:
         return string_like
 
