@@ -1,6 +1,45 @@
 name: ReBench Configuration
 desc: Specifies the elements of the YAML-based configuration format.
 
+schema;denoise_type:
+  type: map
+  mapping:
+    use_nice:
+      type: bool
+      desc: Whether to use the nice command to maximize priority of the benchmark.
+      # default: true  # can't specify this, because defaults override settings
+    shield:
+      type: str
+      # default: basic  # can't specify this, because defaults override settings
+      desc: |
+        We use cpuset to shield the benchmark from other processes.
+        The shield is a comma-separated list of CPUs to be used,
+        using the same format as the `cset` command.
+        
+        Special values:
+         - disabled: do not use CPU shielding
+         - basic: leave a small number of CPUs for the system
+    scaling_governor:
+      type: str
+      # default: performance  # can't specify this, because defaults override settings
+      desc: |
+        The scaling governor to be used for the benchmark.
+        Special values:
+         - unset: do not change the scaling governor
+         - performance: run the CPU at the maximum frequency
+         - powersave: run the CPU at the minimum frequency
+         - ondemand: scale dynamically, jump to the highest frequency and back off when idle
+         - conservative: scale dynamically, more gradually than ondemand
+    set_no_turbo:
+      type: bool
+      # default: true  # can't specify this, because defaults override settings
+      desc: Set the CPU to run without Turbo Boost.
+    minimize_perf_sampling:
+      type: bool
+      # default: true  # can't specify this, because defaults override settings
+      desc: |
+          Minimize perf settings to reduce any possible overhead.
+
 schema;runs_type:
   type: map
   mapping: &EXP_RUN_DETAILS
@@ -56,7 +95,6 @@ schema;runs_type:
       desc: |
         TODO: probably needs to be removed, not sure. parallel exec of
         benchmarks introduced a lot of noise
-
     retries_after_failure:
       type: int
       # default: 0 #  can't specify this here, because the defaults override settings
@@ -73,7 +111,8 @@ schema;runs_type:
           type: str
       desc: |
         Environment variables to be set when starting the executor.
-
+    denoise:
+      include: denoise_type
 
 schema;reporting_type:
   type: map
