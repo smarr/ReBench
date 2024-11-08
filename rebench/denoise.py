@@ -90,16 +90,8 @@ class CommandsPaths:
 
     def get_denoise_python_path(self):
         if self._denoise_python_path is None:
-            active_python_path = sys.path
             current_file = os.path.abspath(__file__)
-
-            # find the element in active_python_path that has the start of the current file path
-            for path in active_python_path:
-                if current_file.startswith(path) and "rebench" in path.lower():
-                    self._denoise_python_path = path
-                    return path
-
-            self._denoise_python_path = False
+            self._denoise_python_path = os.path.dirname(os.path.dirname(current_file))
 
         return self._denoise_python_path
 
