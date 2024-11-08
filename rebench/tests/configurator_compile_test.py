@@ -42,6 +42,7 @@ RUN_DETAILS = {
     "ignore_timeouts": [True, False],
     "retries_after_failure": [8, 9],
     "env": [{"MY_VAR": "value"}, {"MY_VAR": "value2"}],
+    "denoise": [{"use_nice": True}, {"use_nice": False}],
 }
 
 # the variables, with a low priority [0] and a high priority [1] setting
@@ -160,6 +161,9 @@ def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_va
     elif val_key == "tags":
         val_key = "tag"
         high_val = high_val[0]
+    elif val_key == "denoise":
+        assert run.denoise.use_nice == high_val["use_nice"]
+        return
 
     assert getattr(run, val_key) == high_val
 
