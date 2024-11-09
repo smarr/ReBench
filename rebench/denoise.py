@@ -197,7 +197,9 @@ SCALING_GOVERNOR_PERFORMANCE = "performance"
 def _read_scaling_governor() -> Optional[str]:
     try:
         with open(
-            "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r", encoding="utf-8"
+            "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
+            "r",
+            encoding="utf-8",
         ) as gov_file:
             return gov_file.read().strip()
     except IOError:
@@ -226,8 +228,9 @@ def _set_scaling_governor(governor, num_cores) -> str:
 
 def _read_no_turbo() -> Optional[bool]:
     try:
-        # pylint: disable-next=unspecified-encoding
-        with open("/sys/devices/system/cpu/intel_pstate/no_turbo", "r") as nt_file:
+        with open(
+            "/sys/devices/system/cpu/intel_pstate/no_turbo", "r", encoding="utf-8"
+        ) as nt_file:
             return nt_file.read().strip() == "1"
     except IOError:
         return None
