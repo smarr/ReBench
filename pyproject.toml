@@ -40,7 +40,6 @@ extend-exclude = '''
 | /rebench/model/experiment.py
 | /rebench/configurator.py
 | /rebench/subprocess_kill.py
-| /rebench/denoise.py
 | /rebench/model/termination_check.py
 | /rebench/tests/bugs/issue_27_invalid_run_not_handled_test.py
 | /rebench/tests/bugs/issue_112_invocations_setting_ignored_test.py
