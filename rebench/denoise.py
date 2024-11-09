@@ -1,11 +1,11 @@
 import json
 import os
-import subprocess
 import sys
 
 from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
+from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
 
 from .output import output_as_str, UIError
 from .subprocess_kill import kill_process
@@ -47,22 +47,18 @@ class CommandsPaths:
         """
         try:
             selected_cmd = output_as_str(
-                subprocess.check_output(
-                    [self.get_which(), command], shell=False, stderr=subprocess.DEVNULL
-                )
+                check_output([self.get_which(), command], shell=False, stderr=DEVNULL)
             ).strip()
             result_cmd = os.path.realpath(selected_cmd)
-        except subprocess.CalledProcessError:
+        except CalledProcessError:
             result_cmd = command
 
         try:
-            subprocess.check_output(
-                [result_cmd] + arguments_for_successful_exe,
-                shell=False,
-                stderr=subprocess.DEVNULL,
+            check_output(
+                [result_cmd] + arguments_for_successful_exe, shell=False, stderr=DEVNULL
             )
             return result_cmd
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except (CalledProcessError, FileNotFoundError):
             return False
 
     def has_cset(self):
@@ -114,9 +110,7 @@ def _can_set_niceness():
     our benchmarks.
     """
     try:
-        output = subprocess.check_output(
-            ["nice", "-n-20", "echo", "test"], stderr=subprocess.STDOUT
-        )
+        output = check_output(["nice", "-n-20", "echo", "test"], stderr=STDOUT)
         output = output_as_str(output)
     except OSError:
         return False
@@ -144,9 +138,8 @@ def _activate_shielding(num_cores):
         return False
 
     try:
-        output = subprocess.check_output(
-            [paths.get_cset(), "shield", "-c", core_spec, "-k", "on"],
-            stderr=subprocess.STDOUT,
+        output = check_output(
+            [paths.get_cset(), "shield", "-c", core_spec, "-k", "on"], stderr=STDOUT
         )
         output = output_as_str(output)
     except OSError:
@@ -163,14 +156,12 @@ def _activate_shielding(num_cores):
 
 def _reset_shielding():
     try:
-        output = subprocess.check_output(
-            [paths.get_cset(), "shield", "-r"], stderr=subprocess.STDOUT
-        )
+        output = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
         output = output_as_str(output)
         return "cset: done" in output
     except OSError:
         return False
-    except subprocess.CalledProcessError:
+    except CalledProcessError:
         return False
 
 
