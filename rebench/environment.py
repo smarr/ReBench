@@ -135,10 +135,11 @@ def init_environment(denoise_result, ui):
         ui.warning('Was not able to determine the type of CPU used and its clock speed.' +
                    ' Thus, these details will not be recorded with the data.\n')
 
-    result["software"] = []
-    result["software"].append({"name": "kernel", "version": u_name[3]})
-    result["software"].append({"name": "kernel-release", "version": u_name[2]})
-    result["software"].append({"name": "architecture", "version": u_name[4]})
+    result["software"] = [
+        {"name": "kernel", "version": u_name[3]},
+        {"name": "kernel-release", "version": u_name[2]},
+        {"name": "architecture", "version": u_name[4]}
+    ]
 
     global _environment  # pylint: disable=global-statement
     _environment = result
