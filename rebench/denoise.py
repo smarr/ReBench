@@ -32,9 +32,9 @@ class CommandsPaths:
             else:
                 raise UIError(
                     "The basic `which` command was not found."
-                    + " In many systems it is available at /usr/bin/which."
-                    + " If it is elsewhere rebench-denoise will need to be"
-                    + " adapted to support a different location.\n",
+                    " In many systems it is available at /usr/bin/which."
+                    " If it is elsewhere rebench-denoise will need to be"
+                    " adapted to support a different location.\n",
                     None,
                 )
 
@@ -89,10 +89,9 @@ class CommandsPaths:
         if not self.has_denoise():
             raise UIError(
                 "rebench-denoise not found. "
-                + "Was ReBench installed so that `rebench` and `rebench-denoise` "
-                + "are on the PATH? Python's bin directory for packages "
-                + "may need to be added to PATH manually.\n\n"
-                + "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
+                "Was ReBench installed so that `rebench` and `rebench-denoise` are on the PATH? "
+                "Python's bin directory for packages may need to be added to PATH manually.\n\n"
+                "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
                 None,
             )
 
@@ -402,12 +401,12 @@ def _shell_options():
         help=(
             "`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
             "`minimize` sets system to reduce noise. "
-            + "`restore` sets system to the assumed original settings. "
-            + "`exec -- ` executes the given arguments. "
-            + "`kill pid` send kill signal to the process with given id "
-            + "and all child processes. "
-            + "`test` executes a computation for 20 seconds in parallel. "
-            + "it is only useful to test rebench-denoise itself."
+            "`restore` sets system to the assumed original settings. "
+            "`exec -- ` executes the given arguments. "
+            "`kill pid` send kill signal to the process with given id "
+            "and all child processes. "
+            "`test` executes a computation for 20 seconds in parallel. "
+            "it is only useful to test rebench-denoise itself."
         ),
         default=None,
     )
