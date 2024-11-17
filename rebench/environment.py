@@ -46,6 +46,17 @@ def git_repo_not_initialized():
     return _exec(["git", "rev-parse"]) is None
 
 
+_commit_info_format = {
+    "branchOrTag": "%D",
+    "commitMsg": "%B",
+    "authorName": "%aN",
+    "committerName": "%cN",
+    "authorEmail": "%aE",
+    "committerEmail": "%cE"
+}
+
+_commit_info_format_str = "%x00".join(_commit_info_format.values())
+
 def determine_source_details(configurator):
     global _source  # pylint: disable=global-statement
     if _source:
@@ -56,7 +67,8 @@ def determine_source_details(configurator):
     if configurator and configurator.options and configurator.options.git_repo:
         git_cmd += ["-C", configurator.options.git_repo]
 
-    is_git_repo = _exec(git_cmd + ["rev-parse"]) is not None
+    commit_id = _exec(git_cmd + ["rev-parse", "HEAD"])
+    is_git_repo = commit_id is not None
     if not is_git_repo:
         result["repoURL"] = None
         result["branchOrTag"] = None
@@ -80,13 +92,17 @@ def determine_source_details(configurator):
             netloc="{}@{}".format(parsed.username, parsed.hostname))
     result['repoURL'] = _encode_str(parsed.geturl())
 
-    result['branchOrTag'] = extract_base(_exec(git_cmd + ['show', '-s', '--format=%D', 'HEAD']))
-    result['commitId'] = _exec(git_cmd + ['rev-parse', 'HEAD'])
-    result['commitMsg'] = _exec(git_cmd + ['show', '-s', '--format=%B', 'HEAD'])
-    result['authorName'] = _exec(git_cmd + ['show', '-s', '--format=%aN', 'HEAD'])
-    result['committerName'] = _exec(git_cmd + ['show', '-s', '--format=%cN', 'HEAD'])
-    result['authorEmail'] = _exec(git_cmd + ['show', '-s', '--format=%aE', 'HEAD'])
-    result['committerEmail'] = _exec(git_cmd + ['show', '-s', '--format=%cE', 'HEAD'])
+    commit_info = _exec(git_cmd + ['show', '-s', '--format=' + _commit_info_format_str, 'HEAD'])
+    info = commit_info.split("\x00")
+    assert len(info) == len(_commit_info_format), "Unexpected number of fields in commit info"
+
+    result['branchOrTag'] = extract_base(info[0])
+    result['commitId'] = commit_id
+    result['commitMsg'] = info[1]
+    result['authorName'] = info[2]
+    result['committerName'] = info[3]
+    result['authorEmail'] = info[4]
+    result['committerEmail'] = info[5]
 
     _source = result
     return result
