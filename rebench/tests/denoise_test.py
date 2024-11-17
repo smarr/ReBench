@@ -14,3 +14,13 @@ class DenoiseTest(ReBenchTestCase):
 
         self.assertEqual(result, Denoise.system_default())
         assert not result.needs_denoise()
+
+    def test_max_union(self):
+        sys_defaults = Denoise.system_default()
+        defaults = Denoise.default()
+
+        union = Denoise.max_union(sys_defaults, defaults)
+        self.assertEqual(union, defaults)
+
+        union = Denoise.max_union(defaults, sys_defaults)
+        self.assertEqual(union, defaults)
