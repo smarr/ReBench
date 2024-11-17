@@ -179,7 +179,7 @@ class Denoise(object):
         )
 
     @classmethod
-    def max_union(cls, a, b) -> "Denoise":
+    def max_union(cls, a: "Denoise", b: "Denoise") -> "Denoise":
         """
         Return the combined maximum of the two configurations.
         This is useful to find which denoise features are used across all runs.
@@ -191,9 +191,23 @@ class Denoise(object):
             if a.scaling_governor == "no_change"
             else a.scaling_governor
         )
-        no_turbo = b.no_turbo if a.no_turbo is None else a.no_turbo
-        minimize_perf_sampling = a.minimize_perf_sampling or b.minimize_perf_sampling
+        no_turbo = _max_union_of_change(a.no_turbo, b.no_turbo)
+        minimize_perf_sampling = _max_union_of_change(
+            a.minimize_perf_sampling, b.minimize_perf_sampling
+        )
 
         return Denoise(
             use_nice, shield, scaling_governor, no_turbo, minimize_perf_sampling
         )
+
+
+def _max_union_of_change(a: Union[str, bool], b: Union[str, bool]):
+    """Select the possible change request from the two values."""
+
+    if a == "no_change":
+        return b
+
+    if b == "no_change":
+        return a
+
+    return a or b
