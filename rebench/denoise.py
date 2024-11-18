@@ -146,11 +146,14 @@ def _get_core_spec(num_cores) -> str:
 
 
 # pylint: disable-next=too-many-return-statements
-def _activate_shielding(num_cores) -> str:
+def _activate_shielding(shield, num_cores) -> str:
     if not num_cores:
         return "failed: num-cores not set"
 
-    core_spec = _get_core_spec(num_cores)
+    if shield == "basic":
+        core_spec = _get_core_spec(num_cores)
+    else:
+        core_spec = shield
 
     if not paths.has_cset():
         return "failed: cset-path not set"
@@ -188,6 +191,8 @@ def _reset_shielding() -> Union[str, bool]:
     except CalledProcessError:
         return "failed: CalledProcessError"
 
+
+DEFAULT_SHIELD = "basic"
 
 # For intel_pstate systems, there's only powersave and performance
 SCALING_GOVERNOR_POWERSAVE = "powersave"
@@ -317,7 +322,8 @@ def _initial_settings_and_capabilities(
     if args.use_shielding:
         num_cores = int(args.num_cores) if args.num_cores else None
         if paths.has_cset() and num_cores:
-            output = _activate_shielding(num_cores)
+            shield = args.shield or DEFAULT_SHIELD
+            output = _activate_shielding(shield, num_cores)
             if "failed" not in output:
                 _reset_shielding()
                 can_use_shielding = True
@@ -370,7 +376,8 @@ def _minimize_noise(args) -> dict:
     result = {}
 
     if args.use_shielding:
-        result["shielding"] = _activate_shielding(num_cores)
+        shield = args.shield or DEFAULT_SHIELD
+        result["shielding"] = _activate_shielding(shield, num_cores)
 
     if args.use_no_turbo:
         r = _set_no_turbo(True)
@@ -503,6 +510,14 @@ def _shell_options():
         default=True,
         dest="use_shielding",
         help="Don't try shielding cores",
+    )
+    parser.add_argument(
+        "-s",
+        "--shield",
+        action="store",
+        default=None,
+        dest="shield",
+        help=f"Shielding specification. Default is '{DEFAULT_SHIELD}'.",
     )
     parser.add_argument(
         "-T",
@@ -638,18 +653,29 @@ def _any_failed(result: dict):
     return any(str(v).startswith("failed") for v in result.values())
 
 
+def _check_for_inconsistent_settings(args):
+    if args.use_shielding is False and args.shield is not None:
+        print(
+            "Error: -s|--shield can only be set "
+            "when -S|--without-shielding is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
+    if args.use_scaling_governor is False and args.scaling_governor is not None:
+        print(
+            "Error: -g|--governor can only be set "
+            "when -G|--without-scaling-governor is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
+
 def main_func():
     arg_parser = _shell_options()
     args, remaining_args = arg_parser.parse_known_args()
 
     paths.set_cset(args.cset_path)
 
-    if args.use_scaling_governor is False and args.scaling_governor is not None:
-        print(
-            "Error: Option -g|--governor can only be set "
-            "when --without-scaling-governor is not set."
-        )
-        return EXIT_CODE_INVALID_SETTINGS
+    _check_for_inconsistent_settings(args)
 
     result = {}
 
