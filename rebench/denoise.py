@@ -186,6 +186,7 @@ def _reset_shielding() -> Union[str, bool]:
 # For intel_pstate systems, there's only powersave and performance
 SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
+DEFAULT_SCALING_GOVERNOR = SCALING_GOVERNOR_PERFORMANCE
 
 
 def _read_scaling_governor() -> Optional[str]:
@@ -201,10 +202,12 @@ def _read_scaling_governor() -> Optional[str]:
 
 
 def _set_scaling_governor(governor, num_cores) -> str:
-    assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE), (
-        "The scaling governor is expected to be 'performance' or 'powersave', but was "
-        + governor
-    )
+    if governor not in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE):
+        print(
+            "The scaling governor is expected to be 'performance' or 'powersave', but was "
+            + governor
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
 
     if not num_cores:
         return "failed: num-cores not set"
@@ -368,9 +371,8 @@ def _minimize_noise(args) -> dict:
         result["no_turbo"] = "succeeded" if r is True else r
 
     if args.use_scaling_governor:
-        result["scaling_governor"] = _set_scaling_governor(
-            SCALING_GOVERNOR_PERFORMANCE, num_cores
-        )
+        scaling_governor = args.scaling_governor or DEFAULT_SCALING_GOVERNOR
+        result["scaling_governor"] = _set_scaling_governor(scaling_governor, num_cores)
 
     if args.use_mini_perf_sampling:
         r = _configure_perf_sampling(args.for_profiling)
@@ -516,6 +518,14 @@ def _shell_options():
         help="Don't try setting scaling governor",
     )
     parser.add_argument(
+        "-g",
+        "--governor",
+        action="store",
+        default=None,
+        dest="scaling_governor",
+        help=f"Scaling Governor to set. Default value is '{DEFAULT_SCALING_GOVERNOR}'.",
+    )
+    parser.add_argument(
         "-P",
         "--without-min-perf-sampling",
         action="store_false",
@@ -564,6 +574,7 @@ EXIT_CODE_CHANGING_SETTINGS_FAILED = 1
 EXIT_CODE_NUM_CORES_UNSET = 2
 EXIT_CODE_NO_COMMAND_SELECTED = 3
 EXIT_CODE_EXEC_FAILED = 4
+EXIT_CODE_INVALID_SETTINGS = 5
 
 
 def _report_init(result: dict, args):
@@ -629,6 +640,13 @@ def main_func():
     args, remaining_args = arg_parser.parse_known_args()
 
     paths.set_cset(args.cset_path)
+
+    if args.use_scaling_governor is False and args.scaling_governor is not None:
+        print(
+            "Error: Option -g|--governor can only be set "
+            "when --without-scaling-governor is not set."
+        )
+        return EXIT_CODE_INVALID_SETTINGS
 
     result = {}
 
