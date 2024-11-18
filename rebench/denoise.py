@@ -32,7 +32,7 @@ class CommandsPaths:
                 self._which_path = "/usr/bin/which"
             else:
                 raise UIError(
-                    "The basic `which` command was not found."
+                    "The `which` command was not found."
                     " In many systems it is available at /usr/bin/which."
                     " If it is elsewhere rebench-denoise will need to be"
                     " adapted to support a different location.\n",
