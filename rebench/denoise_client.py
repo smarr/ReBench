@@ -6,7 +6,7 @@ from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple
 from cpuinfo import get_cpu_info
 
-from .denoise import paths
+from .denoise import paths, DEFAULT_SCALING_GOVERNOR
 from .model.denoise import Denoise
 from .output import output_as_str
 from .ui import escape_braces
@@ -100,6 +100,9 @@ def _add_denoise_options(cmd: list[str], requested: Denoise):
         options_to_disable += "S"
     if not requested.requested_scaling_governor:
         options_to_disable += "G"
+    elif requested.scaling_governor != DEFAULT_SCALING_GOVERNOR:
+        cmd.append("-g")
+        cmd.append(requested.scaling_governor)
     if not requested.requested_no_turbo:
         options_to_disable += "T"
     if not requested.requested_minimize_perf_sampling:
