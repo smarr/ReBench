@@ -340,6 +340,9 @@ class Executor(object):
         for run in runs:
             run.set_total_number_of_runs(num_runs)
 
+    def get_denoise_initial(self):
+        return self._denoise_initial
+
     def _create_scheduler(self, scheduler, print_execution_plan):
         # figure out whether to use parallel scheduler
         if cpu_count() > 1:
