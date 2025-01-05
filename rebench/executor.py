@@ -534,8 +534,10 @@ class Executor(object):
         if (self._active_denoise_cfg == possible_settings and
                 self._active_for_profiling == for_profiling):
             # denoise is already configured as required, and possible
+            self.ui.debug_output_info("Denoise: expected configuration already active\n")
             return
 
+        self.ui.debug_output_info("Denoise: setting requested configuration:\n")
         self._active_denoise_cfg = minimize_noise(
             possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
         self._active_for_profiling = for_profiling
