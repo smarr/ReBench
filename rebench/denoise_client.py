@@ -108,6 +108,9 @@ def _add_denoise_options(cmd: list[str], requested: Denoise):
         cmd.append(requested.scaling_governor)
     if not requested.requested_no_turbo:
         options_to_disable += "T"
+    else:
+        cmd.append("-nt")
+        cmd.append("true" if requested.no_turbo else "false")
     if not requested.requested_minimize_perf_sampling:
         options_to_disable += "P"
 
