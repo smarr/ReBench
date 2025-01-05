@@ -179,7 +179,7 @@ class Denoise(object):
         )
 
     @classmethod
-    def max_union(cls, a: "Denoise", b: "Denoise") -> "Denoise":
+    def max_union_to_get_used_features(cls, a: "Denoise", b: "Denoise") -> "Denoise":
         """
         Return the combined maximum of the two configurations.
         This is useful to find which denoise features are used across all runs.
