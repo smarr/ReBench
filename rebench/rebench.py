@@ -312,7 +312,7 @@ Argument:
     def identify_used_denoise_features(runs) -> Denoise:
         result = Denoise.system_default()
         for run in runs:
-            result = Denoise.max_union(result, run.denoise)
+            result = Denoise.max_union_to_get_used_features(result, run.denoise)
         return result
 
     def execute_experiment(self, runs,
