@@ -13,9 +13,9 @@ class Denoise(object):
         use_nice = none_or_bool(config.get("use_nice", defaults.use_nice))
         shield = config.get("shield", defaults.shield)
         scaling_governor = config.get("scaling_governor", defaults.scaling_governor)
-        no_turbo = none_or_bool(config.get("no_turbo", defaults.no_turbo))
-        minimize_perf_sampling = none_or_bool(
-            config.get("minimize_perf_sampling", defaults.minimize_perf_sampling)
+        no_turbo = config.get("no_turbo", defaults.no_turbo)
+        minimize_perf_sampling = config.get(
+            "minimize_perf_sampling", defaults.minimize_perf_sampling
         )
 
         return Denoise(
@@ -38,6 +38,13 @@ class Denoise(object):
 
         self._initial_capabilities: Optional["DenoiseInitialSettings"] = None
         self._possible: Optional[Denoise] = None
+
+    def __repr__(self):
+        return (
+            f"Denoise(use_nice={self.use_nice}, shield={self.shield}, "
+            f"scaling_governor={self.scaling_governor}, no_turbo={self.no_turbo}, "
+            f"minimize_perf_sampling={self.minimize_perf_sampling})"
+        )
 
     def __eq__(self, other):
         if other is None:
