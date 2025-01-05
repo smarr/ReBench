@@ -270,6 +270,7 @@ def minimize_noise(possible_settings: Denoise, for_profiling: bool, show_warning
     _add_denoise_options(cmd, possible_settings)
     cmd += ["minimize"]
 
+    ui.debug_output_info("Denoise: " + " ".join(cmd))
     result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
 
     msg = "Minimizing noise with rebench-denoise failed\n"
@@ -310,6 +311,7 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     _add_denoise_options(cmd, restore)
     cmd += ["restore"]
 
+    ui.debug_output_info(f"Denoise, restore settings: {' '.join(cmd)}\n")
     result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
 
     restored = _process_denoise_result(
