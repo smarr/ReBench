@@ -244,8 +244,8 @@ def _read_no_turbo() -> Optional[bool]:
         return None
 
 
-def _set_no_turbo(with_no_turbo: bool) -> Union[Literal[True], str]:
-    if with_no_turbo:
+def _set_no_turbo(no_turbo_value: bool) -> Union[Literal[True], str]:
+    if no_turbo_value:
         value = "1"
     else:
         value = "0"
@@ -380,7 +380,7 @@ def _minimize_noise(args) -> dict:
         result["shielding"] = _activate_shielding(shield, num_cores)
 
     if args.use_no_turbo:
-        r = _set_no_turbo(True)
+        r = _set_no_turbo(args.no_turbo)
         result["no_turbo"] = "succeeded" if r is True else r
 
     if args.use_scaling_governor:
@@ -528,6 +528,17 @@ def _shell_options():
         help="Don't try setting no_turbo",
     )
     parser.add_argument(
+        "-nt",
+        "--no-turbo",
+        action="store",
+        default=None,
+        dest="no_turbo",
+        choices=[True, False],
+        # convert input string to boolean
+        type=lambda x: x.lower() == "true",
+        help="Set no_turbo to the given boolean.",
+    )
+    parser.add_argument(
         "-G",
         "--without-scaling-governor",
         action="store_false",
@@ -654,6 +665,18 @@ def _any_failed(result: dict):
 
 
 def _check_for_inconsistent_settings(args):
+    if args.use_no_turbo is False and args.no_turbo is not None:
+        print(
+            "Error: -nt|--no-turbo can only be set "
+            "when -T|--without-no-turbo is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+    elif args.use_no_turbo and args.no_turbo is None and args.command == "minimize":
+        print(
+            "Error: Attempting to set no_turbo, but no value specified with -nt|--no-turbo."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
     if args.use_shielding is False and args.shield is not None:
         print(
             "Error: -s|--shield can only be set "
