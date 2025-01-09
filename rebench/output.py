@@ -7,7 +7,7 @@ def output_as_str(string_like):
 
 class UIError(Exception):
 
-    def __init__(self, message, exception):
+    def __init__(self, message, exception = None):
         super(UIError, self).__init__()
         self._message = message
         self._exception = exception

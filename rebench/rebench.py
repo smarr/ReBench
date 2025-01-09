@@ -237,6 +237,19 @@ Argument:
         success, _ = rebench_db.send_completion(get_current_time())
         return success
 
+    @staticmethod
+    def _make_args_consistent(args):
+        if args.send_to_rebench_db and (args.no_execution or args.execution_plan):
+            raise UIError("Trying to send existing data with "
+                          "--no-execution or --execution-plan set is not supported.\n")
+
+        if args.no_execution or args.execution_plan:
+            # no execution, so no need to report data
+            args.use_data_reporting = False
+
+        if args.no_execution and args.execution_plan:
+            raise UIError("Options --no-execution and --execution-plan are mutually exclusive.\n")
+
     def run(self, argv=None):
         if argv is None:
             argv = sys.argv
@@ -244,6 +257,7 @@ Argument:
         data_store = DataStore(self.ui)
         opt_parser = self.shell_options()
         args = opt_parser.parse_args(argv[1:])
+        self._make_args_consistent(args)
 
         cli_reporter = CliReporter(args.verbose, self.ui)
 
