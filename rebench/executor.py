@@ -658,7 +658,7 @@ class Executor(object):
                 run.report_job_completed(self._runs)
                 if run.is_failed:
                     successful = False
-            return successful
+            return successful or self._include_faulty
         finally:
             for run in self._runs:
                 run.close_files()
