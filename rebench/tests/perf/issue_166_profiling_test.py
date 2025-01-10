@@ -209,3 +209,23 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         profiler.command = "./cat-first.sh"
         profiler.record_args = "perf-small.report"
         profiler.report_args = "perf-small.report"
+
+    def test_failing_profiler_and_include_faulty(self):
+        raw_config = self._load_config_and_use_tmp_as_data_file()
+        cnf = Configurator(
+            raw_config, DataStore(self.ui), self.ui, exp_name="profile2", data_file=self._tmp_file)
+
+        runs = cnf.get_runs()
+        run_id = list(cnf.get_runs())[0]
+        self.assertEqual(0, run_id.completed_invocations)
+        self.assertEqual(0, run_id.get_number_of_data_points())
+
+        profilers = run_id.benchmark.suite.executor.profiler
+        profiler = profilers[0]
+        profiler.command = "false"
+
+        executor = Executor(runs, False, self.ui, include_faulty=True)
+        self.assertTrue(executor.execute())
+
+        self.assertEqual(0, run_id.completed_invocations)
+        self.assertEqual(0, run_id.get_number_of_data_points())
