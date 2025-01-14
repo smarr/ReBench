@@ -2,6 +2,87 @@
 
 ## [Unreleased]
 
+## [1.3.0] Env Vars part of RunId, and Support for Machine-Specific Settings - 2025-01-20
+
+This release has three major changes that will affect how ReBench interprets configurations.
+
+### 1. `RunId` identity is now based on all details, e.g. also env vars (#271)
+
+Until now, RunId identity was based on the command line generated from the
+configuration. However, this meant, we could not distinguish between different
+runs with for instance different environment variables.
+From now on, RunId identity is based on all details of the configuration,
+which may mean that configuration files may result in more distinct RunIds
+than they did previously.
+
+### 2. Build commands are combined and run as a single shell script (#269)
+
+The `build:` key takes a list of commands, which are now combined into a single
+shell script. Previously, each command was run separately. 
+Since we avoid executing the same command multiple times,
+treating commands separately led to confusing results and was not very useful.
+By combining the commands into a single script, identifying redundant script
+execution leads to more predictable results.
+
+### 3. Support for machine-specific settings (#272)
+
+A new lowest-priority configuration level is introduced, which is meant to define
+machine-specific settings. This can be useful, for instance for settings like this:
+
+```yaml
+machines:
+  smaller-machine:
+    cores: [1, 2]
+  larger-machine:
+    cores: [1, 2, 4, 8]
+```
+
+These settings are combined into a configuration based on the usual rules.
+So, if a benchmark suite or a benchmark give specific values for `cores:`, these
+have higher priority. However, one would likely use it, avoiding
+benchmark-specific values.
+
+When executing ReBench on the corresponding machine, these settings can be
+selected with the `-m` option. Thus, the larger machine configuration is used
+when running:
+
+```bash
+rebench -m larger-machine rebench.conf
+```
+
+### Other Minor Changes
+
+#### Features
+ - add support for ReBenchDB API Version 2 (#236)
+ - expand `~` in paths, right before invocation (#240, #283)
+ - add summary for columns where all values are the same (#256)
+ - show `env` in debug output (#280)
+
+#### Changes
+ - make output for currently running benchmark more compact (#237)
+ - invoke denoise with absolute path to avoid need for having it on a secure_path (#238, #273)
+ - rename the machines variable/filters to a tags variable/filter (#264)
+ - support Python 3.13 as latest version, drop support for Python 3.8 (#268)
+ - reduce number of git invocations to get source information (#275)
+ - distinguish `rebench` return codes for different errors (#282)
+
+#### Bug Fixes
+ - added missing machine column heading for summary table (#246)
+ - behave more gracefully on bare-bone setup, e.g. without git (#245)
+ - raise error in `TimeAdapter` to match other adapters (#254)
+ - make profiling with `perf` more robust (#255)
+ - make denoise more robust to absent tools and running as root with a user-level installation (#260)
+ - fix handling of ctrl-c interrupts (#262)
+ - avoid unnecessary warning about data reporting, when no data is to be reported (#277)
+
+#### Development
+ - use black formatting (#267)
+ - use mypy type checking and add some annotations (#270)
+ - use `pip install —editable` in CI to avoid incorrect coverage reporting (#279)
+ - add testing on Rocky Linux with integration test (#282)
+
+**Full Changelog**: https://github.com/smarr/ReBench/compare/v1.2.0...v1.3.0
+
 ## [1.2.0] Custom Gauge Adapters - 2023-08-06
 
 The main feature of this release is the new support for custom
@@ -20,7 +101,7 @@ Other new features:
  - make the current invocation accessible in the command as `%(invocation)s` (#230)
 
 Other changes:
- - fix bug where `'None'` instead of `null` was reported to ReBenchDB (#232)
+ - make sure `null` is not reported as `'None'` to ReBenchDB (#232)
  - fix handling of environment variables when sudo is used (#210)
  - try `gtime` from MacPorts as alternative `time` command on macOS (#212)
  - update py-cpuinfo to work on macOS with ARM-base CPUs (#212)
@@ -28,6 +109,8 @@ Other changes:
  - add testing on macOS on Github Actions (#226)
 
 Thanks to @naomiGrew for the contributions!
+
+**Full Changelog**: https://github.com/smarr/ReBench/compare/v1.1.0...v1.2.0
 
 ## [1.1.0] Denoise - 2023-02-21
 
@@ -68,9 +151,9 @@ Other notable improvements:
  - make gauge adapter names in configurations case-insensitive (#202)
  - improve documentation (#197, #198)
  - use PyTest for unit tests (#192)
- 
+
 **Full Changelog**: https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
- 
+
 
 ## [1.0.1] - 2020-06-23
 
@@ -83,7 +166,7 @@ This is a bug fix release.
 
 This is the first official release of ReBench as a "feature-complete" product.
 Feature-complete here means, it is a tried and tested tool for benchmark
-execution. It is highly 
+execution. It is highly
 [configurable](https://rebench.readthedocs.io/en/latest/config/),
 [documented](https://rebench.readthedocs.io/en/latest/),
 and [successfully used](https://github.com/smarr/ReBench#use-in-academia).
@@ -136,7 +219,7 @@ Thank you!
  - added testing of Python 3.7 (#121) and ruamel.yaml (#123)
  - ensure config is YAML 1.2 compliant (#123)
  - added support for ReBenchDB (#129, #130)
- 
+
  - fixed issues with error reporting (#128)
  - fixed handling of input size configuration (#117)
 
@@ -145,7 +228,7 @@ Thank you!
  - added `--setup-only` option, to run one benchmark for each setup (#110, #115)
  - added `ignore_timeout` setting to accept known timeouts without error (#118)
  - added `retries_after_failure` setting (#107, #108)
- 
+
  - fixed data loading, which ignored warmup setting (#111, #116)
  - fixed how settings are inherited for follow documentation (#112, #113)
  - fixed message for consecutive failures (#109)
@@ -219,7 +302,8 @@ Thank you!
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.3.0...HEAD
+[1.3.0]:  https://github.com/smarr/ReBench/compare/v1.2.0...v1.3.0
 [1.2.0]:  https://github.com/smarr/ReBench/compare/v1.1.0...v1.2.0
 [1.1.0]:  https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
 [1.0.1]:  https://github.com/smarr/ReBench/compare/v1.0.0...v1.0.1
