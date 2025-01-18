@@ -531,18 +531,20 @@ class Executor(object):
         output = ""
 
         try:
-            self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline)
-
-            def _keep_alive(seconds):
-                self.ui.warning(
-                    "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, cmdline)
-
             location = run_id.location
             if location:
                 location = os.path.expanduser(location)
+            env = add_denoise_python_path_to_env(run_id.env)
+
+            self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline, location, env)
+
+            def _keep_alive(seconds):
+                self.ui.warning(
+                    "Keep alive, current job runs for %dmin\n" % (seconds / 60),
+                    run_id, cmdline, location, env)
 
             (return_code, output, _) = subprocess_timeout.run(
-                cmdline, env=add_denoise_python_path_to_env(run_id.env),
+                cmdline, env=env,
                 cwd=location, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
                 timeout=run_id.max_invocation_time,
@@ -557,7 +559,7 @@ class Executor(object):
                        + "{ind}{ind}File name: %s\n") % (err.strerror, err.filename)
             else:
                 msg = str(err)
-            self.ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline, location, env)
             run_id.report_run_failed(cmdline, 0, output)
             return True
 
@@ -568,7 +570,7 @@ class Executor(object):
                    + "{ind}Return code: %d\n"
                    + "{ind}{ind}%s.\n") % (
                        run_id.benchmark.suite.executor.name, return_code, output.strip())
-            self.ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline, location, env)
             run_id.report_run_failed(cmdline, return_code, output)
             run_id.executable_missing = True
             return True
@@ -591,7 +593,7 @@ class Executor(object):
             else:
                 msg = "{ind}Run failed. Return code: %d\n" % return_code
 
-            self.ui.error(msg, run_id, cmdline)
+            self.ui.error(msg, run_id, cmdline, location, env)
 
             if output and output.strip():
                 lines = escape_braces(output).split('\n')
