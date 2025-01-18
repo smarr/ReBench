@@ -21,9 +21,13 @@ import sys
 
 from io import StringIO
 from os import getcwd
+from typing import Optional, TYPE_CHECKING
 
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 from humanfriendly.terminal.spinners import Spinner
+
+if TYPE_CHECKING:
+    from .model.run_id import RunId
 
 _DETAIL_INDENT = "    "
 _ERASE_LINE = "\r\x1b[2K"
@@ -42,6 +46,7 @@ class UI(object):
         self._prev_run_id = None
         self._prev_cmd = None
         self._prev_cwd = None
+        self._prev_env = None
         self._progress_spinner = None
         self._need_to_erase_spinner = False
         self._error_once_cache = set()
@@ -64,7 +69,8 @@ class UI(object):
         self._progress_spinner.stream.flush()
         self._need_to_erase_spinner = self._progress_spinner.interactive
 
-    def _prepare_details(self, run_id, cmd, cwd):
+    def _prepare_details(self, run_id: Optional["RunId"],
+                         cmd: Optional[str], cwd: Optional[str], env: Optional[dict[str, str]]):
         if not run_id and not cmd:
             return None
 
@@ -92,14 +98,22 @@ class UI(object):
         else:
             text += _DETAIL_INDENT + "cwd: " + getcwd() + "\n"
 
+        if env:
+            text += _DETAIL_INDENT + "env:\n"
+            for k, v in env.items():
+                text += f'{_DETAIL_INDENT}{_DETAIL_INDENT}{k}="{escape_braces(v)}"\n'
+
         self._prev_run_id = run_id
         self._prev_cmd = cmd
         self._prev_cwd = cwd
+        self._prev_env = env
 
         return text
 
-    def _output_detail_header(self, run_id, cmd, cwd):
-        text = self._prepare_details(run_id, cmd, cwd)
+    def _output_detail_header(self, run_id: Optional["RunId"],
+                              cmd: Optional[str], cwd: Optional[str],
+                              env: Optional[dict[str, str]]):
+        text = self._prepare_details(run_id, cmd, cwd, env)
         if text:
             self._output(text, None)
 
@@ -125,12 +139,12 @@ class UI(object):
         self._output_on_stream(sys.stdout, sys.stdout, text, color, *args, **kw)
         sys.stdout.flush()
 
-    def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
-        self._output_detail_header(run_id, cmd, cwd)
+    def warning(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+        self._output_detail_header(run_id, cmd, cwd, env)
         self._output(text, "magenta", **kw)
 
-    def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
-        self._output_detail_header(run_id, cmd, cwd)
+    def error(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+        self._output_detail_header(run_id, cmd, cwd, env)
         self._output(text, "red", **kw)
 
     def _is_first_error_with(self, text):
@@ -139,33 +153,33 @@ class UI(object):
             return True
         return False
 
-    def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def error_once(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         stream = StringIO("")
         self._output_on_stream(stream, sys.stdout, text, "red", **kw)
         stream_str = stream.getvalue()
 
         if self._is_first_error_with(stream_str):
-            self._output_detail_header(run_id, cmd, cwd)
+            self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", **kw)
 
-    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         if self._verbose:
-            self._output_detail_header(run_id, cmd, cwd)
+            self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, None, faint=True, **kw)
 
-    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         if self._verbose:
-            self._output_detail_header(run_id, cmd, cwd)
+            self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", faint=True, **kw)
 
-    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         if self._debug:
-            self._output_detail_header(run_id, cmd, cwd)
+            self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, None, faint=True, **kw)
 
-    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         if self._debug:
-            self._output_detail_header(run_id, cmd, cwd)
+            self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", faint=True, **kw)
 
 
@@ -186,25 +200,25 @@ class TestDummyUI(object):
     def output(self, text, **kw):
         pass
 
-    def warning(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def warning(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def error(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def error(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def error_once(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def error_once(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, **kw):
+    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
 
