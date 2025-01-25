@@ -138,8 +138,8 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
 
         self.assertRegex(
             ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
-            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT,PYTHONPATH " +
-            r"[^\s]*rebench-denoise")
+            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT " +
+            r"[^\s]*denoise\.py")
 
     def test_construct_cmdline_build_with_env(self):
         cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
@@ -148,7 +148,7 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         ex = Executor(runs, True, self.ui, use_nice=True, use_shielding=True)
 
         self.assertRegex(ex._construct_cmdline(runs[0], TimeManualAdapter(False, ex)),
-                         r" --preserve-env=VAR1,VAR3,PYTHONPATH [^\s]*rebench-denoise")
+                         r" --preserve-env=VAR1,VAR3 [^\s]*denoise\.py")
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(":")
