@@ -359,12 +359,11 @@ class Executor(object):
 
     def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
+        env = run_id.env
         if possible_settings.needs_denoise():
-            cmdline, env = construct_denoise_exec_prefix(
-                run_id.env, run_id.is_profiling(), possible_settings)
+            cmdline = construct_denoise_exec_prefix(env, run_id.is_profiling(), possible_settings)
         else:
             cmdline = ""
-            env = run_id.env
 
         cmdline += gauge_adapter.acquire_command(run_id)
 

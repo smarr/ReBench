@@ -1,6 +1,5 @@
 import getpass
 import json
-import os
 
 from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple
@@ -70,8 +69,12 @@ class DenoiseInitialSettings:
 
 
 def _construct_basic_path(env_keys: list[str]) -> list[str]:
-    assert len(env_keys) > 0
-    return ["sudo", "--preserve-env=" + ",".join(env_keys), "-n", paths.get_denoise(), "--json"]
+    if len(env_keys) == 0:
+        preserve = []
+    else:
+        preserve = ["--preserve-env=" + ",".join(env_keys)]
+
+    return ["sudo"] + preserve + ["-n", paths.get_denoise(), "--json"]
 
 
 def _construct_path(for_profiling: bool, env_keys: list[str]) -> list[str]:
@@ -132,9 +135,8 @@ def _add_denoise_exec_options(cmd: list[str], requested: Denoise):
 
 
 def _exec_denoise(cmd: list[str]):
-    env = _get_env_with_python_path_for_denoise()
     try:
-        output = output_as_str(check_output(cmd, stderr=STDOUT, env=env))
+        output = output_as_str(check_output(cmd, stderr=STDOUT))
     except CalledProcessError as e:
         output = output_as_str(e.output)
     except FileNotFoundError as e:
@@ -262,15 +264,12 @@ def minimize_noise(possible_settings: Denoise, for_profiling: bool, show_warning
         result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
 
 
-def construct_denoise_exec_prefix(
-        env, for_profiling, possible_settings: Denoise) -> Tuple[str, dict]:
-    env = _add_denoise_python_path_to_env(env)
+def construct_denoise_exec_prefix(env, for_profiling, possible_settings: Denoise) -> str:
     cmd = _construct_path(for_profiling, env.keys())
-
     _add_denoise_exec_options(cmd, possible_settings)
 
     cmd += ["exec", "--"]
-    return " ".join(cmd) + " ", env
+    return " ".join(cmd) + " "
 
 def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     if denoise_result.nothing_set:
