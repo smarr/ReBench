@@ -87,20 +87,19 @@ class PerfProfiler(Profiler):
 
         return self.report_args < other.report_args
 
-    def _construct_report_cmdline_and_env(self, executor, run_id):
+    def _construct_report_cmdline(self, executor, run_id):
         # need to use sudo, otherwise, the profile.perf file won't be accessible
         possible_settings = run_id.denoise.possible_settings(executor.get_denoise_initial())
         if possible_settings.needs_denoise():
-            cmd, env = construct_denoise_exec_prefix(run_id.env, True, Denoise.system_default())
+            cmd = construct_denoise_exec_prefix(run_id.env, True, Denoise.system_default())
         else:
-            env = run_id.env
             cmd = ""
 
-        return cmd + self.command + " " + self.report_args, env
+        return cmd + self.command + " " + self.report_args
 
     def process_profile(self, run_id, executor):
-        cmdline, env = self._construct_report_cmdline_and_env(executor, run_id)
-        (return_code, output, _) = run(cmdline, env, cwd=run_id.location, shell=True,
+        cmdline = self._construct_report_cmdline(executor, run_id)
+        (return_code, output, _) = run(cmdline, run_id.env, cwd=run_id.location, shell=True,
                                        verbose=executor.debug)
 
         if return_code != 0:
