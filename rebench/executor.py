@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .denoise import paths as denoise_paths
-from .denoise_client import add_denoise_python_path_to_env, get_number_of_cores
+from .denoise_client import get_number_of_cores
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .model.build_cmd import BuildCommand
@@ -346,7 +346,7 @@ class Executor(object):
 
     def _construct_cmdline(self, run_id, gauge_adapter):
         num_cores = get_number_of_cores()
-        env = add_denoise_python_path_to_env(run_id.env)
+        env = run_id.env
         cmdline = ""
 
         if self.use_denoise:
@@ -534,7 +534,7 @@ class Executor(object):
             location = run_id.location
             if location:
                 location = os.path.expanduser(location)
-            env = add_denoise_python_path_to_env(run_id.env)
+            env = run_id.env
 
             self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline, location, env)
 

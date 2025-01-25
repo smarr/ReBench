@@ -13,7 +13,7 @@ print(env)
 
 known_envvars = ["PWD", "SHLVL", "VERSIONER_PYTHON_VERSION",
                  "_", "__CF_USER_TEXT_ENCODING", "LC_CTYPE",
-                 "CPATH", "LIBRARY_PATH", "MANPATH", "SDKROOT", "PYTHONPATH"]
+                 "CPATH", "LIBRARY_PATH", "MANPATH", "SDKROOT"]
 
 if test == "as-expected":
     if os.environ.get("IMPORTANT_ENV_VARIABLE", None) != "exists":
