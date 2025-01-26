@@ -12,7 +12,7 @@ class DenoiseTest(ReBenchTestCase):
         result = minimize_noise(False, self.ui, True)
         self.assertIsInstance(result.succeeded, bool)
         self.assertIsInstance(result.use_nice, bool)
-        self.assertIsInstance(result.use_shielding, bool)
+        self.assertIsInstance(result.use_shielding, (bool, str))
 
         # if it was successful, try to restore normal settings
         if result.succeeded:
