@@ -19,13 +19,24 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import sys
+import os
+import stat
 
 from setuptools import setup, find_packages
+from setuptools.command.install import install
 from rebench import __version__ as rebench_version
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+class InstallAndSetDenoisePermissions(install):
+    def run(self):
+        install.run(self)
+        install_path = os.path.join(self.install_lib, "rebench")
+        denoise_path = os.path.join(install_path, "denoise.py")
+        if os.path.exists(denoise_path):
+            st = os.stat(denoise_path)
+            os.chmod(denoise_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 setup(name='ReBench',
       version=rebench_version,
@@ -53,6 +64,8 @@ setup(name='ReBench',
               'rebench-denoise = rebench.denoise:main_func'
           ]
       },
+      scripts=['rebench/denoise.py'],
+      cmdclass={'install': InstallAndSetDenoisePermissions},
       test_suite='rebench.tests',
       license='MIT'
 )
