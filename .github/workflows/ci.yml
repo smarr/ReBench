@@ -114,3 +114,60 @@ jobs:
 
       - name: Run Unit Tests
         run: python3 -m pytest
+
+  test-rocky:
+    name: "Rocky Linux: Python 3.9"
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux/rockylinux:9
+    steps:
+      - name: Checkout ReBench
+        uses: actions/checkout@v4
+
+      - name: Install basic tools
+        run: dnf install -y which time sudo python3-pip
+
+      - name: Run Tests and Package in venv
+        run: |
+            python3 -m pip install virtualenv
+            python3 -m virtualenv venv
+            source venv/bin/activate
+          
+            pip install pytest
+            pip install .
+    
+            pytest
+            (cd rebench && rebench -D ../rebench.conf e:TestRunner2)
+            
+            python3 setup.py sdist build
+            python3 setup.py sdist bdist_wheel
+
+      - name: Install built package globally
+        run: pip install dist/*.whl
+
+      - name: Run integration test
+        run: |
+            set +e
+            cd rebench
+            rebench -c ../rebench.conf e:TestRunner2
+            REBENCH_EXIT=$?
+          
+            echo "rebench exit code: $REBENCH_EXIT"
+          
+            if [ "$REBENCH_EXIT" -ne "0" ]; then
+              echo "rebench failed unexpectedly"
+              exit $REBENCH_EXIT
+            fi
+          
+            if [ ! -f test.data ]; then
+              echo "test.data not found"
+              exit 1
+            fi
+          
+            EXPECTED=80
+            LINES=$(cat test.data | grep total | wc -l)
+            if [ "$LINES" -ne "$EXPECTED" ]; then
+              echo "test.data has unexpected number of lines: $LINES"
+              echo "expected: $EXPECTED"
+              exit 1
+            fi

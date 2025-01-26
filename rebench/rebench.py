@@ -323,24 +323,32 @@ Argument:
                                " using the reported settings.")
             return executor.execute()
 
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_BENCHMARK_FAILED = 1
+EXIT_CODE_ABORTED = 2
+EXIT_CODE_UI_ERROR = 3
+EXIT_CODE_EXCEPTION = 4
 
 def main_func():
     try:
         rebench = ReBench()
-        return 0 if rebench.run() else -1
+        if rebench.run():
+            return EXIT_CODE_SUCCESS
+        else:
+            return EXIT_CODE_BENCHMARK_FAILED
     except KeyboardInterrupt:
         ui = UI()
         ui.debug_error_info("Aborted by user request\n")
-        return -1
+        return EXIT_CODE_ABORTED
     except UIError as err:
         ui = UI()
         ui.error("\n" + err.message)
-        return -1
+        return EXIT_CODE_UI_ERROR
     except BenchmarkThreadExceptions as exceptions:
         ui = UI()
         for ex in exceptions.exceptions:
             ui.error(str(ex) + "\n")
-        return -1
+        return EXIT_CODE_EXCEPTION
 
 
 if __name__ == "__main__":

@@ -30,13 +30,16 @@ class EnvironmentTest(TestCase):
         self.assertGreater(len(env["userName"]), 0)
         self.assertGreater(len(env["hostName"]), 0)
         self.assertGreater(len(env["osType"]), 0)
-        self.assertGreater(len(env["cpu"]), 0)
+
 
         self.assertTrue("manualRun" in env)
         self.assertGreater(env["memory"], 0)
-        self.assertGreaterEqual(env["clockSpeed"], 0)
 
         self.assertGreaterEqual(len(env["software"]), 3)
+
+        if "cpu" in env:
+            self.assertGreater(len(env["cpu"]), 0)
+            self.assertGreaterEqual(env["clockSpeed"], 0)
 
     def test_extract_base(self):
         self.assertEqual('', extract_base(''))
