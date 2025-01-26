@@ -81,21 +81,29 @@ class CommandsPaths:
     def set_cset(self, cset_path):
         self._cset_path = cset_path
 
-    def has_denoise(self):
+    def ensure_denoise(self):
         if self._denoise_path is None:
-            self._denoise_path = denoise_py
+            if os.access(denoise_py, os.X_OK):
+                self._denoise_path = denoise_py
+            elif not os.path.isfile(denoise_py):
+                raise UIError(
+                    f"{denoise_py} not found. "
+                    "Could it be that the user has no access to the file? "
+                    "To use ReBench without denoise, use the --no-denoise option.\n",
+                    None,
+                )
+            else:
+                raise UIError(
+                    f"{denoise_py} not marked executable. "
+                    f"Please run something similar to `chmod a+x {denoise_py}`. "
+                    "To use ReBench without denoise, use the --no-denoise option.\n",
+                    None,
+                )
 
         return self._denoise_path is not None and self._denoise_path is not False
 
     def get_denoise(self):
-        if not self.has_denoise():
-            raise UIError(
-                f"{denoise_py} not found. "
-                "Could it be that the user has no access to the file? "
-                "To use ReBench without denoise, use the --no-denoise option.\n",
-                None,
-            )
-
+        self.ensure_denoise()
         return self._denoise_path
 
 
