@@ -313,6 +313,8 @@ class RunId(object):
         return self._construct_cmdline()
 
     def _expand_user(self, possible_path):
+        something_changed = False
+
         # split will change the type of quotes, which may cause issues with shell variables
         parts = shlex.split(possible_path)
         for i, part in enumerate(parts):
@@ -320,8 +322,12 @@ class RunId(object):
             if "~" in expanded and ":" in expanded:
                 path_list = expanded.split(":")
                 expanded = ":".join([os.path.expanduser(p) for p in path_list])
-            parts[i] = expanded
-        return shlex.join(parts)
+            if parts[i] != expanded:
+                something_changed = True
+                parts[i] = expanded
+        if something_changed:
+            return shlex.join(parts)
+        return possible_path
 
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
