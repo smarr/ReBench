@@ -1,6 +1,40 @@
+from os.path import expanduser
+import pytest
+
 from ...configurator import Configurator, load_config
+from ...model.run_id import expand_user
 from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase
+
+
+def _simple_expand(path):
+    return path.replace("~", expanduser("~"))
+
+
+def _expand(paths):
+    return [(p, _simple_expand(p)) for p in paths]
+
+
+@pytest.mark.parametrize(
+    "possible_path, after_expansion",
+    _expand(
+        ["~/foo/bar", "~/foo ~/bar -cp ~/here:~/there", "?.lua;../../awfy/Lua/?.lua"]
+    ),
+)
+def test_expand_user_no_escape(possible_path, after_expansion):
+    expanded = expand_user(possible_path, False)
+    assert expanded == after_expansion
+
+
+@pytest.mark.parametrize(
+    "possible_path, after_expansion",
+    _expand(
+        ["~/foo/bar", "~/foo ~/bar -cp ~/here:~/there", "'?.lua;../../awfy/Lua/?.lua'"]
+    ),
+)
+def test_expand_user_with_escape(possible_path, after_expansion):
+    expanded = expand_user(possible_path, True)
+    assert expanded == after_expansion
 
 
 class RunIdTest(ReBenchTestCase):

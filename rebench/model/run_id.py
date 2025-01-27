@@ -35,6 +35,28 @@ if TYPE_CHECKING:
     from ..statistics import WithSamples
 
 
+def expand_user(possible_path, shell_escape):
+    something_changed = False
+
+    # split will change the type of quotes, which may cause issues with shell variables
+    parts = shlex.split(possible_path)
+    for i, part in enumerate(parts):
+        expanded = os.path.expanduser(part)
+        if "~" in expanded and ":" in expanded:
+            path_list = expanded.split(":")
+            expanded = ":".join([os.path.expanduser(p) for p in path_list])
+        if parts[i] != expanded:
+            something_changed = True
+            parts[i] = expanded
+
+    if something_changed:
+        if shell_escape:
+            return shlex.join(parts)
+        return ' '.join(parts)
+
+    return possible_path
+
+
 class RunId(object):
     """
     A RunId is a concrete instantiation of the possible combinations of
@@ -111,7 +133,7 @@ class RunId(object):
 
         self._expandend_env = self.benchmark.run_details.env
         for key, value in self._expandend_env.items():
-            self._expandend_env[key] = self._expand_user(value)
+            self._expandend_env[key] = expand_user(value, False)
         return self._expandend_env
 
     @property
@@ -312,27 +334,10 @@ class RunId(object):
             return self._cmdline
         return self._construct_cmdline()
 
-    def _expand_user(self, possible_path):
-        something_changed = False
-
-        # split will change the type of quotes, which may cause issues with shell variables
-        parts = shlex.split(possible_path)
-        for i, part in enumerate(parts):
-            expanded = os.path.expanduser(part)
-            if "~" in expanded and ":" in expanded:
-                path_list = expanded.split(":")
-                expanded = ":".join([os.path.expanduser(p) for p in path_list])
-            if parts[i] != expanded:
-                something_changed = True
-                parts[i] = expanded
-        if something_changed:
-            return shlex.join(parts)
-        return possible_path
-
     def cmdline_for_next_invocation(self):
         """Replace the invocation number in the command line"""
         cmdline = self.cmdline() % {"invocation": self.completed_invocations + 1}
-        cmdline = self._expand_user(cmdline)
+        cmdline = expand_user(cmdline, True)
         return cmdline
 
     def _construct_cmdline(self):
