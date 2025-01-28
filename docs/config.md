@@ -580,14 +580,14 @@ A list of commands/strings to be executed by the system's shell.
 They are intended to set up the system for benchmarking,
 typically to build binaries, compiled archives, etc.
 
-Each command is executed once before any benchmark that depends on it
-is executed. If the `location` of the suite is set, it is used as
+The list of command is combined into a single shell script, which
+is executed once before any benchmark that depends on it
+runs. If the `location` of the suite is set, it is used as
 working directory. Otherwise, it is the current working directory of ReBench.
 
-`build:` is a list of commands to allow multiple suites and executors to depend on the
-same build command without executing it multiple times.
-For this purpose, build commands are considered the same when they have the
-same command and location (based on simple string comparisons).
+When multiple suites and executors depend on lists of commands,
+where the combined script is identical, and to be executed in the same location,
+the script is executed only once.
 
 Commands are executed with an environment managed by ReBench.
 The environment starts empty, but can be added to using the [`env`](#env) directive.
