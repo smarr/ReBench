@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import os
 import sys
@@ -7,13 +8,21 @@ from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
 
-from .output import output_as_str, UIError
-from .subprocess_kill import kill_process
+denoise_py = os.path.abspath(__file__)
 
-try:
-    from . import __version__ as rebench_version
-except ValueError:
-    rebench_version = "unknown"
+if __name__ == "__main__":
+    # ensure that the rebench module is available
+    rebench_module = os.path.dirname(denoise_py)
+    sys.path.append(os.path.dirname(rebench_module))
+
+    # pylint: disable-next=import-error
+    from output import output_as_str, UIError  # type: ignore
+
+    # pylint: disable-next=import-error
+    from subprocess_kill import kill_process  # type: ignore
+else:
+    from .output import output_as_str, UIError
+    from .subprocess_kill import kill_process
 
 
 class CommandsPaths:
@@ -23,7 +32,6 @@ class CommandsPaths:
         self._cset_path = None
         self._denoise_path = None
         self._which_path = None
-        self._denoise_python_path = None
 
     def get_which(self):
         if not self._which_path:
@@ -73,32 +81,30 @@ class CommandsPaths:
     def set_cset(self, cset_path):
         self._cset_path = cset_path
 
-    def has_denoise(self):
+    def ensure_denoise(self):
         if self._denoise_path is None:
-            self._denoise_path = self._absolute_path_for_command(
-                "rebench-denoise", ["--version"]
-            )
+            if os.access(denoise_py, os.X_OK):
+                self._denoise_path = denoise_py
+            elif not os.path.isfile(denoise_py):
+                raise UIError(
+                    f"{denoise_py} not found. "
+                    "Could it be that the user has no access to the file? "
+                    "To use ReBench without denoise, use the --no-denoise option.\n",
+                    None,
+                )
+            else:
+                raise UIError(
+                    f"{denoise_py} not marked executable. "
+                    f"Please run something similar to `chmod a+x {denoise_py}`. "
+                    "To use ReBench without denoise, use the --no-denoise option.\n",
+                    None,
+                )
 
         return self._denoise_path is not None and self._denoise_path is not False
 
     def get_denoise(self):
-        if not self.has_denoise():
-            raise UIError(
-                "rebench-denoise not found. "
-                "Was ReBench installed so that `rebench` and `rebench-denoise` are on the PATH? "
-                "Python's bin directory for packages may need to be added to PATH manually.\n\n"
-                "To use ReBench without rebench-denoise, use the --no-denoise option.\n",
-                None,
-            )
-
+        self.ensure_denoise()
         return self._denoise_path
-
-    def get_denoise_python_path(self):
-        if self._denoise_python_path is None:
-            current_file = os.path.abspath(__file__)
-            self._denoise_python_path = os.path.dirname(os.path.dirname(current_file))
-
-        return self._denoise_python_path
 
 
 paths = CommandsPaths()
@@ -353,9 +359,6 @@ def _test(num_cores):
 
 def _shell_options():
     parser = ArgumentParser()
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + rebench_version
-    )
     parser.add_argument(
         "--json",
         action="store_true",

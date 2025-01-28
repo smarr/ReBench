@@ -21,25 +21,6 @@ def get_number_of_cores():
     return _num_cpu_cores
 
 
-def _get_env_with_python_path_for_denoise():
-    return add_denoise_python_path_to_env(os.environ)
-
-
-def add_denoise_python_path_to_env(env):
-    path = paths.get_denoise_python_path()
-
-    # did not find it, just leave the env unmodified
-    if path is False:
-        return env
-
-    env = env.copy()
-    if "PYTHONPATH" in env and env["PYTHONPATH"]:
-        env["PYTHONPATH"] += os.pathsep + path
-    else:
-        env["PYTHONPATH"] = path
-    return env
-
-
 class DenoiseResult:
 
     def __init__(self, succeeded, warn_msg, use_nice, use_shielding, details):
@@ -55,8 +36,8 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
 
     result = {}
 
-    env = _get_env_with_python_path_for_denoise()
-    cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise()]
+    env = os.environ
+    cmd = ["sudo", "-n", paths.get_denoise()]
     if for_profiling:
         cmd += ["--for-profiling"]
 
@@ -134,14 +115,14 @@ def minimize_noise(show_warnings, ui, for_profiling):  # pylint: disable=too-man
         if 'password is required' in output:
             msg += '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
                    + ' can be used without password.\n'
-            msg += '{ind}To be able to run rebench-denoise without password,\n'
+            msg += '{ind}To be able to run denoise without password,\n'
             msg += '{ind}add the following to the end of your sudoers file (using visudo):\n'
             msg += '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: '\
                    + paths.get_denoise() + '\n'
         elif 'command not found' in output:
-            msg += '{ind}Please make sure `rebench-denoise` is on the PATH\n'
+            msg += '{ind}Please make sure ' + paths.get_denoise() + ' is accessible.\n'
         elif "No such file or directory: 'sudo'" in output:
-            msg += "{ind}sudo is not available. Can't use rebench-denoise to manage the system.\n"
+            msg += "{ind}sudo is not available. Can't use denoise to manage the system.\n"
         else:
             msg += "{ind}Error: " + escape_braces(output)
 
@@ -158,14 +139,14 @@ def restore_noise(denoise_result, show_warning, ui):
 
     num_cores = get_number_of_cores()
 
-    env = _get_env_with_python_path_for_denoise()
+    env = os.environ
     values = set(denoise_result.details.values())
     if len(values) == 1 and "failed" in values:
         # everything failed, don't need to try to restore things
         pass
     else:
         try:
-            cmd = ["sudo", "--preserve-env=PYTHONPATH", "-n", paths.get_denoise(), "--json"]
+            cmd = ["sudo", "-n", paths.get_denoise(), "--json"]
             if not denoise_result.use_shielding:
                 cmd += ["--without-shielding"]
             elif paths.has_cset():
@@ -183,10 +164,10 @@ def restore_noise(denoise_result, show_warning, ui):
 
 
 def deliver_kill_signal(pid):
-    env = _get_env_with_python_path_for_denoise()
+    env = os.environ
 
     try:
-        cmd = ['sudo', '--preserve-env=PYTHONPATH',
+        cmd = ['sudo',
                '-n', paths.get_denoise(), '--json', 'kill', str(pid)]
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
     except (subprocess.CalledProcessError, FileNotFoundError):
