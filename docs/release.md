@@ -3,7 +3,7 @@
 This list is supposed to make sure we do not forget any important steps during
 release.
 
-1. Check and update issue tracker for issues associated with current milestone
+1. Check and update issue tracker for issues that should be included in the release.
 
 2. Make sure all desired changes are merged with `master`.
 
