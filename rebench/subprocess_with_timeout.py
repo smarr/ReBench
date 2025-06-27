@@ -106,6 +106,7 @@ class _SubprocessThread(Thread):
                     reads.append(proc.stderr.fileno())
 
                 if not reads:
+                    proc.wait()
                     break
 
                 ret = select(reads, [], [], 0.1)
