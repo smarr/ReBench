@@ -92,11 +92,17 @@ class _SubprocessThread(Thread):
             self.stderr_result = ""
 
             while True:
-                reads = [proc.stdout.fileno()]
-                if self._stderr == PIPE:
-                    reads.append(proc.stderr.fileno())
-                ret = select(reads, [], [])
+                reads = []
 
+                if proc.stdout and not proc.stdout.closed:
+                    reads.append(proc.stdout.fileno())
+                if self._stderr == PIPE and proc.stderr and not proc.stderr.closed:
+                    reads.append(proc.stderr.fileno())
+
+                if not reads:
+                    break
+
+                ret = select(reads, [], [])
                 for file_no in ret[0]:
                     if file_no == proc.stdout.fileno():
                         read = output_as_str(proc.stdout.readline())
@@ -106,9 +112,6 @@ class _SubprocessThread(Thread):
                         read = output_as_str(proc.stderr.readline())
                         sys.stderr.write(read)
                         self.stderr_result += read
-
-                if proc.poll() is not None:
-                    break
         else:
             stdout_r, stderr_r = proc.communicate()
             self.stdout_result = output_as_str(stdout_r)
