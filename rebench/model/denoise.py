@@ -175,11 +175,13 @@ class Denoise(object):
             (
                 capabilities.initial_scaling_governor
                 if capabilities.can_set_scaling_governor is True
+                and capabilities.initial_scaling_governor
                 else self.scaling_governor
             ),
             (
                 capabilities.initial_no_turbo
                 if capabilities.can_set_no_turbo is True
+                and capabilities.initial_no_turbo
                 else self.no_turbo
             ),
             capabilities.can_minimize_perf_sampling is True,
