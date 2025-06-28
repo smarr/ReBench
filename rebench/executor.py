@@ -108,6 +108,8 @@ class RunScheduler(object):
 
         art_mean = run.get_mean_of_totals()
         art_unit = run.total_unit
+        if art_unit is None:
+            art_unit = ""
 
         hour, minute, sec = self._estimate_time_left()
 
