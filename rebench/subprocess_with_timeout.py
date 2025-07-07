@@ -91,24 +91,40 @@ class _SubprocessThread(Thread):
             self.stdout_result = ""
             self.stderr_result = ""
 
-            while True:
-                reads = [proc.stdout.fileno()]
-                if self._stderr == PIPE:
-                    reads.append(proc.stderr.fileno())
-                ret = select(reads, [], [])
+            stdout_eof = False
+            stderr_eof = False
 
+            while True:
+                reads = []
+
+                if proc.stdout and not proc.stdout.closed and not stdout_eof:
+                    reads.append(proc.stdout.fileno())
+                if (self._stderr == PIPE and
+                        proc.stderr and
+                        not proc.stderr.closed and
+                        not stderr_eof):
+                    reads.append(proc.stderr.fileno())
+
+                if not reads:
+                    proc.wait()
+                    break
+
+                ret = select(reads, [], [], 0.1)
                 for file_no in ret[0]:
                     if file_no == proc.stdout.fileno():
                         read = output_as_str(proc.stdout.readline())
-                        sys.stdout.write(read)
-                        self.stdout_result += read
+                        if read == "":
+                            stdout_eof = True
+                        else:
+                            sys.stdout.write(read)
+                            self.stdout_result += read
                     if self._stderr == PIPE and file_no == proc.stderr.fileno():
                         read = output_as_str(proc.stderr.readline())
-                        sys.stderr.write(read)
-                        self.stderr_result += read
-
-                if proc.poll() is not None:
-                    break
+                        if read == "":
+                            stderr_eof = True
+                        else:
+                            sys.stderr.write(read)
+                            self.stderr_result += read
         else:
             stdout_r, stderr_r = proc.communicate()
             self.stdout_result = output_as_str(stdout_r)
