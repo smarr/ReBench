@@ -52,7 +52,7 @@ jobs:
 
       - name: Install and run mypy
         run: |
-          pip install mypy
+          pip install mypy types-PyYAML types-psutil types-humanfriendly
           mypy --install-types --non-interactive rebench
         if: matrix.python-version == '3.14'
 
