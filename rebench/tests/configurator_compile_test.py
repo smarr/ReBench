@@ -5,7 +5,6 @@ from ..configurator import validate_config, Configurator
 from ..persistence import DataStore
 from ..ui import TestDummyUI
 
-
 # precedence order/priority, from most important to least important:
 CONFIG_ELEMENTS = [
     "benchmark",
