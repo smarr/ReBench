@@ -15,10 +15,10 @@ jobs:
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -67,10 +67,10 @@ jobs:
     name: "macOS: Python 3.12"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -101,7 +101,7 @@ jobs:
           apt-get install -y --no-install-recommends time
 
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install PyTest
         run: pip3 install pytest
@@ -122,7 +122,7 @@ jobs:
       image: rockylinux/rockylinux:9
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install basic tools
         run: dnf install -y which time sudo python3-pip
