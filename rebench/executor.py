@@ -326,6 +326,9 @@ class Executor(object):
         self._active_denoise_cfg: Optional[Denoise] = None
         self._active_for_profiling: Optional[bool] = None
 
+        # dict of the command that failed, the previous config and the config that failed
+        self._failed_denoise_cfg: set[tuple[Optional[Denoise], Denoise]] = set()
+
         self._print_execution_plan = print_execution_plan
 
         self._do_builds = do_builds
@@ -535,9 +538,19 @@ class Executor(object):
             self.ui.debug_output_info("Denoise: expected configuration already active\n")
             return
 
+        if ((self._active_denoise_cfg, possible_settings) in self._failed_denoise_cfg
+                and self._active_for_profiling == for_profiling):
+            # we already tried this configuration, but it failed, so don't try again
+            self.ui.debug_output_info("Denoise: expected configuration already tried and failed\n")
+            return
+
         self.ui.debug_output_info("Denoise: setting requested configuration:\n")
-        self._active_denoise_cfg = minimize_noise(
+        result = minimize_noise(
             possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
+        if result is None:
+            self._failed_denoise_cfg.add((self._active_denoise_cfg, possible_settings))
+
+        self._active_denoise_cfg = result
         self._active_for_profiling = for_profiling
 
     def _ensure_denoise_is_inactive(self):
