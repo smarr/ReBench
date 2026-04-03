@@ -75,7 +75,7 @@ def none_or_dict(value) -> Optional[dict[str, Any]]:
 def value_with_optional_details(value, default_details=None):
     if isinstance(value, dict):
         assert len(value) == 1
-        (value, details) = list(value.items())[0]
+        value, details = list(value.items())[0]
     else:
         details = default_details
 

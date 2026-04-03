@@ -19,8 +19,6 @@
 # IN THE SOFTWARE.
 import os
 
-from codecs import open as open_with_enc
-
 from ...configurator     import Configurator, load_config
 from ...executor         import Executor
 from ...persistence      import DataStore
@@ -49,7 +47,7 @@ class Issue81UnicodeSuite(ReBenchTestCase):
 
         self.assertTrue(os.path.exists(self._path + "/build.log"))
 
-        with open_with_enc(self._path + "/build.log", "r", encoding="utf-8") as build_file:
+        with open(self._path + "/build.log", "r", encoding="utf-8") as build_file:
             log = build_file.read()
 
         unicode_char = chr(22234)

@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from codecs import open as open_with_enc
 from collections import deque
 from math import floor
 from multiprocessing import cpu_count
@@ -450,7 +449,7 @@ class Executor(object):
         build_command.mark_succeeded()
 
     def process_output(self, name, stdout_result, stderr_result):
-        with open_with_enc(self.build_log, "a", encoding="utf-8") as log_file:
+        with open(self.build_log, "a", encoding="utf-8") as log_file:
             if stdout_result:
                 log_file.write(name + "|STD:")
                 log_file.write(stdout_result)

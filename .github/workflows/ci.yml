@@ -8,17 +8,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.13", "pypy3.10"]
+        python-version: ["3.10", "3.14", "pypy3.10"]
         include:
-          - python-version: 3.9
+          - python-version: 3.10
             coverage: "--cov=rebench"
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -42,19 +42,19 @@ jobs:
         run: |
           pip install pylint
           pylint rebench
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
 
       - name: Install and run black
         run: |
           pip install black
           black --check rebench
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
 
       - name: Install and run mypy
         run: |
-          pip install mypy
+          pip install mypy types-PyYAML types-psutil types-humanfriendly
           mypy --install-types --non-interactive rebench
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
 
       - name: Upload coverage results to Coveralls
         run: coveralls
@@ -64,15 +64,15 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
-    name: "macOS: Python 3.12"
+    name: "macOS: Python 3.13"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install PyTest
         run: pip install pytest
@@ -101,7 +101,7 @@ jobs:
           apt-get install -y --no-install-recommends time
 
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install PyTest
         run: pip3 install pytest
@@ -116,13 +116,13 @@ jobs:
         run: python3 -m pytest
 
   test-rocky:
-    name: "Rocky Linux: Python 3.9"
+    name: "Rocky Linux 10"
     runs-on: ubuntu-latest
     container:
-      image: rockylinux/rockylinux:9
+      image: rockylinux/rockylinux:10
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install basic tools
         run: dnf install -y which time sudo python3-pip
@@ -133,7 +133,7 @@ jobs:
             python3 -m virtualenv venv
             source venv/bin/activate
           
-            pip install pytest
+            pip install pytest setuptools
             pip install .
     
             pytest
