@@ -27,8 +27,8 @@ from ..model.measurement import Measurement
 
 
 class PlainSecondsLogAdapter(GaugeAdapter):
-    """PlainSecondsLogAdapter expects a plain list of numbers, one per line.
-       It can also contain error information.
+    """PlainSecondsLogAdapter expects a plain list of numbers, one per line
+       in seconds. It can also contain error information.
     """
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
