@@ -1,0 +1,46 @@
+# This setup is used to deploy ReBench to the different benchmark machines.
+stages:
+ - install
+
+.shared-scripts:
+  install: &PIP_INSTALL
+    - pip3 install --user --editable . --break-system-packages
+
+  install-no-protection: &PIP_INSTALL_NO_BREAKING
+    # This is for old Debian/Ubuntu versions and macOS/MacPorts
+    - pip3 install --user --editable . --no-build-isolation
+
+kent-yuria:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [kent-yuria]
+
+kent-yuria2:
+  stage: install
+  script: [*PIP_INSTALL_NO_BREAKING]
+  tags: [kent-yuria2]
+
+kent-yuria3:
+  stage: install
+  script: [*PIP_INSTALL_NO_BREAKING]
+  tags: [kent-yuria3]
+
+kent-yuria4:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [kent-yuria4]
+
+kent-zullie1:
+  stage: install
+  script: [*PIP_INSTALL_NO_BREAKING]
+  tags: [kent-zullie1]
+
+ssw-brutus:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [ssw-brutus]
+
+ssw-cassius:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [ssw-cassius]
