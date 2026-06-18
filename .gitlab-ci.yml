@@ -44,3 +44,13 @@ ssw-cassius:
   stage: install
   script: [*PIP_INSTALL]
   tags: [ssw-cassius]
+
+ssw-laertes:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [ssw-laertes]
+
+ssw-ophelia:
+  stage: install
+  script: [*PIP_INSTALL]
+  tags: [ssw-ophelia]
