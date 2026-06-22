@@ -460,7 +460,12 @@ reporting:
     repo_url:     https://example.org/project.git
     project_name: Some Project that Wants Good Performance
     record_all:   true
+    api_token:    your-api-token-here
 ```
+
+The `api_token` is obtained from the ReBenchDB admin UI by clicking
+"Generate My API Token". The full token is shown only once, at generation
+time — copy it immediately.
 
 ---
 
