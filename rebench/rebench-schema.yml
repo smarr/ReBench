@@ -94,6 +94,9 @@ schema;reporting_type:
         record_all:
           type: bool
           desc: All experiments should be stored in the ReBenchDB
+        api_token:
+          type: str
+          desc: API token for authenticating with ReBenchDB.
     codespeed:
       type: map
       desc: Send results to Codespeed for continuous performance tracking.
