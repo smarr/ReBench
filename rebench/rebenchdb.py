@@ -144,7 +144,7 @@ class ReBenchDB(object):
                         + "{ind}{ind}" + str(error) + "\n")
                     attempts -= 1
                     sleep(wait_sec)
-                    wait_sec *= 2
+                    wait_sec = min(wait_sec * 2, 5 * 60)
                 else:
                     self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                                    + "{ind}{ind}" + str(error) + "\n")
