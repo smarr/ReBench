@@ -232,9 +232,9 @@ Argument:
                                              f.startswith("t:"))]
         return exp_name, exp_filter
 
-    def _report_completion(self):
+    def _report_completion(self) -> bool:
         rebench_db = self._config.get_rebench_db_connector()
-        success, _ = rebench_db.send_completion(get_current_time())
+        success = rebench_db.send_completion(get_current_time())
         return success
 
     @staticmethod
