@@ -1,5 +1,6 @@
 import json
 from time import sleep
+from typing import Optional, Tuple
 
 from http.client import HTTPException
 from urllib.request import urlopen, Request as HttpRequest
@@ -60,7 +61,7 @@ class ReBenchDB(object):
 
         return self._api_v2
 
-    def send_results(self, benchmark_data, num_items):
+    def send_results(self, benchmark_data, num_items) -> bool:
         success, response = self._send_to_rebench_db(benchmark_data, "/results")
 
         if success:
@@ -68,9 +69,9 @@ class ReBenchDB(object):
                 "ReBenchDB: Sent {num_i} results to ReBenchDB, response was: {resp}\n",
                 num_i=num_items, resp=response)
 
-        return success, response
+        return success
 
-    def send_completion(self, end_time):
+    def send_completion(self, end_time) -> bool:
         success, response = self._send_to_rebench_db({"endTime": end_time}, "/completion")
 
         if success:
@@ -82,10 +83,10 @@ class ReBenchDB(object):
             self.ui.error("Reporting completion to ReBenchDB failed.\n" +
                            "{ind}Error: {response}", response=response)
 
-        return success, response
+        return success
 
     @staticmethod
-    def _send_payload(payload, url):
+    def _send_payload(payload, url) -> str:
         req = HttpRequest(url, payload,
                          {'Content-Type': 'application/json'}, method='PUT')
         with urlopen(req) as socket:
@@ -106,7 +107,7 @@ class ReBenchDB(object):
     def convert_data_to_json(self, data):
         return json.dumps(data, separators=(",", ":"), ensure_ascii=True)
 
-    def _send_to_rebench_db(self, payload_data, operation):
+    def _send_to_rebench_db(self, payload_data, operation) -> Tuple[bool, Optional[str]]:
         payload_data["projectName"] = self._project_name
         payload_data["experimentName"] = self._experiment_name
         url = self._server_base_url + operation
@@ -119,8 +120,8 @@ class ReBenchDB(object):
 
         return self._send_with_retries(payload.encode("utf-8"), url)
 
-    def _send_with_retries(self, payload_bytes, url):
-        attempts = 4
+    def _send_with_retries(self, payload_bytes, url) -> Tuple[bool, Optional[str]]:
+        attempts = 10
         wait_sec = 10
         while True:
             try:
@@ -143,7 +144,7 @@ class ReBenchDB(object):
                         + "{ind}{ind}" + str(error) + "\n")
                     attempts -= 1
                     sleep(wait_sec)
-                    wait_sec *= 2
+                    wait_sec = min(wait_sec * 2, 5 * 60)
                 else:
                     self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                                    + "{ind}{ind}" + str(error) + "\n")
