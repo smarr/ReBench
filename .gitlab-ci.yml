@@ -17,12 +17,12 @@ kent-yuria:
 
 kent-yuria2:
   stage: install
-  script: [*PIP_INSTALL_NO_BREAKING]
+  script: [*PIP_INSTALL]
   tags: [kent-yuria2]
 
 kent-yuria3:
   stage: install
-  script: [*PIP_INSTALL_NO_BREAKING]
+  script: [*PIP_INSTALL]
   tags: [kent-yuria3]
 
 kent-yuria4:
