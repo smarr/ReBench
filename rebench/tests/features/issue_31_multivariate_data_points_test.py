@@ -62,8 +62,8 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 
-            for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
-                                                    ["ms", "ms", "kbyte", "kerf"],
+            for criterion, unit, measurement in zip(["bar", "baz", "foo", "total"],
+                                                    ["ms", "kbyte", "kerf", "ms"],
                                                     point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i, int(measurement.value))
@@ -78,3 +78,11 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
                                               point.get_measurements()):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i, int(measurement.value))
+
+    def test_measurement_ordering(self):
+        # certain parts of persistency require measurements to be ordered total-last.
+        # see _DataPointPersistence._process_lines
+        data_points = self._records_data_points('Test1', 10)
+        for point in data_points:
+            measurements = point.get_measurements()
+            self.assertTrue(measurements[-1].is_total())
