@@ -291,7 +291,8 @@ class Configurator(object):
 
         self._rebench_db_connector = ReBenchDB(
             self.rebench_db['db_url'], self.rebench_db['project_name'],
-            self.options.experiment_name, self.ui)
+            self.options.experiment_name, self.ui,
+            self.rebench_db.get('api_token'))
         return self._rebench_db_connector
 
     def _process_cli_options(self):

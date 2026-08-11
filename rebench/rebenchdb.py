@@ -3,6 +3,7 @@ from time import sleep
 from typing import Optional, Tuple
 
 from http.client import HTTPException
+from urllib.error import HTTPError
 from urllib.request import urlopen, Request as HttpRequest
 
 from .output import UIError
@@ -28,7 +29,7 @@ except ImportError:
 
 class ReBenchDB(object):
 
-    def __init__(self, server_base_url, project_name, experiment_name, ui):
+    def __init__(self, server_base_url, project_name, experiment_name, ui, api_token=None):
         self.ui = ui
 
         if not server_base_url:
@@ -46,6 +47,7 @@ class ReBenchDB(object):
         self._server_base_url = server_base_url
         self._project_name = project_name
         self._experiment_name = experiment_name
+        self._api_token = api_token
         self._api_v2 = None
 
     def is_api_v2(self):
@@ -110,6 +112,8 @@ class ReBenchDB(object):
     def _send_to_rebench_db(self, payload_data, operation) -> Tuple[bool, Optional[str]]:
         payload_data["projectName"] = self._project_name
         payload_data["experimentName"] = self._experiment_name
+        if self._api_token:
+            payload_data["token"] = self._api_token
         url = self._server_base_url + operation
 
         payload = self.convert_data_to_json(payload_data)
@@ -131,6 +135,27 @@ class ReBenchDB(object):
                 # can't handle this, just abort
                 self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
                                + "{ind}{ind}" + str(te) + "\n")
+                return False, None
+            except HTTPError as error:
+                body = error.read().decode("utf-8", errors="replace")
+                if error.code == 401 and "Authorization required" in body:
+                    message = (
+                        "ReBenchDB requires an API token, but none is configured. "
+                        "Set reporting.rebenchdb.api_token in your configuration file. "
+                        "Server response: " + body)
+                elif error.code == 401:
+                    message = "ReBenchDB rejected the configured API token. Server response: " + body
+                elif error.code == 403:
+                    message = (
+                        "ReBenchDB denied write access for this token. Check that project_name "
+                        "matches the server's project name exactly. "
+                        "Server response: " + body)
+                else:
+                    message = (
+                        "ReBenchDB request failed with status " + str(error.code)
+                        + ". Server response: " + body)
+                self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
+                               + "{ind}{ind}" + message + "\n")
                 return False, None
             except (IOError, HTTPException) as error:
                 # pylint: disable-next=no-member
