@@ -1,7 +1,7 @@
-import getpass
 import json
 from collections.abc import Collection
 
+from getpass import getuser
 from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple, Union, Mapping
 from cpuinfo import get_cpu_info
@@ -18,6 +18,15 @@ from .output import output_as_str
 from .ui import escape_braces
 
 _num_cpu_cores = None
+_user_name = None
+
+
+def get_user_name():
+    """Get the name of the user running ReBench."""
+    global _user_name  # pylint: disable=global-statement
+    if _user_name is None:
+        _user_name = getuser()
+    return _user_name
 
 
 def get_number_of_cores():
@@ -267,7 +276,7 @@ def _report_on_failure(output):
             "{ind}To be able to run denoise without password,\n"
             "{ind}you may need to add the following to your sudoers file (using visudo):\n"
             "{ind}{ind}"
-            + getpass.getuser()
+            + get_user_name()
             + " ALL = (root) NOPASSWD:SETENV: "
             + paths.get_denoise()
             + "\n\n"
@@ -338,7 +347,7 @@ def construct_denoise_exec_prefix(
     cmd = _construct_path(for_profiling, env.keys())
     _add_denoise_exec_options(cmd, possible_settings)
 
-    cmd += ["exec", "--"]
+    cmd += ["exec", "--", "sudo", "-u", get_user_name()]
     return " ".join(cmd) + " "
 
 
