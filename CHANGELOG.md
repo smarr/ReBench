@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+ -
+
+## [1.4.0] Maintenance - 2026-08-27
+
+This is a maintenance release that fixes a few bugs and drops support for Python 3.9.
+
+#### Changes
+
+ - add support for Python 3.14 and drop support for Python 3.9 (#291)
+
+#### Bug Fixes
+ - make sure to read all data from stdout and stderr when in verbose mode (#289, #290)
+ - fix documentation for PlainSecondsLogAdapter (#292, #293)
+ - fix incorrect handling of failing result sending to ReBenchDB and change backoff to make more attempts (#298)
+
+Thanks at @jordanmontt and @OctaveLarose for bug reports.
+
+
 ## [1.3.0] Env Vars part of RunId, and Support for Machine-Specific Settings - 2025-02-03
 
 This release has three major changes that will affect how ReBench interprets configurations,
@@ -124,7 +142,7 @@ Other changes:
  - try `gtime` from MacPorts as alternative `time` command on macOS (#212)
  - update py-cpuinfo to work on macOS with ARM-base CPUs (#212)
  - make error more readable when executor is not available (#213)
- - add testing on macOS on Github Actions (#226)
+ - add testing on macOS on GitHub Actions (#226)
 
 Thanks to @naomiGrew for the contributions!
 
@@ -320,7 +338,8 @@ Thank you!
  - [0.6.0] - 2014-05-19
  - [0.5.0] - 2014-03-25
 
-[Unreleased]: https://github.com/smarr/ReBench/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/smarr/ReBench/compare/v1.4.0...HEAD
+[1.4.0]:  https://github.com/smarr/ReBench/compare/v1.3.0...v1.4.0
 [1.3.0]:  https://github.com/smarr/ReBench/compare/v1.2.0...v1.3.0
 [1.2.0]:  https://github.com/smarr/ReBench/compare/v1.1.0...v1.2.0
 [1.1.0]:  https://github.com/smarr/ReBench/compare/v1.0.1...v1.1.0
