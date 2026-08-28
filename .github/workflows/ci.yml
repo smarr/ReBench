@@ -15,10 +15,10 @@ jobs:
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -67,10 +67,10 @@ jobs:
     name: "macOS: Python 3.13"
     steps:
       - name: Checkout ReBench
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
