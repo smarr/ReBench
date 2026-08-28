@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
+from typing import Union
 
 denoise_py = os.path.abspath(__file__)
 
@@ -39,7 +40,7 @@ class CommandsPaths:
                 self._which_path = "/usr/bin/which"
             else:
                 raise UIError(
-                    "The basic `which` command was not found."
+                    "The `which` command was not found."
                     " In many systems it is available at /usr/bin/which."
                     " If it is elsewhere rebench-denoise will need to be"
                     " adapted to support a different location.\n",
@@ -110,7 +111,7 @@ class CommandsPaths:
 paths = CommandsPaths()
 
 
-def _can_set_niceness():
+def _can_set_niceness() -> bool:
     """
     Check whether we can ask the operating system to influence the priority of
     our benchmarks.
@@ -135,7 +136,7 @@ def _shield_upper_bound(num_cores):
     return num_cores - 1
 
 
-def _activate_shielding(num_cores):
+def _activate_shielding(num_cores) -> Union[bool, str]:
     min_cores = _shield_lower_bound(num_cores)
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
@@ -160,7 +161,7 @@ def _activate_shielding(num_cores):
     return False
 
 
-def _reset_shielding():
+def _reset_shielding() -> bool:
     try:
         output = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
         output = output_as_str(output)
@@ -176,7 +177,7 @@ SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
 
 
-def _set_scaling_governor(governor, num_cores):
+def _set_scaling_governor(governor, num_cores) -> str:
     assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE), (
         "The scaling governor is expected to be performance or powersave, but was "
         + governor
@@ -184,9 +185,7 @@ def _set_scaling_governor(governor, num_cores):
 
     try:
         for cpu_i in range(num_cores):
-            filename = (
-                "/sys/devices/system/cpu/cpu" + str(cpu_i) + "/cpufreq/scaling_governor"
-            )
+            filename = f"/sys/devices/system/cpu/cpu{cpu_i}/cpufreq/scaling_governor"
             with open(filename, "w", encoding="utf-8") as gov_file:
                 gov_file.write(governor + "\n")
     except IOError:
@@ -211,7 +210,7 @@ def _set_no_turbo(with_no_turbo):
     return with_no_turbo
 
 
-def _configure_perf_sampling(for_profiling):
+def _configure_perf_sampling(for_profiling: bool) -> Union[int, str]:
     try:
         with open(
             "/proc/sys/kernel/perf_cpu_time_max_percent", "w", encoding="utf-8"
@@ -242,7 +241,7 @@ def _configure_perf_sampling(for_profiling):
         return 1
 
 
-def _restore_perf_sampling():
+def _restore_perf_sampling() -> str:
     try:
         with open(
             "/proc/sys/kernel/perf_cpu_time_max_percent", "w", encoding="utf-8"
@@ -263,7 +262,7 @@ def _restore_perf_sampling():
     return "restored"
 
 
-def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
+def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling) -> dict:
     governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
     no_turbo = _set_no_turbo(True)
     perf = _configure_perf_sampling(for_profiling)
@@ -280,7 +279,7 @@ def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling):
     }
 
 
-def _restore_standard_settings(num_cores, use_shielding):
+def _restore_standard_settings(num_cores, use_shielding) -> dict:
     governor = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
     no_turbo = _set_no_turbo(False)
     perf = _restore_perf_sampling()
@@ -294,7 +293,7 @@ def _restore_standard_settings(num_cores, use_shielding):
     }
 
 
-def _exec(num_cores, use_nice, use_shielding, args):
+def _exec(num_cores, use_nice, use_shielding, args) -> str:
     cmdline = []
     if use_shielding and paths.has_cset():
         cmdline += [paths.get_cset(), "shield", "--exec", "--"]
