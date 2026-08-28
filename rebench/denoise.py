@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
-from typing import Optional, Union, Mapping, Literal
+from typing import Optional, Union, Literal, TypedDict, NotRequired
 
 denoise_py = os.path.abspath(__file__)
 
@@ -24,6 +24,32 @@ if __name__ == "__main__":
 else:
     from .output import output_as_str, UIError
     from .subprocess_kill import kill_process
+
+
+class DenoiseCapabilities(TypedDict):
+    can_set_nice: NotRequired[bool]
+    can_set_nice_error: NotRequired[str]
+
+    can_set_shield: NotRequired[bool]
+    can_set_shield_error: NotRequired[str]
+
+    can_set_no_turbo: NotRequired[bool]
+    can_set_no_turbo_error: NotRequired[str]
+    initial_no_turbo: NotRequired[Union[bool, str, None]]
+
+    can_set_scaling_governor: NotRequired[bool]
+    can_set_scaling_governor_error: NotRequired[str]
+    initial_scaling_governor: NotRequired[str]
+
+    can_minimize_perf_sampling: NotRequired[bool]
+    can_minimize_perf_sampling_error: NotRequired[str]
+
+
+class DenoiseSettings(TypedDict):
+    shielding: NotRequired[Union[str, bool]]
+    no_turbo: NotRequired[Union[str, bool]]
+    scaling_governor: NotRequired[str]
+    perf_event_max_sample_rate: NotRequired[Union[str, bool]]
 
 
 class CommandsPaths:
@@ -165,6 +191,10 @@ def _activate_shielding(shield, num_cores) -> str:
         output = output_as_str(out)
     except OSError as e:
         return "failed: " + str(e)
+    except CalledProcessError as e:
+        output = output_as_str(e.output)
+        if "unknown filesystem type 'cpuset'" in output:
+            return "failed: system does not support cgroups v1"
 
     if output is None:
         return "failed: no output"
@@ -200,7 +230,7 @@ SCALING_GOVERNOR_PERFORMANCE = "performance"
 DEFAULT_SCALING_GOVERNOR = SCALING_GOVERNOR_PERFORMANCE
 
 
-def _read_scaling_governor() -> Optional[str]:
+def _read_scaling_governor() -> str:
     try:
         with open(
             "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
@@ -208,8 +238,10 @@ def _read_scaling_governor() -> Optional[str]:
             encoding="utf-8",
         ) as gov_file:
             return gov_file.read().strip()
-    except IOError:
-        return None
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+        return "failed: " + str(e)
 
 
 def _set_scaling_governor(governor, num_cores) -> str:
@@ -234,14 +266,16 @@ def _set_scaling_governor(governor, num_cores) -> str:
     return governor
 
 
-def _read_no_turbo() -> Optional[bool]:
+def _read_no_turbo() -> Optional[Union[bool, str]]:
     try:
         with open(
             "/sys/devices/system/cpu/intel_pstate/no_turbo", "r", encoding="utf-8"
         ) as nt_file:
             return nt_file.read().strip() == "1"
-    except IOError:
-        return None
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
+        return "failed: " + str(e)
 
 
 def _set_no_turbo(no_turbo_value: bool) -> Union[Literal[True], str]:
@@ -255,8 +289,10 @@ def _set_no_turbo(no_turbo_value: bool) -> Union[Literal[True], str]:
             "/sys/devices/system/cpu/intel_pstate/no_turbo", "w", encoding="utf-8"
         ) as nt_file:
             nt_file.write(value + "\n")
-    except IOError:
-        return "failed: IOError"
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
+        return "failed: " + str(e)
 
     return True
 
@@ -283,8 +319,8 @@ def _configure_perf_sampling(for_profiling: bool) -> Union[Literal[True], str]:
                 "/proc/sys/kernel/perf_event_paranoid", "w", encoding="utf-8"
             ) as perf_file:
                 perf_file.write("-1\n")
-    except IOError:
-        return "failed: IOError"
+    except IOError as e:
+        return "failed: " + str(e)
 
     return True
 
@@ -310,14 +346,19 @@ def _restore_perf_sampling() -> str:
     return "restored"
 
 
+# pylint: disable-next=too-many-statements
 def _initial_settings_and_capabilities(
     args,
-) -> Mapping[str, Union[str, bool, None]]:
-    result = {}
+) -> DenoiseCapabilities:
+    result: DenoiseCapabilities = {}
 
     if args.use_nice:
         r = _can_set_niceness()
-        result["can_set_nice"] = r is True
+        if r is True:
+            result["can_set_nice"] = r
+        else:
+            result["can_set_nice_error"] = str(r)
+            result["can_set_nice"] = False
 
     if args.use_shielding:
         num_cores = int(args.num_cores) if args.num_cores else None
@@ -329,6 +370,7 @@ def _initial_settings_and_capabilities(
                 can_use_shielding = True
             else:
                 can_use_shielding = False
+                result["can_set_shield_error"] = output
         else:
             can_use_shielding = False
         result["can_set_shield"] = can_use_shielding
@@ -337,43 +379,48 @@ def _initial_settings_and_capabilities(
         initial_no_turbo = _read_no_turbo()
         can_set_no_turbo = False
 
-        if initial_no_turbo is not None and not initial_no_turbo:
+        if "failed" not in str(initial_no_turbo) and not initial_no_turbo:
             r = _set_no_turbo(True)
             can_set_no_turbo = r is True
             if can_set_no_turbo:
                 _set_no_turbo(False)
+            else:
+                result["can_set_no_turbo_error"] = str(r)
 
         result["can_set_no_turbo"] = can_set_no_turbo
-        result["initial_no_turbo"] = initial_no_turbo  # type: ignore
+        result["initial_no_turbo"] = initial_no_turbo
 
     if args.use_scaling_governor:
         initial_governor = _read_scaling_governor()
         can_set_governor = False
 
         if (
-            initial_governor is not None
+            "failed" not in initial_governor
             and initial_governor != SCALING_GOVERNOR_PERFORMANCE
         ):
             r = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
             can_set_governor = r == SCALING_GOVERNOR_PERFORMANCE
+            if not can_set_governor:
+                result["can_set_scaling_governor_error"] = r
 
         result["can_set_scaling_governor"] = can_set_governor
-        result["initial_scaling_governor"] = initial_governor  # type: ignore
+        result["initial_scaling_governor"] = initial_governor
 
     if args.use_mini_perf_sampling:
-        can_minimize_perf_sampling = (
-            _configure_perf_sampling(args.for_profiling) != "failed"
-        )
+        r = _configure_perf_sampling(args.for_profiling)
+        can_minimize_perf_sampling = r is True
         if can_minimize_perf_sampling:
             _restore_perf_sampling()
+        else:
+            result["can_minimize_perf_sampling_error"] = str(r)
         result["can_minimize_perf_sampling"] = can_minimize_perf_sampling
 
     return result
 
 
-def _minimize_noise(args) -> dict:
+def _minimize_noise(args) -> DenoiseSettings:
     num_cores = int(args.num_cores) if args.num_cores else None
-    result = {}
+    result: DenoiseSettings = {}
 
     if args.use_shielding:
         shield = args.shield or DEFAULT_SHIELD
@@ -394,9 +441,9 @@ def _minimize_noise(args) -> dict:
     return result
 
 
-def _restore_standard_settings(args) -> dict:
+def _restore_standard_settings(args) -> DenoiseSettings:
     num_cores = int(args.num_cores) if args.num_cores else None
-    result = {}
+    result: DenoiseSettings = {}
 
     if args.use_shielding:
         result["shielding"] = _reset_shielding()
@@ -606,16 +653,22 @@ EXIT_CODE_EXEC_FAILED = 4
 EXIT_CODE_INVALID_SETTINGS = 5
 
 
-def _report_init(result: dict, args):
+def _report_init(result: DenoiseCapabilities, args):
     if args.use_nice:
         print("Can set niceness: ", result.get("can_set_nice", "Unknown"))
+        if "can_set_nice_error" in result:
+            print("\tError: ", result.get("can_set_nice_error"))
 
     if args.use_shielding:
         print("Can use shielding: ", result.get("can_set_shield", "Unknown"))
+        if "can_set_shield_error" in result:
+            print("\tError: ", result.get("can_set_shield_error"))
 
     if args.use_no_turbo:
         print("Can set no_turbo: ", result.get("can_set_no_turbo", "Unknown"))
         print("Initial no_turbo: ", result.get("initial_no_turbo", "Unknown"))
+        if "can_set_no_turbo_error" in result:
+            print("\tError: ", result.get("can_set_no_turbo_error"))
 
     if args.use_scaling_governor:
         print(
@@ -626,21 +679,22 @@ def _report_init(result: dict, args):
             "Initial scaling_governor: ",
             result.get("initial_scaling_governor", "Unknown"),
         )
+        if "can_set_scaling_governor_error" in result:
+            print("\tError: ", result.get("can_set_scaling_governor_error"))
 
     if args.use_mini_perf_sampling:
         print(
             "Can minimize perf sampling: ",
             result.get("can_minimize_perf_sampling", "Unknown"),
         )
+        if "can_minimize_perf_sampling_error" in result:
+            print("\tError: ", result.get("can_minimize_perf_sampling_error"))
 
 
-def _report(result: Union[str, dict], args):
+def _report(result: Union[str, DenoiseSettings], args):
     if isinstance(result, str):
         print(result)
         return
-
-    if args.use_nice and args.command == "exec":
-        print("Can set niceness:                   ", result.get("can_set_nice", False))
 
     if args.use_shielding:
         print("Enabled core shielding:             ", result.get("shielding", False))

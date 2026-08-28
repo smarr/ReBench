@@ -5,7 +5,7 @@ from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple
 from cpuinfo import get_cpu_info
 
-from .denoise import paths, DEFAULT_SCALING_GOVERNOR, DEFAULT_SHIELD
+from .denoise import paths, DEFAULT_SCALING_GOVERNOR, DEFAULT_SHIELD, DenoiseCapabilities
 from .model.denoise import Denoise
 from .output import output_as_str
 from .ui import escape_braces
@@ -27,7 +27,7 @@ class DenoiseInitialSettings:
     This class is used to store the initial system settings that are changed by rebench-denoise.
     """
 
-    def __init__(self, requested: Denoise, result: dict, warn_msg: Optional[str]):
+    def __init__(self, requested: Denoise, result: DenoiseCapabilities, warn_msg: Optional[str]):
         self.requested = requested
 
         can_set = [v for k, v in result.items() if k.startswith("can_")]
@@ -144,14 +144,14 @@ def _exec_denoise(cmd: list[str]):
     return output
 
 
-def _exec_denoise_and_parse_result(cmd: list[str]) -> Tuple[dict, bool, str]:
+def _exec_denoise_and_parse_result(cmd: list[str]) -> Tuple[DenoiseCapabilities, bool, str]:
     output = _exec_denoise(cmd)
 
+    result: DenoiseCapabilities = {}
     try:
         result = json.loads(output)
         got_json = True
     except ValueError:
-        result = {}
         got_json = False
 
     return result, got_json, output
@@ -182,18 +182,35 @@ def get_initial_settings_and_capabilities(
                 success = False
                 if k == "can_set_nice":
                     msg += "{ind}Process niceness could not be set.\n"
+                    if "can_set_nice_error" in result:
+                        msg += "{ind}{ind}" + result["can_set_nice_error"] + "\n"
                 elif k == "can_set_shield":
                     msg += "{ind}Core shielding could not be set up.\n"
+                    if "can_set_shield_error" in result:
+                        msg += "{ind}{ind}" + result["can_set_shield_error"] + "\n"
                     if not paths.has_cset():
                         msg += ("{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu,"
                                 " and OpenSuSE. The code is maintained here:"
                                 " https://github.com/SUSE/cpuset\n")
                 elif k == "can_set_no_turbo":
                     msg += "{ind}Turbo mode could not be disabled.\n"
+                    if "can_set_no_turbo_error" in result:
+                        msg += "{ind}{ind}" + result["can_set_no_turbo_error"] + "\n"
+                    if "initial_no_turbo" in result and isinstance(result["initial_no_turbo"], str):
+                        msg += "{ind}{ind}" + result["initial_no_turbo"] + "\n"
+
                 elif k == "can_set_scaling_governor":
                     msg += "{ind}Scaling governor could not be set.\n"
+                    if "can_set_scaling_governor_error" in result:
+                        msg += "{ind}{ind}" + result["can_set_scaling_governor_error"] + "\n"
+                    if ("initial_scaling_governor" in result
+                            and isinstance(result["initial_scaling_governor"], str)):
+                        msg += "{ind}{ind}" + result["initial_scaling_governor"] + "\n"
+
                 elif k == "can_minimize_perf_sampling":
                     msg += "{ind}Perf sampling frequency could not be minimized.\n"
+                    if "can_minimize_perf_sampling_error" in result:
+                        msg += "{ind}{ind}" + result["can_minimize_perf_sampling_error"] + "\n"
                 else:
                     msg += "{ind}Unknown capability: " + k + "\n"
     else:
