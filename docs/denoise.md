@@ -7,7 +7,7 @@ benchmark results.
 `rebench-denoise` is a command-line tool, and supports the `--help` argument
 for a brief overview of its options.
 
-```bash
+```
 $ rebench-denoise --help 
 usage: rebench-denoise [-h] [--version] [--json] [--without-nice] 
                        [--without-shielding]

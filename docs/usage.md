@@ -3,7 +3,7 @@
 ReBench is a command-line tool. In the following, we will discuss its usage.
 The complete set of options can be displayed with the `--help` argument:
 
-```bash
+```
 $ rebench --help
 Usage: rebench [options] <config> [exp_name] [e:$]* [s:$]* [m:$]*
 
