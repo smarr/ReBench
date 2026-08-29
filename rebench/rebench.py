@@ -333,7 +333,8 @@ Argument:
                             initials_and_capabilities,
                             show_denoise_warnings,
                             self._config.options.execution_plan,
-                            self._config.config_dir)
+                            self._config.config_dir,
+                            self._config.options.use_denoise)
 
         if self._config.options.no_execution:
             return True
