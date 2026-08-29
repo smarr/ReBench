@@ -30,14 +30,19 @@ class DenoiseInitialSettings:
     def __init__(self, requested: Denoise, result: DenoiseCapabilities, warn_msg: Optional[str]):
         self.requested = requested
 
-        can_set = [v for k, v in result.items() if k.startswith("can_")]
-        self.nothing_set = not any(can_set)
-
         self.can_set_nice = result.get("can_set_nice", None)
         self.can_set_shield = result.get("can_set_shield", None)
         self.can_set_no_turbo = result.get("can_set_no_turbo", None)
         self.can_set_scaling_governor = result.get("can_set_scaling_governor", None)
         self.can_minimize_perf_sampling = result.get("can_minimize_perf_sampling", None)
+
+        self.nothing_set = not any([
+            self.can_set_nice,
+            self.can_set_shield,
+            self.can_set_no_turbo,
+            self.can_set_scaling_governor,
+            self.can_minimize_perf_sampling
+        ])
 
         self.initial_no_turbo = result.get("initial_no_turbo", None)
         self.initial_scaling_governor = result.get("initial_scaling_governor", None)
