@@ -7,7 +7,10 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
-from typing import Optional, Union, Literal, TypedDict, NotRequired
+from typing import Optional, Union, Literal, TypedDict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import NotRequired
 
 denoise_py = os.path.abspath(__file__)
 
@@ -27,29 +30,29 @@ else:
 
 
 class DenoiseCapabilities(TypedDict):
-    can_set_nice: NotRequired[bool]
-    can_set_nice_error: NotRequired[str]
+    can_set_nice: "NotRequired[bool]"
+    can_set_nice_error: "NotRequired[str]"
 
-    can_set_shield: NotRequired[bool]
-    can_set_shield_error: NotRequired[str]
+    can_set_shield: "NotRequired[bool]"
+    can_set_shield_error: "NotRequired[str]"
 
-    can_set_no_turbo: NotRequired[bool]
-    can_set_no_turbo_error: NotRequired[str]
-    initial_no_turbo: NotRequired[Union[bool, str, None]]
+    can_set_no_turbo: "NotRequired[bool]"
+    can_set_no_turbo_error: "NotRequired[str]"
+    initial_no_turbo: "NotRequired[Union[bool, str, None]]"
 
-    can_set_scaling_governor: NotRequired[bool]
-    can_set_scaling_governor_error: NotRequired[str]
-    initial_scaling_governor: NotRequired[str]
+    can_set_scaling_governor: "NotRequired[bool]"
+    can_set_scaling_governor_error: "NotRequired[str]"
+    initial_scaling_governor: "NotRequired[str]"
 
-    can_minimize_perf_sampling: NotRequired[bool]
-    can_minimize_perf_sampling_error: NotRequired[str]
+    can_minimize_perf_sampling: "NotRequired[bool]"
+    can_minimize_perf_sampling_error: "NotRequired[str]"
 
 
 class DenoiseSettings(TypedDict):
-    shielding: NotRequired[Union[str, bool]]
-    no_turbo: NotRequired[Union[str, bool]]
-    scaling_governor: NotRequired[str]
-    perf_event_max_sample_rate: NotRequired[Union[str, bool]]
+    shielding: "NotRequired[Union[str, bool]]"
+    no_turbo: "NotRequired[Union[str, bool]]"
+    scaling_governor: "NotRequired[str]"
+    perf_event_max_sample_rate: "NotRequired[Union[str, bool]]"
 
 
 class CommandsPaths:
