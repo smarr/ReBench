@@ -11,9 +11,18 @@ env = sorted(env_items, key=lambda el: el[0])
 print(test)
 print(env)
 
-known_envvars = ["PWD", "SHLVL", "VERSIONER_PYTHON_VERSION",
-                 "_", "__CF_USER_TEXT_ENCODING", "LC_CTYPE",
-                 "CPATH", "LIBRARY_PATH", "MANPATH", "SDKROOT"]
+known_envvars = [
+    "PWD",
+    "SHLVL",
+    "VERSIONER_PYTHON_VERSION",
+    "_",
+    "__CF_USER_TEXT_ENCODING",
+    "LC_CTYPE",
+    "CPATH",
+    "LIBRARY_PATH",
+    "MANPATH",
+    "SDKROOT",
+]
 
 if test == "as-expected":
     if os.environ.get("IMPORTANT_ENV_VARIABLE", None) != "exists":
@@ -24,8 +33,11 @@ if test == "as-expected":
 
     while env:
         e = env.pop()
-        if (e[0] != "IMPORTANT_ENV_VARIABLE" and e[0] != "ALSO_IMPORTANT"
-                and e[0] not in known_envvars):
+        if (
+            e[0] != "IMPORTANT_ENV_VARIABLE"
+            and e[0] != "ALSO_IMPORTANT"
+            and e[0] not in known_envvars
+        ):
             sys.exit(1)
 elif test == "no-env":
     while env:

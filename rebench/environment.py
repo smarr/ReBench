@@ -9,8 +9,6 @@ from psutil import virtual_memory
 
 from .output import output_as_str
 
-
-
 if TYPE_CHECKING:
     from .denoise_client import DenoiseInitialSettings
 
@@ -24,7 +22,8 @@ def _encode_str(out):
 
 def _exec(cmd):
     try:
-        with open(os.devnull, "w") as dev_null_f:  # pylint: disable=unspecified-encoding
+        # pylint: disable-next=unspecified-encoding
+        with open(os.devnull, "w") as dev_null_f:
             out = subprocess.check_output(cmd, stderr=dev_null_f)
     except subprocess.CalledProcessError:
         return None
@@ -58,10 +57,11 @@ _commit_info_format = {
     "authorName": "%aN",
     "committerName": "%cN",
     "authorEmail": "%aE",
-    "committerEmail": "%cE"
+    "committerEmail": "%cE",
 }
 
 _commit_info_format_str = "%x00".join(_commit_info_format.values())
+
 
 def determine_source_details(configurator):
     global _source  # pylint: disable=global-statement
@@ -95,20 +95,25 @@ def determine_source_details(configurator):
     if parsed.password:
         # remove password
         parsed = parsed._replace(
-            netloc="{}@{}".format(parsed.username, parsed.hostname))
-    result['repoURL'] = _encode_str(parsed.geturl())
+            netloc="{}@{}".format(parsed.username, parsed.hostname)
+        )
+    result["repoURL"] = _encode_str(parsed.geturl())
 
-    commit_info = _exec(git_cmd + ['show', '-s', '--format=' + _commit_info_format_str, 'HEAD'])
+    commit_info = _exec(
+        git_cmd + ["show", "-s", "--format=" + _commit_info_format_str, "HEAD"]
+    )
     info = commit_info.split("\x00")
-    assert len(info) == len(_commit_info_format), "Unexpected number of fields in commit info"
+    assert len(info) == len(
+        _commit_info_format
+    ), "Unexpected number of fields in commit info"
 
-    result['branchOrTag'] = extract_base(info[0])
-    result['commitId'] = commit_id
-    result['commitMsg'] = info[1]
-    result['authorName'] = info[2]
-    result['committerName'] = info[3]
-    result['authorEmail'] = info[4]
-    result['committerEmail'] = info[5]
+    result["branchOrTag"] = extract_base(info[0])
+    result["commitId"] = commit_id
+    result["commitMsg"] = info[1]
+    result["authorName"] = info[2]
+    result["committerName"] = info[3]
+    result["authorEmail"] = info[4]
+    result["committerEmail"] = info[5]
 
     _source = result
     return result
@@ -119,10 +124,7 @@ _environment = None
 
 def init_env_for_test():
     global _environment  # pylint: disable=global-statement
-    _environment = {
-        'hostName': 'test',
-        'userName': 'test'
-    }
+    _environment = {"hostName": "test", "userName": "test"}
 
 
 def init_environment(initial_denoise: Optional["DenoiseInitialSettings"], ui):
@@ -143,24 +145,27 @@ def init_environment(initial_denoise: Optional["DenoiseInitialSettings"], ui):
         cpu_info = _get_cpu_info_internal()
 
         if cpu_info:
-            if 'brand_raw' in cpu_info:
-                result['cpu'] = cpu_info['brand_raw']
-            if 'hz_advertised' in cpu_info:
-                result['clockSpeed'] = (cpu_info['hz_advertised'][0]
-                                        * (10 ** cpu_info['hz_advertised'][1]))
+            if "brand_raw" in cpu_info:
+                result["cpu"] = cpu_info["brand_raw"]
+            if "hz_advertised" in cpu_info:
+                result["clockSpeed"] = cpu_info["hz_advertised"][0] * (
+                    10 ** cpu_info["hz_advertised"][1]
+                )
             else:
                 result["clockSpeed"] = 0
     except ValueError:
         pass
 
-    if 'cpu' not in result:
-        ui.warning('Was not able to determine the type of CPU used and its clock speed.' +
-                   ' Thus, these details will not be recorded with the data.\n')
+    if "cpu" not in result:
+        ui.warning(
+            "Was not able to determine the type of CPU used and its clock speed."
+            + " Thus, these details will not be recorded with the data.\n"
+        )
 
     result["software"] = [
         {"name": "kernel", "version": u_name[3]},
         {"name": "kernel-release", "version": u_name[2]},
-        {"name": "architecture", "version": u_name[4]}
+        {"name": "architecture", "version": u_name[4]},
     ]
 
     global _environment  # pylint: disable=global-statement

@@ -68,19 +68,26 @@ class PerfParserTest(TestCase):
 
         self.assertIsNotNone(e.trace)
         self.assertEqual(len(e.trace), 1)
-        self.assertEqual(e.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
+        self.assertEqual(
+            e.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments"
+        )
         self.assertEqual(e.percent, 7.20)
 
         e = e.trace[0]
         self.assertIsNotNone(e.trace)
         self.assertEqual(len(e.trace), 3)
-        self.assertEqual(e.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
+        self.assertEqual(
+            e.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments"
+        )
         self.assertEqual(e.percent, 6.87)
 
         e = e.trace[2]
         self.assertIsNotNone(e.trace)
         self.assertEqual(len(e.trace), 2)
-        self.assertEqual(e.method, "IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_long_long0")
+        self.assertEqual(
+            e.method,
+            "IntToDoInlinedLiteralsNodeFactory$IntToDoInlinedLiteralsNodeGen_executeGeneric_long_long0",
+        )
         self.assertEqual(e.percent, 6.82)
 
         e = e.trace[1]
@@ -98,7 +105,9 @@ class PerfParserTest(TestCase):
         e = e.trace[0]
         self.assertIsNotNone(e.trace)
         self.assertEqual(len(e.trace), 1)
-        self.assertEqual(e.method, "MessageSendNode$GenericMessageSendNode_doPreEvaluated")
+        self.assertEqual(
+            e.method, "MessageSendNode$GenericMessageSendNode_doPreEvaluated"
+        )
         self.assertEqual(e.percent, 1.72)
 
         self._assert_json_is_serializable()
@@ -124,22 +133,25 @@ class PerfParserTest(TestCase):
         self.assertEqual(len(elements), 1)
 
         e = elements[0]
-        self.assertEqual(e.method, "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric")
+        self.assertEqual(
+            e.method, "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric"
+        )
         self.assertEqual(e.percent, 5.99)
         self.assertEqual(len(e.trace), 1)
 
         e = e.trace[0]
-        self.assertEqual(e.method,
-                         "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric")
+        self.assertEqual(
+            e.method, "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric"
+        )
         self.assertEqual(e.percent, 5.78)
         self.assertEqual(len(e.trace), 2)
 
         e1 = e.trace[0]
         e2 = e.trace[1]
-        self.assertEqual(e1.method,
-                         "EagerBinaryPrimitiveNode_executeGeneric")
-        self.assertEqual(e2.method,
-                         "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
+        self.assertEqual(e1.method, "EagerBinaryPrimitiveNode_executeGeneric")
+        self.assertEqual(
+            e2.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments"
+        )
 
         self._assert_json_is_serializable()
 
@@ -154,8 +166,7 @@ class PerfParserTest(TestCase):
         self.assertEqual(len(elements), 1)
 
         e = elements[0]
-        self.assertEqual(e.method,
-                         "OptimizedCallTarget_profileArguments")
+        self.assertEqual(e.method, "OptimizedCallTarget_profileArguments")
         self.assertEqual(e.percent, 4.25)
         self.assertEqual(len(e.trace), 2)
 
@@ -186,18 +197,22 @@ class PerfParserTest(TestCase):
         self.assertEqual(len(elements), 1)
 
         e = elements[0]
-        self.assertEqual(e.method,
-                         "FrameWithoutBoxing_getTag")
+        self.assertEqual(e.method, "FrameWithoutBoxing_getTag")
         self.assertEqual(e.percent, 2.84)
         self.assertEqual(len(e.trace), 4)
 
         self.assertEqual(e.trace[0], "FrameWithoutBoxing_getTag")
-        self.assertEqual(e.trace[1], "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric")
+        self.assertEqual(
+            e.trace[1],
+            "LocalVariableNodeFactory$LocalVariableReadNodeGen_executeGeneric",
+        )
 
         e3 = e.trace[2]
         e4 = e.trace[3]
 
-        self.assertEqual(e3.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments")
+        self.assertEqual(
+            e3.method, "MessageSendNode$AbstractMessageSendNode_evaluateArguments"
+        )
         self.assertEqual(e4.method, "EagerBinaryPrimitiveNode_executeGeneric")
 
         self._assert_json_is_serializable()

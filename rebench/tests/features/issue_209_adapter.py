@@ -1,15 +1,16 @@
 from re import compile as re_compile
 
-from rebench.interop.adapter   import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
-from rebench.model.data_point  import DataPoint
+from rebench.interop.adapter import (
+    GaugeAdapter,
+    OutputNotParseable,
+    ResultsIndicatedAsInvalid,
+)
+from rebench.model.data_point import DataPoint
 from rebench.model.measurement import Measurement
 
 
 class MyTestAdapter(GaugeAdapter):
-    """Performance reader for the test case and the definitions
-       in test/test.conf
-    """
+    """Performance reader for the test case and the definitions in test/test.conf."""
 
     __test__ = False  # This is not a test class
     re_time = re_compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
@@ -26,13 +27,19 @@ class MyTestAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             match = MyTestAdapter.re_time.match(line)
             if match:
-                measure = Measurement(invocation, iteration,
-                                      float(match.group(2)), 'ms', run_id,
-                                      match.group(1))
+                measure = Measurement(
+                    invocation,
+                    iteration,
+                    float(match.group(2)),
+                    "ms",
+                    run_id,
+                    match.group(1),
+                )
                 current.add_measurement(measure)
 
                 if measure.is_total():

@@ -18,16 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
-from ..model.data_point  import DataPoint
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class TestExecutorAdapter(GaugeAdapter):
-    """Performance reader for the test case and the definitions
-       in test/test.conf
-    """
+    """Performance reader for the test case and the definitions in test/test.conf."""
 
     __test__ = False  # This is not a test class
     re_time = re.compile(r"RESULT-(\w+):\s*(\d+\.\d+)")
@@ -44,13 +41,19 @@ class TestExecutorAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             match = TestExecutorAdapter.re_time.match(line)
             if match:
-                measure = Measurement(invocation, iteration,
-                                      float(match.group(2)), 'ms', run_id,
-                                      match.group(1))
+                measure = Measurement(
+                    invocation,
+                    iteration,
+                    float(match.group(2)),
+                    "ms",
+                    run_id,
+                    match.group(1),
+                )
                 current.add_measurement(measure)
 
                 if measure.is_total():

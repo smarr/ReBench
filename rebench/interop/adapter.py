@@ -24,9 +24,10 @@ from os.path import join
 
 
 class GaugeAdapter(object):
-    """A GaugeAdapter implements a common interface to evaluate the output of
-       benchmarks and to determine measured performance values.
-       The GaugeAdapter class also provides some basic helper functionality.
+    """
+    A GaugeAdapter implements a common interface to evaluate the output of
+    benchmarks and to determine measured performance values.
+    The GaugeAdapter class also provides some basic helper functionality.
     """
 
     # definition of some regular expression to identify erroneous runs
@@ -46,8 +47,9 @@ class GaugeAdapter(object):
         raise NotImplementedError()
 
     def check_for_error(self, line):
-        """Check whether the output line contains one of the common error
-           messages. If it's an erroneous run, the result has to be discarded.
+        """
+        Check whether the output line contains one of the common error
+        messages. If it's an erroneous run, the result has to be discarded.
         """
         if self._include_faulty:
             return False
@@ -68,8 +70,8 @@ class GaugeAdapter(object):
 
 
 class ExecutionDeliveredNoResults(Exception):
-    """The exception to be raised when no results were obtained from the given
-       data string."""
+    """The exception to be raised when no results were obtained from the given data string."""
+
     def __init__(self, unparsable_data):
         super(ExecutionDeliveredNoResults, self).__init__()
         self._unparseable_data = unparsable_data

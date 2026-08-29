@@ -17,10 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator, load_config
-from ...executor         import Executor
-from ...rebench          import ReBench
-from ...persistence      import DataStore
+from ...configurator import Configurator, load_config
+from ...executor import Executor
+from ...rebench import ReBench
+from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -31,8 +31,12 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_faulty_runs_rejected_without_switch(self):
-        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_34.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
@@ -49,16 +53,19 @@ class Issue34AcceptFaultyRuns(ReBenchTestCase):
         self.assertEqual(0, runs[2].get_number_of_data_points())
 
     def test_parse_command_switch(self):
-        options = ReBench().shell_options().parse_args(
-            ["--faulty", "test.conf"])
+        options = ReBench().shell_options().parse_args(["--faulty", "test.conf"])
         self.assertTrue(options.include_faulty)
 
         options = ReBench().shell_options().parse_args(["test.conf"])
         self.assertFalse(options.include_faulty)
 
     def test_faulty_runs_accepted_with_switch(self):
-        cnf = Configurator(load_config(self._path + '/issue_34.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_34.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 

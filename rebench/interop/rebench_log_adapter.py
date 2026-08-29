@@ -19,28 +19,31 @@
 # THE SOFTWARE.
 import re
 
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 
-from ..model.data_point  import DataPoint
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class RebenchLogAdapter(GaugeAdapter):
-    """RebenchLogPerformance is the standard log parser of ReBench.
-       It reads a simple log format, which includes the number of iterations of
-       a benchmark and its runtime in microseconds.
-
-       Note: regular expressions are documented in /docs/extensions.md
     """
+    RebenchLogPerformance is the standard log parser of ReBench.
+    It reads a simple log format, which includes the number of iterations of
+    a benchmark and its runtime in microseconds.
+
+    Note: regular expressions are documented in /docs/extensions.md
+    """
+
     re_log_line = re.compile(
         r"^(?:.*: )?([^\s]+)( [\w\.]+)?: iterations=([0-9]+) "
         + r"runtime: (?P<runtime>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
-        + r"(?P<unit>[mu])s")
+        + r"(?P<unit>[mu])s"
+    )
     re_extra_criterion_log_line = re.compile(
         r"^(?:.*: )?([^\s]+): (?P<criterion>[^:]{1,30}):\s*"
         + r"(?P<value>(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
-        + r"(?P<unit>[a-zA-Z]+)")
+        + r"(?P<unit>[a-zA-Z]+)"
+    )
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
@@ -48,8 +51,11 @@ class RebenchLogAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty, executor):
         super(RebenchLogAdapter, self).__init__(include_faulty, executor)
-        self._other_error_definitions = [self.re_NPB_partial_invalid,
-                                         self.re_NPB_invalid, self.re_incorrect]
+        self._other_error_definitions = [
+            self.re_NPB_partial_invalid,
+            self.re_NPB_invalid,
+            self.re_incorrect,
+        ]
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
@@ -59,7 +65,8 @@ class RebenchLogAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             measure = None
             match = self.re_log_line.match(line)
@@ -69,7 +76,9 @@ class RebenchLogAdapter(GaugeAdapter):
                     time /= 1000
                 criterion = (match.group(2) or "total").strip()
 
-                measure = Measurement(invocation, iteration, time, "ms", run_id, criterion)
+                measure = Measurement(
+                    invocation, iteration, time, "ms", run_id, criterion
+                )
 
             else:
                 match = self.re_extra_criterion_log_line.match(line)
@@ -78,7 +87,9 @@ class RebenchLogAdapter(GaugeAdapter):
                     criterion = match.group("criterion")
                     unit = match.group("unit")
 
-                    measure = Measurement(invocation, iteration, value, unit, run_id, criterion)
+                    measure = Measurement(
+                        invocation, iteration, value, unit, run_id, criterion
+                    )
 
             if measure:
                 current.add_measurement(measure)

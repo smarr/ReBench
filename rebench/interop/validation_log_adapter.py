@@ -19,24 +19,24 @@
 # THE SOFTWARE.
 import re
 
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 
-from ..model.data_point  import DataPoint
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class ValidationLogAdapter(GaugeAdapter):
     """ValidationLogPerformance is the log parser for SOMns ImpactHarness.
-       It reads a simple log format, which includes the number of iterations of
-       a benchmark, its runtime in microseconds and if it was successful.
+    It reads a simple log format, which includes the number of iterations of
+    a benchmark, its runtime in microseconds and if it was successful.
     """
+
     re_log_line = re.compile(
         r"^(?:.*: )?([\w\.]+)( [\w\.]+)?: iterations=([0-9]+)"
-        r" runtime: ([0-9]+)([mu])s success: (true|false)")
+        r" runtime: ([0-9]+)([mu])s success: (true|false)"
+    )
 
-    re_actors = re.compile(
-        r"^\[Total\]\s+A#([0-9]+)\s+M#([0-9]+)\s+P#([0-9]+)")
+    re_actors = re.compile(r"^\[Total\]\s+A#([0-9]+)\s+M#([0-9]+)\s+P#([0-9]+)")
 
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
@@ -44,8 +44,11 @@ class ValidationLogAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty, executor):
         super(ValidationLogAdapter, self).__init__(include_faulty, executor)
-        self._other_error_definitions = [self.re_NPB_partial_invalid,
-                                         self.re_NPB_invalid, self.re_incorrect]
+        self._other_error_definitions = [
+            self.re_NPB_partial_invalid,
+            self.re_NPB_invalid,
+            self.re_incorrect,
+        ]
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
@@ -55,17 +58,26 @@ class ValidationLogAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             match = self.re_log_line.match(line)
             if match:
                 time = float(match.group(4))
                 if match.group(5) == "u":
                     time /= 1000
-                criterion = (match.group(2) or 'total').strip()
-                success_measure = Measurement(invocation, iteration,
-                                              match.group(6) == "true", 'bool', run_id, 'Success')
-                measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
+                criterion = (match.group(2) or "total").strip()
+                success_measure = Measurement(
+                    invocation,
+                    iteration,
+                    match.group(6) == "true",
+                    "bool",
+                    run_id,
+                    "Success",
+                )
+                measure = Measurement(
+                    invocation, iteration, time, "ms", run_id, criterion
+                )
                 current.add_measurement(success_measure)
                 current.add_measurement(measure)
 
@@ -76,14 +88,33 @@ class ValidationLogAdapter(GaugeAdapter):
             else:
                 match = self.re_actors.match(line)
                 if match:
-                    measure1 = Measurement(invocation, iteration,
-                                           int(match.group(1)), 'count', run_id, 'Actors')
-                    measure2 = Measurement(invocation, iteration,
-                                           int(match.group(2)), 'count', run_id, 'Messages')
-                    measure3 = Measurement(invocation, iteration,
-                                           int(match.group(3)), 'count', run_id, 'Promises')
-                    measure4 = Measurement(invocation, iteration,
-                                           0, 'ms', run_id, 'total')
+                    measure1 = Measurement(
+                        invocation,
+                        iteration,
+                        int(match.group(1)),
+                        "count",
+                        run_id,
+                        "Actors",
+                    )
+                    measure2 = Measurement(
+                        invocation,
+                        iteration,
+                        int(match.group(2)),
+                        "count",
+                        run_id,
+                        "Messages",
+                    )
+                    measure3 = Measurement(
+                        invocation,
+                        iteration,
+                        int(match.group(3)),
+                        "count",
+                        run_id,
+                        "Promises",
+                    )
+                    measure4 = Measurement(
+                        invocation, iteration, 0, "ms", run_id, "total"
+                    )
                     current.add_measurement(measure1)
                     current.add_measurement(measure2)
                     current.add_measurement(measure3)

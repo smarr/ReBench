@@ -59,8 +59,9 @@ class UI(object):
         return self._progress_spinner is not None
 
     def init_spinner(self, total):
-        self._progress_spinner = UiSpinner(label="Running Benchmarks",
-                                           total=total, stream=sys.stdout)
+        self._progress_spinner = UiSpinner(
+            label="Running Benchmarks", total=total, stream=sys.stdout
+        )
         return self._progress_spinner
 
     def step_spinner(self, completed_runs, label=None):
@@ -69,8 +70,13 @@ class UI(object):
         self._progress_spinner.stream.flush()
         self._need_to_erase_spinner = self._progress_spinner.interactive
 
-    def _prepare_details(self, run_id: Optional["RunId"],
-                         cmd: Optional[str], cwd: Optional[str], env: Optional[dict[str, str]]):
+    def _prepare_details(
+        self,
+        run_id: Optional["RunId"],
+        cmd: Optional[str],
+        cwd: Optional[str],
+        env: Optional[dict[str, str]],
+    ):
         if not run_id and not cmd:
             return None
 
@@ -110,9 +116,13 @@ class UI(object):
 
         return text
 
-    def _output_detail_header(self, run_id: Optional["RunId"],
-                              cmd: Optional[str], cwd: Optional[str],
-                              env: Optional[dict[str, str]]):
+    def _output_detail_header(
+        self,
+        run_id: Optional["RunId"],
+        cmd: Optional[str],
+        cwd: Optional[str],
+        env: Optional[dict[str, str]],
+    ):
         text = self._prepare_details(run_id, cmd, cwd, env)
         if text:
             self._output(text, None)
@@ -162,7 +172,9 @@ class UI(object):
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", **kw)
 
-    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def verbose_output_info(
+        self, text, run_id=None, cmd=None, cwd=None, env=None, **kw
+    ):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, None, faint=True, **kw)
@@ -209,7 +221,9 @@ class TestDummyUI(object):
     def error_once(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
         pass
 
-    def verbose_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def verbose_output_info(
+        self, text, run_id=None, cmd=None, cwd=None, env=None, **kw
+    ):
         pass
 
     def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):

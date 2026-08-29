@@ -22,7 +22,7 @@ from ...model.data_point import DataPoint
 from ...model.measurement import Measurement
 from ...model.termination_check import TerminationCheck
 from ...configurator import Configurator, load_config
-from ...persistence  import DataStore
+from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -30,9 +30,13 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def setUp(self):
         super(RunsConfigTestCase, self).setUp()
-        self._cnf = Configurator(load_config(self._path + '/small.conf'), DataStore(self.ui),
-                                 self.ui, None,
-                                 data_file=self._tmp_file)
+        self._cnf = Configurator(
+            load_config(self._path + "/small.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            data_file=self._tmp_file,
+        )
         runs = self._cnf.get_runs()
         self._run = list(runs)[0]
 
@@ -83,15 +87,22 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def test_command_user_path_expansion(self):
         self._cnf = Configurator(
-            load_config(self._path + '/small_expand_user.conf'), DataStore(self.ui),
-            self.ui, None, data_file=self._tmp_file)
+            load_config(self._path + "/small_expand_user.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            data_file=self._tmp_file,
+        )
         runs = self._cnf.get_runs()
         sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
 
         run = sorted_runs[0]
 
-        expected_cmd = '~/tests/vm1.py 1 -cp ~/foo:~/bar Bench ~/suiteFolder/Bench1'.replace(
-            '~', expanduser('~'))
+        expected_cmd = (
+            "~/tests/vm1.py 1 -cp ~/foo:~/bar Bench ~/suiteFolder/Bench1".replace(
+                "~", expanduser("~")
+            )
+        )
         self.assertNotIn("~", expected_cmd)
         expected_cmd += " -message 'a string with a ~'"
         next_invocation_cmdline = run.cmdline_for_next_invocation()
@@ -99,8 +110,12 @@ class RunsConfigTestCase(ReBenchTestCase):
 
     def test_env_user_path_expansion(self):
         self._cnf = Configurator(
-            load_config(self._path + '/small_expand_user.conf'), DataStore(self.ui),
-            self.ui, None, data_file=self._tmp_file)
+            load_config(self._path + "/small_expand_user.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            data_file=self._tmp_file,
+        )
         runs = self._cnf.get_runs()
         sorted_runs = sorted(list(runs), key=lambda r: r.cmdline())
         run = sorted_runs[0]

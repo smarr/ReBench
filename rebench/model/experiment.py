@@ -37,8 +37,12 @@ class Experiment(object):
         else:
             data_file = exp.get("data_file") or configurator.data_file
 
-        reporting = Reporting.compile(exp.get('reporting', {}), configurator.reporting,
-                                      configurator.options, configurator.ui)
+        reporting = Reporting.compile(
+            exp.get("reporting", {}),
+            configurator.reporting,
+            configurator.options,
+            configurator.ui,
+        )
 
         run_details = ExpRunDetails.compile(exp, configurator.base_run_details)
         variables = ExpVariables.compile(exp, configurator.base_variables)
@@ -48,11 +52,34 @@ class Experiment(object):
 
         env = exp.get("env")
 
-        return Experiment(name, description or desc, action, env, data_file, reporting,
-                          run_details, variables, configurator, executions, suites)
+        return Experiment(
+            name,
+            description or desc,
+            action,
+            env,
+            data_file,
+            reporting,
+            run_details,
+            variables,
+            configurator,
+            executions,
+            suites,
+        )
 
-    def __init__(self, name, description, action, env, data_file, reporting, run_details,
-                 variables, configurator, executions, suites):
+    def __init__(
+        self,
+        name,
+        description,
+        action,
+        env,
+        data_file,
+        reporting,
+        run_details,
+        variables,
+        configurator,
+        executions,
+        suites,
+    ):
         self.name = name
         self._description = description
         self._action = action
@@ -66,7 +93,8 @@ class Experiment(object):
         self._persistence = self._data_store.get(data_file, configurator, action)
 
         self._suites = self._compile_executors_and_benchmark_suites(
-            executions, suites, configurator)
+            executions, suites, configurator
+        )
         self._benchmarks = self._compile_benchmarks()
         self.runs = self._compile_runs(configurator)
 
@@ -85,7 +113,13 @@ class Experiment(object):
                             if not configurator.run_filter.applies_to_tag(tag):
                                 continue
                             run = self._data_store.create_run_id(
-                                bench, cores, input_size, var_val, tag, configurator.machine)
+                                bench,
+                                cores,
+                                input_size,
+                                var_val,
+                                tag,
+                                configurator.machine,
+                            )
                             runs.add(run)
                             run.add_reporting(self._reporting)
                             run.add_persistence(self._persistence)
@@ -108,12 +142,16 @@ class Experiment(object):
                 suites_for_executor = suites
 
             executor = configurator.get_executor(
-                executor_name, run_details, variables, self._action)
+                executor_name, run_details, variables, self._action
+            )
 
             for suite_name in suites_for_executor:
                 suite = BenchmarkSuite.compile(
-                    suite_name, configurator.get_suite(suite_name), executor,
-                    configurator.deduplicated_build_commands)
+                    suite_name,
+                    configurator.get_suite(suite_name),
+                    executor,
+                    configurator.deduplicated_build_commands,
+                )
                 results.append(suite)
 
         return results

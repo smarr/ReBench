@@ -1,15 +1,23 @@
 from unittest import TestCase, skipIf
 
 from ..denoise_client import DenoiseInitialSettings
-from ..environment import determine_source_details, determine_environment,\
-    init_environment, extract_base, git_not_available, git_repo_not_initialized
+from ..environment import (
+    determine_source_details,
+    determine_environment,
+    init_environment,
+    extract_base,
+    git_not_available,
+    git_repo_not_initialized,
+)
 from ..ui import TestDummyUI
 
 
 class EnvironmentTest(TestCase):
 
-    @skipIf(git_not_available() or git_repo_not_initialized(),
-        "git seems not to be installed, or on the path, or the .git dir is missing")
+    @skipIf(
+        git_not_available() or git_repo_not_initialized(),
+        "git seems not to be installed, or on the path, or the .git dir is missing",
+    )
     def test_source_details(self):
         details = determine_source_details(None)
         self.assertEqual(len(details["commitId"]), 40)
@@ -31,7 +39,6 @@ class EnvironmentTest(TestCase):
         self.assertGreater(len(env["hostName"]), 0)
         self.assertGreater(len(env["osType"]), 0)
 
-
         self.assertTrue("manualRun" in env)
         self.assertGreater(env["memory"], 0)
 
@@ -42,10 +49,14 @@ class EnvironmentTest(TestCase):
             self.assertGreaterEqual(env["clockSpeed"], 0)
 
     def test_extract_base(self):
-        self.assertEqual('', extract_base(''))
-        self.assertEqual('branch', extract_base('branch'))
-        self.assertEqual('tag/tag', extract_base('tag/tag'))
-        self.assertEqual('branch', extract_base('HEAD -> branch'))
-        self.assertEqual('branch', extract_base('HEAD -> branch, otherBranch'))
-        self.assertEqual('develop', extract_base(
-            'HEAD -> develop, origin/master, origin/develop, origin/HEAD, master'))
+        self.assertEqual("", extract_base(""))
+        self.assertEqual("branch", extract_base("branch"))
+        self.assertEqual("tag/tag", extract_base("tag/tag"))
+        self.assertEqual("branch", extract_base("HEAD -> branch"))
+        self.assertEqual("branch", extract_base("HEAD -> branch, otherBranch"))
+        self.assertEqual(
+            "develop",
+            extract_base(
+                "HEAD -> develop, origin/master, origin/develop, origin/HEAD, master"
+            ),
+        )

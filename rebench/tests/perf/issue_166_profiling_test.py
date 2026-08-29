@@ -18,21 +18,33 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def test_check_executors_raw_values(self):
-        cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_166.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         execs = cnf._executors
 
         self.assertEqual(2, len(execs))
 
-        self.assertEqual(execs['TestRunner1']['profiler']['perf']['record_args'],
-                         "record -g -F 9999 --call-graph lbr")
-        self.assertEqual(execs['TestRunner1']['profiler']['perf']['report_args'],
-                         "report -g graph --no-children --stdio")
+        self.assertEqual(
+            execs["TestRunner1"]["profiler"]["perf"]["record_args"],
+            "record -g -F 9999 --call-graph lbr",
+        )
+        self.assertEqual(
+            execs["TestRunner1"]["profiler"]["perf"]["report_args"],
+            "report -g graph --no-children --stdio",
+        )
 
-        self.assertEqual(execs['TestRunner2']['profiler']['perf']['record_args'],
-                         "record custom-args")
-        self.assertEqual(execs['TestRunner2']['profiler']['perf']['report_args'],
-                         "report custom-args")
+        self.assertEqual(
+            execs["TestRunner2"]["profiler"]["perf"]["record_args"],
+            "record custom-args",
+        )
+        self.assertEqual(
+            execs["TestRunner2"]["profiler"]["perf"]["report_args"],
+            "report custom-args",
+        )
 
     def _assert_prof_details(self, run_id, record_args, report_args):
         profilers = run_id.benchmark.suite.executor.profiler
@@ -46,19 +58,25 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(profiler.report_args, report_args)
 
     def test_run_id_includes_profiling_details(self):
-        cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_166.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         runs = sorted(list(cnf.get_runs()))
         self.assertEqual(2, len(runs))
 
         self._assert_prof_details(
             runs[0],
             "record -g -F 9999 --call-graph lbr --output=profile.perf ",
-            "report -g graph --no-children --stdio --input=profile.perf ")
+            "report -g graph --no-children --stdio --input=profile.perf ",
+        )
         self._assert_prof_details(
             runs[1],
             "record custom-args --output=profile.perf ",
-            "report custom-args --input=profile.perf ")
+            "report custom-args --input=profile.perf ",
+        )
 
         # TODO: how do we deal with having multiple profilers defined?
         # this is something for when we support more than one
@@ -79,7 +97,9 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(0, run_id.completed_invocations)
         self.assertEqual(0, run_id.get_number_of_data_points())
 
-        data_point = ProfileData(run_id, "TEST-DATA, not json though, just a string", 1, 1)
+        data_point = ProfileData(
+            run_id, "TEST-DATA, not json though, just a string", 1, 1
+        )
         run_id.add_data_point(data_point, False)
         run_id.close_files()
         self.assertEqual(1, run_id.completed_invocations)
@@ -99,8 +119,12 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(1, run_id2.get_number_of_data_points())
 
     def test_perf_gauge_adapter_reads_perf_report(self):
-        cnf = Configurator(load_config(self._path + '/issue_166.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_166.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         runs = list(cnf.get_runs())
         run_id = runs[0]
 
@@ -124,12 +148,16 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(len(result_data), 10)
 
         self.assertEqual(
-            'MessageSendNode$AbstractMessageSendNode_evaluateArguments', result_data[0]['m'])
-        self.assertEqual('intel_pmu_handle_irq', result_data[9]['m'])
+            "MessageSendNode$AbstractMessageSendNode_evaluateArguments",
+            result_data[0]["m"],
+        )
+        self.assertEqual("intel_pmu_handle_irq", result_data[9]["m"])
 
     def test_execute_profiling(self):
         raw_config = self._load_config_and_use_tmp_as_data_file()
-        cnf = Configurator(raw_config, DataStore(self.ui), self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            raw_config, DataStore(self.ui), self.ui, data_file=self._tmp_file
+        )
         runs = cnf.get_runs()
         run_id = list(cnf.get_runs())[0]
         self.assertEqual(0, run_id.completed_invocations)
@@ -146,7 +174,12 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
     def test_execute_profiling_profile2(self):
         raw_config = self._load_config_and_use_tmp_as_data_file()
         cnf = Configurator(
-            raw_config, DataStore(self.ui), self.ui, exp_name="profile2", data_file=self._tmp_file)
+            raw_config,
+            DataStore(self.ui),
+            self.ui,
+            exp_name="profile2",
+            data_file=self._tmp_file,
+        )
 
         runs = cnf.get_runs()
         run_id = list(cnf.get_runs())[0]
@@ -161,28 +194,36 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
         self.assertEqual(7, run_id.completed_invocations)
         self.assertEqual(7, run_id.get_number_of_data_points())
 
-    @skipIf(git_not_available() or git_repo_not_initialized(),
-        "git source info not available, but needed for reporting to ReBenchDB")
+    @skipIf(
+        git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB",
+    )
     def test_send_to_rebench_db(self):
         server = MockHTTPServer()
         port = server.get_free_port()
         server.start()
 
         raw_config = self._load_config_and_use_tmp_as_data_file()
-        raw_config['reporting'] = {}
-        raw_config['reporting']['rebenchdb'] = {
-            'db_url': 'http://localhost:' + str(port),
-            'repo_url': 'http://repo.git',
-            'project_name': 'Persistency Test',
-            'send_to_rebench_db': True,
-            'record_all': True}
+        raw_config["reporting"] = {}
+        raw_config["reporting"]["rebenchdb"] = {
+            "db_url": "http://localhost:" + str(port),
+            "repo_url": "http://repo.git",
+            "project_name": "Persistency Test",
+            "send_to_rebench_db": True,
+            "record_all": True,
+        }
 
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args(["--experiment=Test", "ignored"])
 
         try:
             cnf = Configurator(
-                raw_config, DataStore(self.ui), self.ui, cmd_config, data_file=self._tmp_file)
+                raw_config,
+                DataStore(self.ui),
+                self.ui,
+                cmd_config,
+                data_file=self._tmp_file,
+            )
             runs = cnf.get_runs()
             run_id = list(cnf.get_runs())[0]
             self._make_profiler_return_small_report(run_id)
@@ -213,7 +254,12 @@ class Issue166ProfilingSupportTest(ReBenchTestCase):
     def test_failing_profiler_and_include_faulty(self):
         raw_config = self._load_config_and_use_tmp_as_data_file()
         cnf = Configurator(
-            raw_config, DataStore(self.ui), self.ui, exp_name="profile2", data_file=self._tmp_file)
+            raw_config,
+            DataStore(self.ui),
+            self.ui,
+            exp_name="profile2",
+            data_file=self._tmp_file,
+        )
 
         runs = cnf.get_runs()
         run_id = list(cnf.get_runs())[0]

@@ -61,8 +61,13 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
             return log_file.read()
 
     def test_env_vars_are_set_as_expected(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='test-set-as-expected')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="test-set-as-expected",
+        )
         runs = list(cnf.get_runs())
         reporter = _TestFailedReporter()
         runs[0].add_reporter(reporter)
@@ -77,8 +82,13 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         self.assertFalse(runs[0].is_failed)
 
     def test_run_without_config_has_empty_env(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='test-no-env')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="test-no-env",
+        )
         runs = list(cnf.get_runs())
         reporter = _TestFailedReporter()
         runs[0].add_reporter(reporter)
@@ -93,8 +103,13 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         self.assertFalse(runs[0].is_failed)
 
     def test_build_with_env_should_see_a_run_env(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='build-with-env')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="build-with-env",
+        )
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
@@ -119,8 +134,13 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
             self.assertEqual("VAR3=another test", env[3])
 
     def test_build_and_run_without_env_should_have_empty_env(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='build-without-env')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="build-without-env",
+        )
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 
@@ -133,40 +153,66 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         self._assert_empty_standard_env(parts[1])
 
     def test_construct_cmdline_env_vars_set_as_expected(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='test-set-as-expected')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="test-set-as-expected",
+        )
         runs = list(cnf.get_runs())
-        ex = Executor(runs, True, self.ui,
-                      initials_and_capabilities=self._denoise_initial_for_testing(),
-                      use_denoise=True)
+        ex = Executor(
+            runs,
+            True,
+            self.ui,
+            initials_and_capabilities=self._denoise_initial_for_testing(),
+            use_denoise=True,
+        )
 
-        cmdline, _ = ex._construct_cmdline_and_env(runs[0], TimeManualAdapter(False, ex))
+        cmdline, _ = ex._construct_cmdline_and_env(
+            runs[0], TimeManualAdapter(False, ex)
+        )
         self.assertRegex(
             cmdline,
-            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT -n " +
-            r"[^\s]*denoise\.py")
-
+            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT -n "
+            + r"[^\s]*denoise\.py",
+        )
 
     @staticmethod
     def _denoise_initial_for_testing():
-        return DenoiseInitialSettings(Denoise.default(),
-                                      {"can_set_nice": True,
-                                       "can_set_shield": True,
-                                       "can_set_scaling_governor": True,
-                                       "can_set_no_turbo": True,
-                                       "can_minimize_perf_sampling": True}, None)
+        return DenoiseInitialSettings(
+            Denoise.default(),
+            {
+                "can_set_nice": True,
+                "can_set_shield": True,
+                "can_set_scaling_governor": True,
+                "can_set_no_turbo": True,
+                "can_minimize_perf_sampling": True,
+            },
+            None,
+        )
 
     def test_construct_cmdline_build_with_env(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='build-with-env')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="build-with-env",
+        )
         runs = list(cnf.get_runs())
-        ex = Executor(runs, True, self.ui,
-                      initials_and_capabilities=self._denoise_initial_for_testing(),
-                      use_denoise=True)
+        ex = Executor(
+            runs,
+            True,
+            self.ui,
+            initials_and_capabilities=self._denoise_initial_for_testing(),
+            use_denoise=True,
+        )
 
-        cmdline, _ = ex._construct_cmdline_and_env(runs[0], TimeManualAdapter(False, ex))
-        self.assertRegex(cmdline,
-                         r" --preserve-env=VAR1,VAR3 -n [^\s]*denoise\.py")
+        cmdline, _ = ex._construct_cmdline_and_env(
+            runs[0], TimeManualAdapter(False, ex)
+        )
+        self.assertRegex(cmdline, r" --preserve-env=VAR1,VAR3 -n [^\s]*denoise\.py")
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(":")
@@ -181,8 +227,13 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
 
     @skip("Needs more work, left here for documentation")
     def test_env_supports_value_expansion(self):
-        cnf = Configurator(load_config(self._path + '/issue_42.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file, exp_name='test-value-expansion')
+        cnf = Configurator(
+            load_config(self._path + "/issue_42.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+            exp_name="test-value-expansion",
+        )
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.benchmark.name)
 

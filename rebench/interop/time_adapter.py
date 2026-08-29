@@ -19,16 +19,17 @@
 # THE SOFTWARE.
 import re
 import subprocess
-from .adapter            import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
-from ..model.data_point  import DataPoint
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class TimeAdapter(GaugeAdapter):
     """TimePerformance uses the systems time utility to allow measurement of
-       unmodified programs or aspects which need to cover the whole program
-       execution time.
+    unmodified programs or aspects which need to cover the whole program
+    execution time.
     """
+
     re_time = re.compile(r"^(\w+)\s*(\d+)m(\d+\.\d+)s")
     re_time2 = re.compile(r"^(\w+)(\s*)(\d+\.\d+)")
 
@@ -66,16 +67,26 @@ class TimeAdapter(GaugeAdapter):
         time_bin = "/usr/bin/time"
         try:
             formatted_output = subprocess.call(
-                ['/usr/bin/time', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                ["/usr/bin/time", "-f", TimeAdapter.time_format, "/bin/sleep", "0"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         except OSError:
             formatted_output = 1
 
         if formatted_output == 1:
             try:
                 formatted_output = subprocess.call(
-                    ['/opt/local/bin/gtime', '-f', TimeAdapter.time_format, '/bin/sleep', '0'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    [
+                        "/opt/local/bin/gtime",
+                        "-f",
+                        TimeAdapter.time_format,
+                        "/bin/sleep",
+                        "0",
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
                 if formatted_output == 0:
                     time_bin = "/opt/local/bin/gtime"
             except OSError:
@@ -94,18 +105,23 @@ class TimeAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             if self._use_formatted_time:
                 match1 = self.re_formatted_rss.match(line)
                 match2 = self.re_formatted_time.match(line)
                 if match1:
                     mem_kb = float(match1.group(1))
-                    measure = Measurement(invocation, iteration, mem_kb, "kb", run_id, "MaxRSS")
+                    measure = Measurement(
+                        invocation, iteration, mem_kb, "kb", run_id, "MaxRSS"
+                    )
                     current.add_measurement(measure)
                 elif match2:
                     time = float(match2.group(1)) * 1000
-                    measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
+                    measure = Measurement(
+                        invocation, iteration, time, "ms", run_id, "total"
+                    )
                     current.add_measurement(measure)
                     data_points.append(current)
                     current = DataPoint(run_id)
@@ -115,10 +131,13 @@ class TimeAdapter(GaugeAdapter):
                 match2 = self.re_time2.match(line)
                 if match1 or match2:
                     match = match1 or match2
-                    criterion = 'total' if match.group(1) == 'real' else match.group(1)
-                    time = (float(match.group(2).strip() or 0) * 60 +
-                            float(match.group(3))) * 1000
-                    measure = Measurement(invocation, iteration, time, 'ms', run_id, criterion)
+                    criterion = "total" if match.group(1) == "real" else match.group(1)
+                    time = (
+                        float(match.group(2).strip() or 0) * 60 + float(match.group(3))
+                    ) * 1000
+                    measure = Measurement(
+                        invocation, iteration, time, "ms", run_id, criterion
+                    )
                     if measure.is_total():
                         total_measure = measure
                     else:
@@ -126,8 +145,10 @@ class TimeAdapter(GaugeAdapter):
                 else:
                     measure = None
 
-                if current.number_of_measurements() == 3 and \
-                        current.get_total_value() is not None:
+                if (
+                    current.number_of_measurements() == 3
+                    and current.get_total_value() is not None
+                ):
                     data_points.append(current)
                     current = DataPoint(run_id)
                     iteration += 1
@@ -144,8 +165,9 @@ class TimeAdapter(GaugeAdapter):
 
 class TimeManualAdapter(TimeAdapter):
     """TimeManualPerformance works like TimePerformance but does expect the
-       user to use the /usr/bin/time manually.
-       This is useful for runs on remote machines like the Tilera or ARM boards.
+    user to use the /usr/bin/time manually.
+    This is useful for runs on remote machines like the Tilera or ARM boards.
     """
+
     def acquire_command(self, run_id):
         return run_id.cmdline_for_next_invocation()

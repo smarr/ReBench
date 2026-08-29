@@ -29,8 +29,7 @@ class StatsTest(unittest.TestCase):
         self._floats = [float(x) for x in self._integers]
         self._floats2 = [float(x) + 2.31 for x in self._integers]
 
-        self._mixed = [x if x % 2 == 0 else float(x) + 4.5
-                       for x in self._integers]
+        self._mixed = [x if x % 2 == 0 else float(x) + 4.5 for x in self._integers]
 
     def _assert(self, stats, mean_val, geo_mean, min_val, max_val, std_dev):
         self.assertAlmostEqual(mean_val, stats.mean)
@@ -61,7 +60,9 @@ class StatsTest(unittest.TestCase):
     def test_shifted(self):
         stats = StatisticProperties()
         stats.add(self._floats2)
-        self._assert(stats, 25 + 2.31, 22.533409416, 1.0 + 2.31, 49.0 + 2.31, 14.142135623730951)
+        self._assert(
+            stats, 25 + 2.31, 22.533409416, 1.0 + 2.31, 49.0 + 2.31, 14.142135623730951
+        )
 
     def test_mixed(self):
         stats = StatisticProperties()

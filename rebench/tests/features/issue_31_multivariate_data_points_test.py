@@ -17,9 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator           import Configurator, load_config
-from ...executor               import Executor
-from ...persistence            import DataStore
+from ...configurator import Configurator, load_config
+from ...executor import Executor
+from ...persistence import DataStore
 from ..persistence import TestPersistence
 from ..rebench_test_case import ReBenchTestCase
 
@@ -34,9 +34,13 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         self._set_path(__file__)
 
     def _records_data_points(self, exp_name, num_data_points):
-        cnf = Configurator(load_config(self._path + '/issue_31.conf'), DataStore(self.ui),
-                           self.ui, exp_name=exp_name,
-                           data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_31.conf"),
+            DataStore(self.ui),
+            self.ui,
+            exp_name=exp_name,
+            data_file=self._tmp_file,
+        )
         runs = cnf.get_runs()
         persistence = TestPersistence()
         persistence.use_on(runs)
@@ -62,9 +66,11 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 
-            for criterion, unit, measurement in zip(["bar", "total", "baz", "foo"],
-                                                    ["ms", "ms", "kbyte", "kerf"],
-                                                    point.get_measurements()):
+            for criterion, unit, measurement in zip(
+                ["bar", "total", "baz", "foo"],
+                ["ms", "ms", "kbyte", "kerf"],
+                point.get_measurements(),
+            ):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i, int(measurement.value))
                 self.assertEqual(unit, measurement.unit)
@@ -74,7 +80,8 @@ class Issue31MultivariateDataPointsTest(ReBenchTestCase):
         for point, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, point.number_of_measurements())
 
-            for criterion, measurement in zip(["bar", "baz", "foo", "total"],
-                                              point.get_measurements()):
+            for criterion, measurement in zip(
+                ["bar", "baz", "foo", "total"], point.get_measurements()
+            ):
                 self.assertEqual(criterion, measurement.criterion)
                 self.assertEqual(i, int(measurement.value))

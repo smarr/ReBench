@@ -29,14 +29,18 @@ from .exp_variables import ExpVariables
 class BenchmarkSuite(object):
 
     @classmethod
-    def compile(cls, suite_name, suite, executor: Executor, deduplicated_build_commands):
+    def compile(
+        cls, suite_name, suite, executor: Executor, deduplicated_build_commands
+    ):
         gauge_adapter = suite.get("gauge_adapter")
         command = suite.get("command")
 
         location = suite.get("location", executor.path)
         if location and not location.startswith("~"):
             location = os.path.abspath(location)
-        build = BuildCommand.create(suite.get("build"), location, deduplicated_build_commands)
+        build = BuildCommand.create(
+            suite.get("build"), location, deduplicated_build_commands
+        )
         benchmarks_config = suite.get("benchmarks")
 
         description = suite.get("description")
@@ -45,12 +49,32 @@ class BenchmarkSuite(object):
         run_details = ExpRunDetails.compile(suite, executor.run_details)
         variables = ExpVariables.compile(suite, executor.variables)
 
-        return BenchmarkSuite(suite_name, executor, gauge_adapter, command, location,
-                              build, benchmarks_config, description or desc, run_details, variables)
+        return BenchmarkSuite(
+            suite_name,
+            executor,
+            gauge_adapter,
+            command,
+            location,
+            build,
+            benchmarks_config,
+            description or desc,
+            run_details,
+            variables,
+        )
 
-    def __init__(self, suite_name, executor: Executor, gauge_adapter, command, location,
-                 build: Optional[BuildCommand],
-                 benchmarks_config, desc, run_details, variables):
+    def __init__(
+        self,
+        suite_name,
+        executor: Executor,
+        gauge_adapter,
+        command,
+        location,
+        build: Optional[BuildCommand],
+        benchmarks_config,
+        desc,
+        run_details,
+        variables,
+    ):
         """Specialize the benchmark suite for the given executor"""
         self.name = suite_name
         self.executor = executor
@@ -68,12 +92,13 @@ class BenchmarkSuite(object):
 
     def __eq__(self, other) -> bool:
         return self is other or (
-            self.name == other.name and
-            self.command == other.command and
-            self.location == other.location and
-            self._desc == other._desc and
-            self.build == other.build and
-            self.executor == other.executor)
+            self.name == other.name
+            and self.command == other.command
+            and self.location == other.location
+            and self._desc == other._desc
+            and self.build == other.build
+            and self.executor == other.executor
+        )
 
     # pylint: disable-next=too-many-return-statements
     def __lt__(self, other: "BenchmarkSuite") -> bool:
@@ -100,7 +125,16 @@ class BenchmarkSuite(object):
         return self.executor < other.executor
 
     def __hash__(self):
-        return hash((self.name, self.command, self.location, self._desc, self.build, self.executor))
+        return hash(
+            (
+                self.name,
+                self.command,
+                self.location,
+                self._desc,
+                self.build,
+                self.executor,
+            )
+        )
 
     def __str__(self):
         return "Suite(%s, %s)" % (self.name, self.command)
@@ -128,6 +162,15 @@ class BenchmarkSuite(object):
         location = data.get("location", None)
         build = BuildCommand.from_dict(data.get("build", None), location)
 
-        return BenchmarkSuite(data["name"], executor, None, data["command"],
-                              location,
-                              build, None, data.get("desc", None), None, None)
+        return BenchmarkSuite(
+            data["name"],
+            executor,
+            None,
+            data["command"],
+            location,
+            build,
+            None,
+            data.get("desc", None),
+            None,
+            None,
+        )

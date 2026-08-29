@@ -19,10 +19,9 @@
 # THE SOFTWARE.
 import re
 
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 
-from ..model.data_point  import DataPoint
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
@@ -30,9 +29,11 @@ class JMHAdapter(GaugeAdapter):
     """
     An adapter for parsing logs produced by JMH, a Java benchmarking harness.
     """
+
     # we need to capture both measurement iterations and warmup iterations
     re_result_line = re.compile(
-        r"^(Iteration|# Warmup Iteration)\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)")
+        r"^(Iteration|# Warmup Iteration)\s+(\d+):\s+(\d+(?:\.\d+)?)\s+(.+)"
+    )
     re_bench = re.compile(r"^# Benchmark: (.+)")
     re_complete = re.compile("Run complete")
 
@@ -49,7 +50,8 @@ class JMHAdapter(GaugeAdapter):
 
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             ## TODO: make sure that we support JMH in a way that we get the results
             ## for the correct benchmarks...
@@ -70,8 +72,9 @@ class JMHAdapter(GaugeAdapter):
                 criterion = "total"
 
                 point = DataPoint(run_id)
-                point.add_measurement(Measurement(invocation, iteration,
-                                                  value, unit, run_id, criterion))
+                point.add_measurement(
+                    Measurement(invocation, iteration, value, unit, run_id, criterion)
+                )
                 data_points.append(point)
                 iteration += 1
 

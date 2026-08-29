@@ -18,9 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
-from ..model.data_point  import DataPoint
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
@@ -52,11 +51,12 @@ class MultivariateAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             match = self.variable_re.match(line)
             if match:
-                (cnt, variable, unit, value_thing, floatpart) = match.groups()
+                cnt, variable, unit, value_thing, floatpart = match.groups()
 
                 # check for possible data point carry over
                 if cnt is not None:
@@ -71,9 +71,14 @@ class MultivariateAdapter(GaugeAdapter):
                 else:
                     value = float(value_thing)
 
-                measure = Measurement(invocation, iteration, value,
-                                      unit if unit is not None else 'ms',
-                                      run_id, variable)
+                measure = Measurement(
+                    invocation,
+                    iteration,
+                    value,
+                    unit if unit is not None else "ms",
+                    run_id,
+                    variable,
+                )
                 current.add_measurement(measure)
 
                 if cnt is None and measure.is_total():

@@ -22,14 +22,13 @@ import os
 
 from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
-from ..rebench           import ReBench
-from ..executor          import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
-from ..configurator      import Configurator, load_config
+from ..rebench import ReBench
+from ..executor import Executor, BatchScheduler, RandomScheduler, RoundRobinScheduler
+from ..configurator import Configurator, load_config
 from ..model.measurement import Measurement
-from ..output            import UIError
-from ..persistence       import DataStore
-from ..reporter          import Reporter
-
+from ..output import UIError
+from ..persistence import DataStore
+from ..reporter import Reporter
 
 
 class ExecutorTest(ReBenchTestCase):
@@ -41,20 +40,31 @@ class ExecutorTest(ReBenchTestCase):
     def test_setup_and_run_benchmark(self):
         options = ReBench().shell_options().parse_args(["dummy"])
 
-        cnf = Configurator(load_config(self._path + '/test.conf'), DataStore(self.ui),
-                           self.ui, options,
-                           None, 'Test', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/test.conf"),
+            DataStore(self.ui),
+            self.ui,
+            options,
+            None,
+            "Test",
+            data_file=self._tmp_file,
+        )
 
         ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
         ex.execute()
 
     def test_broken_command_format_with_ValueError(self):
         with self.assertRaises(UIError) as err:
-            options = ReBench().shell_options().parse_args(['dummy'])
-            cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(self.ui), self.ui, options,
-                               None, 'TestBrokenCommandFormat',
-                               data_file=self._tmp_file)
+            options = ReBench().shell_options().parse_args(["dummy"])
+            cnf = Configurator(
+                load_config(self._path + "/test.conf"),
+                DataStore(self.ui),
+                self.ui,
+                options,
+                None,
+                "TestBrokenCommandFormat",
+                data_file=self._tmp_file,
+            )
             ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
@@ -63,7 +73,9 @@ class ExecutorTest(ReBenchTestCase):
         yaml = load_config(self._path + "/test.conf")
 
         # change config to use executable that doesn't exist
-        self.assertEqual(yaml["executors"]["TestRunner1"]["executable"], "test-vm1.py %(cores)s")
+        self.assertEqual(
+            yaml["executors"]["TestRunner1"]["executable"], "test-vm1.py %(cores)s"
+        )
         yaml["executors"]["TestRunner1"]["executable"] = "does_not_exist"
 
         # the test.conf has some extra compilcations that we don't want
@@ -71,8 +83,9 @@ class ExecutorTest(ReBenchTestCase):
         yaml["executors"]["TestRunner1"]["execute_exclusively"] = True
         yaml["executors"]["TestRunner2"]["execute_exclusively"] = True
 
-        cnf = Configurator(yaml, DataStore(self.ui),
-                           self.ui, exp_name='Test', data_file=self._tmp_file)
+        cnf = Configurator(
+            yaml, DataStore(self.ui), self.ui, exp_name="Test", data_file=self._tmp_file
+        )
 
         reporter = _TestReporter(self)
         initial_runs = list(cnf.get_runs())
@@ -97,11 +110,16 @@ class ExecutorTest(ReBenchTestCase):
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:
-            options = ReBench().shell_options().parse_args(['dummy'])
-            cnf = Configurator(load_config(self._path + '/test.conf'),
-                               DataStore(self.ui), self.ui, options,
-                               None, 'TestBrokenCommandFormat2',
-                               data_file=self._tmp_file)
+            options = ReBench().shell_options().parse_args(["dummy"])
+            cnf = Configurator(
+                load_config(self._path + "/test.conf"),
+                DataStore(self.ui),
+                self.ui,
+                options,
+                None,
+                "TestBrokenCommandFormat2",
+                data_file=self._tmp_file,
+            )
             ex = Executor(cnf.get_runs(), cnf.do_builds, self.ui)
             ex.execute()
             self.assertIsInstance(err.exception.source_exception, TypeError)
@@ -124,19 +142,28 @@ class ExecutorTest(ReBenchTestCase):
                 self.assertEqual(4, len(measurements))
                 self.assertIsInstance(measurements[0], Measurement)
                 self.assertTrue(measurements[3].is_total())
-                self.assertEqual(data_point.get_total_value(),
-                                 measurements[3].value)
+                self.assertEqual(data_point.get_total_value(), measurements[3].value)
 
     def test_basic_execution(self):
-        cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(self.ui), self.ui, None,
-                           data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/small.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            data_file=self._tmp_file,
+        )
         self._basic_execution(cnf)
 
     def test_basic_execution_with_magic_all(self):
-        cnf = Configurator(load_config(self._path + '/small.conf'),
-                           DataStore(self.ui), self.ui, None, None,
-                           'all', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/small.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            None,
+            "all",
+            data_file=self._tmp_file,
+        )
         self._basic_execution(cnf)
 
     def test_execution_with_quick_set(self):
@@ -145,8 +172,13 @@ class ExecutorTest(ReBenchTestCase):
         cmd_config = option_parser.parse_args(["-R", "-q", "persistency.conf"])
         self.assertTrue(cmd_config.quick)
 
-        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
-                           self.ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            DataStore(self.ui),
+            self.ui,
+            cmd_config,
+            data_file=self._tmp_file,
+        )
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 
@@ -159,12 +191,19 @@ class ExecutorTest(ReBenchTestCase):
     def test_execution_with_invocation_and_iteration_set(self):
         self._set_path(__file__)
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(["-R", "-in=2", "-it=2", "persistency.conf"])
+        cmd_config = option_parser.parse_args(
+            ["-R", "-in=2", "-it=2", "persistency.conf"]
+        )
         self.assertEqual(2, cmd_config.invocations)
         self.assertEqual(2, cmd_config.iterations)
 
-        cnf = Configurator(load_config(self._path + '/persistency.conf'), DataStore(self.ui),
-                           self.ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            DataStore(self.ui),
+            self.ui,
+            cmd_config,
+            data_file=self._tmp_file,
+        )
         runs = cnf.get_runs()
         self.assertEqual(1, len(runs))
 

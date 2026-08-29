@@ -59,29 +59,37 @@ class CodespeedReporting(object):
         codespeed = raw_config.get("codespeed", {})
 
         if options.commit_id is None:
-            raise ConfigurationError("--commit-id has to be set on the command "
-                                     "line for codespeed reporting.")
+            raise ConfigurationError(
+                "--commit-id has to be set on the command "
+                "line for codespeed reporting."
+            )
         self.commit_id = options.commit_id
 
         if options.environment is None:
-            raise ConfigurationError("--environment has to be set on the "
-                                     "command line for codespeed reporting.")
+            raise ConfigurationError(
+                "--environment has to be set on the "
+                "command line for codespeed reporting."
+            )
         self.environment = options.environment
 
         if "project" not in codespeed and options.project is None:
-            raise ConfigurationError("The config file needs to configure a "
-                                     "'project' in the reporting.codespeed "
-                                     "section, or --project has to be given on "
-                                     "the command line.")
+            raise ConfigurationError(
+                "The config file needs to configure a "
+                "'project' in the reporting.codespeed "
+                "section, or --project has to be given on "
+                "the command line."
+            )
         if options.project is not None:
             self.project = options.project
         else:
             self.project = codespeed["project"]
 
         if "url" not in codespeed:
-            raise ConfigurationError("The config file needs to define a URL to "
-                                     "codespeed in the reporting.codespeed "
-                                     "section")
+            raise ConfigurationError(
+                "The config file needs to define a URL to "
+                "codespeed in the reporting.codespeed "
+                "section"
+            )
         self.url = codespeed["url"]
 
         self.report_incrementally = options.report_incrementally

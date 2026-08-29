@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from os.path  import dirname, realpath
+from os.path import dirname, realpath
 from unittest import TestCase
 
 from ...interop.jmh_adapter import JMHAdapter
@@ -38,13 +38,14 @@ class Issue32JMHSupport(TestCase):
         adapter = JMHAdapter(False, None)
         data_points = adapter.parse_data(self._data, None, 1)
 
-        self.assertEqual(4  # number of experiments
-                         * 2  # warmup and the considered operations
-                         * 20, len(data_points))
+        self.assertEqual(
+            4 * 2 * 20,  # number of experiments  # warmup and the considered operations
+            len(data_points),
+        )
 
         for i in range(0, 120):
-            self.assertAlmostEqual(830000, data_points[i].get_total_value(),
-                                   delta=60000)
+            self.assertAlmostEqual(
+                830000, data_points[i].get_total_value(), delta=60000
+            )
         for i in range(140, 160):
-            self.assertAlmostEqual(86510, data_points[i].get_total_value(),
-                                   delta=4000)
+            self.assertAlmostEqual(86510, data_points[i].get_total_value(), delta=4000)

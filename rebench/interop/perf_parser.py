@@ -26,7 +26,7 @@ def _list_of_elem_or_str_to_json(trace):
 
 class Element(object):
 
-    def __init__(self, percent, method, exe_type = None, binary=None, shared_object=None):
+    def __init__(self, percent, method, exe_type=None, binary=None, shared_object=None):
         self.prev_divider = None
         self.trace = None
         self.percent = percent
@@ -92,8 +92,9 @@ class PerfParser(object):
                 top_of_stack = stack[-1]
 
                 if len(prev_divider) > len(line):
-                    while (top_of_stack.prev_divider is None
-                           or len(top_of_stack.prev_divider) > len(line)):
+                    while top_of_stack.prev_divider is None or len(
+                        top_of_stack.prev_divider
+                    ) > len(line):
                         stack.pop()
                         top_of_stack = stack[-1]
                 else:
@@ -145,12 +146,15 @@ class PerfParser(object):
 
     def print_elements(self):
         for e in self._elements:
-            print("     %.2f%%  %s  %s  [%s] %s"
-                  % (e.percent, e.binary, e.shared_object, e.type, e.method))
+            print(
+                "     %.2f%%  %s  %s  [%s] %s"
+                % (e.percent, e.binary, e.shared_object, e.type, e.method)
+            )
             if e.trace:
                 if isinstance(e.trace[0], Element):
                     print("            |          ")
-                for i in range(len(e.trace)):  # pylint: disable=consider-using-enumerate
+                # pylint: disable-next=consider-using-enumerate
+                for i in range(len(e.trace)):
                     is_last = i == len(e.trace) - 1
                     self._print_child(e.trace[i], is_last, "            ")
             print("")
@@ -162,7 +166,8 @@ class PerfParser(object):
             if e.trace:
                 if isinstance(e.trace[0], Element):
                     print(indentation + "           |          ")
-                for i in range(len(e.trace)):  # pylint: disable=consider-using-enumerate
+                # pylint: disable-next=consider-using-enumerate
+                for i in range(len(e.trace)):
                     is_last = i == len(e.trace) - 1
                     self._print_child(e.trace[i], is_last, indentation + "           ")
         else:
