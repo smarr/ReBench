@@ -2,10 +2,11 @@ import getpass
 import json
 
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from cpuinfo import get_cpu_info
 
-from .denoise import paths, DEFAULT_SCALING_GOVERNOR, DEFAULT_SHIELD, DenoiseCapabilities
+from .denoise import (paths, DEFAULT_SCALING_GOVERNOR, DEFAULT_SHIELD,
+                      DenoiseCapabilities, DenoiseSettings)
 from .model.denoise import Denoise
 from .output import output_as_str
 from .ui import escape_braces
@@ -149,10 +150,11 @@ def _exec_denoise(cmd: list[str]):
     return output
 
 
-def _exec_denoise_and_parse_result(cmd: list[str]) -> Tuple[DenoiseCapabilities, bool, str]:
+def _exec_denoise_and_parse_result(cmd: list[str])\
+        -> Tuple[Union[DenoiseCapabilities, DenoiseSettings], bool, str]:
     output = _exec_denoise(cmd)
 
-    result: DenoiseCapabilities = {}
+    result: Union[DenoiseCapabilities, DenoiseSettings] = {}
     try:
         result = json.loads(output)
         got_json = True
@@ -171,7 +173,8 @@ def get_initial_settings_and_capabilities(
     _add_denoise_options(cmd, requested)
     cmd += ["init"]
 
-    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result_, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result: DenoiseCapabilities = result_  # type: ignore
 
     success = False
 
@@ -244,7 +247,7 @@ def _report_on_failure(output):
 
 
 def _process_denoise_result(
-        result, got_json, raw_output, msg, show_warnings, ui, possible_settings):
+        result: DenoiseSettings, got_json, raw_output, msg, show_warnings, ui, possible_settings):
     success = True
 
     if got_json:
@@ -278,7 +281,8 @@ def minimize_noise(possible_settings: Denoise, for_profiling: bool, show_warning
     cmd += ["minimize"]
 
     ui.debug_output_info("Denoise: " + " ".join(cmd))
-    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result_, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result: DenoiseSettings = result_  # type: ignore
 
     msg = "Minimizing noise with rebench-denoise failed\n"
     msg += "{ind}possibly causing benchmark results to vary more.\n\n"
@@ -316,7 +320,8 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     cmd += ["restore"]
 
     ui.debug_output_info(f"Denoise, restore settings: {' '.join(cmd)}\n")
-    result, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result_, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
+    result: DenoiseSettings = result_  # type: ignore
 
     restored = _process_denoise_result(
         result, got_json, raw_output,
