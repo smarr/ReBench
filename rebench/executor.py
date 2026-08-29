@@ -28,14 +28,20 @@ from time import time
 from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise_client import DenoiseInitialSettings, minimize_noise, restore_noise, \
-    construct_denoise_exec_prefix
-from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
-    ResultsIndicatedAsInvalid
+from .denoise_client import (
+    DenoiseInitialSettings,
+    minimize_noise,
+    restore_noise,
+    construct_denoise_exec_prefix,
+)
+from .interop.adapter import (
+    ExecutionDeliveredNoResults,
+    instantiate_adapter,
+    OutputNotParseable,
+    ResultsIndicatedAsInvalid,
+)
 from .model.build_cmd import BuildCommand
 from .ui import escape_braces
-
-
 
 if TYPE_CHECKING:
     from .model.run_id import RunId
@@ -44,6 +50,7 @@ if TYPE_CHECKING:
 
 class FailedBuilding(Exception):
     """The exception to be raised when building of the executor or suite failed."""
+
     def __init__(self, name, build_command):
         super(FailedBuilding, self).__init__()
         self._name = name
@@ -114,14 +121,22 @@ class RunScheduler(object):
         hour, minute, sec = self._estimate_time_left()
 
         run_details = self._run_string_for_progress(run)
-        label = self._progress_label % (run_details, art_mean, art_unit, hour, minute, sec)
+        label = self._progress_label % (
+            run_details,
+            art_mean,
+            art_unit,
+            hour,
+            minute,
+            sec,
+        )
         self.ui.step_spinner(self._runs_completed, label)
 
     def indicate_build(self, run_id):
         exe_name = run_id.benchmark.suite.executor.name
         suite_name = run_id.benchmark.suite.name
         self.ui.step_spinner(
-            self._runs_completed, f"Run build for {exe_name} {suite_name}")
+            self._runs_completed, f"Run build for {exe_name} {suite_name}"
+        )
 
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
@@ -149,7 +164,8 @@ class BatchScheduler(RunScheduler):
                     if run_id.executable_missing:
                         num_runs = len(remaining_runs)
                         remaining_runs = self._executor.without_missing_binaries(
-                            run_id, remaining_runs)
+                            run_id, remaining_runs
+                        )
                         self._runs_completed += num_runs - len(remaining_runs)
                     self._indicate_progress(completed, run_id)
             except FailedBuilding:
@@ -169,8 +185,9 @@ class RoundRobinScheduler(RunScheduler):
                     task_list.append(run)
                 elif run.executable_missing:
                     num_runs = len(task_list)
-                    task_list = deque(self._executor.without_missing_binaries(
-                        run, task_list))
+                    task_list = deque(
+                        self._executor.without_missing_binaries(run, task_list)
+                    )
                     self._runs_completed += num_runs - len(task_list)
                 self._indicate_progress(completed, run)
             except FailedBuilding:
@@ -191,7 +208,8 @@ class RandomScheduler(RunScheduler):
                     if run.executable_missing:
                         num_runs = len(task_list)
                         task_list = self._executor.without_missing_binaries(
-                            run, task_list)
+                            run, task_list
+                        )
                         self._runs_completed += num_runs - len(task_list)
                 self._indicate_progress(completed, run)
 
@@ -256,7 +274,9 @@ class ParallelScheduler(RunScheduler):
     def _process_sequential_runs(self, runs):
         seq_runs, par_runs = self._split_runs(runs)
 
-        scheduler = self._seq_scheduler_class(self._executor, self.ui, self._print_execution_plan)
+        scheduler = self._seq_scheduler_class(
+            self._executor, self.ui, self._print_execution_plan
+        )
         scheduler._process_remaining_runs(seq_runs)
 
         return par_runs
@@ -264,8 +284,9 @@ class ParallelScheduler(RunScheduler):
     def _process_remaining_runs(self, runs):
         self._remaining_work = self._process_sequential_runs(runs)
 
-        self._worker_threads = [BenchmarkThread(self, i)
-                                for i in range(self._num_worker_threads)]
+        self._worker_threads = [
+            BenchmarkThread(self, i) for i in range(self._num_worker_threads)
+        ]
 
         for thread in self._worker_threads:
             thread.start()
@@ -290,7 +311,9 @@ class ParallelScheduler(RunScheduler):
         return per_thread
 
     def get_local_scheduler(self):
-        return self._seq_scheduler_class(self._executor, self.ui, self._print_execution_plan)
+        return self._seq_scheduler_class(
+            self._executor, self.ui, self._print_execution_plan
+        )
 
     def acquire_work(self):
         with self._lock:
@@ -307,13 +330,22 @@ class ParallelScheduler(RunScheduler):
 
 class Executor(object):
 
-    def __init__(self, runs, do_builds, ui, include_faulty=False,
-                 debug=False, scheduler=BatchScheduler, build_log=None,
-                 artifact_review=False,
-                 initials_and_capabilities: Optional[DenoiseInitialSettings] = None,
-                 show_denoise_warnings: bool = False,
-                 print_execution_plan=False, config_dir=None,
-                 use_denoise=True):
+    def __init__(
+        self,
+        runs,
+        do_builds,
+        ui,
+        include_faulty=False,
+        debug=False,
+        scheduler=BatchScheduler,
+        build_log=None,
+        artifact_review=False,
+        initials_and_capabilities: Optional[DenoiseInitialSettings] = None,
+        show_denoise_warnings: bool = False,
+        print_execution_plan=False,
+        config_dir=None,
+        use_denoise=True,
+    ):
         self.use_denoise = use_denoise
         self._runs = runs
 
@@ -363,7 +395,9 @@ class Executor(object):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         env = run_id.env
         if possible_settings.needs_denoise():
-            cmdline = construct_denoise_exec_prefix(env, run_id.is_profiling(), possible_settings)
+            cmdline = construct_denoise_exec_prefix(
+                env, run_id.is_profiling(), possible_settings
+            )
         else:
             cmdline = ""
 
@@ -389,11 +423,17 @@ class Executor(object):
             raise FailedBuilding(name, build)
         self._execute_build_cmd(build, location, name, run_id)
 
-    def _execute_build_cmd(self, build_command: BuildCommand, location: Optional[str],
-                           name: str, run_id: "RunId"):
-        assert build_command.location == location,\
-            "The location of the BuildCommand is only used for equality. "\
+    def _execute_build_cmd(
+        self,
+        build_command: BuildCommand,
+        location: Optional[str],
+        name: str,
+        run_id: "RunId",
+    ):
+        assert build_command.location == location, (
+            "The location of the BuildCommand is only used for equality. "
             "And should always be equal to the one coming from the suite or executor"
+        )
 
         path = location
         if not path or path == ".":
@@ -407,23 +447,33 @@ class Executor(object):
 
         def _keep_alive(seconds):
             self.ui.warning(
-                "Keep alive, current job runs for %dmin\n" % (seconds / 60), run_id, script, path)
+                "Keep alive, current job runs for %dmin\n" % (seconds / 60),
+                run_id,
+                script,
+                path,
+            )
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                '/bin/sh', run_id.env, path, False, True,
+                "/bin/sh",
+                run_id.env,
+                path,
+                False,
+                True,
                 stdin_input=str.encode(script),
-                keep_alive_output=_keep_alive)
+                keep_alive_output=_keep_alive,
+            )
         except OSError as err:
             build_command.mark_failed()
             run_id.fail_immediately()
-            run_id.report_run_failed(
-                script, err.errno, "Build of " + name + " failed.")
+            run_id.report_run_failed(script, err.errno, "Build of " + name + " failed.")
 
             if err.errno == 2:
-                msg = ("{ind}Build of %s failed.\n"
-                       + "{ind}{ind}It failed with: %s.\n"
-                       + "{ind}{ind}File name: %s\n") % (name, err.strerror, err.filename)
+                msg = (
+                    "{ind}Build of %s failed.\n"
+                    + "{ind}{ind}It failed with: %s.\n"
+                    + "{ind}{ind}File name: %s\n"
+                ) % (name, err.strerror, err.filename)
             else:
                 msg = str(err)
             self.ui.error(msg, run_id, script, path)
@@ -436,16 +486,19 @@ class Executor(object):
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, return_code, "Build of " + name + " failed.")
+                script, return_code, "Build of " + name + " failed."
+            )
             self.ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
-                lines = escape_braces(stdout_result).split('\n')
-                self.ui.error("{ind}stdout:\n\n{ind}{ind}"
-                               + "\n{ind}{ind}".join(lines) + "\n")
+                lines = escape_braces(stdout_result).split("\n")
+                self.ui.error(
+                    "{ind}stdout:\n\n{ind}{ind}" + "\n{ind}{ind}".join(lines) + "\n"
+                )
             if stderr_result and stderr_result.strip():
-                lines = escape_braces(stderr_result).split('\n')
-                self.ui.error("{ind}stderr:\n\n{ind}{ind}"
-                               + "\n{ind}{ind}".join(lines) + "\n")
+                lines = escape_braces(stderr_result).split("\n")
+                self.ui.error(
+                    "{ind}stderr:\n\n{ind}{ind}" + "\n{ind}{ind}".join(lines) + "\n"
+                )
             raise FailedBuilding(name, build_command)
 
         build_command.mark_succeeded()
@@ -468,7 +521,9 @@ class Executor(object):
                 run.report_run_failed(None, None, None)
                 run.report_run_completed(None)
                 if is_first:
-                    self.ui.warning("{ind}Aborting remaining benchmarks using %s." % run.executable)
+                    self.ui.warning(
+                        "{ind}Aborting remaining benchmarks using %s." % run.executable
+                    )
                     is_first = False
             else:
                 remaining_runs.append(run)
@@ -491,39 +546,50 @@ class Executor(object):
 
         run_id.report_start_run()
 
-        terminate = self._check_termination_condition(run_id, termination_check, cmdline)
+        terminate = self._check_termination_condition(
+            run_id, termination_check, cmdline
+        )
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)
 
         # now start the actual execution
         if not terminate:
-            terminate = self._generate_data_point(cmdline, env, gauge_adapter,
-                                                  run_id, termination_check)
+            terminate = self._generate_data_point(
+                cmdline, env, gauge_adapter, run_id, termination_check
+            )
 
         mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
             run_id.report_run_completed(cmdline)
-            if (not run_id.is_failed
-                    and not run_id.is_profiling()
-                    and run_id.min_iteration_time
-                    and mean_of_totals < run_id.min_iteration_time
-                    and not self._artifact_review):
+            if (
+                not run_id.is_failed
+                and not run_id.is_profiling()
+                and run_id.min_iteration_time
+                and mean_of_totals < run_id.min_iteration_time
+                and not self._artifact_review
+            ):
                 self.ui.warning(
-                    ("{ind}Warning: Low mean run time.\n"
-                     + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
-                    % (mean_of_totals, run_id.min_iteration_time), run_id, cmdline)
+                    (
+                        "{ind}Warning: Low mean run time.\n"
+                        + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n"
+                    )
+                    % (mean_of_totals, run_id.min_iteration_time),
+                    run_id,
+                    cmdline,
+                )
 
         return terminate
 
     def _get_gauge_adapter_instance(self, run_id):
         adapter_cfg = run_id.get_gauge_adapter()
-        adapter = instantiate_adapter(adapter_cfg,
-                                      self._include_faulty,
-                                      self)
+        adapter = instantiate_adapter(adapter_cfg, self._include_faulty, self)
 
         if adapter is None:
             run_id.fail_immediately()
-            msg = "{ind}Couldn't find gauge adapter: %s\n" % run_id.get_gauge_adapter_name()
+            msg = (
+                "{ind}Couldn't find gauge adapter: %s\n"
+                % run_id.get_gauge_adapter_name()
+            )
             self.ui.error_once(msg, run_id)
 
         return adapter
@@ -532,21 +598,30 @@ class Executor(object):
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         for_profiling = run_id.is_profiling()
 
-        if (self._active_denoise_cfg == possible_settings and
-                self._active_for_profiling == for_profiling):
+        if (
+            self._active_denoise_cfg == possible_settings
+            and self._active_for_profiling == for_profiling
+        ):
             # denoise is already configured as required, and possible
-            self.ui.debug_output_info("Denoise: expected configuration already active\n")
+            self.ui.debug_output_info(
+                "Denoise: expected configuration already active\n"
+            )
             return
 
-        if ((self._active_denoise_cfg, possible_settings) in self._failed_denoise_cfg
-                and self._active_for_profiling == for_profiling):
+        if (
+            (self._active_denoise_cfg, possible_settings) in self._failed_denoise_cfg
+            and self._active_for_profiling == for_profiling
+        ):
             # we already tried this configuration, but it failed, so don't try again
-            self.ui.debug_output_info("Denoise: expected configuration already tried and failed\n")
+            self.ui.debug_output_info(
+                "Denoise: expected configuration already tried and failed\n"
+            )
             return
 
         self.ui.debug_output_info("Denoise: setting requested configuration:\n")
         result = minimize_noise(
-            possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
+            possible_settings, for_profiling, self._show_denoise_warnings, self.ui
+        )
         if result is None:
             self._failed_denoise_cfg.add((self._active_denoise_cfg, possible_settings))
 
@@ -558,11 +633,13 @@ class Executor(object):
             return
 
         self._active_denoise_cfg = restore_noise(
-            self._denoise_initial, self._show_denoise_warnings, self.ui)
+            self._denoise_initial, self._show_denoise_warnings, self.ui
+        )
         self._active_for_profiling = None
 
-    def _generate_data_point(self, cmdline, env, gauge_adapter, run_id: "RunId",
-                             termination_check):
+    def _generate_data_point(
+        self, cmdline, env, gauge_adapter, run_id: "RunId", termination_check
+    ):
         self._ensure_denoise_is_active(run_id)
         assert not self._print_execution_plan
         output = ""
@@ -573,27 +650,39 @@ class Executor(object):
                 location = os.path.expanduser(location)
             env = run_id.env
 
-            self.ui.debug_output_info("{ind}Starting run\n", run_id, cmdline, location, env)
+            self.ui.debug_output_info(
+                "{ind}Starting run\n", run_id, cmdline, location, env
+            )
 
             def _keep_alive(seconds):
                 self.ui.warning(
                     "Keep alive, current job runs for %dmin\n" % (seconds / 60),
-                    run_id, cmdline, location, env)
+                    run_id,
+                    cmdline,
+                    location,
+                    env,
+                )
 
-            (return_code, output, _) = subprocess_timeout.run(
-                cmdline, env=env,
-                cwd=location, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, shell=True, verbose=self.debug,
+            return_code, output, _ = subprocess_timeout.run(
+                cmdline,
+                env=env,
+                cwd=location,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True,
+                verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive,
-                uses_sudo=self.use_denoise
+                uses_sudo=self.use_denoise,
             )
         except OSError as err:
             run_id.fail_immediately()
             if err.errno == 2:
-                msg = ("{ind}Failed executing run\n"
-                       + "{ind}{ind}It failed with: %s.\n"
-                       + "{ind}{ind}File name: %s\n") % (err.strerror, err.filename)
+                msg = (
+                    "{ind}Failed executing run\n"
+                    + "{ind}{ind}It failed with: %s.\n"
+                    + "{ind}{ind}File name: %s\n"
+                ) % (err.strerror, err.filename)
             else:
                 msg = str(err)
             self.ui.error(msg, run_id, cmdline, location, env)
@@ -602,29 +691,37 @@ class Executor(object):
 
         if return_code == 127:
             run_id.fail_immediately()
-            msg = ("{ind}Error: Could not execute %s.\n"
-                   + "{ind}{ind}The command was not found.\n"
-                   + "{ind}Return code: %d\n"
-                   + "{ind}{ind}%s.\n") % (
-                       run_id.benchmark.suite.executor.name, return_code, output.strip())
+            msg = (
+                "{ind}Error: Could not execute %s.\n"
+                + "{ind}{ind}The command was not found.\n"
+                + "{ind}Return code: %d\n"
+                + "{ind}{ind}%s.\n"
+            ) % (run_id.benchmark.suite.executor.name, return_code, output.strip())
             self.ui.error(msg, run_id, cmdline, location, env)
             run_id.report_run_failed(cmdline, return_code, output)
             run_id.executable_missing = True
             return True
-        elif return_code != 0 and not self._include_faulty and not (
-                return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts):
+        elif (
+            return_code != 0
+            and not self._include_faulty
+            and not (
+                return_code == subprocess_timeout.E_TIMEOUT and run_id.ignore_timeouts
+            )
+        ):
             run_id.indicate_failed_execution()
             run_id.report_run_failed(cmdline, return_code, output)
             if return_code == 126:
-                msg = ("{ind}Error: Could not execute %s.\n"
-                       + "{ind}{ind}The file may not be marked as executable.\n"
-                       + "{ind}Return code: %d\n") % (
-                           run_id.benchmark.suite.executor.name, return_code)
+                msg = (
+                    "{ind}Error: Could not execute %s.\n"
+                    + "{ind}{ind}The file may not be marked as executable.\n"
+                    + "{ind}Return code: %d\n"
+                ) % (run_id.benchmark.suite.executor.name, return_code)
             elif return_code == subprocess_timeout.E_TIMEOUT:
-                msg = ("{ind}Run timed out.\n"
-                       + "{ind}{ind}Return code: %d\n"
-                       + "{ind}{ind}max_invocation_time: %s\n") % (
-                           return_code, run_id.max_invocation_time)
+                msg = (
+                    "{ind}Run timed out.\n"
+                    + "{ind}{ind}Return code: %d\n"
+                    + "{ind}{ind}max_invocation_time: %s\n"
+                ) % (return_code, run_id.max_invocation_time)
             elif return_code is None:
                 msg = "{ind}Run failed. Return code: None\n"
             else:
@@ -633,9 +730,10 @@ class Executor(object):
             self.ui.error(msg, run_id, cmdline, location, env)
 
             if output and output.strip():
-                lines = escape_braces(output).split('\n')
-                self.ui.error("{ind}Output:\n\n{ind}{ind}"
-                               + "\n{ind}{ind}".join(lines) + "\n")
+                lines = escape_braces(output).split("\n")
+                self.ui.error(
+                    "{ind}Output:\n\n{ind}{ind}" + "\n{ind}{ind}".join(lines) + "\n"
+                )
         else:
             self._eval_output(output, run_id, gauge_adapter, cmdline)
 
@@ -643,7 +741,9 @@ class Executor(object):
 
     def _eval_output(self, output, run_id, gauge_adapter, cmdline):
         try:
-            data_points = gauge_adapter.parse_data(output, run_id, run_id.completed_invocations + 1)
+            data_points = gauge_adapter.parse_data(
+                output, run_id, run_id.completed_invocations + 1
+            )
 
             warmup = run_id.warmup_iterations
 
@@ -653,7 +753,9 @@ class Executor(object):
             msg = "{ind}Completed invocation\n"
 
             if num_points > num_points_to_show:
-                msg += "{ind}{ind}Recorded %d data points, show last 20...\n" % num_points
+                msg += (
+                    "{ind}{ind}Recorded %d data points, show last 20...\n" % num_points
+                )
             i = 0
             for data_point in data_points:
                 if run_id.is_profiling():
@@ -666,14 +768,19 @@ class Executor(object):
                     # only log the last num_points_to_show results
                     if i >= num_points - num_points_to_show:
                         msg += "{ind}{ind}%4d\t%s%s\n" % (
-                            i + 1, data_point.get_total_value(), data_point.get_total_unit())
+                            i + 1,
+                            data_point.get_total_value(),
+                            data_point.get_total_unit(),
+                        )
                 i += 1
 
             run_id.indicate_successful_execution()
             self.ui.verbose_output_info(msg, run_id, cmdline)
         except ExecutionDeliveredNoResults as e:
             if isinstance(e, OutputNotParseable):
-                self.ui.error("{ind}Output of run could not be parsed.\n", run_id, cmdline)
+                self.ui.error(
+                    "{ind}Output of run could not be parsed.\n", run_id, cmdline
+                )
             elif isinstance(e, ResultsIndicatedAsInvalid):
                 self.ui.error("{ind}Results were marked as invalid.\n", run_id, cmdline)
             else:
@@ -684,7 +791,8 @@ class Executor(object):
     @staticmethod
     def _check_termination_condition(run_id, termination_check, cmd):
         return termination_check.should_terminate(
-            run_id.get_number_of_data_points(), cmd)
+            run_id.get_number_of_data_points(), cmd
+        )
 
     def execute(self):
         try:

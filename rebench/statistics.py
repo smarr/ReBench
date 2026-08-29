@@ -75,24 +75,28 @@ class StatisticProperties(WithSamples):
             self.mean = prev_mean + ((sample - prev_mean) / self.num_samples)
 
             self._product_of_samples = self._product_of_samples * float(sample)
-            self.geom_mean = self._product_of_samples ** (1/float(self.num_samples))
+            self.geom_mean = self._product_of_samples ** (1 / float(self.num_samples))
 
-            self._variance_times_num_samples = (self._variance_times_num_samples +
-                                                ((sample - prev_mean) * (sample - self.mean)))
-            self.std_dev = math.sqrt(self._variance_times_num_samples / self.num_samples)
+            self._variance_times_num_samples = self._variance_times_num_samples + (
+                (sample - prev_mean) * (sample - self.mean)
+            )
+            self.std_dev = math.sqrt(
+                self._variance_times_num_samples / self.num_samples
+            )
 
             self.min = min(self.min, sample)
             self.max = max(self.max, sample)
 
     def as_tuple(self):
-        return (self.mean,
-                self.geom_mean,
-                self.std_dev,
-                self.num_samples,
-                self.min,
-                self.max)
+        return (
+            self.mean,
+            self.geom_mean,
+            self.std_dev,
+            self.num_samples,
+            self.min,
+            self.max,
+        )
 
     @classmethod
     def tuple_mapping(cls):
-        return ('arithmetic mean', 'geometric mean', 'stdDev',
-                '#samples', 'min', 'max')
+        return ("arithmetic mean", "geometric mean", "stdDev", "#samples", "min", "max")

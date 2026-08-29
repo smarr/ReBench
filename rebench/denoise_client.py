@@ -5,12 +5,16 @@ from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple, Union
 from cpuinfo import get_cpu_info
 
-from .denoise import (paths, DEFAULT_SCALING_GOVERNOR, DEFAULT_SHIELD,
-                      DenoiseCapabilities, DenoiseSettings)
+from .denoise import (
+    paths,
+    DEFAULT_SCALING_GOVERNOR,
+    DEFAULT_SHIELD,
+    DenoiseCapabilities,
+    DenoiseSettings,
+)
 from .model.denoise import Denoise
 from .output import output_as_str
 from .ui import escape_braces
-
 
 _num_cpu_cores = None
 
@@ -28,7 +32,9 @@ class DenoiseInitialSettings:
     This class is used to store the initial system settings that are changed by rebench-denoise.
     """
 
-    def __init__(self, requested: Denoise, result: DenoiseCapabilities, warn_msg: Optional[str]):
+    def __init__(
+        self, requested: Denoise, result: DenoiseCapabilities, warn_msg: Optional[str]
+    ):
         self.requested = requested
 
         self.can_set_nice = result.get("can_set_nice", None)
@@ -37,13 +43,15 @@ class DenoiseInitialSettings:
         self.can_set_scaling_governor = result.get("can_set_scaling_governor", None)
         self.can_minimize_perf_sampling = result.get("can_minimize_perf_sampling", None)
 
-        self.nothing_set = not any([
-            self.can_set_nice,
-            self.can_set_shield,
-            self.can_set_no_turbo,
-            self.can_set_scaling_governor,
-            self.can_minimize_perf_sampling
-        ])
+        self.nothing_set = not any(
+            [
+                self.can_set_nice,
+                self.can_set_shield,
+                self.can_set_no_turbo,
+                self.can_set_scaling_governor,
+                self.can_minimize_perf_sampling,
+            ]
+        )
 
         self.initial_no_turbo = result.get("initial_no_turbo", None)
         self.initial_scaling_governor = result.get("initial_scaling_governor", None)
@@ -59,9 +67,8 @@ class DenoiseInitialSettings:
             "can_set_no_turbo": self.can_set_no_turbo,
             "can_set_scaling_governor": self.can_set_scaling_governor,
             "can_minimize_perf_sampling": self.can_minimize_perf_sampling,
-
             "initial_no_turbo": self.initial_no_turbo,
-            "initial_scaling_governor": self.initial_scaling_governor
+            "initial_scaling_governor": self.initial_scaling_governor,
         }
 
     def restore_initial(self) -> Denoise:
@@ -150,8 +157,9 @@ def _exec_denoise(cmd: list[str]):
     return output
 
 
-def _exec_denoise_and_parse_result(cmd: list[str])\
-        -> Tuple[Union[DenoiseCapabilities, DenoiseSettings], bool, str]:
+def _exec_denoise_and_parse_result(
+    cmd: list[str],
+) -> Tuple[Union[DenoiseCapabilities, DenoiseSettings], bool, str]:
     output = _exec_denoise(cmd)
 
     result: Union[DenoiseCapabilities, DenoiseSettings] = {}
@@ -165,7 +173,8 @@ def _exec_denoise_and_parse_result(cmd: list[str])\
 
 
 def get_initial_settings_and_capabilities(
-        show_warnings, ui, requested: Denoise) -> Optional[DenoiseInitialSettings]:
+    show_warnings, ui, requested: Denoise
+) -> Optional[DenoiseInitialSettings]:
     if not requested.needs_denoise():
         return None
 
@@ -184,8 +193,10 @@ def get_initial_settings_and_capabilities(
         for k, value in result.items():
             if k.startswith("can_") and value is False:
                 if success:
-                    msg = "Minimizing noise with rebench-denoise was not complete.\n" \
-                          "{ind}This may cause benchmark results to vary more.\n\n"
+                    msg = (
+                        "Minimizing noise with rebench-denoise was not complete.\n"
+                        "{ind}This may cause benchmark results to vary more.\n\n"
+                    )
 
                 success = False
                 if k == "can_set_nice":
@@ -197,28 +208,41 @@ def get_initial_settings_and_capabilities(
                     if "can_set_shield_error" in result:
                         msg += "{ind}{ind}" + result["can_set_shield_error"] + "\n"
                     if not paths.has_cset():
-                        msg += ("{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu,"
-                                " and OpenSuSE. The code is maintained here:"
-                                " https://github.com/SUSE/cpuset\n")
+                        msg += (
+                            "{ind}{ind}cset is part of the cpuset package on Debian, Ubuntu,"
+                            " and OpenSuSE. The code is maintained here:"
+                            " https://github.com/SUSE/cpuset\n"
+                        )
                 elif k == "can_set_no_turbo":
                     msg += "{ind}Turbo mode could not be disabled.\n"
                     if "can_set_no_turbo_error" in result:
                         msg += "{ind}{ind}" + result["can_set_no_turbo_error"] + "\n"
-                    if "initial_no_turbo" in result and isinstance(result["initial_no_turbo"], str):
+                    if "initial_no_turbo" in result and isinstance(
+                        result["initial_no_turbo"], str
+                    ):
                         msg += "{ind}{ind}" + result["initial_no_turbo"] + "\n"
 
                 elif k == "can_set_scaling_governor":
                     msg += "{ind}Scaling governor could not be set.\n"
                     if "can_set_scaling_governor_error" in result:
-                        msg += "{ind}{ind}" + result["can_set_scaling_governor_error"] + "\n"
-                    if ("initial_scaling_governor" in result
-                            and isinstance(result["initial_scaling_governor"], str)):
+                        msg += (
+                            "{ind}{ind}"
+                            + result["can_set_scaling_governor_error"]
+                            + "\n"
+                        )
+                    if "initial_scaling_governor" in result and isinstance(
+                        result["initial_scaling_governor"], str
+                    ):
                         msg += "{ind}{ind}" + result["initial_scaling_governor"] + "\n"
 
                 elif k == "can_minimize_perf_sampling":
                     msg += "{ind}Perf sampling frequency could not be minimized.\n"
                     if "can_minimize_perf_sampling_error" in result:
-                        msg += "{ind}{ind}" + result["can_minimize_perf_sampling_error"] + "\n"
+                        msg += (
+                            "{ind}{ind}"
+                            + result["can_minimize_perf_sampling_error"]
+                            + "\n"
+                        )
                 else:
                     msg += "{ind}Unknown capability: " + k + "\n"
     else:
@@ -231,15 +255,20 @@ def get_initial_settings_and_capabilities(
 
 
 def _report_on_failure(output):
-    if 'password is required' in output:
-        return '{ind}Please make sure `sudo ' + paths.get_denoise() + '`' \
-               ' can be used without password.\n' \
-               '{ind}To be able to run denoise without password,\n' \
-               '{ind}add the following to the end of your sudoers file (using visudo):\n' \
-               '{ind}{ind}' + getpass.getuser() + ' ALL = (root) NOPASSWD:SETENV: ' \
-               + paths.get_denoise() + '\n'
-    elif 'command not found' in output:
-        return '{ind}Please make sure ' + paths.get_denoise() + ' is accessible.\n'
+    if "password is required" in output:
+        return (
+            "{ind}Please make sure `sudo " + paths.get_denoise() + "`"
+            " can be used without password.\n"
+            "{ind}To be able to run denoise without password,\n"
+            "{ind}add the following to the end of your sudoers file (using visudo):\n"
+            "{ind}{ind}"
+            + getpass.getuser()
+            + " ALL = (root) NOPASSWD:SETENV: "
+            + paths.get_denoise()
+            + "\n"
+        )
+    elif "command not found" in output:
+        return "{ind}Please make sure " + paths.get_denoise() + " is accessible.\n"
     elif "No such file or directory: 'sudo'" in output:
         return "{ind}sudo is not available. Can't use denoise to manage the system.\n"
     else:
@@ -247,7 +276,14 @@ def _report_on_failure(output):
 
 
 def _process_denoise_result(
-        result: DenoiseSettings, got_json, raw_output, msg, show_warnings, ui, possible_settings):
+    result: DenoiseSettings,
+    got_json,
+    raw_output,
+    msg,
+    show_warnings,
+    ui,
+    possible_settings,
+):
     success = True
 
     if got_json:
@@ -272,7 +308,9 @@ def _process_denoise_result(
         return None
 
 
-def minimize_noise(possible_settings: Denoise, for_profiling: bool, show_warnings: bool, ui):
+def minimize_noise(
+    possible_settings: Denoise, for_profiling: bool, show_warnings: bool, ui
+):
     if not possible_settings.needs_denoise():
         return possible_settings
 
@@ -287,15 +325,19 @@ def minimize_noise(possible_settings: Denoise, for_profiling: bool, show_warning
     msg = "Minimizing noise with rebench-denoise failed\n"
     msg += "{ind}possibly causing benchmark results to vary more.\n\n"
     return _process_denoise_result(
-        result, got_json, raw_output, msg, show_warnings, ui, possible_settings)
+        result, got_json, raw_output, msg, show_warnings, ui, possible_settings
+    )
 
 
-def construct_denoise_exec_prefix(env, for_profiling, possible_settings: Denoise) -> str:
+def construct_denoise_exec_prefix(
+    env, for_profiling, possible_settings: Denoise
+) -> str:
     cmd = _construct_path(for_profiling, env.keys())
     _add_denoise_exec_options(cmd, possible_settings)
 
     cmd += ["exec", "--"]
     return " ".join(cmd) + " "
+
 
 def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     if denoise_result.nothing_set:
@@ -324,9 +366,14 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
     result: DenoiseSettings = result_  # type: ignore
 
     restored = _process_denoise_result(
-        result, got_json, raw_output,
-        "Restoring system defaults with rebench-denoise failed.\n", False, ui,
-        Denoise.system_default())
+        result,
+        got_json,
+        raw_output,
+        "Restoring system defaults with rebench-denoise failed.\n",
+        False,
+        ui,
+        Denoise.system_default(),
+    )
 
     if show_warning and denoise_result.warn_msg:
         # warn a second time at the end of the execution

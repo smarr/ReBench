@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 from unittest import TestCase
 
-from ...interop.adapter      import OutputNotParseable
+from ...interop.adapter import OutputNotParseable
 from ...interop.time_adapter import TimeAdapter, TimeManualAdapter
 
 

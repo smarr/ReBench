@@ -61,8 +61,19 @@ class TextReporter(Reporter):
 
     def __init__(self):
         super(TextReporter, self).__init__()
-        self.expected_columns = ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Tag', 'Machine', '#Samples', 'Mean (ms)']
+        self.expected_columns = [
+            "Benchmark",
+            "Executor",
+            "Suite",
+            "Extra",
+            "Core",
+            "Size",
+            "Var",
+            "Tag",
+            "Machine",
+            "#Samples",
+            "Mean (ms)",
+        ]
 
     @staticmethod
     def _path_to_string(path):
@@ -92,7 +103,9 @@ class TextReporter(Reporter):
             mean = run_id.get_mean_of_totals()
             num_samples = run_id.get_number_of_data_points()
             out = run_id.as_str_list(0)
-            out[-1] = num_samples # can just overwrite the last value, which is the run_id_id
+            out[-1] = (
+                num_samples  # can just overwrite the last value, which is the run_id_id
+            )
             if num_samples == 0:
                 out.append("Failed")
             else:
@@ -132,7 +145,7 @@ class TextReporter(Reporter):
 
 
 class CliReporter(TextReporter):
-    """ Reports to standard out using the logging framework """
+    """Reports to standard out using the logging framework"""
 
     def __init__(self, executes_verbose, ui):
         super(CliReporter, self).__init__()
@@ -155,9 +168,12 @@ class CliReporter(TextReporter):
         self.ui.output("\n")
         if summary:
             self.ui.output(ansi_wrap(" Result Summary of Uniform Values", bold=True))
-            self.ui.output(format_pretty_table(summary, ['Property', 'Value'],
-                                               vertical_bar='', horizontal_bar=''))
-        self.ui.output(format_pretty_table(rows, used_cols, vertical_bar=''))
+            self.ui.output(
+                format_pretty_table(
+                    summary, ["Property", "Value"], vertical_bar="", horizontal_bar=""
+                )
+            )
+        self.ui.output(format_pretty_table(rows, used_cols, vertical_bar=""))
 
     def set_total_number_of_runs(self, num_runs):
         self._num_runs = num_runs
@@ -234,18 +250,24 @@ class CodespeedReporter(Reporter):
         else:
             result["result_value"] = -1
 
-        result["executable"] = self._cfg.executable or run_id.benchmark.suite.executor.name
+        result["executable"] = (
+            self._cfg.executable or run_id.benchmark.suite.executor.name
+        )
 
         if run_id.benchmark.codespeed_name:
             name = run_id.benchmark.codespeed_name
         else:
-            name = (self._beautify_benchmark_name(run_id.benchmark.name)
-                    + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)")
+            name = (
+                self._beautify_benchmark_name(run_id.benchmark.name)
+                + " (%(cores)s cores, %(input_sizes)s %(extra_args)s)"
+            )
 
         # TODO: this is incomplete:
-        name = name % {'cores'       : run_id.cores_as_str,
-                       'input_sizes' : run_id.input_size_as_str,
-                       'extra_args'  : run_id.benchmark.extra_args}
+        name = name % {
+            "cores": run_id.cores_as_str,
+            "input_sizes": run_id.input_size_as_str,
+            "extra_args": run_id.benchmark.extra_args,
+        }
 
         result["benchmark"] = name
 
@@ -266,27 +288,38 @@ class CodespeedReporter(Reporter):
             # is not yet properly initialized, let's try again for those cases
             try:
                 response = self._send_payload(payload)
-                self.ui.verbose_error_info("Sent %d results to Codespeed, response was: %s\n"
-                                            % (len(results), response))
+                self.ui.verbose_error_info(
+                    "Sent %d results to Codespeed, response was: %s\n"
+                    % (len(results), response)
+                )
             except (IOError, HTTPException) as error:
-                envs = list({i['environment'] for i in results})
-                projects = list({i['project'] for i in results})
-                benchmarks = list({i['benchmark'] for i in results})
-                executables = list({i['executable'] for i in results})
-                msg = ("{ind}Data\n"
-                       + "{ind}{ind}environments: %s\n"
-                       + "{ind}{ind}projects: %s\n"
-                       + "{ind}{ind}benchmarks: %s\n"
-                       + "{ind}{ind}executables: %s\n") % (
-                           envs, projects, benchmarks, executables)
+                envs = list({i["environment"] for i in results})
+                projects = list({i["project"] for i in results})
+                benchmarks = list({i["benchmark"] for i in results})
+                executables = list({i["executable"] for i in results})
+                msg = (
+                    "{ind}Data\n"
+                    + "{ind}{ind}environments: %s\n"
+                    + "{ind}{ind}projects: %s\n"
+                    + "{ind}{ind}benchmarks: %s\n"
+                    + "{ind}{ind}executables: %s\n"
+                ) % (envs, projects, benchmarks, executables)
 
                 self.ui.error(
                     "{ind}Error: Reporting to Codespeed failed.\n"
-                    + "{ind}{ind}" + str(error) + "\n"
+                    + "{ind}{ind}"
+                    + str(error)
+                    + "\n"
                     + "{ind}{ind}This is most likely caused by either a wrong URL in the\n"
                     + "{ind}{ind}config file, or an environment not configured in Codespeed.\n"
-                    + "{ind}{ind}URL: " + self._cfg.url + "\n"
-                    + "{ind}{ind}" + msg + "\n", run_id)
+                    + "{ind}{ind}URL: "
+                    + self._cfg.url
+                    + "\n"
+                    + "{ind}{ind}"
+                    + msg
+                    + "\n",
+                    run_id,
+                )
 
     def _prepare_result(self, run_id):
         return self._format_for_codespeed(run_id, run_id.statistics)

@@ -23,9 +23,12 @@ from typing import Optional
 class BuildCommand(object):
 
     @classmethod
-    def create(cls, commands: Optional[list[str]], location: Optional[str],
-               deduplicated_build_commands: dict["BuildCommand", "BuildCommand"]
-               ) -> Optional["BuildCommand"]:
+    def create(
+        cls,
+        commands: Optional[list[str]],
+        location: Optional[str],
+        deduplicated_build_commands: dict["BuildCommand", "BuildCommand"],
+    ) -> Optional["BuildCommand"]:
         if not commands:
             return None
 
@@ -52,9 +55,10 @@ class BuildCommand(object):
 
     def __eq__(self, other):
         return self is other or (
-                isinstance(other, self.__class__) and
-                self.command == other.command and
-                self.location == other.location)
+            isinstance(other, self.__class__)
+            and self.command == other.command
+            and self.location == other.location
+        )
 
     def __lt__(self, other):
         if self.command != other.commands:
@@ -71,7 +75,9 @@ class BuildCommand(object):
         return self.command
 
     @classmethod
-    def from_dict(cls, command: Optional[str], location: Optional[str]) -> Optional["BuildCommand"]:
+    def from_dict(
+        cls, command: Optional[str], location: Optional[str]
+    ) -> Optional["BuildCommand"]:
         if command is None:
             return None
 

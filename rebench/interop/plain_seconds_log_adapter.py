@@ -19,17 +19,18 @@
 # THE SOFTWARE.
 import re
 
-from .adapter         import GaugeAdapter, OutputNotParseable,\
-    ResultsIndicatedAsInvalid
+from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 
-from ..model.data_point  import DataPoint
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class PlainSecondsLogAdapter(GaugeAdapter):
-    """PlainSecondsLogAdapter expects a plain list of numbers, one per line
-       in seconds. It can also contain error information.
     """
+    PlainSecondsLogAdapter expects a plain list of numbers, one per line in seconds.
+    It can also contain error information.
+    """
+
     re_NPB_partial_invalid = re.compile(r".*Failed.*verification")
     re_NPB_invalid = re.compile(r".*Benchmark done.*verification failed")
     re_incorrect = re.compile(r".*incorrect.*")
@@ -37,9 +38,12 @@ class PlainSecondsLogAdapter(GaugeAdapter):
 
     def __init__(self, include_faulty, executor):
         super(PlainSecondsLogAdapter, self).__init__(include_faulty, executor)
-        self._other_error_definitions = [self.re_NPB_partial_invalid,
-                                         self.re_NPB_invalid, self.re_incorrect,
-                                         self.re_err]
+        self._other_error_definitions = [
+            self.re_NPB_partial_invalid,
+            self.re_NPB_invalid,
+            self.re_incorrect,
+            self.re_err,
+        ]
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
@@ -49,11 +53,14 @@ class PlainSecondsLogAdapter(GaugeAdapter):
         for line in data.split("\n"):
             if self.check_for_error(line):
                 raise ResultsIndicatedAsInvalid(
-                    "Output of bench program indicated error.")
+                    "Output of bench program indicated error."
+                )
 
             try:
                 time = float(line) * 1000
-                measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
+                measure = Measurement(
+                    invocation, iteration, time, "ms", run_id, "total"
+                )
                 current.add_measurement(measure)
 
                 data_points.append(current)

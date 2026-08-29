@@ -32,8 +32,13 @@ class Issue117Test(ReBenchTestCase):
     def _test(self, exp_name, num_runs, exp_input_sizes):
         # Executes first time
         ds = DataStore(self.ui)
-        cnf = Configurator(load_config(self._path + '/issue_117.conf'),
-                           ds, self.ui, exp_name=exp_name, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_117.conf"),
+            ds,
+            self.ui,
+            exp_name=exp_name,
+            data_file=self._tmp_file,
+        )
         ds.load_data(None, False)
 
         # Has not executed yet, check that there is simply
@@ -42,8 +47,11 @@ class Issue117Test(ReBenchTestCase):
         runs = list(cnf.get_runs())
         runs = sorted(runs, key=lambda e: e.cmdline())
         for i in range(num_runs):
-            self.assertEqual(exp_input_sizes[i], runs[i].input_size,
-                             "expected input_size at idx %d" % i)
+            self.assertEqual(
+                exp_input_sizes[i],
+                runs[i].input_size,
+                "expected input_size at idx %d" % i,
+            )
 
     def test_input_size_setting_on_experiment(self):
         self._test("ExpSetting", 6, [0, 10, 1, 2, 3, 4])

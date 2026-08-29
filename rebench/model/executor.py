@@ -31,15 +31,24 @@ from ..configuration_error import ConfigurationError
 class Executor(object):
 
     @classmethod
-    def compile(cls, executor_name, executor, run_details,
-                variables, deduplicated_build_commands, action):
+    def compile(
+        cls,
+        executor_name,
+        executor,
+        run_details,
+        variables,
+        deduplicated_build_commands,
+        action,
+    ):
         path = executor.get("path")
         if path and not path.startswith("~"):
             path = os.path.abspath(path)
         executable = executor.get("executable")
         args = executor.get("args")
 
-        build = BuildCommand.create(executor.get("build"), path, deduplicated_build_commands)
+        build = BuildCommand.create(
+            executor.get("build"), path, deduplicated_build_commands
+        )
 
         description = executor.get("description")
         desc = executor.get("desc")
@@ -51,17 +60,43 @@ class Executor(object):
         variables = ExpVariables.compile(executor, variables)
 
         if action == "profile" and len(profiler) == 0:
-            raise ConfigurationError("Executor " + executor_name + " is configured for profiling, "
-                                     + "but no profiler details are given.")
+            raise ConfigurationError(
+                "Executor "
+                + executor_name
+                + " is configured for profiling, "
+                + "but no profiler details are given."
+            )
 
-        return Executor(executor_name, path, executable, args, build, description or desc,
-                        profiler, run_details, variables, action, env)
+        return Executor(
+            executor_name,
+            path,
+            executable,
+            args,
+            build,
+            description or desc,
+            profiler,
+            run_details,
+            variables,
+            action,
+            env,
+        )
 
-    def __init__(self, name, path, executable, args, build: Optional[BuildCommand], description,
-                 profiler: Optional[list[Profiler]], run_details: ExpRunDetails,
-                 variables: ExpVariables, action, env):
+    def __init__(
+        self,
+        name,
+        path,
+        executable,
+        args,
+        build: Optional[BuildCommand],
+        description,
+        profiler: Optional[list[Profiler]],
+        run_details: ExpRunDetails,
+        variables: ExpVariables,
+        action,
+        env,
+    ):
         """Specializing the executor details in the run definitions with the settings from
-           the executor definitions
+        the executor definitions
         """
         self.name = name
         self.path = path
@@ -80,15 +115,16 @@ class Executor(object):
 
     def __eq__(self, other) -> bool:
         return self is other or (
-            self.name == other.name and
-            self.description == other.description and
-            self.action == other.action and
-            self.path == other.path and
-            self.executable == other.executable and
-            self.args == other.args and
-            self.build == other.build and
-            self.run_details == other.run_details and
-            self.variables == other.variables)
+            self.name == other.name
+            and self.description == other.description
+            and self.action == other.action
+            and self.path == other.path
+            and self.executable == other.executable
+            and self.args == other.args
+            and self.build == other.build
+            and self.run_details == other.run_details
+            and self.variables == other.variables
+        )
 
     # pylint: disable-next=too-many-return-statements
     def __lt__(self, other) -> bool:
@@ -122,23 +158,34 @@ class Executor(object):
         return self.variables < other.variables
 
     def __hash__(self):
-        return hash((self.name, self.description, self.action, self.path, self.executable,
-                     self.args, self.build, self.run_details, self.variables))
+        return hash(
+            (
+                self.name,
+                self.description,
+                self.action,
+                self.path,
+                self.executable,
+                self.args,
+                self.build,
+                self.run_details,
+                self.variables,
+            )
+        )
 
     def as_dict(self):
         result = {
-            'name': self.name,
-            'executable': self.executable,
-            'action': self.action,
-            'runDetails': self.run_details.as_dict(),
-            'variables': self.variables.as_dict(),
+            "name": self.name,
+            "executable": self.executable,
+            "action": self.action,
+            "runDetails": self.run_details.as_dict(),
+            "variables": self.variables.as_dict(),
         }
         if self.path is not None:
-            result['path'] = self.path
+            result["path"] = self.path
         if self.args is not None:
-            result['args'] = self.args
+            result["args"] = self.args
         if self.description is not None:
-            result['desc'] = self.description
+            result["desc"] = self.description
         if self.build is not None:
             result["build"] = self.build.as_dict()
         return result
@@ -147,10 +194,16 @@ class Executor(object):
     def from_dict(cls, data: Mapping) -> "Executor":
         path = data.get("path", None)
         build = BuildCommand.from_dict(data.get("build", None), path)
-        return Executor(data["name"], path, data["executable"],
-                        data.get("args", None), build, data.get("desc", None),
-                        Profiler.from_dict(data.get("profiler", None)),
-                        ExpRunDetails.from_dict(data.get("runDetails", None)),
-                        ExpVariables.from_dict(data.get("variables", None)),
-                        data.get("action", None),
-                        data.get("env", None))
+        return Executor(
+            data["name"],
+            path,
+            data["executable"],
+            data.get("args", None),
+            build,
+            data.get("desc", None),
+            Profiler.from_dict(data.get("profiler", None)),
+            ExpRunDetails.from_dict(data.get("runDetails", None)),
+            ExpVariables.from_dict(data.get("variables", None)),
+            data.get("action", None),
+            data.get("env", None),
+        )

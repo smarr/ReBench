@@ -43,7 +43,7 @@ class HTTPServerWithCounter(HTTPServer):
 
 class MockHTTPServer(object):
 
-    def __init__(self, api_v2 = True, test_error_handling = False):
+    def __init__(self, api_v2=True, test_error_handling=False):
         self._port = -1
         self._server = None
         self._thread = None

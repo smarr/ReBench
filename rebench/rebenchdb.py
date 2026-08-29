@@ -32,16 +32,21 @@ class ReBenchDB(object):
         self.ui = ui
 
         if not server_base_url:
-            raise UIError("ReBenchDB expected server address, but got: %s" % server_base_url, None)
+            raise UIError(
+                "ReBenchDB expected server address, but got: %s" % server_base_url, None
+            )
 
         # A user warning that old style configuration is detected
         if server_base_url.endswith("/results"):
             raise UIError(
-                "The URL to ReBenchDB should exclude '/results' but was '%s'" % server_base_url,
-                None)
+                "The URL to ReBenchDB should exclude '/results' but was '%s'"
+                % server_base_url,
+                None,
+            )
 
         ui.debug_output_info(
-            'ReBench will report all measurements to {url}\n', url=server_base_url)
+            "ReBench will report all measurements to {url}\n", url=server_base_url
+        )
 
         self._server_base_url = server_base_url
         self._project_name = project_name
@@ -67,28 +72,40 @@ class ReBenchDB(object):
         if success:
             self.ui.verbose_output_info(
                 "ReBenchDB: Sent {num_i} results to ReBenchDB, response was: {resp}\n",
-                num_i=num_items, resp=response)
+                num_i=num_items,
+                resp=response,
+            )
 
         return success
 
     def send_completion(self, end_time) -> bool:
-        success, response = self._send_to_rebench_db({"endTime": end_time}, "/completion")
+        success, response = self._send_to_rebench_db(
+            {"endTime": end_time}, "/completion"
+        )
 
         if success:
             self.ui.verbose_output_info(
-                "ReBenchDB was notified of completion of {project} {exp} at {time}\n" +
-                "{ind} Its response was: {resp}\n",
-                project=self._project_name, exp=self._experiment_name, time=end_time, resp=response)
+                "ReBenchDB was notified of completion of {project} {exp} at {time}\n"
+                + "{ind} Its response was: {resp}\n",
+                project=self._project_name,
+                exp=self._experiment_name,
+                time=end_time,
+                resp=response,
+            )
         else:
-            self.ui.error("Reporting completion to ReBenchDB failed.\n" +
-                           "{ind}Error: {response}", response=response)
+            self.ui.error(
+                "Reporting completion to ReBenchDB failed.\n"
+                + "{ind}Error: {response}",
+                response=response,
+            )
 
         return success
 
     @staticmethod
     def _send_payload(payload, url) -> str:
-        req = HttpRequest(url, payload,
-                         {'Content-Type': 'application/json'}, method='PUT')
+        req = HttpRequest(
+            url, payload, {"Content-Type": "application/json"}, method="PUT"
+        )
         with urlopen(req) as socket:
             response = socket.read()
             return response
@@ -107,7 +124,9 @@ class ReBenchDB(object):
     def convert_data_to_json(self, data):
         return json.dumps(data, separators=(",", ":"), ensure_ascii=True)
 
-    def _send_to_rebench_db(self, payload_data, operation) -> Tuple[bool, Optional[str]]:
+    def _send_to_rebench_db(
+        self, payload_data, operation
+    ) -> Tuple[bool, Optional[str]]:
         payload_data["projectName"] = self._project_name
         payload_data["experimentName"] = self._experiment_name
         url = self._server_base_url + operation
@@ -115,7 +134,7 @@ class ReBenchDB(object):
         payload = self.convert_data_to_json(payload_data)
 
         # self.ui.output("Saving JSON Payload of size: %d\n" % len(payload))
-        with open("payload.json", "w") as text_file:  # pylint: disable=unspecified-encoding
+        with open("payload.json", "w", encoding="utf-8") as text_file:
             text_file.write(payload)
 
         return self._send_with_retries(payload.encode("utf-8"), url)
@@ -129,8 +148,12 @@ class ReBenchDB(object):
                 return True, response
             except TypeError as te:
                 # can't handle this, just abort
-                self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                               + "{ind}{ind}" + str(te) + "\n")
+                self.ui.error(
+                    "{ind}Error: Reporting to ReBenchDB failed.\n"
+                    + "{ind}{ind}"
+                    + str(te)
+                    + "\n"
+                )
                 return False, None
             except (IOError, HTTPException) as error:
                 # pylint: disable-next=no-member
@@ -140,12 +163,20 @@ class ReBenchDB(object):
                     # but let it breath a little
                     self.ui.warning(
                         "ReBenchDB: had issue reporting data. Trying again after "
-                        + str(wait_sec) + "seconds.\n"
-                        + "{ind}{ind}" + str(error) + "\n")
+                        + str(wait_sec)
+                        + "seconds.\n"
+                        + "{ind}{ind}"
+                        + str(error)
+                        + "\n"
+                    )
                     attempts -= 1
                     sleep(wait_sec)
                     wait_sec = min(wait_sec * 2, 5 * 60)
                 else:
-                    self.ui.error("{ind}Error: Reporting to ReBenchDB failed.\n"
-                                   + "{ind}{ind}" + str(error) + "\n")
+                    self.ui.error(
+                        "{ind}Error: Reporting to ReBenchDB failed.\n"
+                        + "{ind}{ind}"
+                        + str(error)
+                        + "\n"
+                    )
                     return False, None

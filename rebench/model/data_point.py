@@ -40,15 +40,22 @@ class DataPoint(object):
         if self.invocation == -1:
             self.invocation = measurement.invocation
         elif self.invocation != measurement.invocation:
-            raise UIError("A data point is expected to represent a single invocation " +
-                          "but we got invocation " + str(measurement.invocation) +
-                          " and " + str(self.invocation) + "\n", None)
+            raise UIError(
+                "A data point is expected to represent a single invocation "
+                + "but we got invocation "
+                + str(measurement.invocation)
+                + " and "
+                + str(self.invocation)
+                + "\n",
+                None,
+            )
 
         self._measurements.append(measurement)
         if measurement.is_total():
             if self._total is not None:
-                raise ValueError("A data point should only include one " +
-                                 "'total' measurement.")
+                raise ValueError(
+                    "A data point should only include one " + "'total' measurement."
+                )
             self._total = measurement
 
     def get_measurements(self):
@@ -77,11 +84,7 @@ class DataPoint(object):
             data.append({"v": m.value, "c": criteria[criterion]})
         assert self.invocation == invocation
 
-        return {
-            'in': invocation,
-            'it': iteration,
-            'm': data
-        }
+        return {"in": invocation, "it": iteration, "m": data}
 
     def add_measurements_api_v20(self, criteria, data):
         num_measurements = 0

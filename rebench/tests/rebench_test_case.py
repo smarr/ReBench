@@ -19,13 +19,13 @@
 # IN THE SOFTWARE.
 import logging
 import os
-from os.path  import dirname, realpath
+from os.path import dirname, realpath
 
 import sys
 from unittest import TestCase
 from tempfile import mkstemp
 from ..environment import init_env_for_test
-from ..ui  import TestDummyUI
+from ..ui import TestDummyUI
 
 
 class ReBenchTestCase(TestCase):
@@ -60,5 +60,9 @@ class ReBenchTestCase(TestCase):
         self.assertEqual(num_runs, len(runs), "incorrect number of runs")
         run = list(runs)[0]
 
-        self.assertEqual(num_dps, run.get_number_of_data_points(), "incorrect num of data points")
-        self.assertEqual(num_invocations, run.completed_invocations, "incorrect num of invocations")
+        self.assertEqual(
+            num_dps, run.get_number_of_data_points(), "incorrect num of data points"
+        )
+        self.assertEqual(
+            num_invocations, run.completed_invocations, "incorrect num of invocations"
+        )

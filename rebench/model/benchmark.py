@@ -33,27 +33,42 @@ class Benchmark(object):
     @classmethod
     def compile(cls, bench, suite):
         """Specialization of the configurations which get executed by using the
-           suite definitions.
+        suite definitions.
         """
         name, details = value_with_optional_details(bench, {})
 
         command = details.get("command", name)
 
-        gauge_adapter = details.get('gauge_adapter',
-                                    suite.gauge_adapter)
-        extra_args = details.get('extra_args', None)
-        codespeed_name = details.get('codespeed_name', None)
+        gauge_adapter = details.get("gauge_adapter", suite.gauge_adapter)
+        extra_args = details.get("extra_args", None)
+        codespeed_name = details.get("codespeed_name", None)
 
         run_details = ExpRunDetails.compile(details, suite.run_details)
         run_details.resolve_override_and_important()
         variables = ExpVariables.compile(details, suite.variables)
 
-        return Benchmark(name, command, gauge_adapter, suite,
-                         variables, extra_args, run_details, codespeed_name)
+        return Benchmark(
+            name,
+            command,
+            gauge_adapter,
+            suite,
+            variables,
+            extra_args,
+            run_details,
+            codespeed_name,
+        )
 
-    def __init__(self, name: str, command: str, gauge_adapter: Optional["GaugeAdapter"],
-                 suite: "BenchmarkSuite", variables: Optional[ExpVariables], extra_args: str,
-                 run_details: "ExpRunDetails", codespeed_name: Optional[str]):
+    def __init__(
+        self,
+        name: str,
+        command: str,
+        gauge_adapter: Optional["GaugeAdapter"],
+        suite: "BenchmarkSuite",
+        variables: Optional[ExpVariables],
+        extra_args: str,
+        run_details: "ExpRunDetails",
+        codespeed_name: Optional[str],
+    ):
         assert run_details is None or isinstance(run_details, ExpRunDetails)
         self.name = name
 
@@ -82,12 +97,13 @@ class Benchmark(object):
 
     def __eq__(self, other) -> bool:
         return self is other or (
-            self.name == other.name and
-            self.command == other.command and
-            self.extra_args == other.extra_args and
-            self.run_details == other.run_details and
-            self.variables == other.variables and
-            self.suite == other.suite)
+            self.name == other.name
+            and self.command == other.command
+            and self.extra_args == other.extra_args
+            and self.run_details == other.run_details
+            and self.variables == other.variables
+            and self.suite == other.suite
+        )
 
     # pylint: disable-next=too-many-return-statements
     def __lt__(self, other) -> bool:
@@ -113,24 +129,48 @@ class Benchmark(object):
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = hash((self.name, self.command, self.extra_args, self.run_details,
-                               self.variables, self.suite))
+            self._hash = hash(
+                (
+                    self.name,
+                    self.command,
+                    self.extra_args,
+                    self.run_details,
+                    self.variables,
+                    self.suite,
+                )
+            )
         return self._hash
 
     def __str__(self):
         return "%s, executor:%s, suite:%s, args:'%s'" % (
-            self.name, self.suite.executor.name, self.suite.name, self.extra_args or '')
+            self.name,
+            self.suite.executor.name,
+            self.suite.name,
+            self.extra_args or "",
+        )
 
     def as_simple_string(self):
         if self.extra_args:
-            return "%s (%s, %s, %s)"  % (self.name, self.suite.executor.name,
-                                         self.suite.name, self.extra_args)
+            return "%s (%s, %s, %s)" % (
+                self.name,
+                self.suite.executor.name,
+                self.suite.name,
+                self.extra_args,
+            )
         else:
-            return "%s (%s, %s)" % (self.name, self.suite.executor.name, self.suite.name)
+            return "%s (%s, %s)" % (
+                self.name,
+                self.suite.executor.name,
+                self.suite.name,
+            )
 
     def as_str_list(self):
-        return [self.name, self.suite.executor.name, self.suite.name,
-                '' if self.extra_args is None else str(self.extra_args)]
+        return [
+            self.name,
+            self.suite.executor.name,
+            self.suite.name,
+            "" if self.extra_args is None else str(self.extra_args),
+        ]
 
     def as_dict(self):
         result = {
@@ -138,7 +178,7 @@ class Benchmark(object):
             "command": self.command,
             "runDetails": self.run_details.as_dict(),
             "suite": self.suite.as_dict(),
-            "variables": self.variables.as_dict()
+            "variables": self.variables.as_dict(),
         }
 
         if self.extra_args is not None:
@@ -151,8 +191,16 @@ class Benchmark(object):
         suite = BenchmarkSuite.from_dict(data["suite"])
         variables = ExpVariables.from_dict(data.get("variables", None))
 
-        return Benchmark(data["name"], data["command"], None, suite, variables,
-                         data.get("extra_args", None), run_details, None)
+        return Benchmark(
+            data["name"],
+            data["command"],
+            None,
+            suite,
+            variables,
+            data.get("extra_args", None),
+            run_details,
+            None,
+        )
 
     @classmethod
     def get_column_headers(cls):

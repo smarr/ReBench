@@ -1,7 +1,7 @@
-from select     import select
+from select import select
 from subprocess import PIPE, STDOUT, Popen
-from threading  import Thread, Condition, current_thread, main_thread
-from time       import time
+from threading import Thread, Condition, current_thread, main_thread
+from time import time
 
 import sys
 import signal
@@ -9,7 +9,6 @@ import signal
 from .denoise_client import deliver_kill_signal
 from .output import output_as_str
 from .subprocess_kill import kill_process
-
 
 # Indicate timeout with standard exit code
 E_TIMEOUT = -9
@@ -34,8 +33,18 @@ def _setup_signal_handling_if_needed():
 
 class _SubprocessThread(Thread):
 
-    def __init__(self, executable_name, args, env,
-                 shell, cwd, verbose, stdout, stderr, stdin_input):
+    def __init__(
+        self,
+        executable_name,
+        args,
+        env,
+        shell,
+        cwd,
+        verbose,
+        stdout,
+        stderr,
+        stdin_input,
+    ):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
@@ -64,8 +73,15 @@ class _SubprocessThread(Thread):
             stdin = PIPE if self._stdin_input else None
 
             # pylint: disable-next=consider-using-with
-            proc = Popen(self._args, shell=self._shell, cwd=self._cwd,
-                         stdin=stdin, stdout=self._stdout, stderr=self._stderr, env=self._env)
+            proc = Popen(
+                self._args,
+                shell=self._shell,
+                cwd=self._cwd,
+                stdin=stdin,
+                stdout=self._stdout,
+                stderr=self._stderr,
+                env=self._env,
+            )
             self._pid = proc.pid
             self._started_cv.notify()
             self._started_cv.release()
@@ -99,10 +115,12 @@ class _SubprocessThread(Thread):
 
                 if proc.stdout and not proc.stdout.closed and not stdout_eof:
                     reads.append(proc.stdout.fileno())
-                if (self._stderr == PIPE and
-                        proc.stderr and
-                        not proc.stderr.closed and
-                        not stderr_eof):
+                if (
+                    self._stderr == PIPE
+                    and proc.stderr
+                    and not proc.stderr.closed
+                    and not stderr_eof
+                ):
                     reads.append(proc.stderr.fileno())
 
                 if not reads:
@@ -135,9 +153,20 @@ def _print_keep_alive(seconds_since_start):
     print("Keep alive, current job runs for %dmin\n" % (seconds_since_start / 60))
 
 
-def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
-        verbose=False, stdout=PIPE, stderr=PIPE, stdin_input=None,
-        keep_alive_output=_print_keep_alive, uses_sudo=False):
+def run(
+    args,
+    env,
+    cwd=None,
+    shell=False,
+    kill_tree=True,
+    timeout=-1,
+    verbose=False,
+    stdout=PIPE,
+    stderr=PIPE,
+    stdin_input=None,
+    keep_alive_output=_print_keep_alive,
+    uses_sudo=False,
+):
     """
     Run a command with a timeout after which it will be forcibly
     killed.
@@ -145,8 +174,9 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
     _setup_signal_handling_if_needed()
     executable_name = args.split(" ", 1)[0]
 
-    thread = _SubprocessThread(executable_name, args, env, shell, cwd, verbose, stdout,
-                               stderr, stdin_input)
+    thread = _SubprocessThread(
+        executable_name, args, env, shell, cwd, verbose, stdout, stderr, stdin_input
+    )
     thread.start()
 
     was_interrupted = False
@@ -158,8 +188,12 @@ def run(args, env, cwd=None, shell=False, kill_tree=True, timeout=-1,
 
     if (timeout != -1 or was_interrupted) and thread.is_alive():
         assert thread.get_pid() is not None
-        result = kill_process(thread.get_pid(), kill_tree, thread,
-                              deliver_kill_signal if uses_sudo else None)
+        result = kill_process(
+            thread.get_pid(),
+            kill_tree,
+            thread,
+            deliver_kill_signal if uses_sudo else None,
+        )
         if was_interrupted:
             raise KeyboardInterrupt()
         return result

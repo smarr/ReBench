@@ -39,7 +39,9 @@ class Issue110Test(ReBenchTestCase):
         self._cleanup_file("build.log")
         self._cleanup_file("rebench.data")
         self._data_store = DataStore(self.ui)
-        self._cli_options = ReBench().shell_options().parse_args(["-d", "--setup-only", "dummy"])
+        self._cli_options = (
+            ReBench().shell_options().parse_args(["-d", "--setup-only", "dummy"])
+        )
 
     def tearDown(self):
         self._cleanup_file("rebench.data")
@@ -62,19 +64,28 @@ class Issue110Test(ReBenchTestCase):
         self.assertEqual(num_runs, len(runs), "incorrect number of runs")
 
         for run in runs:
-            self.assertEqual(num_dps, run.get_number_of_data_points(),
-                             "incorrect num of data points")
-            self.assertEqual(num_invocations, run.completed_invocations,
-                             "incorrect num of invocations")
+            self.assertEqual(
+                num_dps, run.get_number_of_data_points(), "incorrect num of data points"
+            )
+            self.assertEqual(
+                num_invocations,
+                run.completed_invocations,
+                "incorrect num of invocations",
+            )
 
     def _execute(self, cnf):
         ex = Executor(cnf.get_runs(), True, self.ui, build_log=cnf.build_log)
         ex.execute()
 
     def test_complete(self):
-        cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self.ui, self._cli_options,
-                           exp_name='Complete', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_110.conf"),
+            self._data_store,
+            self.ui,
+            self._cli_options,
+            exp_name="Complete",
+            data_file=self._tmp_file,
+        )
         self._data_store.load_data(None, False)
 
         runs = cnf.get_runs()
@@ -83,10 +94,12 @@ class Issue110Test(ReBenchTestCase):
         # uses one of the executors too
         self.assertTrue(len(runs) == 3 or len(runs) == 2)
         for run in runs:
-            self.assertEqual(0, run.get_number_of_data_points(),
-                             "incorrect num of data points")
-            self.assertEqual(0, run.completed_invocations,
-                             "incorrect num of invocations")
+            self.assertEqual(
+                0, run.get_number_of_data_points(), "incorrect num of data points"
+            )
+            self.assertEqual(
+                0, run.completed_invocations, "incorrect num of invocations"
+            )
 
         self._execute(cnf)
 
@@ -94,20 +107,32 @@ class Issue110Test(ReBenchTestCase):
         self.assertTrue(len(runs) == 3 or len(runs) == 2)
 
         for run in runs:
-            self.assertEqual(1, run.get_number_of_data_points(),
-                             "incorrect num of data points")
-            self.assertEqual(1, run.completed_invocations,
-                             "incorrect num of invocations")
+            self.assertEqual(
+                1, run.get_number_of_data_points(), "incorrect num of data points"
+            )
+            self.assertEqual(
+                1, run.completed_invocations, "incorrect num of invocations"
+            )
 
         log = self._read_log()
-        self.assertEqual({"E:BashB|STD:Built VM110B",
-                          "E:BashA|STD:Built VM110A",
-                          "S:SuiteWithBuild|STD:Built Suite"}, log)
+        self.assertEqual(
+            {
+                "E:BashB|STD:Built VM110B",
+                "E:BashA|STD:Built VM110A",
+                "S:SuiteWithBuild|STD:Built Suite",
+            },
+            log,
+        )
 
     def test_a1(self):
-        cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self.ui, self._cli_options,
-                           exp_name='A1', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_110.conf"),
+            self._data_store,
+            self.ui,
+            self._cli_options,
+            exp_name="A1",
+            data_file=self._tmp_file,
+        )
         self._data_store.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
@@ -120,9 +145,14 @@ class Issue110Test(ReBenchTestCase):
         self.assertEqual({"E:BashA|STD:Built VM110A"}, log)
 
     def test_b2(self):
-        cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self.ui, self._cli_options,
-                           exp_name='B2', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_110.conf"),
+            self._data_store,
+            self.ui,
+            self._cli_options,
+            exp_name="B2",
+            data_file=self._tmp_file,
+        )
         self._data_store.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
@@ -135,9 +165,14 @@ class Issue110Test(ReBenchTestCase):
         self.assertEqual({"E:BashB|STD:Built VM110B"}, log)
 
     def test_suite_with_build(self):
-        cnf = Configurator(load_config(self._path + '/issue_110.conf'),
-                           self._data_store, self.ui, self._cli_options,
-                           exp_name='SuiteWithBuild', data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_110.conf"),
+            self._data_store,
+            self.ui,
+            self._cli_options,
+            exp_name="SuiteWithBuild",
+            data_file=self._tmp_file,
+        )
         self._data_store.load_data(None, False)
 
         # Has not executed yet, check that there is simply
@@ -148,5 +183,6 @@ class Issue110Test(ReBenchTestCase):
         self._assert_runs(cnf, 1, 1, 1)
 
         log = self._read_log()
-        self.assertEqual({"E:BashA|STD:Built VM110A",
-                          "S:SuiteWithBuild|STD:Built Suite"}, log)
+        self.assertEqual(
+            {"E:BashA|STD:Built VM110A", "S:SuiteWithBuild|STD:Built Suite"}, log
+        )

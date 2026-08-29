@@ -21,8 +21,17 @@ from .run_id import RunId
 
 
 class Measurement(object):
-    def __init__(self, invocation, iteration, value, unit,
-                 run_id: RunId, criterion='total', line_number=None, filename=None):
+    def __init__(
+        self,
+        invocation,
+        iteration,
+        value,
+        unit,
+        run_id: RunId,
+        criterion="total",
+        line_number=None,
+        filename=None,
+    ):
         self.invocation = invocation
         self.iteration = iteration
         self.value = value
@@ -42,13 +51,18 @@ class Measurement(object):
         else:
             val = "%s" % self.value
 
-        return [str(self.invocation), str(self.iteration),
-                val,
-                self.unit,
-                self.criterion] + self.run_id.as_str_list(persisted_run_id)
+        return [
+            str(self.invocation),
+            str(self.iteration),
+            val,
+            self.unit,
+            self.criterion,
+        ] + self.run_id.as_str_list(persisted_run_id)
 
     @classmethod
-    def from_str_list(cls, id_to_run_id: list[RunId], str_list, line_number=None, filename=None):
+    def from_str_list(
+        cls, id_to_run_id: list[RunId], str_list, line_number=None, filename=None
+    ):
         invocation = int(str_list[0])
         iteration = int(str_list[1])
         value = float(str_list[2])
@@ -56,12 +70,20 @@ class Measurement(object):
         criterion = str_list[4]
         run_id = RunId.from_str_list(id_to_run_id, str_list[5:])
 
-        return Measurement(invocation, iteration, value, unit, run_id,
-                           criterion, line_number, filename)
+        return Measurement(
+            invocation, iteration, value, unit, run_id, criterion, line_number, filename
+        )
+
     @classmethod
     def get_column_headers(cls):
         run_id_headers = RunId.get_column_headers()
-        return ["invocation", "iteration", "value", "unit", "criterion"] + run_id_headers
+        return [
+            "invocation",
+            "iteration",
+            "value",
+            "unit",
+            "criterion",
+        ] + run_id_headers
 
     def as_dict(self):
         return {

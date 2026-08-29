@@ -43,16 +43,25 @@ from ..rebench import ReBench
 
 class PersistencyTest(ReBenchTestCase):
     def test_de_serialization(self):
-        executor = ExecutorConf("MyVM", '', '',
-                                None, None, None, None, None, None, "benchmark", {})
-        suite = BenchmarkSuite("MySuite", executor, '', '', None, None,
-                               None, None, None, None)
-        benchmark = Benchmark("Test Bench [>", "Test Bench [>", None,
-                              suite, None, None, ExpRunDetails.default(None, None),
-                              None)
+        executor = ExecutorConf(
+            "MyVM", "", "", None, None, None, None, None, None, "benchmark", {}
+        )
+        suite = BenchmarkSuite(
+            "MySuite", executor, "", "", None, None, None, None, None, None
+        )
+        benchmark = Benchmark(
+            "Test Bench [>",
+            "Test Bench [>",
+            None,
+            suite,
+            None,
+            None,
+            ExpRunDetails.default(None, None),
+            None,
+        )
 
-        run_id = RunId(benchmark, 1000, 44, 'sdf sdf sdf sdfsf', 'tag11', 'machine-22')
-        measurement = Measurement(43, 45, 2222.2222, 'ms', run_id, 'foobar crit')
+        run_id = RunId(benchmark, 1000, 44, "sdf sdf sdf sdfsf", "tag11", "machine-22")
+        measurement = Measurement(43, 45, 2222.2222, "ms", run_id, "foobar crit")
 
         id_to_run_id = [run_id]
 
@@ -70,8 +79,12 @@ class PersistencyTest(ReBenchTestCase):
     def test_iteration_invocation_semantics(self):
         # Executes first time
         ds = DataStore(self.ui)
-        cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                           ds, self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            ds,
+            self.ui,
+            data_file=self._tmp_file,
+        )
         ds.load_data(None, False)
         self._assert_runs(cnf, 1, 0, 0)
 
@@ -83,8 +96,12 @@ class PersistencyTest(ReBenchTestCase):
         # Execute a second time, should not add any data points,
         # because goal is already reached
         ds2 = DataStore(self.ui)
-        cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
-                            ds2, self.ui, data_file=self._tmp_file)
+        cnf2 = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            ds2,
+            self.ui,
+            data_file=self._tmp_file,
+        )
         ds2.load_data(None, False)
 
         self._assert_runs(cnf2, 1, 10, 10)
@@ -97,8 +114,12 @@ class PersistencyTest(ReBenchTestCase):
     def test_data_discarding(self):
         # Executes first time
         ds = DataStore(self.ui)
-        cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                           ds, self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            ds,
+            self.ui,
+            data_file=self._tmp_file,
+        )
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
@@ -110,8 +131,12 @@ class PersistencyTest(ReBenchTestCase):
 
         # Execute a second time, this time, discard the data first, and then rerun
         ds2 = DataStore(self.ui)
-        cnf2 = Configurator(load_config(self._path + '/persistency.conf'),
-                            ds2, self.ui, data_file=self._tmp_file)
+        cnf2 = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            ds2,
+            self.ui,
+            data_file=self._tmp_file,
+        )
         run2 = cnf2.get_runs()
         ds2.load_data(run2, True)
 
@@ -122,8 +147,10 @@ class PersistencyTest(ReBenchTestCase):
 
         self._assert_runs(cnf2, 1, 10, 10)
 
-    @skipIf(git_not_available() or git_repo_not_initialized(),
-        "git source info not available, but needed for reporting to ReBenchDB")
+    @skipIf(
+        git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB",
+    )
     def test_rebenchdb(self):
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args(["--experiment=Test", "persistency.conf"])
@@ -138,8 +165,10 @@ class PersistencyTest(ReBenchTestCase):
         finally:
             server.process_and_shutdown()
 
-    @skipIf(git_not_available() or git_repo_not_initialized(),
-        "git source info not available, but needed for reporting to ReBenchDB")
+    @skipIf(
+        git_not_available() or git_repo_not_initialized(),
+        "git source info not available, but needed for reporting to ReBenchDB",
+    )
     def test_rebenchdb_400_error(self):
         option_parser = ReBench().shell_options()
         cmd_config = option_parser.parse_args(["--experiment=Test", "persistency.conf"])
@@ -156,7 +185,9 @@ class PersistencyTest(ReBenchTestCase):
 
     def test_disabled_rebench_db(self):
         option_parser = ReBench().shell_options()
-        cmd_config = option_parser.parse_args(["--experiment=Test", "-R", "persistency.conf"])
+        cmd_config = option_parser.parse_args(
+            ["--experiment=Test", "-R", "persistency.conf"]
+        )
 
         server = MockHTTPServer()
 
@@ -174,16 +205,19 @@ class PersistencyTest(ReBenchTestCase):
         server.start()
         ds = DataStore(self.ui)
 
-        raw_config = load_config(self._path + '/persistency.conf')
-        del raw_config['reporting']['codespeed']
-        raw_config['reporting']['rebenchdb'] = {
-            'db_url': 'http://localhost:' + str(port),
-            'repo_url': 'http://repo.git',
-            'project_name': 'Persistency Test',
-            'send_to_rebench_db': True,
-            'record_all': True}
+        raw_config = load_config(self._path + "/persistency.conf")
+        del raw_config["reporting"]["codespeed"]
+        raw_config["reporting"]["rebenchdb"] = {
+            "db_url": "http://localhost:" + str(port),
+            "repo_url": "http://repo.git",
+            "project_name": "Persistency Test",
+            "send_to_rebench_db": True,
+            "record_all": True,
+        }
 
-        cnf = Configurator(raw_config, ds, self.ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(
+            raw_config, ds, self.ui, cmd_config, data_file=self._tmp_file
+        )
         ds.load_data(None, False)
 
         self._assert_runs(cnf, 1, 0, 0)
@@ -206,7 +240,9 @@ class PersistencyTest(ReBenchTestCase):
         time = self.get_line_after_char("Start:", lines[1])
         self.assertTrue(self.is_valid_time(time))
 
-        self.assertIsNotNone(json.loads(self.get_line_after_char("Environment:", lines[2])))
+        self.assertIsNotNone(
+            json.loads(self.get_line_after_char("Environment:", lines[2]))
+        )
         self.assertIsNotNone(json.loads(self.get_line_after_char("Source:", lines[3])))
 
         column_headers = lines[4].split("\t")
@@ -218,8 +254,11 @@ class PersistencyTest(ReBenchTestCase):
 
         a_line_that_has_data = lines[-1]
         num_data_columns = len(a_line_that_has_data.split("\t"))
-        self.assertEqual(num_data_columns, len(column_headers),
-                         'expected same number of column headers as data columns')
+        self.assertEqual(
+            num_data_columns,
+            len(column_headers),
+            "expected same number of column headers as data columns",
+        )
 
     def get_line_after_char(self, char, line):
         if char in line:
@@ -236,8 +275,13 @@ class PersistencyTest(ReBenchTestCase):
 
     def _load_config_and_run(self, args=None):
         ds = DataStore(self.ui)
-        cnf = Configurator(load_config(self._path + '/persistency.conf'),
-                           ds, self.ui, args, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/persistency.conf"),
+            ds,
+            self.ui,
+            args,
+            data_file=self._tmp_file,
+        )
         ds.load_data(None, False)
         ex = Executor(cnf.get_runs(), False, self.ui)
         ex.execute()
@@ -249,7 +293,9 @@ class PersistencyTest(ReBenchTestCase):
 
         # second run, requesting more invocations
         opt_parser = ReBench().shell_options()
-        args = opt_parser.parse_args(["-in", "20", "-R", self._path + "/persistency.conf"])
+        args = opt_parser.parse_args(
+            ["-in", "20", "-R", self._path + "/persistency.conf"]
+        )
         self._load_config_and_run(args)
 
         with open(self._tmp_file, "r") as file:  # pylint: disable=unspecified-encoding
@@ -268,11 +314,15 @@ class PersistencyTest(ReBenchTestCase):
         return _ReBenchDB(_Cfg(), None, self.ui)
 
     def _run_exp_to_get_data_points_with_inconsistent_set_of_criteria(self):
-        yaml = load_config(self._path + '/features/issue_16.conf')
-        yaml['executors']['TestRunner']['executable'] = 'features/issue_16_vm2.py'
-        cnf = Configurator(yaml, DataStore(self.ui),
-                           self.ui, exp_name='Test1',
-                           data_file=self._tmp_file)
+        yaml = load_config(self._path + "/features/issue_16.conf")
+        yaml["executors"]["TestRunner"]["executable"] = "features/issue_16_vm2.py"
+        cnf = Configurator(
+            yaml,
+            DataStore(self.ui),
+            self.ui,
+            exp_name="Test1",
+            data_file=self._tmp_file,
+        )
         runs = cnf.get_runs()
         persistence = TestPersistence()
         persistence.use_on(runs)
@@ -352,9 +402,13 @@ class PersistencyTest(ReBenchTestCase):
         return ReBenchDB("http://localhost", "", "", self.ui)
 
     def test_data_conversion_to_rebench_db_api(self):
-        cache, run_id_obj = self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        cache, run_id_obj = (
+            self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        )
         rebench_db = self._create_dummy_rebench_db_persistence()
-        all_data, criteria_index, num_measurements = rebench_db.convert_data_to_api_format(cache)
+        all_data, criteria_index, num_measurements = (
+            rebench_db.convert_data_to_api_format(cache)
+        )
 
         self.assertEqual(24, num_measurements)
 
@@ -369,17 +423,19 @@ class PersistencyTest(ReBenchTestCase):
 
         rdb = self._create_dummy_rebench_db_adapter()
 
-        self.assertEqual('[{"in":1,"it":1,"m":[{"v":0.0,"c":0},{"v":0.0,"c":1},{"v":0.0,"c":2}]},' +
-                         '{"in":1,"it":2,"m":[{"v":1.1,"c":3},{"v":1.1,"c":2}]},' +
-                         '{"in":1,"it":3,"m":[{"v":2.2,"c":0},{"v":2.2,"c":2}]},' +
-                         '{"in":1,"it":4,"m":[{"v":3.3,"c":1},{"v":3.3,"c":3},{"v":3.3,"c":2}]},' +
-                         '{"in":1,"it":5,"m":[{"v":4.4,"c":0},{"v":4.4,"c":2}]},' +
-                         '{"in":1,"it":6,"m":[{"v":5.5,"c":3},{"v":5.5,"c":2}]},' +
-                         '{"in":1,"it":7,"m":[{"v":6.6,"c":0},{"v":6.6,"c":1},{"v":6.6,"c":2}]},' +
-                         '{"in":1,"it":8,"m":[{"v":7.7,"c":3},{"v":7.7,"c":2}]},' +
-                         '{"in":1,"it":9,"m":[{"v":8.8,"c":0},{"v":8.8,"c":2}]},' +
-                         '{"in":1,"it":10,"m":[{"v":9.9,"c":1},{"v":9.9,"c":3},{"v":9.9,"c":2}]}]',
-                         rdb.convert_data_to_json(data))
+        self.assertEqual(
+            '[{"in":1,"it":1,"m":[{"v":0.0,"c":0},{"v":0.0,"c":1},{"v":0.0,"c":2}]},'
+            + '{"in":1,"it":2,"m":[{"v":1.1,"c":3},{"v":1.1,"c":2}]},'
+            + '{"in":1,"it":3,"m":[{"v":2.2,"c":0},{"v":2.2,"c":2}]},'
+            + '{"in":1,"it":4,"m":[{"v":3.3,"c":1},{"v":3.3,"c":3},{"v":3.3,"c":2}]},'
+            + '{"in":1,"it":5,"m":[{"v":4.4,"c":0},{"v":4.4,"c":2}]},'
+            + '{"in":1,"it":6,"m":[{"v":5.5,"c":3},{"v":5.5,"c":2}]},'
+            + '{"in":1,"it":7,"m":[{"v":6.6,"c":0},{"v":6.6,"c":1},{"v":6.6,"c":2}]},'
+            + '{"in":1,"it":8,"m":[{"v":7.7,"c":3},{"v":7.7,"c":2}]},'
+            + '{"in":1,"it":9,"m":[{"v":8.8,"c":0},{"v":8.8,"c":2}]},'
+            + '{"in":1,"it":10,"m":[{"v":9.9,"c":1},{"v":9.9,"c":3},{"v":9.9,"c":2}]}]',
+            rdb.convert_data_to_json(data),
+        )
 
     def _assert_data_point_structure_v20(self, data):
         self.assertEqual(1, len(data))
@@ -407,9 +463,13 @@ class PersistencyTest(ReBenchTestCase):
                 self.assertIsNone(ms[3][i])
 
     def test_data_conversion_to_rebench_db_api_v20(self):
-        cache, run_id_obj = self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        cache, run_id_obj = (
+            self._run_exp_to_get_data_points_with_inconsistent_set_of_criteria()
+        )
         rebench_db = self._create_dummy_rebench_db_persistence()
-        all_data, criteria_index, num_measurements = rebench_db.convert_data_to_api_20_format(cache)
+        all_data, criteria_index, num_measurements = (
+            rebench_db.convert_data_to_api_20_format(cache)
+        )
 
         self.assertEqual(24, num_measurements)
 
@@ -422,8 +482,10 @@ class PersistencyTest(ReBenchTestCase):
         self._assert_data_point_structure_v20(data)
 
         rdb = self._create_dummy_rebench_db_adapter()
-        self.assertEqual('[{"in":1,"m":[[0.0,null,2.2,null,4.4,null,6.6,null,8.8],' +
-                         '[0.0,null,null,3.3,null,null,6.6,null,null,9.9],' +
-                         '[0.0,1.1,2.2,3.3,4.4,5.5,6.6,7.7,8.8,9.9],' +
-                         '[null,1.1,null,3.3,null,5.5,null,7.7,null,9.9]]}]',
-                         rdb.convert_data_to_json(data))
+        self.assertEqual(
+            '[{"in":1,"m":[[0.0,null,2.2,null,4.4,null,6.6,null,8.8],'
+            + "[0.0,null,null,3.3,null,null,6.6,null,null,9.9],"
+            + "[0.0,1.1,2.2,3.3,4.4,5.5,6.6,7.7,8.8,9.9],"
+            + "[null,1.1,null,3.3,null,5.5,null,7.7,null,9.9]]}]",
+            rdb.convert_data_to_json(data),
+        )

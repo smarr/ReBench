@@ -14,15 +14,21 @@ class ReporterTest(ReBenchTestCase):
     def _run_benchmarks_and_do_reporting(self, rebench_db=True):
         option_parser = ReBench().shell_options()
         if rebench_db:
-            args = ["--commit-id=id", "--environment=test", "--project=test", "persistency.conf"]
+            args = [
+                "--commit-id=id",
+                "--environment=test",
+                "--project=test",
+                "persistency.conf",
+            ]
             config = load_config(self._path + "/persistency.conf")
         else:
             args = ["-R", "test.conf", "Test"]
             config = load_config(self._path + "/test.conf")
 
         cmd_config = option_parser.parse_args(args)
-        cnf = Configurator(config, DataStore(self.ui),
-                           self.ui, cmd_config, data_file=self._tmp_file)
+        cnf = Configurator(
+            config, DataStore(self.ui), self.ui, cmd_config, data_file=self._tmp_file
+        )
 
         self._runs = cnf.get_runs()  # pylint: disable=attribute-defined-outside-init
 
@@ -68,11 +74,23 @@ class ReporterTest(ReBenchTestCase):
         self.assertEqual(40, len(sorted_rows))
         self.assertEqual(2, len(summary))
         self.assertEqual(len(reporter.expected_columns) - 2, len(sorted_rows[0]))
-        self.assertEqual(['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
-             'Tag', 'Mean (ms)'], used_cols)
-        self.assertEqual('Machine', summary[0][0])
-        self.assertEqual('', summary[0][1])
-        self.assertEqual('#Samples', summary[1][0])
+        self.assertEqual(
+            [
+                "Benchmark",
+                "Executor",
+                "Suite",
+                "Extra",
+                "Core",
+                "Size",
+                "Var",
+                "Tag",
+                "Mean (ms)",
+            ],
+            used_cols,
+        )
+        self.assertEqual("Machine", summary[0][0])
+        self.assertEqual("", summary[0][1])
+        self.assertEqual("#Samples", summary[1][0])
         self.assertEqual(0, summary[1][1])
 
     def test_text_reporter_summary_table_4_runs(self):

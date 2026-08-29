@@ -33,15 +33,20 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
 from typing import TYPE_CHECKING, Optional
 
 from . import __version__ as rebench_version
-from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
-    RandomScheduler, BenchmarkThreadExceptions
+from .executor import (
+    Executor,
+    BatchScheduler,
+    RoundRobinScheduler,
+    RandomScheduler,
+    BenchmarkThreadExceptions,
+)
 from .denoise_client import restore_noise, get_initial_settings_and_capabilities
 from .environment import init_environment
 from .model.denoise import Denoise
-from .persistence    import DataStore
-from .rebenchdb      import get_current_time
-from .reporter       import CliReporter
-from .configurator   import Configurator, load_config
+from .persistence import DataStore
+from .rebenchdb import get_current_time
+from .reporter import CliReporter
+from .configurator import Configurator, load_config
 from .configuration_error import ConfigurationError
 from .output import UIError
 from .ui import UI
@@ -79,162 +84,298 @@ Argument:
 """
 
         parser = ArgumentParser(
-            usage=usage, add_help=False,
-            formatter_class=RawDescriptionHelpFormatter)
+            usage=usage, add_help=False, formatter_class=RawDescriptionHelpFormatter
+        )
 
-        parser.add_argument('config', nargs=1, help=SUPPRESS)
-        parser.add_argument('exp_filter', nargs='*', help=SUPPRESS)
+        parser.add_argument("config", nargs=1, help=SUPPRESS)
+        parser.add_argument("exp_filter", nargs="*", help=SUPPRESS)
 
-        basics = parser.add_argument_group('Basic Options')
-        basics.add_argument('-h', '--help', action='help',
-                            help='Show this help message and exit')
-        basics.add_argument('--version', action='version',
-                            version="%(prog)s " + self.version)
-        basics.add_argument('-d', '--debug', action='store_true', dest='debug',
-                            default=False, help='Enable debug output')
-        basics.add_argument('-v', '--verbose', action='store_true',
-                            dest='verbose', default=False,
-                            help='Output more details during execution.')
+        basics = parser.add_argument_group("Basic Options")
+        basics.add_argument(
+            "-h", "--help", action="help", help="Show this help message and exit"
+        )
+        basics.add_argument(
+            "--version", action="version", version="%(prog)s " + self.version
+        )
+        basics.add_argument(
+            "-d",
+            "--debug",
+            action="store_true",
+            dest="debug",
+            default=False,
+            help="Enable debug output",
+        )
+        basics.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            dest="verbose",
+            default=False,
+            help="Output more details during execution.",
+        )
 
         execution = parser.add_argument_group(
-            'Execution Options', 'Adapt how ReBench executes benchmarks')
+            "Execution Options", "Adapt how ReBench executes benchmarks"
+        )
         execution.add_argument(
-            '-in', '--invocations', action='store', dest='invocations',
-            help='The number of times an executor is started to execute a run.',
-            default=None, type=int)
+            "-in",
+            "--invocations",
+            action="store",
+            dest="invocations",
+            help="The number of times an executor is started to execute a run.",
+            default=None,
+            type=int,
+        )
         execution.add_argument(
-            '-it', '--iterations', action='store', dest='iterations',
-            help='The number of times a benchmark is to be executed within an executor invocation.',
-            default=None, type=int)
+            "-it",
+            "--iterations",
+            action="store",
+            dest="iterations",
+            help="The number of times a benchmark is to be executed within an executor invocation.",
+            default=None,
+            type=int,
+        )
         execution.add_argument(
-            '-q', '--quick', action='store_true', dest='quick',
-            help='Execute quickly. Identical with --iterations=1 --invocations=1',
-            default=False)
-        execution.add_argument(
-            '--setup-only', action='store_true', dest='setup_only',
-            help=('Build all executors and suites, and run one benchmark for each executor. ' +
-                  'This ensures executors and suites are built. ' +
-                  ' It Implies --iterations=1 --invocations=1.'),
-            default=False)
-        execution.add_argument(
-            '-B', '--without-building', action='store_false', dest='do_builds',
-            help='Disables execution of build commands for executors and suites.',
-            default=True)
-        execution.add_argument('-m', '--machine', action='store', dest='machine',
-                               default=None, help='Name of the machine configuration to be used.')
-        execution.add_argument(
-            '-s', '--scheduler', action='store', dest='scheduler',
-            default='batch',
-            help='execution order of benchmarks: '
-                 'batch, round-robin, random [default: %(default)s]')
-        execution.add_argument(
-            '-E', '--no-execution', action='store_true', dest='no_execution',
+            "-q",
+            "--quick",
+            action="store_true",
+            dest="quick",
+            help="Execute quickly. Identical with --iterations=1 --invocations=1",
             default=False,
-            help='Disables execution.'
-                 ' It allows to verify the configuration file and other parameters.')
+        )
         execution.add_argument(
-            '-D', '--no-denoise', action='store_false', dest='use_denoise',
+            "--setup-only",
+            action="store_true",
+            dest="setup_only",
+            help=(
+                "Build all executors and suites, and run one benchmark for each executor. "
+                + "This ensures executors and suites are built. "
+                + " It Implies --iterations=1 --invocations=1."
+            ),
+            default=False,
+        )
+        execution.add_argument(
+            "-B",
+            "--without-building",
+            action="store_false",
+            dest="do_builds",
+            help="Disables execution of build commands for executors and suites.",
             default=True,
-            help='Disable use of denoise, and thus, ' +
-                 ' do not try to minimize interference from the system during benchmarking.')
+        )
         execution.add_argument(
-            '-p', '--execution-plan', action='store_true', dest='execution_plan',
+            "-m",
+            "--machine",
+            action="store",
+            dest="machine",
+            default=None,
+            help="Name of the machine configuration to be used.",
+        )
+        execution.add_argument(
+            "-s",
+            "--scheduler",
+            action="store",
+            dest="scheduler",
+            default="batch",
+            help="execution order of benchmarks: "
+            "batch, round-robin, random [default: %(default)s]",
+        )
+        execution.add_argument(
+            "-E",
+            "--no-execution",
+            action="store_true",
+            dest="no_execution",
             default=False,
-            help='Print execution plan.'
-                 ' This outputs all executions that would be performed, without executing them.')
+            help="Disables execution."
+            " It allows to verify the configuration file and other parameters.",
+        )
+        execution.add_argument(
+            "-D",
+            "--no-denoise",
+            action="store_false",
+            dest="use_denoise",
+            default=True,
+            help="Disable use of denoise, and thus, "
+            + " do not try to minimize interference from the system during benchmarking.",
+        )
+        execution.add_argument(
+            "-p",
+            "--execution-plan",
+            action="store_true",
+            dest="execution_plan",
+            default=False,
+            help="Print execution plan."
+            " This outputs all executions that would be performed, without executing them.",
+        )
 
         data = parser.add_argument_group(
-            'Data and Reporting',
-            'Configure how recorded data is handled and reported')
-        data.add_argument('-c', '--clean', action='store_true', dest='clean',
-                          default=False,
-                          help='Discard old data from the data file '
-                               '(configured in the experiment).')
-        data.add_argument('-r', '--rerun', action='store_true',
-                          dest='do_rerun', default=False,
-                          help='Rerun experiments, '
-                               'and discard old data from data file.')
-        data.add_argument('-f', '--faulty', action='store_true',
-                          dest='include_faulty', default=False,
-                          help='Include results of faulty or failing runs')
-        data.add_argument('-df', '--data-file', dest='data_file', default=None,
-                          help='Record all data into given file. '
-                               'This overrides the configuration\'s settings.')
-        data.add_argument('-b', '--build-log', dest='build_log', default=None,
-                          help='File for the output of build commands.'
-                               'This overrides the configuration\'s setting.')
+            "Data and Reporting", "Configure how recorded data is handled and reported"
+        )
+        data.add_argument(
+            "-c",
+            "--clean",
+            action="store_true",
+            dest="clean",
+            default=False,
+            help="Discard old data from the data file "
+            "(configured in the experiment).",
+        )
+        data.add_argument(
+            "-r",
+            "--rerun",
+            action="store_true",
+            dest="do_rerun",
+            default=False,
+            help="Rerun experiments, " "and discard old data from data file.",
+        )
+        data.add_argument(
+            "-f",
+            "--faulty",
+            action="store_true",
+            dest="include_faulty",
+            default=False,
+            help="Include results of faulty or failing runs",
+        )
+        data.add_argument(
+            "-df",
+            "--data-file",
+            dest="data_file",
+            default=None,
+            help="Record all data into given file. "
+            "This overrides the configuration's settings.",
+        )
+        data.add_argument(
+            "-b",
+            "--build-log",
+            dest="build_log",
+            default=None,
+            help="File for the output of build commands."
+            "This overrides the configuration's setting.",
+        )
 
         codespeed = parser.add_argument_group(
-            'Reporting to Result Trackers',
-            'Some of these parameters are mandatory for reporting to Codespeed')
-        codespeed.add_argument('--commit-id', dest='commit_id', default=None,
-                               help='MANDATORY: when Codespeed reporting is '
-                                    ' used, the commit-id has to be specified.')
-        codespeed.add_argument('--environment', dest='environment',
-                               default=None,
-                               help='MANDATORY: name the machine on which the '
-                                    'results are obtained.')
-        codespeed.add_argument('--executable', dest='executable',
-                               default=None,
-                               help='The executable name given to Codespeed. '
-                                    'Default: The name used for the executor.')
-        codespeed.add_argument('--project', dest='project',
-                               default=None,
-                               help='The project name given to Codespeed. '
-                                    'Default: Value given in the config file.')
-        codespeed.add_argument('-I', '--disable-inc-report',
-                               action='store_false', dest='report_incrementally',
-                               default=True, help='Creates a report at the '
-                                                  'end instead of reporting '
-                                                  'incrementally.')
-        codespeed.add_argument('-R', '--disable-data-reporting',
-                               action='store_false', dest='use_data_reporting',
-                               default=True,
-                               help='Override configuration and '
-                                    'disable any reporting to Codespeed and ReBenchDB.')
-        codespeed.add_argument('--git-repo', dest='git_repo', default=None,
-                               help='Path to the git repository with the source for the ' +
-                                    'experiment. This is useful when the experiment is run ' +
-                                    'from a different location, for instance a RAM disk, or tmpfs.')
+            "Reporting to Result Trackers",
+            "Some of these parameters are mandatory for reporting to Codespeed",
+        )
+        codespeed.add_argument(
+            "--commit-id",
+            dest="commit_id",
+            default=None,
+            help="MANDATORY: when Codespeed reporting is "
+            " used, the commit-id has to be specified.",
+        )
+        codespeed.add_argument(
+            "--environment",
+            dest="environment",
+            default=None,
+            help="MANDATORY: name the machine on which the " "results are obtained.",
+        )
+        codespeed.add_argument(
+            "--executable",
+            dest="executable",
+            default=None,
+            help="The executable name given to Codespeed. "
+            "Default: The name used for the executor.",
+        )
+        codespeed.add_argument(
+            "--project",
+            dest="project",
+            default=None,
+            help="The project name given to Codespeed. "
+            "Default: Value given in the config file.",
+        )
+        codespeed.add_argument(
+            "-I",
+            "--disable-inc-report",
+            action="store_false",
+            dest="report_incrementally",
+            default=True,
+            help="Creates a report at the "
+            "end instead of reporting "
+            "incrementally.",
+        )
+        codespeed.add_argument(
+            "-R",
+            "--disable-data-reporting",
+            action="store_false",
+            dest="use_data_reporting",
+            default=True,
+            help="Override configuration and "
+            "disable any reporting to Codespeed and ReBenchDB.",
+        )
+        codespeed.add_argument(
+            "--git-repo",
+            dest="git_repo",
+            default=None,
+            help="Path to the git repository with the source for the "
+            + "experiment. This is useful when the experiment is run "
+            + "from a different location, for instance a RAM disk, or tmpfs.",
+        )
 
         rebench_db = parser.add_argument_group(
-            'Reporting to ReBenchDB',
-            'To interact with ReBenchDB, and provide environment information.')
-        rebench_db.add_argument('--send', dest='send_to_rebench_db',
-                                help='Send already recorded data to ReBenchDB',
-                                action='store_true', default=False)
-        rebench_db.add_argument('--db-server', dest='db_server',
-                                default=None,
-                                help='Set address of ReBenchDB server, overriding config file. '
-                                     'Example: http://localhost:33333/rebenchdb/results')
-        rebench_db.add_argument('-exp', '--experiment', dest='experiment_name',
-                                default=None,
-                                help='MANDATORY: name this experiment to uniquely identify the data'
-                                     ' and be able to know what it was for'
-                                     ' and possibly in which context it was recorded'
-                                     ', perhaps relating to a specific CI job'
-                                     ' or confirming some hypothesis.')
-        rebench_db.add_argument('--branch', dest='branch',
-                                default=None,
-                                help='The branch for which the results have to '
-                                     'be recorded, i.e., to which the commit'
-                                     ' belongs. If not provided, ReBench will try to get'
-                                     ' the name from git.')
-        rebench_db.add_argument('--report-completion', dest='report_completion',
-                                default=None, action='store_true',
-                                help='Report the completion of the name experiment to ReBenchDB.')
+            "Reporting to ReBenchDB",
+            "To interact with ReBenchDB, and provide environment information.",
+        )
+        rebench_db.add_argument(
+            "--send",
+            dest="send_to_rebench_db",
+            help="Send already recorded data to ReBenchDB",
+            action="store_true",
+            default=False,
+        )
+        rebench_db.add_argument(
+            "--db-server",
+            dest="db_server",
+            default=None,
+            help="Set address of ReBenchDB server, overriding config file. "
+            "Example: http://localhost:33333/rebenchdb/results",
+        )
+        rebench_db.add_argument(
+            "-exp",
+            "--experiment",
+            dest="experiment_name",
+            default=None,
+            help="MANDATORY: name this experiment to uniquely identify the data"
+            " and be able to know what it was for"
+            " and possibly in which context it was recorded"
+            ", perhaps relating to a specific CI job"
+            " or confirming some hypothesis.",
+        )
+        rebench_db.add_argument(
+            "--branch",
+            dest="branch",
+            default=None,
+            help="The branch for which the results have to "
+            "be recorded, i.e., to which the commit"
+            " belongs. If not provided, ReBench will try to get"
+            " the name from git.",
+        )
+        rebench_db.add_argument(
+            "--report-completion",
+            dest="report_completion",
+            default=None,
+            action="store_true",
+            help="Report the completion of the name experiment to ReBenchDB.",
+        )
 
         return parser
 
     @staticmethod
     def determine_exp_name_and_filters(filters):
-        exp_name = filters[0] if filters and (
-            not filters[0].startswith("e:") and
-            not filters[0].startswith("s:") and
-            not filters[0].startswith("t:")) else None
-        exp_filter = [f for f in filters if (f.startswith("e:") or
-                                             f.startswith("s:") or
-                                             f.startswith("t:"))]
+        exp_name = (
+            filters[0]
+            if filters
+            and (
+                not filters[0].startswith("e:")
+                and not filters[0].startswith("s:")
+                and not filters[0].startswith("t:")
+            )
+            else None
+        )
+        exp_filter = [
+            f
+            for f in filters
+            if (f.startswith("e:") or f.startswith("s:") or f.startswith("t:"))
+        ]
         return exp_name, exp_filter
 
     def _report_completion(self) -> bool:
@@ -245,15 +386,19 @@ Argument:
     @staticmethod
     def _make_args_consistent(args):
         if args.send_to_rebench_db and (args.no_execution or args.execution_plan):
-            raise UIError("Trying to send existing data with "
-                          "--no-execution or --execution-plan set is not supported.\n")
+            raise UIError(
+                "Trying to send existing data with "
+                "--no-execution or --execution-plan set is not supported.\n"
+            )
 
         if args.no_execution or args.execution_plan:
             # no execution, so no need to report data
             args.use_data_reporting = False
 
         if args.no_execution and args.execution_plan:
-            raise UIError("Options --no-execution and --execution-plan are mutually exclusive.\n")
+            raise UIError(
+                "Options --no-execution and --execution-plan are mutually exclusive.\n"
+            )
 
     def run(self, argv=None):
         if argv is None:
@@ -270,9 +415,18 @@ Argument:
 
         try:
             config = load_config(args.config[0])
-            self._config = Configurator(config, data_store, self.ui, args,
-                                        cli_reporter, exp_name, args.data_file,
-                                        args.build_log, exp_filter, args.machine)
+            self._config = Configurator(
+                config,
+                data_store,
+                self.ui,
+                args,
+                cli_reporter,
+                exp_name,
+                args.data_file,
+                args.build_log,
+                exp_filter,
+                args.machine,
+            )
         except ConfigurationError as exc:
             raise UIError(exc.message + "\n", exc)
         except ValueError as exc:
@@ -284,29 +438,39 @@ Argument:
         runs = self._config.get_runs()
         used_denoise_features = self.identify_used_denoise_features(runs)
 
-        if not self._config.options.use_denoise or not used_denoise_features.needs_denoise():
-            return self.load_data_and_execute_experiments(
-                runs, data_store, None, False)
+        if (
+            not self._config.options.use_denoise
+            or not used_denoise_features.needs_denoise()
+        ):
+            return self.load_data_and_execute_experiments(runs, data_store, None, False)
         else:
             initials_and_capabilities = None
-            show_denoise_warnings = not (self._config.artifact_review
-                                         or self._config.options.execution_plan)
+            show_denoise_warnings = not (
+                self._config.artifact_review or self._config.options.execution_plan
+            )
             try:
                 initials_and_capabilities = get_initial_settings_and_capabilities(
-                    show_denoise_warnings, self.ui, used_denoise_features)
+                    show_denoise_warnings, self.ui, used_denoise_features
+                )
 
                 return self.load_data_and_execute_experiments(
-                    runs, data_store, initials_and_capabilities, show_denoise_warnings)
+                    runs, data_store, initials_and_capabilities, show_denoise_warnings
+                )
             finally:
                 restore_noise(initials_and_capabilities, show_denoise_warnings, self.ui)
 
     def load_data_and_execute_experiments(
-            self, runs, data_store,
-            initials_and_capabilities: Optional["DenoiseInitialSettings"],
-            show_denoise_warnings: bool):
+        self,
+        runs,
+        data_store,
+        initials_and_capabilities: Optional["DenoiseInitialSettings"],
+        show_denoise_warnings: bool,
+    ):
         init_environment(initials_and_capabilities, self.ui)
         data_store.load_data(runs, self._config.options.do_rerun)
-        return self.execute_experiment(runs, initials_and_capabilities, show_denoise_warnings)
+        return self.execute_experiment(
+            runs, initials_and_capabilities, show_denoise_warnings
+        )
 
     @staticmethod
     def identify_used_denoise_features(runs) -> Denoise:
@@ -315,40 +479,55 @@ Argument:
             result = Denoise.max_union_to_get_used_features(result, run.denoise)
         return result
 
-    def execute_experiment(self, runs,
-                           initials_and_capabilities: Optional["DenoiseInitialSettings"],
-                           show_denoise_warnings: bool):
-        self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
+    def execute_experiment(
+        self,
+        runs,
+        initials_and_capabilities: Optional["DenoiseInitialSettings"],
+        show_denoise_warnings: bool,
+    ):
+        self.ui.verbose_output_info(
+            "Execute experiment: " + self._config.experiment_name + "\n"
+        )
 
-        scheduler_class = {'batch':       BatchScheduler,
-                           'round-robin': RoundRobinScheduler,
-                           'random':      RandomScheduler}.get(self._config.options.scheduler)
+        scheduler_class = {
+            "batch": BatchScheduler,
+            "round-robin": RoundRobinScheduler,
+            "random": RandomScheduler,
+        }.get(self._config.options.scheduler)
 
-        executor = Executor(runs, self._config.do_builds,
-                            self.ui,
-                            self._config.options.include_faulty,
-                            self._config.options.debug,
-                            scheduler_class,
-                            self._config.build_log, self._config.artifact_review,
-                            initials_and_capabilities,
-                            show_denoise_warnings,
-                            self._config.options.execution_plan,
-                            self._config.config_dir,
-                            self._config.options.use_denoise)
+        executor = Executor(
+            runs,
+            self._config.do_builds,
+            self.ui,
+            self._config.options.include_faulty,
+            self._config.options.debug,
+            scheduler_class,
+            self._config.build_log,
+            self._config.artifact_review,
+            initials_and_capabilities,
+            show_denoise_warnings,
+            self._config.options.execution_plan,
+            self._config.config_dir,
+            self._config.options.use_denoise,
+        )
 
         if self._config.options.no_execution:
             return True
         else:
             if self._config.artifact_review:
-                self.ui.output("Executing benchmarks for Artifact Review" +
-                               " using the reported settings.")
+                self.ui.output(
+                    "Executing benchmarks for Artifact Review"
+                    + " using the reported settings."
+                )
             return executor.execute()
+
 
 EXIT_CODE_SUCCESS = 0
 EXIT_CODE_BENCHMARK_FAILED = 1
 EXIT_CODE_ABORTED = 2
 EXIT_CODE_UI_ERROR = 3
 EXIT_CODE_EXCEPTION = 4
+
 
 def main_func():
     try:

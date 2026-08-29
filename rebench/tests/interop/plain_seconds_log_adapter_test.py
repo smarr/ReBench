@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 from unittest import TestCase
 
-from ...interop.adapter      import OutputNotParseable
+from ...interop.adapter import OutputNotParseable
 from ...interop.plain_seconds_log_adapter import PlainSecondsLogAdapter
 
 
@@ -29,6 +29,7 @@ class PlainSecondsAdapterTest(TestCase):
         class _TestRunId(object):
             def cmdline_for_next_invocation(self):
                 return "FOO"
+
         adapter = PlainSecondsLogAdapter(False, None)
         cmd = adapter.acquire_command(_TestRunId())
         self.assertEqual("FOO", cmd)

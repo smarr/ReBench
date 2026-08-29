@@ -109,8 +109,9 @@ class _RunFilter(object):
                 raise RuntimeError("Unknown filter expression: " + run_filter)
 
     def applies_to_bench(self, bench):
-        return (self._match(self._executor_filters, bench) and
-                self._match(self._suite_filters, bench))
+        return self._match(self._executor_filters, bench) and self._match(
+            self._suite_filters, bench
+        )
 
     def applies_to_tag(self, tag):
         return self._match(self._tag_filters, tag)
@@ -125,10 +126,10 @@ class _RunFilter(object):
         return False
 
 
-def validate_config(data, validator_list = None):
+def validate_config(data, validator_list=None):
     validator = Core(
-        source_data=data,
-        schema_files=[dirname(__file__) + "/rebench-schema.yml"])
+        source_data=data, schema_files=[dirname(__file__) + "/rebench-schema.yml"]
+    )
     if validator_list is not None:
         validator_list.append(validator)
     validator.validate(raise_exception=True)
@@ -141,17 +142,26 @@ def load_config(file_name):
     """
     config_data = None
     try:
-        with open(file_name, 'r') as conf_file:  # pylint: disable=unspecified-encoding
+        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
             config_data = yaml.safe_load(conf_file)
     except IOError as err:
         if err.errno == 2:
             assert err.strerror == "No such file or directory"
-            raise UIError("The requested config file (%s) could not be opened. %s.\n"
-                          % (file_name, err.strerror), err)
+            raise UIError(
+                "The requested config file (%s) could not be opened. %s.\n"
+                % (file_name, err.strerror),
+                err,
+            )
         raise UIError(str(err) + "\n", err)
     except yaml.YAMLError as err:
-        raise UIError("Parsing of the config file "
-                      + file_name + " failed.\nError " + str(err) + "\n", err)
+        raise UIError(
+            "Parsing of the config file "
+            + file_name
+            + " failed.\nError "
+            + str(err)
+            + "\n",
+            err,
+        )
 
     try:
         validators = []
@@ -160,13 +170,18 @@ def load_config(file_name):
 
         # add file name and directory to config to be able to use it when loading
         # for instance gauge adapters
-        config_data['__file__'] = file_name
-        config_data['__dir__'] = dirname(abspath(file_name))
+        config_data["__file__"] = file_name
+        config_data["__dir__"] = dirname(abspath(file_name))
     except SchemaError as err:
         errors = [escape_braces(val_err) for val_err in validators[0].validation_errors]
         raise UIError(
-            "Validation of " + file_name + " failed.\n{ind}" +
-            "\n{ind}".join(errors) + "\n", err)
+            "Validation of "
+            + file_name
+            + " failed.\n{ind}"
+            + "\n{ind}".join(errors)
+            + "\n",
+            err,
+        )
     return config_data
 
 
@@ -175,30 +190,52 @@ def validate_gauge_adapters(raw_config):
     for suite_name, suite in benchmark_suites.items():
         adapter = suite["gauge_adapter"]
         if not isinstance(adapter, (dict, str)):
-            raise UIError(("Gauge adapter for suite %s must be a string or a dictionary," +
-                           "but is %s.\n") % (suite_name, type(adapter).__name__), None)
+            raise UIError(
+                (
+                    "Gauge adapter for suite %s must be a string or a dictionary,"
+                    + "but is %s.\n"
+                )
+                % (suite_name, type(adapter).__name__),
+                None,
+            )
 
         if isinstance(adapter, dict) and len(adapter) != 1:
-            raise UIError("When specifying a custom gauge adapter," +
-                          " exactly one must to be specified." +
-                          " Currently there are %d. (%s)\n" % (len(adapter), adapter), None)
+            raise UIError(
+                "When specifying a custom gauge adapter,"
+                + " exactly one must to be specified."
+                + " Currently there are %d. (%s)\n" % (len(adapter), adapter),
+                None,
+            )
     return True
 
 
 class Configurator(object):
 
-    def __init__(self, raw_config: Mapping, data_store, ui, cli_options=None, cli_reporter=None,
-                 exp_name=None, data_file=None, build_log=None, run_filter=None, machine=None):
+    def __init__(
+        self,
+        raw_config: Mapping,
+        data_store,
+        ui,
+        cli_options=None,
+        cli_reporter=None,
+        exp_name=None,
+        data_file=None,
+        build_log=None,
+        run_filter=None,
+        machine=None,
+    ):
         self._raw_config_for_debugging = raw_config  # kept around for debugging only
 
-        self.build_log = build_log or raw_config.get('build_log', 'build.log')
-        self.data_file = data_file or raw_config.get('default_data_file', 'rebench.data')
-        self._exp_name = exp_name or raw_config.get('default_experiment', 'all')
-        self.artifact_review = raw_config.get('artifact_review', False)
+        self.build_log = build_log or raw_config.get("build_log", "build.log")
+        self.data_file = data_file or raw_config.get(
+            "default_data_file", "rebench.data"
+        )
+        self._exp_name = exp_name or raw_config.get("default_experiment", "all")
+        self.artifact_review = raw_config.get("artifact_review", False)
         self.machine = machine
-        self.machines = raw_config.get('machines', {})
-        self.config_dir = raw_config.get('__dir__', None)
-        self.config_file = raw_config.get('__file__', None)
+        self.machines = raw_config.get("machines", {})
+        self.config_dir = raw_config.get("__dir__", None)
+        self.config_file = raw_config.get("__file__", None)
 
         self._rebench_db_connector = None
 
@@ -210,21 +247,33 @@ class Configurator(object):
                 invocations = 1
                 iterations = 1
 
-        raw_machine_config = raw_config.get('machines', {})
+        raw_machine_config = raw_config.get("machines", {})
         if machine and machine not in raw_machine_config:
             raise ValueError(
-                ("The machine configuration '%s' was selected " +
-                 "but not found under the 'machines:' key.") % machine)
+                (
+                    "The machine configuration '%s' was selected "
+                    + "but not found under the 'machines:' key."
+                )
+                % machine
+            )
 
         self.base_run_details = self._assemble_base_run_details(
             raw_machine_config.get(machine, {}),
-            raw_config.get('runs', {}), invocations, iterations)
+            raw_config.get("runs", {}),
+            invocations,
+            iterations,
+        )
 
         self.base_variables = ExpVariables.compile(
-            raw_machine_config.get(machine, {}), ExpVariables.empty())
+            raw_machine_config.get(machine, {}), ExpVariables.empty()
+        )
 
         self._root_reporting = Reporting.compile(
-            raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
+            raw_config.get("reporting", {}),
+            Reporting.empty(cli_reporter),
+            cli_options,
+            ui,
+        )
 
         # Construct ReBenchDB config
         rdb_cfg = raw_config.get("reporting", None)
@@ -254,19 +303,26 @@ class Configurator(object):
         experiments = raw_config.get("experiments", {})
         self._experiments = self._compile_experiments(experiments)
 
-    def _assemble_base_run_details(self, machine_raw, run_config, invocations, iterations):
+    def _assemble_base_run_details(
+        self, machine_raw, run_config, invocations, iterations
+    ):
         machine_config = ExpRunDetails.compile(
-            machine_raw, ExpRunDetails.default(invocations, iterations))
+            machine_raw, ExpRunDetails.default(invocations, iterations)
+        )
 
-        return ExpRunDetails.compile(
-            run_config, machine_config)
+        return ExpRunDetails.compile(run_config, machine_config)
 
     @property
     def use_rebench_db(self):
         report_results = self.options is None or self.options.use_data_reporting
-        return report_results and self.rebench_db and (
-            self.rebench_db.get('send_to_rebench_db', False)
-            or self.rebench_db.get('record_all', False))
+        return (
+            report_results
+            and self.rebench_db
+            and (
+                self.rebench_db.get("send_to_rebench_db", False)
+                or self.rebench_db.get("record_all", False)
+            )
+        )
 
     def get_rebench_db_connector(self):
         if not self.use_rebench_db:
@@ -274,9 +330,10 @@ class Configurator(object):
         if self._rebench_db_connector:
             return self._rebench_db_connector
 
-        if 'project_name' not in self.rebench_db:
+        if "project_name" not in self.rebench_db:
             raise ConfigurationError(
-                "No project_name defined in configuration file under reporting.rebenchdb.")
+                "No project_name defined in configuration file under reporting.rebenchdb."
+            )
 
         if not self.options.experiment_name:
             raise ConfigurationError(
@@ -287,11 +344,15 @@ class Configurator(object):
                 "was recorded, perhaps relating to a specific CI job "
                 "or to confirm some hypothesis."
                 "\n\n"
-                "Use the --experiment option to set the name.")
+                "Use the --experiment option to set the name."
+            )
 
         self._rebench_db_connector = ReBenchDB(
-            self.rebench_db['db_url'], self.rebench_db['project_name'],
-            self.options.experiment_name, self.ui)
+            self.rebench_db["db_url"],
+            self.rebench_db["project_name"],
+            self.options.experiment_name,
+            self.ui,
+        )
         return self._rebench_db_connector
 
     def _process_cli_options(self):
@@ -322,21 +383,28 @@ class Configurator(object):
     def get_executor(self, executor_name, run_details, variables, action):
         if executor_name not in self._executors:
             raise ConfigurationError(
-                "An experiment tries to use an undefined executor: %s" % executor_name)
+                "An experiment tries to use an undefined executor: %s" % executor_name
+            )
 
         executor = Executor.compile(
-            executor_name, self._executors[executor_name],
-            run_details, variables, self.deduplicated_build_commands, action)
+            executor_name,
+            self._executors[executor_name],
+            run_details,
+            variables,
+            self.deduplicated_build_commands,
+            action,
+        )
         return executor
 
     def get_suite(self, suite_name):
         return self._suites_config[suite_name]
 
     def get_experiments(self):
-        """The configuration has been compiled before it is handed out
-           to the client class, since some configurations can override
-           others and none of that should concern other parts of the
-           system.
+        """
+        The configuration has been compiled before it is handed out
+        to the client class, since some configurations can override
+        others and none of that should concern other parts of the
+        system.
         """
         return self._experiments
 
@@ -366,13 +434,17 @@ class Configurator(object):
 
         if self._exp_name == "all":
             for exp_name in experiments:
-                results[exp_name] = self._compile_experiment(exp_name, experiments[exp_name])
+                results[exp_name] = self._compile_experiment(
+                    exp_name, experiments[exp_name]
+                )
         else:
             if self._exp_name not in experiments:
-                raise ValueError("Requested experiment '%s' not available." %
-                                 self._exp_name)
+                raise ValueError(
+                    "Requested experiment '%s' not available." % self._exp_name
+                )
             results[self._exp_name] = self._compile_experiment(
-                self._exp_name, experiments[self._exp_name])
+                self._exp_name, experiments[self._exp_name]
+            )
 
         return results
 

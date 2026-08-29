@@ -2,15 +2,16 @@ from typing import Union, Optional
 
 
 def output_as_str(string_like: Optional[Union[str, bytes]]) -> Optional[str]:
-    if string_like is not None and type(string_like) != str:  # pylint: disable=unidiomatic-typecheck
-        return string_like.decode("utf-8", errors="replace") # type: ignore
+    # pylint: disable-next=unidiomatic-typecheck
+    if string_like is not None and type(string_like) != str:
+        return string_like.decode("utf-8", errors="replace")  # type: ignore
     else:
         return string_like
 
 
 class UIError(Exception):
 
-    def __init__(self, message, exception = None):
+    def __init__(self, message, exception=None):
         super(UIError, self).__init__()
         self._message = message
         self._exception = exception

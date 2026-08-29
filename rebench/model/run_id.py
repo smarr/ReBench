@@ -50,7 +50,7 @@ def expand_user(possible_path, shell_escape):
     if something_changed:
         if shell_escape:
             return shlex.join(parts)
-        return ' '.join(parts)
+        return " ".join(parts)
 
     return possible_path
 
@@ -61,9 +61,15 @@ class RunId(object):
     configurations defined by the `Benchmark` instance.
     """
 
-    def __init__(self, benchmark: Benchmark, cores: Optional[Union[str, int]],
-                 input_size: Optional[str], var_value: Optional[str],
-                 tag: Optional[str], machine: Optional[str]):
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        cores: Optional[Union[str, int]],
+        input_size: Optional[str],
+        var_value: Optional[str],
+        tag: Optional[str],
+        machine: Optional[str],
+    ):
         self.benchmark = benchmark
         self.cores = cores
         self.input_size = input_size
@@ -164,7 +170,7 @@ class RunId(object):
 
     @property
     def machine_as_str(self):
-        return '' if self.machine is None else self.machine
+        return "" if self.machine is None else self.machine
 
     @property
     def location(self):
@@ -282,41 +288,58 @@ class RunId(object):
         return self._termination_check
 
     def is_completed(self, ui):
-        """ Check whether the termination condition is satisfied. """
+        """Check whether the termination condition is satisfied."""
         return self.get_termination_check(ui).should_terminate(
-            self.get_number_of_data_points(), None)
+            self.get_number_of_data_points(), None
+        )
 
     def run_failed(self):
-        return (self._termination_check.fails_consecutively() or
-                self._termination_check.has_too_many_failures(
-                    self.get_number_of_data_points()))
+        return (
+            self._termination_check.fails_consecutively()
+            or self._termination_check.has_too_many_failures(
+                self.get_number_of_data_points()
+            )
+        )
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = hash((self.benchmark, self.cores, self.input_size, self.var_value,
-                               self.tag, self.machine))
+            self._hash = hash(
+                (
+                    self.benchmark,
+                    self.cores,
+                    self.input_size,
+                    self.var_value,
+                    self.tag,
+                    self.machine,
+                )
+            )
         return self._hash
 
     def as_simple_string(self):
         return "%s %s %s %s %s" % (
             self.benchmark.as_simple_string(),
-            self.cores, self.input_size, self.var_value, self.tag)
+            self.cores,
+            self.input_size,
+            self.var_value,
+            self.tag,
+        )
 
     def _expand_vars(self, string):
         try:
-            return string % {'benchmark': self.benchmark.command,
-                             'cores': self.cores_as_str,
-                             'executor': self.benchmark.suite.executor.name,
-                             'input': self.input_size_as_str,
-                             'iterations': self.iterations,
-
-                             # the invocation number needs to be set right before execution
-                             # we don't know it here, and it would change the RunId identity
-                             'invocation': '%(invocation)s',
-                             'suite': self.benchmark.suite.name,
-                             'variable': self.var_value_as_str,
-                             'tag': self.tag_as_str,
-                             'warmup': self.benchmark.run_details.warmup}
+            return string % {
+                "benchmark": self.benchmark.command,
+                "cores": self.cores_as_str,
+                "executor": self.benchmark.suite.executor.name,
+                "input": self.input_size_as_str,
+                "iterations": self.iterations,
+                # the invocation number needs to be set right before execution
+                # we don't know it here, and it would change the RunId identity
+                "invocation": "%(invocation)s",
+                "suite": self.benchmark.suite.name,
+                "variable": self.var_value_as_str,
+                "tag": self.tag_as_str,
+                "warmup": self.benchmark.run_details.warmup,
+            }
         except ValueError as err:
             self._report_format_issue_and_exit(string, err)
             return None
@@ -324,11 +347,12 @@ class RunId(object):
             self._report_format_issue_and_exit(string, err)
             return None
         except KeyError as err:
-            msg = ("The configuration of %s contains improper Python format strings.\n"
-                   + "{ind}The command line configured is: %s\n"
-                   + "{ind}%s is not supported as key.\n"
-                   + "{ind}Only benchmark, input, variable, cores, and warmup are supported.\n") % (
-                       self.benchmark.name, string, err)
+            msg = (
+                "The configuration of %s contains improper Python format strings.\n"
+                + "{ind}The command line configured is: %s\n"
+                + "{ind}%s is not supported as key.\n"
+                + "{ind}Only benchmark, input, variable, cores, and warmup are supported.\n"
+            ) % (self.benchmark.name, string, err)
             raise UIError(msg, err)
 
     def cmdline(self):
@@ -368,12 +392,13 @@ class RunId(object):
             return False
 
         return (
-            self.cores == other.cores and
-            self.input_size == other.input_size and
-            self.var_value == other.var_value and
-            self.tag == other.tag and
-            self.benchmark == other.benchmark and
-            self.machine == other.machine)
+            self.cores == other.cores
+            and self.input_size == other.input_size
+            and self.var_value == other.var_value
+            and self.tag == other.tag
+            and self.benchmark == other.benchmark
+            and self.machine == other.machine
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -404,19 +429,23 @@ class RunId(object):
         return self.machine < other.machine
 
     def _report_format_issue_and_exit(self, cmdline, err):
-        msg = ("The configuration of the benchmark %s contains an improper Python format string.\n"
-               + "{ind}The command line configured is: %s\n"
-               + "{ind}Error: %s\n") % (
-                   self.benchmark.name, cmdline, err)
+        msg = (
+            "The configuration of the benchmark %s contains an improper Python format string.\n"
+            + "{ind}The command line configured is: %s\n"
+            + "{ind}Error: %s\n"
+        ) % (self.benchmark.name, cmdline, err)
 
         # figure out which format misses a conversion type
-        without_conversion_type = re.findall(
-            r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
+        without_conversion_type = re.findall(r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
         if without_conversion_type:
-            msg += ("{ind}The following elements do not have conversion types: \"%s\""
-                    + "{ind}This can be fixed by replacing for instance %s with %ss\n") % (
-                        '", "'.join(without_conversion_type),
-                        without_conversion_type[0], without_conversion_type[0])
+            msg += (
+                '{ind}The following elements do not have conversion types: "%s"'
+                + "{ind}This can be fixed by replacing for instance %s with %ss\n"
+            ) % (
+                '", "'.join(without_conversion_type),
+                without_conversion_type[0],
+                without_conversion_type[0],
+            )
         raise UIError(msg, err)
 
     def as_str_list(self, persisted_run_id: int):
@@ -431,43 +460,46 @@ class RunId(object):
 
         return result
 
-    def as_dict(self, without_benchmark = False):
+    def as_dict(self, without_benchmark=False):
         extra_args = self.benchmark.extra_args
-        result = {
-            'cmdline': self.cmdline()
-        }
+        result = {"cmdline": self.cmdline()}
 
         location = self.location
         if location is not None:
-            result['location'] = location
+            result["location"] = location
 
         if not without_benchmark:
-            result['benchmark'] = self.benchmark.as_dict()
+            result["benchmark"] = self.benchmark.as_dict()
 
         if self.cores is not None:
-            result['cores'] = self.cores
+            result["cores"] = self.cores
         if self.input_size is not None:
-            result['inputSize'] = self.input_size
+            result["inputSize"] = self.input_size
         if self.var_value is not None:
-            result['varValue'] = self.var_value
+            result["varValue"] = self.var_value
         if self.tag is not None:
-            result['tag'] = self.tag
+            result["tag"] = self.tag
         if extra_args is not None:
-            result['extraArgs'] = str(extra_args)
+            result["extraArgs"] = str(extra_args)
         if self.machine is not None:
             result["machine"] = self.machine
 
         return result
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any], benchmark = False) -> "RunId":
+    def from_dict(cls, data: Mapping[str, Any], benchmark=False) -> "RunId":
         if not benchmark:
-            benchmark = Benchmark.from_dict(data['benchmark'])
-        run_id = RunId(benchmark, data.get('cores', None), data.get('inputSize', None),
-                       data.get('varValue', None),
-                       data.get('tag', None), data.get("machine", None))
+            benchmark = Benchmark.from_dict(data["benchmark"])
+        run_id = RunId(
+            benchmark,
+            data.get("cores", None),
+            data.get("inputSize", None),
+            data.get("varValue", None),
+            data.get("tag", None),
+            data.get("machine", None),
+        )
 
-        run_id._cmdline = data['cmdline']
+        run_id._cmdline = data["cmdline"]
         return run_id
 
     @classmethod
@@ -476,20 +508,30 @@ class RunId(object):
         if run_id_id < len(id_to_run_id):
             return id_to_run_id[run_id_id]
         else:
-            raise UIError("Possibly corrupted data file. run_id %d not found." % run_id_id, None)
+            raise UIError(
+                "Possibly corrupted data file. run_id %d not found." % run_id_id, None
+            )
 
     @classmethod
     def get_column_headers(cls):
         benchmark_headers = Benchmark.get_column_headers()
-        return benchmark_headers + ["cores", "inputSize", "varValue", "tag", "machine", "runId"]
+        return benchmark_headers + [
+            "cores",
+            "inputSize",
+            "varValue",
+            "tag",
+            "machine",
+            "runId",
+        ]
 
     def __str__(self):
         return "RunId(%s, %s, %s, %s, %s, %s, %s, %d)" % (
             self.benchmark.name,
             self.cores,
             self.benchmark.extra_args,
-            self.input_size or '',
-            self.var_value  or '',
-            self.tag or '',
-            self.machine or '',
-            self.benchmark.run_details.warmup or 0)
+            self.input_size or "",
+            self.var_value or "",
+            self.tag or "",
+            self.machine or "",
+            self.benchmark.run_details.warmup or 0,
+        )

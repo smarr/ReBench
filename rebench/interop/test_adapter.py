@@ -17,25 +17,52 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from .adapter            import GaugeAdapter
-from ..model.data_point  import DataPoint
+from .adapter import GaugeAdapter
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class TestAdapter(GaugeAdapter):
-    __test__ = False # This is not a test class
+    __test__ = False  # This is not a test class
 
-    test_data = [45872, 45871, 45868, 45869, 45873,
-                 45865, 45869, 45874, 45863, 45873,
-                 45872, 45873, 45867, 45872, 45876,
-                 45871, 45870, 45870, 45868, 45869,
-                 45872, 45873, 45867, 45866, 45869,
-                 45875, 45871, 45869, 45870, 45874]
+    test_data = [
+        45872,
+        45871,
+        45868,
+        45869,
+        45873,
+        45865,
+        45869,
+        45874,
+        45863,
+        45873,
+        45872,
+        45873,
+        45867,
+        45872,
+        45876,
+        45871,
+        45870,
+        45870,
+        45868,
+        45869,
+        45872,
+        45873,
+        45867,
+        45866,
+        45869,
+        45875,
+        45871,
+        45869,
+        45870,
+        45874,
+    ]
     index = 0
 
     def parse_data(self, data, run_id, _invocation):
         point = DataPoint(run_id)
-        point.add_measurement(Measurement(1, 1, self.test_data[self.index], "ms",
-                                          run_id))
+        point.add_measurement(
+            Measurement(1, 1, self.test_data[self.index], "ms", run_id)
+        )
         self.index = (self.index + 1) % len(self.test_data)
         return [point]

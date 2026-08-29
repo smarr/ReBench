@@ -9,14 +9,22 @@ class Issue169ConfigCompositionTest(ReBenchTestCase):
         super(Issue169ConfigCompositionTest, self).setUp()
         self._set_path(__file__)
         self.cnf = Configurator(
-            load_config(self._path + '/issue_169.conf'),
-            DataStore(self.ui), self.ui, None, 'all')
+            load_config(self._path + "/issue_169.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            "all",
+        )
         self.runs = list(self.cnf.get_runs())
         self.runs = sorted(self.runs, key=lambda e: e.cmdline())
 
         self.cnf_important = Configurator(
-            load_config(self._path + '/issue_169_important.conf'),
-            DataStore(self.ui), self.ui, None, 'all')
+            load_config(self._path + "/issue_169_important.conf"),
+            DataStore(self.ui),
+            self.ui,
+            None,
+            "all",
+        )
         self.runs_important = list(self.cnf_important.get_runs())
         self.runs_important = sorted(self.runs_important, key=lambda e: e.cmdline())
 

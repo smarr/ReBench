@@ -18,9 +18,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from typing import Optional, Mapping, Any
-from . import none_or_int, none_or_float, none_or_bool, none_or_dict, \
-    remove_important, prefer_important
+from . import (
+    none_or_int,
+    none_or_float,
+    none_or_bool,
+    none_or_dict,
+    remove_important,
+    prefer_important,
+)
 from .denoise import Denoise
+
 
 def _lt_of_env_dict(a: dict, b: dict):
     assert a != b
@@ -38,53 +45,97 @@ def _lt_of_env_dict(a: dict, b: dict):
     # This case should never be reached, because we already checked for equality
     assert False, "Unexpected case reached in _lt_of_env_dict"
 
+
 class ExpRunDetails(object):
 
     @classmethod
     def compile(cls, config, defaults) -> "ExpRunDetails":
-        invocations = prefer_important(config.get('invocations'), defaults.invocations)
-        iterations = prefer_important(config.get('iterations'), defaults.iterations)
-        warmup = prefer_important(config.get('warmup'), defaults.warmup)
+        invocations = prefer_important(config.get("invocations"), defaults.invocations)
+        iterations = prefer_important(config.get("iterations"), defaults.iterations)
+        warmup = prefer_important(config.get("warmup"), defaults.warmup)
 
-        min_iteration_time = none_or_int(config.get('min_iteration_time',
-                                                    defaults.min_iteration_time))
-        max_invocation_time = none_or_int(config.get('max_invocation_time',
-                                                     defaults.max_invocation_time))
-        ignore_timeouts = none_or_bool(config.get('ignore_timeouts',
-                                                  defaults.ignore_timeouts))
+        min_iteration_time = none_or_int(
+            config.get("min_iteration_time", defaults.min_iteration_time)
+        )
+        max_invocation_time = none_or_int(
+            config.get("max_invocation_time", defaults.max_invocation_time)
+        )
+        ignore_timeouts = none_or_bool(
+            config.get("ignore_timeouts", defaults.ignore_timeouts)
+        )
 
-        parallel_interference_factor = none_or_float(config.get(
-            'parallel_interference_factor', defaults.parallel_interference_factor))
-        execute_exclusively = none_or_bool(config.get('execute_exclusively',
-                                                      defaults.execute_exclusively))
+        parallel_interference_factor = none_or_float(
+            config.get(
+                "parallel_interference_factor", defaults.parallel_interference_factor
+            )
+        )
+        execute_exclusively = none_or_bool(
+            config.get("execute_exclusively", defaults.execute_exclusively)
+        )
 
-        retries_after_failure = none_or_int(config.get('retries_after_failure',
-                                                       defaults.retries_after_failure))
-        env = none_or_dict(config.get('env', defaults.env))
+        retries_after_failure = none_or_int(
+            config.get("retries_after_failure", defaults.retries_after_failure)
+        )
+        env = none_or_dict(config.get("env", defaults.env))
 
-        denoise = Denoise.compile(config.get('denoise', {}), defaults.denoise)
+        denoise = Denoise.compile(config.get("denoise", {}), defaults.denoise)
 
-        return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
-                             max_invocation_time, ignore_timeouts, parallel_interference_factor,
-                             execute_exclusively, retries_after_failure, env, denoise,
-                             defaults.invocations_override, defaults.iterations_override)
+        return ExpRunDetails(
+            invocations,
+            iterations,
+            warmup,
+            min_iteration_time,
+            max_invocation_time,
+            ignore_timeouts,
+            parallel_interference_factor,
+            execute_exclusively,
+            retries_after_failure,
+            env,
+            denoise,
+            defaults.invocations_override,
+            defaults.iterations_override,
+        )
 
     @classmethod
     def empty(cls):
-        return ExpRunDetails(None, None, None, None, None, None, None, None, None,
-                             None, None, None, None)
+        return ExpRunDetails(
+            None, None, None, None, None, None, None, None, None, None, None, None, None
+        )
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {}, Denoise.default(),
-                             invocations_override, iterations_override)
+        return ExpRunDetails(
+            1,
+            1,
+            None,
+            50,
+            -1,
+            None,
+            None,
+            True,
+            0,
+            {},
+            Denoise.default(),
+            invocations_override,
+            iterations_override,
+        )
 
-    def __init__(self, invocations: Optional[int], iterations: Optional[int], warmup: Optional[int],
-                 min_iteration_time: Optional[int],
-                 max_invocation_time: Optional[int], ignore_timeouts, parallel_interference_factor,
-                 execute_exclusively, retries_after_failure, env: Optional[Mapping],
-                 denoise: Denoise,
-                 invocations_override: Optional[int], iterations_override: Optional[int]):
+    def __init__(
+        self,
+        invocations: Optional[int],
+        iterations: Optional[int],
+        warmup: Optional[int],
+        min_iteration_time: Optional[int],
+        max_invocation_time: Optional[int],
+        ignore_timeouts,
+        parallel_interference_factor,
+        execute_exclusively,
+        retries_after_failure,
+        env: Optional[Mapping],
+        denoise: Denoise,
+        invocations_override: Optional[int],
+        iterations_override: Optional[int],
+    ):
         self.invocations = invocations
         self.iterations = iterations
         self.warmup = warmup
@@ -103,22 +154,21 @@ class ExpRunDetails(object):
 
     def __eq__(self, other):
         return self is other or (
-            isinstance(other, self.__class__) and
-            self.invocations == other.invocations and
-            self.iterations == other.iterations and
-            self.warmup == other.warmup and
-
-            self.min_iteration_time == other.min_iteration_time and
-            self.max_invocation_time == other.max_invocation_time and
-            self.ignore_timeouts == other.ignore_timeouts and
-            self.parallel_interference_factor == other.parallel_interference_factor and
-            self.execute_exclusively == other.execute_exclusively and
-            self.retries_after_failure == other.retries_after_failure and
-            self.env == other.env and
-            self.denoise == other.denoise and
-
-            self.invocations_override == other.invocations_override and
-            self.iterations_override == other.iterations_override)
+            isinstance(other, self.__class__)
+            and self.invocations == other.invocations
+            and self.iterations == other.iterations
+            and self.warmup == other.warmup
+            and self.min_iteration_time == other.min_iteration_time
+            and self.max_invocation_time == other.max_invocation_time
+            and self.ignore_timeouts == other.ignore_timeouts
+            and self.parallel_interference_factor == other.parallel_interference_factor
+            and self.execute_exclusively == other.execute_exclusively
+            and self.retries_after_failure == other.retries_after_failure
+            and self.env == other.env
+            and self.denoise == other.denoise
+            and self.invocations_override == other.invocations_override
+            and self.iterations_override == other.iterations_override
+        )
 
     # pylint: disable-next=too-many-return-statements
     def __lt__(self, other):
@@ -144,7 +194,9 @@ class ExpRunDetails(object):
             return self.ignore_timeouts < other.ignore_timeouts
 
         if self.parallel_interference_factor != other.parallel_interference_factor:
-            return self.parallel_interference_factor < other.parallel_interference_factor
+            return (
+                self.parallel_interference_factor < other.parallel_interference_factor
+            )
 
         if self.execute_exclusively != other.execute_exclusively:
             return self.execute_exclusively < other.execute_exclusively
@@ -164,12 +216,23 @@ class ExpRunDetails(object):
         return self.iterations_override < other.iterations_override
 
     def __hash__(self):
-        return hash((self.invocations, self.iterations, self.warmup,
-                     self.min_iteration_time, self.max_invocation_time,
-                     self.ignore_timeouts, self.parallel_interference_factor,
-                     self.execute_exclusively, self.retries_after_failure,
-                     tuple(sorted(self.env.items())) if self.env else None, self.denoise,
-                     self.invocations_override, self.iterations_override))
+        return hash(
+            (
+                self.invocations,
+                self.iterations,
+                self.warmup,
+                self.min_iteration_time,
+                self.max_invocation_time,
+                self.ignore_timeouts,
+                self.parallel_interference_factor,
+                self.execute_exclusively,
+                self.retries_after_failure,
+                tuple(sorted(self.env.items())) if self.env else None,
+                self.denoise,
+                self.invocations_override,
+                self.iterations_override,
+            )
+        )
 
     def resolve_override_and_important(self):
         # resolve overrides
@@ -186,19 +249,21 @@ class ExpRunDetails(object):
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ExpRunDetails":
-        return ExpRunDetails(data.get("invocations", None),
-                             data.get("iterations", None),
-                             data.get("warmup", None),
-                             data.get("minIterationTime", None),
-                             data.get("maxInvocationTime", None),
-                             data.get("ignore_timeouts", None),
-                             data.get("parallel_interference_factor", None),
-                             data.get("execute_exclusively", None),
-                             data.get("retries_after_failure", None),
-                             data.get("env", None),
-                             Denoise.from_dict(data.get("denoise", None)),
-                             data.get("invocations_override", None),
-                             data.get("iterations_override", None))
+        return ExpRunDetails(
+            data.get("invocations", None),
+            data.get("iterations", None),
+            data.get("warmup", None),
+            data.get("minIterationTime", None),
+            data.get("maxInvocationTime", None),
+            data.get("ignore_timeouts", None),
+            data.get("parallel_interference_factor", None),
+            data.get("execute_exclusively", None),
+            data.get("retries_after_failure", None),
+            data.get("env", None),
+            Denoise.from_dict(data.get("denoise", None)),
+            data.get("invocations_override", None),
+            data.get("iterations_override", None),
+        )
 
     def as_dict(self):
         result = {}

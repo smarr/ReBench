@@ -43,15 +43,21 @@ class TerminationCheck(object):
         self._consecutive_erroneous_executions = 0
 
     def fails_consecutively(self):
-        return (self._fail_immediately or
-                (self._consecutive_erroneous_executions > 0 and
-                 self._consecutive_erroneous_executions >= self._run_id.retries_after_failure))
+        return self._fail_immediately or (
+            self._consecutive_erroneous_executions > 0
+            and self._consecutive_erroneous_executions
+            >= self._run_id.retries_after_failure
+        )
 
     def has_too_many_failures(self, number_of_data_points):
-        return (self._fail_immediately or
-                (self._failed_execution_count > 6) or (
-                    number_of_data_points > 10 and (
-                        self._failed_execution_count > number_of_data_points / 2)))
+        return (
+            self._fail_immediately
+            or (self._failed_execution_count > 6)
+            or (
+                number_of_data_points > 10
+                and (self._failed_execution_count > number_of_data_points / 2)
+            )
+        )
 
     def should_terminate(self, number_of_data_points, cmd):
         if self._fail_immediately:
@@ -60,12 +66,15 @@ class TerminationCheck(object):
             msg = "{ind}Execution has failed, benchmark is aborted.\n"
             if self._consecutive_erroneous_executions > 0:
                 msg += "{ind}{ind}The benchmark failed "
-                msg += str(self._consecutive_erroneous_executions) + " times in a row.\n"
+                msg += (
+                    str(self._consecutive_erroneous_executions) + " times in a row.\n"
+                )
             self.ui.warning(msg, self._run_id, cmd)
             return True
         elif self.has_too_many_failures(number_of_data_points):
             self.ui.warning(
-                "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id, cmd)
+                "{ind}Many runs are failing, benchmark is aborted.\n", self._run_id, cmd
+            )
             return True
         elif self._run_id.completed_invocations >= self._run_id.invocations:
             return True

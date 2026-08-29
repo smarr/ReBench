@@ -21,14 +21,14 @@ import re
 
 from .adapter import GaugeAdapter, OutputNotParseable
 
-from ..model.data_point  import DataPoint
+from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
 
 
 class SavinaLogAdapter(GaugeAdapter):
-    """ SavinaLogAdapter parses the output of the Savina benchmark harness. """
-    re_log_line = re.compile(
-        r"^([\w\.]+)\s+Iteration-(?:\d+):\s+([0-9]+\.[0-9]+) ms")
+    """SavinaLogAdapter parses the output of the Savina benchmark harness."""
+
+    re_log_line = re.compile(r"^([\w\.]+)\s+Iteration-(?:\d+):\s+([0-9]+\.[0-9]+) ms")
 
     def parse_data(self, data, run_id, invocation):
         iteration = 1
@@ -38,7 +38,9 @@ class SavinaLogAdapter(GaugeAdapter):
             match = self.re_log_line.match(line)
             if match:
                 time = float(match.group(2))
-                measure = Measurement(invocation, iteration, time, "ms", run_id, "total")
+                measure = Measurement(
+                    invocation, iteration, time, "ms", run_id, "total"
+                )
                 current = DataPoint(run_id)
                 current.add_measurement(measure)
                 data_points.append(current)

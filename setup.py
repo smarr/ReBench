@@ -29,6 +29,7 @@ from rebench import __version__ as rebench_version
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+
 class InstallAndSetDenoisePermissions(install):
     def run(self):
         install.run(self)
@@ -36,36 +37,38 @@ class InstallAndSetDenoisePermissions(install):
         denoise_path = os.path.join(install_path, "denoise.py")
         if os.path.exists(denoise_path):
             st = os.stat(denoise_path)
-            os.chmod(denoise_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            os.chmod(
+                denoise_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
 
-setup(name='ReBench',
-      version=rebench_version,
-      description='Execute and document benchmarks reproducibly.',
-      long_description=long_description,
-      long_description_content_type="text/markdown",
-      author='Stefan Marr',
-      author_email='rebench@stefan-marr.de',
-      url='https://github.com/smarr/ReBench',
-      packages=find_packages(exclude=['*.tests']),
-      package_data={'rebench': ['rebench-schema.yml']},
-      install_requires=[
-          'PyYAML>=6.0',
-          'pykwalify>=1.8.0',
-          'humanfriendly>=10.0',
-          'py-cpuinfo==9.0.0',
-          'psutil>=5.9.5'
-      ],
-      test_require=[
-          'pytest>=7.2.2'
-      ],
-      entry_points={
-          'console_scripts': [
-              'rebench = rebench.rebench:main_func',
-              'rebench-denoise = rebench.denoise:main_func'
-          ]
-      },
-      scripts=['rebench/denoise.py'],
-      cmdclass={'install': InstallAndSetDenoisePermissions},
-      test_suite='rebench.tests',
-      license='MIT'
+
+setup(
+    name="ReBench",
+    version=rebench_version,
+    description="Execute and document benchmarks reproducibly.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author="Stefan Marr",
+    author_email="rebench@stefan-marr.de",
+    url="https://github.com/smarr/ReBench",
+    packages=find_packages(exclude=["*.tests"]),
+    package_data={"rebench": ["rebench-schema.yml"]},
+    install_requires=[
+        "PyYAML>=6.0",
+        "pykwalify>=1.8.0",
+        "humanfriendly>=10.0",
+        "py-cpuinfo==9.0.0",
+        "psutil>=5.9.5",
+    ],
+    test_require=["pytest>=7.2.2"],
+    entry_points={
+        "console_scripts": [
+            "rebench = rebench.rebench:main_func",
+            "rebench-denoise = rebench.denoise:main_func",
+        ]
+    },
+    scripts=["rebench/denoise.py"],
+    cmdclass={"install": InstallAndSetDenoisePermissions},
+    test_suite="rebench.tests",
+    license="MIT",
 )

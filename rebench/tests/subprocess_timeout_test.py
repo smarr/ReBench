@@ -32,10 +32,15 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
     def test_normal_exec_no_timeout(self):
         cmdline = "sleep 1; echo Done"
-        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT,
-                                             shell=True, timeout=10)
+        return_code, output, err = sub.run(
+            cmdline,
+            {},
+            cwd=self._path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True,
+            timeout=10,
+        )
 
         self.assertEqual(0, return_code)
         self.assertEqual("Done\n", output)
@@ -43,21 +48,31 @@ class SubprocessTimeoutTest(unittest.TestCase):
 
     def test_exec_with_timeout(self):
         cmdline = "sleep 100; echo Done"
-        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT,
-                                             shell=True, timeout=1)
+        return_code, output, err = sub.run(
+            cmdline,
+            {},
+            cwd=self._path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True,
+            timeout=1,
+        )
 
         self.assertEqual(sub.E_TIMEOUT, return_code)
         self.assertEqual("", output)
         self.assertEqual(None, err)
 
     def test_exec_with_timeout_python_interpreter(self):
-        cmdline = "python3 -c \"while True: pass\""
-        (return_code, output, err) = sub.run(cmdline, {}, cwd=self._path,
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT,
-                                             shell=True, timeout=5)
+        cmdline = 'python3 -c "while True: pass"'
+        return_code, output, err = sub.run(
+            cmdline,
+            {},
+            cwd=self._path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True,
+            timeout=5,
+        )
 
         self.assertEqual(sub.E_TIMEOUT, return_code)
         self.assertEqual("", output)

@@ -17,10 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-from ...configurator     import Configurator, load_config
-from ...executor         import Executor, RoundRobinScheduler
-from ...persistence      import DataStore
-from ...reporter         import Reporter
+from ...configurator import Configurator, load_config
+from ...executor import Executor, RoundRobinScheduler
+from ...persistence import DataStore
+from ...reporter import Reporter
 from ..rebench_test_case import ReBenchTestCase
 
 
@@ -71,21 +71,24 @@ class OneMeasurementAtATime(Issue19OneDataPointAtATime):
         self.assertIs(self._run_id, run_id)
 
     def start_run(self, run_id):
-        """ Make sure that we do not do the same run twice in a row. """
+        """Make sure that we do not do the same run twice in a row."""
         print("start", run_id)
         self.assertIsNot(self._run_id, run_id)
         self._run_id = run_id
         self._run_count[run_id] = self._run_count.get(run_id, 0) + 1
 
     def test_one_measurement_at_a_time_and_correct_number_of_data_points(self):
-        cnf = Configurator(load_config(self._path + '/issue_19.conf'), DataStore(self.ui),
-                           self.ui, data_file=self._tmp_file)
+        cnf = Configurator(
+            load_config(self._path + "/issue_19.conf"),
+            DataStore(self.ui),
+            self.ui,
+            data_file=self._tmp_file,
+        )
         reporter = TestReporter(self)
         for run in cnf.get_runs():
             run.add_reporter(reporter)
 
-        ex = Executor(cnf.get_runs(), False, self.ui, False, False,
-                      RoundRobinScheduler)
+        ex = Executor(cnf.get_runs(), False, self.ui, False, False, RoundRobinScheduler)
         ex.execute()
 
         for run in cnf.get_runs():
