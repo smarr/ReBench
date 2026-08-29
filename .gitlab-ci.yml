@@ -5,52 +5,61 @@ stages:
 .shared-scripts:
   install: &PIP_INSTALL
     - pip3 install --user --editable . --break-system-packages
+    - pip3 install --user pytest --break-system-packages
 
   install-no-protection: &PIP_INSTALL_NO_BREAKING
     # This is for old Debian/Ubuntu versions and macOS/MacPorts
     - pip3 install --user --editable . --no-build-isolation
+    - pip3 install --user pytest --no-build-isolation
+
+  py-test: &PY_TEST
+    - python3 -m pytest
+
 
 kent-yuria:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [kent-yuria]
 
 kent-yuria2:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [kent-yuria2]
 
 kent-yuria3:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [kent-yuria3]
 
 kent-yuria4:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [kent-yuria4]
 
 kent-zullie1:
   stage: install
-  script: [*PIP_INSTALL_NO_BREAKING]
+  script:
+    - *PIP_INSTALL_NO_BREAKING
+    - export PATH=$PATH:/Users/gitlab-runner/Library/Python/3.12/bin
+    - *PY_TEST
   tags: [kent-zullie1]
 
 ssw-brutus:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [ssw-brutus]
 
 ssw-cassius:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [ssw-cassius]
 
 ssw-laertes:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [ssw-laertes]
 
 ssw-ophelia:
   stage: install
-  script: [*PIP_INSTALL]
+  script: [*PIP_INSTALL, *PY_TEST]
   tags: [ssw-ophelia]
