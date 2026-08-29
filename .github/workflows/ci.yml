@@ -12,6 +12,7 @@ jobs:
         include:
           - python-version: 3.11
             coverage: "--cov=rebench"
+            coverage_rebench_prefix: "coverage run --append --data-file=../.coverage"
     name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
     steps:
       - name: Checkout ReBench
@@ -27,7 +28,7 @@ jobs:
         run: pip install pytest
 
       - name: Install coverage and coveralls
-        run: pip install pytest-cov coveralls
+        run: pip install pytest-cov coverage coveralls
         if: matrix.coverage
 
       - name: Install ReBench dependencies
@@ -36,7 +37,7 @@ jobs:
       - name: Run tests
         run: |
           pytest ${{ matrix.coverage }}
-          (cd rebench && rebench ../rebench.conf e:TestRunner2)
+          (cd rebench && ${{ matrix.coverage_rebench_prefix }} `which rebench` ../rebench.conf e:TestRunner2)
 
       - name: Install and run pylint
         run: |

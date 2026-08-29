@@ -60,7 +60,7 @@ setup(
         "py-cpuinfo==9.0.0",
         "psutil>=5.9.5",
     ],
-    test_require=["pytest>=7.2.2"],
+    test_require=["pytest>=7.2.2", "coverage>=7.16.0"],
     entry_points={
         "console_scripts": [
             "rebench = rebench.rebench:main_func",
