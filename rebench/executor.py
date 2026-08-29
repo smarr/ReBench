@@ -28,8 +28,8 @@ from time import time
 from typing import TYPE_CHECKING, Optional
 
 from . import subprocess_with_timeout as subprocess_timeout
-from .denoise import paths as denoise_paths
-from .denoise_client import get_number_of_cores
+from .denoise_client import DenoiseInitialSettings, minimize_noise, restore_noise, \
+    construct_denoise_exec_prefix
 from .interop.adapter import ExecutionDeliveredNoResults, instantiate_adapter, OutputNotParseable, \
     ResultsIndicatedAsInvalid
 from .model.build_cmd import BuildCommand
@@ -39,6 +39,7 @@ from .ui import escape_braces
 
 if TYPE_CHECKING:
     from .model.run_id import RunId
+    from .model.denoise import Denoise
 
 
 class FailedBuilding(Exception):
@@ -308,15 +309,25 @@ class Executor(object):
 
     def __init__(self, runs, do_builds, ui, include_faulty=False,
                  debug=False, scheduler=BatchScheduler, build_log=None,
-                 artifact_review=False, use_nice=False, use_shielding=False,
+                 artifact_review=False,
+                 initials_and_capabilities: Optional[DenoiseInitialSettings] = None,
+                 show_denoise_warnings: bool = False,
                  print_execution_plan=False, config_dir=None,
                  use_denoise=True):
         self.use_denoise = use_denoise
         self._runs = runs
 
-        self._use_nice = use_nice
-        self._use_shielding = use_shielding
-        self.use_denoise = self.use_denoise and (use_nice or use_shielding)
+        if initials_and_capabilities:
+            self._denoise_initial = initials_and_capabilities
+        else:
+            self._denoise_initial = DenoiseInitialSettings.system_default()
+
+        self._show_denoise_warnings = show_denoise_warnings
+        self._active_denoise_cfg: Optional[Denoise] = None
+        self._active_for_profiling: Optional[bool] = None
+
+        # dict of the command that failed, the previous config and the config that failed
+        self._failed_denoise_cfg: set[tuple[Optional[Denoise], Denoise]] = set()
 
         self._print_execution_plan = print_execution_plan
 
@@ -333,6 +344,9 @@ class Executor(object):
         for run in runs:
             run.set_total_number_of_runs(num_runs)
 
+    def get_denoise_initial(self):
+        return self._denoise_initial
+
     def _create_scheduler(self, scheduler, print_execution_plan):
         # figure out whether to use parallel scheduler
         if cpu_count() > 1:
@@ -345,30 +359,17 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
-    def _construct_cmdline(self, run_id, gauge_adapter):
-        num_cores = get_number_of_cores()
+    def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
+        possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         env = run_id.env
-        cmdline = ""
-
-        if self.use_denoise:
-            cmdline += "sudo "
-            if env:
-                cmdline += "--preserve-env=" + ",".join(env.keys()) + " "
-            cmdline += denoise_paths.get_denoise() + " "
-            if not self._use_nice:
-                cmdline += "--without-nice "
-            if not self._use_shielding:
-                cmdline += "--without-shielding "
-            elif denoise_paths.has_cset():
-                cmdline += "--cset-path " + denoise_paths.get_cset() + " "
-            if run_id.is_profiling():
-                cmdline += "--for-profiling "
-            cmdline += "--num-cores " + str(num_cores) + " "
-            cmdline += "exec -- "
+        if possible_settings.needs_denoise():
+            cmdline = construct_denoise_exec_prefix(env, run_id.is_profiling(), possible_settings)
+        else:
+            cmdline = ""
 
         cmdline += gauge_adapter.acquire_command(run_id)
 
-        return cmdline
+        return cmdline, env
 
     def _build_executor_and_suite(self, run_id: "RunId"):
         name = "E:" + run_id.benchmark.suite.executor.name
@@ -400,6 +401,7 @@ class Executor(object):
 
         script = build_command.command
 
+        self._ensure_denoise_is_inactive()
         self._scheduler.indicate_build(run_id)
         self.ui.debug_output_info("Start build\n", None, script, path)
 
@@ -477,7 +479,7 @@ class Executor(object):
         if gauge_adapter is None:
             return True
 
-        cmdline = self._construct_cmdline(run_id, gauge_adapter)
+        cmdline, env = self._construct_cmdline_and_env(run_id, gauge_adapter)
 
         if self._print_execution_plan:
             if run_id.location:
@@ -495,7 +497,7 @@ class Executor(object):
 
         # now start the actual execution
         if not terminate:
-            terminate = self._generate_data_point(cmdline, gauge_adapter,
+            terminate = self._generate_data_point(cmdline, env, gauge_adapter,
                                                   run_id, termination_check)
 
         mean_of_totals = run_id.get_mean_of_totals()
@@ -526,8 +528,42 @@ class Executor(object):
 
         return adapter
 
-    def _generate_data_point(self, cmdline, gauge_adapter, run_id,
+    def _ensure_denoise_is_active(self, run_id: "RunId"):
+        possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
+        for_profiling = run_id.is_profiling()
+
+        if (self._active_denoise_cfg == possible_settings and
+                self._active_for_profiling == for_profiling):
+            # denoise is already configured as required, and possible
+            self.ui.debug_output_info("Denoise: expected configuration already active\n")
+            return
+
+        if ((self._active_denoise_cfg, possible_settings) in self._failed_denoise_cfg
+                and self._active_for_profiling == for_profiling):
+            # we already tried this configuration, but it failed, so don't try again
+            self.ui.debug_output_info("Denoise: expected configuration already tried and failed\n")
+            return
+
+        self.ui.debug_output_info("Denoise: setting requested configuration:\n")
+        result = minimize_noise(
+            possible_settings, for_profiling, self._show_denoise_warnings, self.ui)
+        if result is None:
+            self._failed_denoise_cfg.add((self._active_denoise_cfg, possible_settings))
+
+        self._active_denoise_cfg = result
+        self._active_for_profiling = for_profiling
+
+    def _ensure_denoise_is_inactive(self):
+        if self._active_denoise_cfg and not self._active_denoise_cfg.needs_denoise():
+            return
+
+        self._active_denoise_cfg = restore_noise(
+            self._denoise_initial, self._show_denoise_warnings, self.ui)
+        self._active_for_profiling = None
+
+    def _generate_data_point(self, cmdline, env, gauge_adapter, run_id: "RunId",
                              termination_check):
+        self._ensure_denoise_is_active(run_id)
         assert not self._print_execution_plan
         output = ""
 

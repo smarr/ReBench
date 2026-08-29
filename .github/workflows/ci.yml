@@ -74,15 +74,13 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install PyTest
-        run: pip install pytest
-
-      - name: Install ReBench dependencies
-        run: pip install .
-
-      - name: Run tests
+      - name: Run Tests
         run: |
-          python -m pytest
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python3 -m pip install pytest
+          python3 -m pip install .
+          python3 -m pytest
           (cd rebench && rebench ../rebench.conf e:TestRunner2)
 
   test-docker:

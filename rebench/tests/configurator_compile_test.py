@@ -41,6 +41,7 @@ RUN_DETAILS = {
     "ignore_timeouts": [True, False],
     "retries_after_failure": [8, 9],
     "env": [{"MY_VAR": "value"}, {"MY_VAR": "value2"}],
+    "denoise": [{"use_nice": True}, {"use_nice": False}],
 }
 
 # the variables, with a low priority [0] and a high priority [1] setting
@@ -137,12 +138,16 @@ def test_experiment_with_higher_priority_setting(
     assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_val)
 
 
-def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_val):
+def _create_config_and_get_run(ui, data_store, raw_config):
     cnf = Configurator(raw_config, data_store, ui, machine="testMachine")
     runs = list(cnf.get_runs())
-    assert len(runs) == 1
 
-    run = runs[0]
+    assert len(runs) == 1
+    return runs[0]
+
+
+def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_val):
+    run = _create_config_and_get_run(ui, data_store, raw_config)
 
     # need to do just a little bit of mapping
     # the names are not a 1:1 match, and some of the lists will turn into distinct runs
@@ -159,6 +164,9 @@ def assert_expected_value_in_config(ui, data_store, raw_config, val_key, high_va
     elif val_key == "tags":
         val_key = "tag"
         high_val = high_val[0]
+    elif val_key == "denoise":
+        assert run.denoise.use_nice == high_val["use_nice"]
+        return
 
     assert getattr(run, val_key) == high_val
 
@@ -180,3 +188,25 @@ def test_machine_settings_being_used(ui, data_store, key, value):
     add_setting(raw_config, "machine", key, value)
 
     assert_expected_value_in_config(ui, data_store, raw_config, key, value)
+
+
+@pytest.mark.parametrize("no_turbo", [True, False, "no_change"])
+def test_machine_setting_denoise_no_turbo(ui, data_store, no_turbo):
+    raw_config = create_raw_configuration()
+    add_setting(raw_config, "machine", "denoise", {"no_turbo": no_turbo})
+
+    run = _create_config_and_get_run(ui, data_store, raw_config)
+
+    assert run.denoise.no_turbo == no_turbo
+    assert run.denoise.requested_no_turbo == (no_turbo != "no_change")
+
+
+@pytest.mark.parametrize("value", [True, False, "no_change"])
+def test_machine_setting_denoise_min_perf_samp(ui, data_store, value):
+    raw_config = create_raw_configuration()
+    add_setting(raw_config, "machine", "denoise", {"minimize_perf_sampling": value})
+
+    run = _create_config_and_get_run(ui, data_store, raw_config)
+
+    assert run.denoise.minimize_perf_sampling == value
+    assert run.denoise.requested_minimize_perf_sampling == (value != "no_change")

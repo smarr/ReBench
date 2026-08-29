@@ -7,7 +7,10 @@ from argparse import ArgumentParser
 from math import log, floor
 from multiprocessing import Pool
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
-from typing import Union
+from typing import Optional, Union, Literal, TypedDict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import NotRequired
 
 denoise_py = os.path.abspath(__file__)
 
@@ -24,6 +27,32 @@ if __name__ == "__main__":
 else:
     from .output import output_as_str, UIError
     from .subprocess_kill import kill_process
+
+
+class DenoiseCapabilities(TypedDict):
+    can_set_nice: "NotRequired[bool]"
+    can_set_nice_error: "NotRequired[str]"
+
+    can_set_shield: "NotRequired[bool]"
+    can_set_shield_error: "NotRequired[str]"
+
+    can_set_no_turbo: "NotRequired[bool]"
+    can_set_no_turbo_error: "NotRequired[str]"
+    initial_no_turbo: "NotRequired[Union[bool, str, None]]"
+
+    can_set_scaling_governor: "NotRequired[bool]"
+    can_set_scaling_governor_error: "NotRequired[str]"
+    initial_scaling_governor: "NotRequired[str]"
+
+    can_minimize_perf_sampling: "NotRequired[bool]"
+    can_minimize_perf_sampling_error: "NotRequired[str]"
+
+
+class DenoiseSettings(TypedDict):
+    shielding: "NotRequired[Union[str, bool]]"
+    no_turbo: "NotRequired[Union[str, bool]]"
+    scaling_governor: "NotRequired[str]"
+    perf_event_max_sample_rate: "NotRequired[Union[str, bool]]"
 
 
 class CommandsPaths:
@@ -111,19 +140,21 @@ class CommandsPaths:
 paths = CommandsPaths()
 
 
-def _can_set_niceness() -> bool:
+def _can_set_niceness() -> Union[bool, str]:
     """
     Check whether we can ask the operating system to influence the priority of
     our benchmarks.
     """
     try:
-        output = check_output(["nice", "-n-20", "echo", "test"], stderr=STDOUT)
-        output = output_as_str(output)
+        out = check_output(["nice", "-n-20", "echo", "test"], stderr=STDOUT)
+        output = output_as_str(out)
     except OSError:
-        return False
+        return "failed: OSError"
 
-    if "cannot set niceness" in output or "Permission denied" in output:
-        return False
+    if output is not None and (
+        "cannot set niceness" in output or "Permission denied" in output
+    ):
+        return "failed: permission denied"
     else:
         return True
 
@@ -136,52 +167,96 @@ def _shield_upper_bound(num_cores):
     return num_cores - 1
 
 
-def _activate_shielding(num_cores) -> Union[bool, str]:
+def _get_core_spec(num_cores) -> str:
     min_cores = _shield_lower_bound(num_cores)
     max_cores = _shield_upper_bound(num_cores)
     core_spec = "%d-%d" % (min_cores, max_cores)
+    return core_spec
+
+
+# pylint: disable-next=too-many-return-statements
+def _activate_shielding(shield, num_cores) -> str:
+    if not num_cores:
+        return "failed: num-cores not set"
+
+    if shield == "basic":
+        core_spec = _get_core_spec(num_cores)
+    else:
+        core_spec = shield
 
     if not paths.has_cset():
-        return False
+        return "failed: cset-path not set"
 
     try:
-        output = check_output(
+        out = check_output(
             [paths.get_cset(), "shield", "-c", core_spec, "-k", "on"], stderr=STDOUT
         )
-        output = output_as_str(output)
-    except OSError:
-        return False
+        output = output_as_str(out)
+    except OSError as e:
+        return "failed: " + str(e)
+    except CalledProcessError as e:
+        output = output_as_str(e.output)
+        if "unknown filesystem type 'cpuset'" in output:
+            return "failed: system does not support cgroups v1"
+
+    if output is None:
+        return "failed: no output"
 
     if "Permission denied" in output:
-        return False
+        return "failed: Permission denied"
 
     if "kthread shield activated" in output:
         return core_spec
 
-    return False
+    return "failed: " + output
 
 
-def _reset_shielding() -> bool:
+def _reset_shielding() -> Union[str, bool]:
+    if not paths.has_cset():
+        return "failed: cset-path not set"
+
     try:
-        output = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
-        output = output_as_str(output)
-        return "cset: done" in output
+        out = check_output([paths.get_cset(), "shield", "-r"], stderr=STDOUT)
+        output = output_as_str(out)
+        return output is not None and "cset: done" in output
     except OSError:
-        return False
+        return "failed: OSError"
     except CalledProcessError:
-        return False
+        return "failed: CalledProcessError"
 
+
+DEFAULT_SHIELD = "basic"
 
 # For intel_pstate systems, there's only powersave and performance
 SCALING_GOVERNOR_POWERSAVE = "powersave"
 SCALING_GOVERNOR_PERFORMANCE = "performance"
+DEFAULT_SCALING_GOVERNOR = SCALING_GOVERNOR_PERFORMANCE
+
+
+def _read_scaling_governor() -> str:
+    try:
+        with open(
+            "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
+            "r",
+            encoding="utf-8",
+        ) as gov_file:
+            return gov_file.read().strip()
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+        return "failed: " + str(e)
 
 
 def _set_scaling_governor(governor, num_cores) -> str:
-    assert governor in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE), (
-        "The scaling governor is expected to be performance or powersave, but was "
-        + governor
-    )
+    if governor not in (SCALING_GOVERNOR_POWERSAVE, SCALING_GOVERNOR_PERFORMANCE):
+        print(
+            "The scaling governor is expected to be 'performance' or 'powersave', but was "
+            + governor
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
+    if not num_cores:
+        return "failed: num-cores not set"
 
     try:
         for cpu_i in range(num_cores):
@@ -189,13 +264,25 @@ def _set_scaling_governor(governor, num_cores) -> str:
             with open(filename, "w", encoding="utf-8") as gov_file:
                 gov_file.write(governor + "\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
 
     return governor
 
 
-def _set_no_turbo(with_no_turbo):
-    if with_no_turbo:
+def _read_no_turbo() -> Optional[Union[bool, str]]:
+    try:
+        with open(
+            "/sys/devices/system/cpu/intel_pstate/no_turbo", "r", encoding="utf-8"
+        ) as nt_file:
+            return nt_file.read().strip() == "1"
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
+        return "failed: " + str(e)
+
+
+def _set_no_turbo(no_turbo_value: bool) -> Union[Literal[True], str]:
+    if no_turbo_value:
         value = "1"
     else:
         value = "0"
@@ -205,12 +292,15 @@ def _set_no_turbo(with_no_turbo):
             "/sys/devices/system/cpu/intel_pstate/no_turbo", "w", encoding="utf-8"
         ) as nt_file:
             nt_file.write(value + "\n")
-    except IOError:
-        return "failed"
-    return with_no_turbo
+    except IOError as e:
+        if e.errno == 2 and "No such file" in str(e):
+            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
+        return "failed: " + str(e)
+
+    return True
 
 
-def _configure_perf_sampling(for_profiling: bool) -> Union[int, str]:
+def _configure_perf_sampling(for_profiling: bool) -> Union[Literal[True], str]:
     try:
         with open(
             "/proc/sys/kernel/perf_cpu_time_max_percent", "w", encoding="utf-8"
@@ -232,13 +322,10 @@ def _configure_perf_sampling(for_profiling: bool) -> Union[int, str]:
                 "/proc/sys/kernel/perf_event_paranoid", "w", encoding="utf-8"
             ) as perf_file:
                 perf_file.write("-1\n")
-    except IOError:
-        return "failed"
+    except IOError as e:
+        return "failed: " + str(e)
 
-    if for_profiling:
-        return 0
-    else:
-        return 1
+    return True
 
 
 def _restore_perf_sampling() -> str:
@@ -258,65 +345,159 @@ def _restore_perf_sampling() -> str:
         ) as perf_file:
             perf_file.write("3\n")
     except IOError:
-        return "failed"
+        return "failed: IOError"
     return "restored"
 
 
-def _minimize_noise(num_cores, use_nice, use_shielding, for_profiling) -> dict:
-    governor = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
-    no_turbo = _set_no_turbo(True)
-    perf = _configure_perf_sampling(for_profiling)
+# pylint: disable-next=too-many-statements
+def _initial_settings_and_capabilities(
+    args,
+) -> DenoiseCapabilities:
+    result: DenoiseCapabilities = {}
 
-    can_nice = _can_set_niceness() if use_nice else False
-    shielding = _activate_shielding(num_cores) if use_shielding else False
+    if args.use_nice:
+        r = _can_set_niceness()
+        if r is True:
+            result["can_set_nice"] = r
+        else:
+            result["can_set_nice_error"] = str(r)
+            result["can_set_nice"] = False
 
-    return {
-        "scaling_governor": governor,
-        "no_turbo": no_turbo,
-        "perf_event_max_sample_rate": perf,
-        "can_set_nice": can_nice,
-        "shielding": shielding,
-    }
+    if args.use_shielding:
+        num_cores = int(args.num_cores) if args.num_cores else None
+        if paths.has_cset() and num_cores:
+            shield = args.shield or DEFAULT_SHIELD
+            output = _activate_shielding(shield, num_cores)
+            if "failed" not in output:
+                _reset_shielding()
+                can_use_shielding = True
+            else:
+                can_use_shielding = False
+                result["can_set_shield_error"] = output
+        else:
+            can_use_shielding = False
+        result["can_set_shield"] = can_use_shielding
+
+    if args.use_no_turbo:
+        initial_no_turbo = _read_no_turbo()
+        can_set_no_turbo = False
+
+        if "failed" not in str(initial_no_turbo) and not initial_no_turbo:
+            r = _set_no_turbo(True)
+            can_set_no_turbo = r is True
+            if can_set_no_turbo:
+                _set_no_turbo(False)
+            else:
+                result["can_set_no_turbo_error"] = str(r)
+
+        result["can_set_no_turbo"] = can_set_no_turbo
+        result["initial_no_turbo"] = initial_no_turbo
+
+    if args.use_scaling_governor:
+        initial_governor = _read_scaling_governor()
+        can_set_governor = False
+
+        if (
+            "failed" not in initial_governor
+            and initial_governor != SCALING_GOVERNOR_PERFORMANCE
+        ):
+            r = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
+            can_set_governor = r == SCALING_GOVERNOR_PERFORMANCE
+            if not can_set_governor:
+                result["can_set_scaling_governor_error"] = r
+
+        result["can_set_scaling_governor"] = can_set_governor
+        result["initial_scaling_governor"] = initial_governor
+
+    if args.use_mini_perf_sampling:
+        r = _configure_perf_sampling(args.for_profiling)
+        can_minimize_perf_sampling = r is True
+        if can_minimize_perf_sampling:
+            _restore_perf_sampling()
+        else:
+            result["can_minimize_perf_sampling_error"] = str(r)
+        result["can_minimize_perf_sampling"] = can_minimize_perf_sampling
+
+    return result
 
 
-def _restore_standard_settings(num_cores, use_shielding) -> dict:
-    governor = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
-    no_turbo = _set_no_turbo(False)
-    perf = _restore_perf_sampling()
-    shielding = _reset_shielding() if use_shielding else False
+def _minimize_noise(args) -> DenoiseSettings:
+    num_cores = int(args.num_cores) if args.num_cores else None
+    result: DenoiseSettings = {}
 
-    return {
-        "scaling_governor": governor,
-        "no_turbo": no_turbo,
-        "perf_event_max_sample_rate": perf,
-        "shielding": shielding,
-    }
+    if args.use_shielding:
+        shield = args.shield or DEFAULT_SHIELD
+        result["shielding"] = _activate_shielding(shield, num_cores)
+
+    if args.use_no_turbo:
+        r = _set_no_turbo(args.no_turbo)
+        result["no_turbo"] = "succeeded" if r is True else r
+
+    if args.use_scaling_governor:
+        scaling_governor = args.scaling_governor or DEFAULT_SCALING_GOVERNOR
+        result["scaling_governor"] = _set_scaling_governor(scaling_governor, num_cores)
+
+    if args.use_mini_perf_sampling:
+        r = _configure_perf_sampling(args.for_profiling)
+        result["perf_event_max_sample_rate"] = "succeeded" if r is True else r
+
+    return result
 
 
-def _exec(num_cores, use_nice, use_shielding, args) -> str:
+def _restore_standard_settings(args) -> DenoiseSettings:
+    num_cores = int(args.num_cores) if args.num_cores else None
+    result: DenoiseSettings = {}
+
+    if args.use_shielding:
+        result["shielding"] = _reset_shielding()
+
+    if args.use_no_turbo:
+        result["no_turbo"] = _set_no_turbo(False)
+
+    if args.use_scaling_governor:
+        result["scaling_governor"] = _set_scaling_governor(
+            SCALING_GOVERNOR_POWERSAVE, num_cores
+        )
+
+    if args.use_mini_perf_sampling:
+        result["perf_event_max_sample_rate"] = _restore_perf_sampling()
+
+    return result
+
+
+# pylint: disable-next=inconsistent-return-statements
+def _exec(args, remaining_args) -> str:
+    num_cores = int(args.num_cores) if args.num_cores else None
+
     cmdline = []
-    if use_shielding and paths.has_cset():
+    if args.use_shielding:
+        if not paths.has_cset():
+            return "cset-path not set"
+        if not num_cores:
+            return "num-cores not set"
+
         cmdline += [paths.get_cset(), "shield", "--exec", "--"]
-    if use_nice:
+
+    if args.use_nice:
         cmdline += ["nice", "-n-20"]
-    cmdline += args
+    cmdline += remaining_args
 
     # the first element of cmdline is ignored as argument, since it's the file argument, too
     cmd = cmdline[0]
 
     # communicate the used core spec to executed command as part of its environment
     env = os.environ.copy()
-    if use_shielding and paths.has_cset():
-        min_cores = _shield_lower_bound(num_cores)
-        max_cores = _shield_upper_bound(num_cores)
-        core_spec = "%d-%d" % (min_cores, max_cores)
+    if args.use_shielding:
+        assert paths.has_cset()
+        assert num_cores
+        core_spec = _get_core_spec(num_cores)
         env["REBENCH_DENOISE_CORE_SET"] = core_spec
 
     os.execvpe(cmd, cmdline, env)
 
 
 def _kill(proc_id):
-    kill_process(int(proc_id), True, None, None)
+    return kill_process(int(proc_id), True, None, None)
 
 
 def _calculate(core_id):
@@ -365,6 +546,7 @@ def _shell_options():
         help="Output results as JSON for processing",
     )
     parser.add_argument(
+        "-N",
         "--without-nice",
         action="store_false",
         default=True,
@@ -372,6 +554,7 @@ def _shell_options():
         help="Don't try setting process niceness",
     )
     parser.add_argument(
+        "-S",
         "--without-shielding",
         action="store_false",
         default=True,
@@ -379,27 +562,86 @@ def _shell_options():
         help="Don't try shielding cores",
     )
     parser.add_argument(
+        "-s",
+        "--shield",
+        action="store",
+        default=None,
+        dest="shield",
+        help=f"Shielding specification. Default is '{DEFAULT_SHIELD}'.",
+    )
+    parser.add_argument(
+        "-T",
+        "--without-no-turbo",
+        action="store_false",
+        default=True,
+        dest="use_no_turbo",
+        help="Don't try setting no_turbo",
+    )
+    parser.add_argument(
+        "-nt",
+        "--no-turbo",
+        action="store",
+        default=None,
+        dest="no_turbo",
+        choices=[True, False],
+        # convert input string to boolean
+        type=lambda x: x.lower() == "true",
+        help="Set no_turbo to the given boolean.",
+    )
+    parser.add_argument(
+        "-G",
+        "--without-scaling-governor",
+        action="store_false",
+        default=True,
+        dest="use_scaling_governor",
+        help="Don't try setting scaling governor",
+    )
+    parser.add_argument(
+        "-g",
+        "--governor",
+        action="store",
+        default=None,
+        dest="scaling_governor",
+        help=f"Scaling Governor to set. Default value is '{DEFAULT_SCALING_GOVERNOR}'.",
+    )
+    parser.add_argument(
+        "-P",
+        "--without-min-perf-sampling",
+        action="store_false",
+        default=True,
+        dest="use_mini_perf_sampling",
+        help="Don't try to minimize perf sampling",
+    )
+    parser.add_argument(
+        "-p",
         "--for-profiling",
         action="store_true",
         default=False,
         dest="for_profiling",
         help="Don't restrict CPU usage by profiler",
     )
-    parser.add_argument("--cset-path", help="Absolute path to cset", default=None)
     parser.add_argument(
-        "--num-cores", help="Number of cores. Is required.", default=None
+        "--cset-path",
+        help="Absolute path to cset. Needed for `init`, `minimize`, and `restore`.",
+        default=None,
+    )
+    parser.add_argument(
+        "--num-cores",
+        help="Number of cores. Needed for `init`, `minimize`, and `restore`.",
+        default=None,
     )
     parser.add_argument(
         "command",
         help=(
-            "`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
+            "`init`|`minimize`|`restore`|`exec -- `|`kill pid`|`test`: "
+            "`init` determines initial settings and capabilities. "
             "`minimize` sets system to reduce noise. "
             "`restore` sets system to the assumed original settings. "
-            "`exec -- ` executes the given arguments. "
+            "`exec -- ` executes the given command with arguments. "
             "`kill pid` send kill signal to the process with given id "
             "and all child processes. "
             "`test` executes a computation for 20 seconds in parallel. "
-            "it is only useful to test rebench-denoise itself."
+            "It is only useful to test rebench-denoise itself."
         ),
         default=None,
     )
@@ -410,6 +652,101 @@ EXIT_CODE_SUCCESS = 0
 EXIT_CODE_CHANGING_SETTINGS_FAILED = 1
 EXIT_CODE_NUM_CORES_UNSET = 2
 EXIT_CODE_NO_COMMAND_SELECTED = 3
+EXIT_CODE_EXEC_FAILED = 4
+EXIT_CODE_INVALID_SETTINGS = 5
+
+
+def _report_init(result: DenoiseCapabilities, args):
+    if args.use_nice:
+        print("Can set niceness: ", result.get("can_set_nice", "Unknown"))
+        if "can_set_nice_error" in result:
+            print("\tError: ", result.get("can_set_nice_error"))
+
+    if args.use_shielding:
+        print("Can use shielding: ", result.get("can_set_shield", "Unknown"))
+        if "can_set_shield_error" in result:
+            print("\tError: ", result.get("can_set_shield_error"))
+
+    if args.use_no_turbo:
+        print("Can set no_turbo: ", result.get("can_set_no_turbo", "Unknown"))
+        print("Initial no_turbo: ", result.get("initial_no_turbo", "Unknown"))
+        if "can_set_no_turbo_error" in result:
+            print("\tError: ", result.get("can_set_no_turbo_error"))
+
+    if args.use_scaling_governor:
+        print(
+            "Can set scaling_governor: ",
+            result.get("can_set_scaling_governor", "Unknown"),
+        )
+        print(
+            "Initial scaling_governor: ",
+            result.get("initial_scaling_governor", "Unknown"),
+        )
+        if "can_set_scaling_governor_error" in result:
+            print("\tError: ", result.get("can_set_scaling_governor_error"))
+
+    if args.use_mini_perf_sampling:
+        print(
+            "Can minimize perf sampling: ",
+            result.get("can_minimize_perf_sampling", "Unknown"),
+        )
+        if "can_minimize_perf_sampling_error" in result:
+            print("\tError: ", result.get("can_minimize_perf_sampling_error"))
+
+
+def _report(result: Union[str, DenoiseSettings], args):
+    if isinstance(result, str):
+        print(result)
+        return
+
+    if args.use_shielding:
+        print("Enabled core shielding:             ", result.get("shielding", False))
+
+    if args.use_scaling_governor:
+        print(
+            "Setting scaling_governor:           ", result.get("scaling_governor", None)
+        )
+
+    if args.use_no_turbo:
+        print("Setting no_turbo:                   ", result.get("no_turbo", False))
+
+    if args.use_mini_perf_sampling:
+        print(
+            "Setting perf_event_max_sample_rate: ",
+            result.get("perf_event_max_sample_rate", None),
+        )
+
+
+def _any_failed(result: dict):
+    return any(str(v).startswith("failed") for v in result.values())
+
+
+def _check_for_inconsistent_settings(args):
+    if args.use_no_turbo is False and args.no_turbo is not None:
+        print(
+            "Error: -nt|--no-turbo can only be set "
+            "when -T|--without-no-turbo is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+    elif args.use_no_turbo and args.no_turbo is None and args.command == "minimize":
+        print(
+            "Error: Attempting to set no_turbo, but no value specified with -nt|--no-turbo."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
+    if args.use_shielding is False and args.shield is not None:
+        print(
+            "Error: -s|--shield can only be set "
+            "when -S|--without-shielding is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
+
+    if args.use_scaling_governor is False and args.scaling_governor is not None:
+        print(
+            "Error: -g|--governor can only be set "
+            "when -G|--without-scaling-governor is not set."
+        )
+        sys.exit(EXIT_CODE_INVALID_SETTINGS)
 
 
 def main_func():
@@ -418,45 +755,39 @@ def main_func():
 
     paths.set_cset(args.cset_path)
 
-    num_cores = int(args.num_cores) if args.num_cores else None
+    _check_for_inconsistent_settings(args)
+
     result = {}
 
-    if args.command == "minimize" and num_cores is not None:
-        result = _minimize_noise(
-            num_cores, args.use_nice, args.use_shielding, args.for_profiling
-        )
-    elif args.command == "restore" and num_cores is not None:
-        result = _restore_standard_settings(num_cores, args.use_shielding)
+    if args.command == "init":
+        result = _initial_settings_and_capabilities(args)
+    elif args.command == "minimize":
+        result = _minimize_noise(args)
+    elif args.command == "restore":
+        result = _restore_standard_settings(args)
     elif args.command == "exec":
-        _exec(num_cores, args.use_nice, args.use_shielding, remaining_args)
+        result = _exec(args, remaining_args)
     elif args.command == "kill":
         _kill(remaining_args[0])
-    elif args.command == "test" and num_cores is not None:
-        _test(num_cores)
+    elif args.command == "test":
+        _test(args)
     else:
         arg_parser.print_help()
-        if num_cores is None:
-            print("The --num-cores must be provided.")
-            return EXIT_CODE_NUM_CORES_UNSET
         return EXIT_CODE_NO_COMMAND_SELECTED
 
     if args.json:
         print(json.dumps(result))
     else:
-        print(
-            "Setting scaling_governor:           ", result.get("scaling_governor", None)
-        )
-        print("Setting no_turbo:                   ", result.get("no_turbo", False))
-        print(
-            "Setting perf_event_max_sample_rate: ",
-            result.get("perf_event_max_sample_rate", None),
-        )
-        print("")
-        print("Enabled core shielding:             ", result.get("shielding", False))
-        print("")
-        print("Can set niceness:                   ", result.get("can_set_nice", False))
+        if args.command == "init":
+            _report_init(result, args)
+        if args.command == "exec":
+            # should not have returned
+            print(result)
+            return EXIT_CODE_EXEC_FAILED
+        else:
+            _report(result, args)
 
-    if "failed" in result.values():
+    if _any_failed(result):
         return EXIT_CODE_CHANGING_SETTINGS_FAILED
     else:
         return EXIT_CODE_SUCCESS

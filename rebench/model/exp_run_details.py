@@ -20,6 +20,7 @@
 from typing import Optional, Mapping, Any
 from . import none_or_int, none_or_float, none_or_bool, none_or_dict, \
     remove_important, prefer_important
+from .denoise import Denoise
 
 def _lt_of_env_dict(a: dict, b: dict):
     assert a != b
@@ -61,25 +62,28 @@ class ExpRunDetails(object):
                                                        defaults.retries_after_failure))
         env = none_or_dict(config.get('env', defaults.env))
 
+        denoise = Denoise.compile(config.get('denoise', {}), defaults.denoise)
+
         return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
                              max_invocation_time, ignore_timeouts, parallel_interference_factor,
-                             execute_exclusively, retries_after_failure, env,
+                             execute_exclusively, retries_after_failure, env, denoise,
                              defaults.invocations_override, defaults.iterations_override)
 
     @classmethod
     def empty(cls):
         return ExpRunDetails(None, None, None, None, None, None, None, None, None,
-                             None, None, None)
+                             None, None, None, None)
 
     @classmethod
     def default(cls, invocations_override, iterations_override):
-        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {},
+        return ExpRunDetails(1, 1, None, 50, -1, None, None, True, 0, {}, Denoise.default(),
                              invocations_override, iterations_override)
 
     def __init__(self, invocations: Optional[int], iterations: Optional[int], warmup: Optional[int],
                  min_iteration_time: Optional[int],
                  max_invocation_time: Optional[int], ignore_timeouts, parallel_interference_factor,
                  execute_exclusively, retries_after_failure, env: Optional[Mapping],
+                 denoise: Denoise,
                  invocations_override: Optional[int], iterations_override: Optional[int]):
         self.invocations = invocations
         self.iterations = iterations
@@ -92,6 +96,7 @@ class ExpRunDetails(object):
         self.execute_exclusively = execute_exclusively
         self.retries_after_failure = retries_after_failure
         self.env = env
+        self.denoise = denoise
 
         self.invocations_override = invocations_override
         self.iterations_override = iterations_override
@@ -110,6 +115,7 @@ class ExpRunDetails(object):
             self.execute_exclusively == other.execute_exclusively and
             self.retries_after_failure == other.retries_after_failure and
             self.env == other.env and
+            self.denoise == other.denoise and
 
             self.invocations_override == other.invocations_override and
             self.iterations_override == other.iterations_override)
@@ -149,6 +155,9 @@ class ExpRunDetails(object):
         if self.env != other.env:
             return _lt_of_env_dict(self.env, other.env)
 
+        if self.denoise != other.denoise:
+            return self.denoise < other.denoise
+
         if self.invocations_override != other.invocations_override:
             return self.invocations_override < other.invocations_override
 
@@ -159,7 +168,7 @@ class ExpRunDetails(object):
                      self.min_iteration_time, self.max_invocation_time,
                      self.ignore_timeouts, self.parallel_interference_factor,
                      self.execute_exclusively, self.retries_after_failure,
-                     tuple(sorted(self.env.items())) if self.env else None,
+                     tuple(sorted(self.env.items())) if self.env else None, self.denoise,
                      self.invocations_override, self.iterations_override))
 
     def resolve_override_and_important(self):
@@ -187,6 +196,7 @@ class ExpRunDetails(object):
                              data.get("execute_exclusively", None),
                              data.get("retries_after_failure", None),
                              data.get("env", None),
+                             Denoise.from_dict(data.get("denoise", None)),
                              data.get("invocations_override", None),
                              data.get("iterations_override", None))
 
@@ -222,6 +232,9 @@ class ExpRunDetails(object):
 
         if self.env is not None:
             result["env"] = self.env
+
+        if self.denoise is not None:
+            result["denoise"] = self.denoise.as_dict()
 
         if self.invocations_override is not None:
             result["invocations_override"] = self.invocations_override

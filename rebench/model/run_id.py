@@ -20,9 +20,7 @@
 import os
 import re
 import shlex
-from typing import TYPE_CHECKING, Any
-
-from typing import Optional, Mapping, Union
+from typing import TYPE_CHECKING, Any, Optional, Mapping, Union
 
 from .benchmark import Benchmark
 from .termination_check import TerminationCheck
@@ -135,6 +133,10 @@ class RunId(object):
         for key, value in self._expandend_env.items():
             self._expandend_env[key] = expand_user(value, False)
         return self._expandend_env
+
+    @property
+    def denoise(self):
+        return self.benchmark.run_details.denoise
 
     @property
     def completed_invocations(self):

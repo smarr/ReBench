@@ -349,6 +349,36 @@ runs:
 
 ---
 
+**denoise:**
+
+<a id="denoise"></a>
+
+With the `rebench-denoise` tool, we attempt to reduce the interference with
+the benchmark execution for instance by ensuring that the benchmark is executed
+with the highest priority. It could make sense to configure these settings,
+for instance per [machine](#machines).
+
+Denoise supports the following settings:
+
+ - `use_nice`, whether to use the nice command to maximize priority of the benchmark.
+ - `shield`, which CPUs to use for benchmarking
+ - `scaling_governor`, which Linux scaling governor to use
+ - `no_turbo`, whether to ask the OS to disable Turbo Boost
+ - `minimize_perf_sampling`, whether to ask Linux to reduce the perf sampling frequency to minimize disturbance
+
+The default values are:
+
+```
+runs:
+  denoise:
+    use_nice: true
+    shield: basic                  # leaves a small number of CPUs for the system
+    scaling_governor: performance  # runs the CPU at the maximum frequency
+    no_turbo: true                 # disables Turbo Boost
+    minimize_perf_sampling: true   # reduces the perf sampling frequency
+```
+
+
 **ignore_timeouts:**
 
 <a id="ignore_timeouts"></a>
@@ -465,6 +495,8 @@ reporting:
 ---
 
 ## Machines
+
+<a id="machines"></a>
 
 The `machines` key defines machine-specific configuration.
 This configuration is applied when `rebench` is run with the `-m|--machine` option.
@@ -794,6 +826,8 @@ benchmark_suites:
 ---
 
 **tags:**
+
+<a id="tags"></a>
 
 A dimension by which the benchmark execution can be varied.
 It takes a list of strings.

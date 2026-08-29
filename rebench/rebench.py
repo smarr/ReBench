@@ -30,12 +30,14 @@
 import sys
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, SUPPRESS
+from typing import TYPE_CHECKING, Optional
 
 from . import __version__ as rebench_version
 from .executor import Executor, BatchScheduler, RoundRobinScheduler, \
     RandomScheduler, BenchmarkThreadExceptions
-from .denoise_client import minimize_noise, restore_noise
+from .denoise_client import restore_noise, get_initial_settings_and_capabilities
 from .environment import init_environment
+from .model.denoise import Denoise
 from .persistence    import DataStore
 from .rebenchdb      import get_current_time
 from .reporter       import CliReporter
@@ -43,6 +45,9 @@ from .configurator   import Configurator, load_config
 from .configuration_error import ConfigurationError
 from .output import UIError
 from .ui import UI
+
+if TYPE_CHECKING:
+    from .denoise_client import DenoiseInitialSettings
 
 
 class ReBench(object):
@@ -277,29 +282,42 @@ Argument:
             return self._report_completion()
 
         runs = self._config.get_runs()
-        does_profiling = any(r.is_profiling() for r in runs)
-        if not self._config.options.use_denoise:
-            return self.load_data_and_execute_experiments(runs, data_store, False, False, None)
+        used_denoise_features = self.identify_used_denoise_features(runs)
+
+        if not self._config.options.use_denoise or not used_denoise_features.needs_denoise():
+            return self.load_data_and_execute_experiments(
+                runs, data_store, None, False)
         else:
-            denoise_result = None
+            initials_and_capabilities = None
             show_denoise_warnings = not (self._config.artifact_review
                                          or self._config.options.execution_plan)
             try:
-                denoise_result = minimize_noise(show_denoise_warnings, self.ui, does_profiling)
-                use_nice = denoise_result.use_nice
-                use_shielding = denoise_result.use_shielding
+                initials_and_capabilities = get_initial_settings_and_capabilities(
+                    show_denoise_warnings, self.ui, used_denoise_features)
+
                 return self.load_data_and_execute_experiments(
-                    runs, data_store, use_nice, use_shielding, denoise_result)
+                    runs, data_store, initials_and_capabilities, show_denoise_warnings)
             finally:
-                restore_noise(denoise_result, show_denoise_warnings, self.ui)
+                restore_noise(initials_and_capabilities, show_denoise_warnings, self.ui)
 
-    def load_data_and_execute_experiments(self, runs, data_store,
-                                          use_nice, use_shielding, denoise_result):
-        init_environment(denoise_result, self.ui)
+    def load_data_and_execute_experiments(
+            self, runs, data_store,
+            initials_and_capabilities: Optional["DenoiseInitialSettings"],
+            show_denoise_warnings: bool):
+        init_environment(initials_and_capabilities, self.ui)
         data_store.load_data(runs, self._config.options.do_rerun)
-        return self.execute_experiment(runs, use_nice, use_shielding)
+        return self.execute_experiment(runs, initials_and_capabilities, show_denoise_warnings)
 
-    def execute_experiment(self, runs, use_nice, use_shielding):
+    @staticmethod
+    def identify_used_denoise_features(runs) -> Denoise:
+        result = Denoise.system_default()
+        for run in runs:
+            result = Denoise.max_union_to_get_used_features(result, run.denoise)
+        return result
+
+    def execute_experiment(self, runs,
+                           initials_and_capabilities: Optional["DenoiseInitialSettings"],
+                           show_denoise_warnings: bool):
         self.ui.verbose_output_info("Execute experiment: " + self._config.experiment_name + "\n")
 
         scheduler_class = {'batch':       BatchScheduler,
@@ -312,8 +330,11 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log, self._config.artifact_review,
-                            use_nice, use_shielding, self._config.options.execution_plan,
-                            self._config.config_dir)
+                            initials_and_capabilities,
+                            show_denoise_warnings,
+                            self._config.options.execution_plan,
+                            self._config.config_dir,
+                            self._config.options.use_denoise)
 
         if self._config.options.no_execution:
             return True
