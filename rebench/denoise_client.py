@@ -182,18 +182,23 @@ def _exec_denoise_and_parse_result(
     return result, got_json, output
 
 
-def get_initial_settings_and_capabilities(
-    show_warnings, ui, requested: Denoise
-) -> Optional[DenoiseInitialSettings]:
-    if not requested.needs_denoise():
-        return None
-
+def exec_denoise_init(requested: Denoise) -> Tuple[DenoiseCapabilities, bool, str]:
     cmd = _construct_path(False, ["PYTHONPATH"])
     _add_denoise_options(cmd, requested)
     cmd += ["init"]
 
     result_, got_json, raw_output = _exec_denoise_and_parse_result(cmd)
     result: DenoiseCapabilities = result_  # type: ignore
+    return result, got_json, raw_output
+
+
+def get_initial_settings_and_capabilities(
+    show_warnings, ui, requested: Denoise
+) -> Optional[DenoiseInitialSettings]:
+    if not requested.needs_denoise():
+        return None
+
+    result, got_json, raw_output = exec_denoise_init(requested)
 
     success = False
 
