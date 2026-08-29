@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test-linux:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -65,6 +66,7 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     name: "macOS: Python 3.13"
     steps:
       - name: Checkout ReBench
@@ -87,6 +89,7 @@ jobs:
   test-docker:
     name: "Docker: python:3"
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: python:3
 
@@ -117,6 +120,7 @@ jobs:
   test-rocky:
     name: "Rocky Linux 10"
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: rockylinux/rockylinux:10
     steps:
