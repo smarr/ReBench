@@ -36,10 +36,10 @@ class Reporter(object):
     def __init__(self):
         self._job_completion_reported = False
 
-    def run_failed(self, _run_id, _cmdline, _return_code, _output):
+    def run_failed(self, _run_id, _cmdline: list[str], _return_code, _output):
         pass
 
-    def run_completed(self, run_id, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline: list[str]):
         pass
 
     def report_job_completed(self, run_ids):
@@ -156,10 +156,10 @@ class CliReporter(TextReporter):
         self._runs_remaining = 0
         self._executes_verbose = executes_verbose
 
-    def run_failed(self, run_id, cmdline, return_code, cmd_output):
+    def run_failed(self, run_id, cmdline: list[str], return_code, cmd_output):
         pass
 
-    def run_completed(self, run_id, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline: list[str]):
         self._runs_completed += 1
         self._runs_remaining -= 1
 
@@ -195,7 +195,7 @@ class CodespeedReporter(Reporter):
         self._last_send = time()
         self.ui = ui
 
-    def run_completed(self, run_id, statistics, cmdline):
+    def run_completed(self, run_id, statistics, cmdline: list[str]):
         if not self._incremental_report:
             return
 

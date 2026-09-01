@@ -874,7 +874,7 @@ to execute benchmarks. Each executor is a named set of properties.
 
 **path:**
 
-Path to the executable. If not given, it's up to the shell to find the executable.
+Path to the executable.
 
 Example:
 

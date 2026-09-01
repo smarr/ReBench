@@ -23,6 +23,7 @@ from multiprocessing import cpu_count
 import os
 import random
 import subprocess
+from shlex import join as shlex_join, split as shlex_split
 from threading import Thread, RLock
 from time import time
 from typing import TYPE_CHECKING, Optional, Tuple, Mapping
@@ -393,17 +394,16 @@ class Executor(object):
 
     def _construct_cmdline_and_env(
         self, run_id: "RunId", gauge_adapter
-    ) -> Tuple[str, Mapping[str, str]]:
+    ) -> Tuple[list[str], Mapping[str, str]]:
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         env = run_id.env
+        cmdline: list[str] = []
         if possible_settings.needs_denoise():
             cmdline = construct_denoise_exec_prefix(
                 env, run_id.is_profiling(), possible_settings
             )
-        else:
-            cmdline = ""
 
-        cmdline += gauge_adapter.acquire_command(run_id)
+        cmdline += shlex_split(gauge_adapter.acquire_command(run_id))
 
         return cmdline, env
 
@@ -457,7 +457,7 @@ class Executor(object):
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                "/bin/sh",
+                ["/bin/sh"],
                 run_id.env,
                 path,
                 False,
@@ -468,7 +468,9 @@ class Executor(object):
         except OSError as err:
             build_command.mark_failed()
             run_id.fail_immediately()
-            run_id.report_run_failed(script, err.errno, "Build of " + name + " failed.")
+            run_id.report_run_failed(
+                shlex_split(script), err.errno, "Build of " + name + " failed."
+            )
 
             if err.errno == 2:
                 msg = (
@@ -488,7 +490,7 @@ class Executor(object):
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, return_code, "Build of " + name + " failed."
+                shlex_split(script), return_code, "Build of " + name + " failed."
             )
             self.ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
@@ -541,7 +543,7 @@ class Executor(object):
         if self._print_execution_plan:
             if run_id.location:
                 print("cd " + run_id.location)
-            print(cmdline)
+            print(shlex_join(cmdline))
             return True
 
         termination_check = run_id.get_termination_check(self.ui)
@@ -641,7 +643,7 @@ class Executor(object):
 
     def _generate_data_point(
         self,
-        cmdline: str,
+        cmdline: list[str],
         env: Mapping[str, str],
         gauge_adapter,
         run_id: "RunId",
@@ -655,7 +657,6 @@ class Executor(object):
             location = run_id.location
             if location:
                 location = os.path.expanduser(location)
-            env = run_id.env
 
             self.ui.debug_output_info(
                 "{ind}Starting run\n", run_id, cmdline, location, env
@@ -676,7 +677,7 @@ class Executor(object):
                 cwd=location,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                shell=True,
+                shell=False,
                 verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive,
@@ -804,7 +805,7 @@ class Executor(object):
             run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
-    def _check_termination_condition(run_id, termination_check, cmd: str):
+    def _check_termination_condition(run_id, termination_check, cmd: list[str]):
         return termination_check.should_terminate(
             run_id.get_number_of_data_points(), cmd
         )

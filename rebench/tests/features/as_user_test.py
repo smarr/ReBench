@@ -8,7 +8,7 @@ from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase
 
 
-def make_executor_cls():
+def make_executor_cls() -> tuple[type[Executor], list[str], list[list[str]]]:
     all_outputs = []
 
     class DebugExecutor(Executor):

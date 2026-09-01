@@ -135,10 +135,11 @@ class RunId(object):
         if self._expandend_env is not None:
             return self._expandend_env
 
-        self._expandend_env = self.benchmark.run_details.env
-        for key, value in self._expandend_env.items():
-            self._expandend_env[key] = expand_user(value, False)
-        return self._expandend_env
+        expandend_env = self.benchmark.run_details.env
+        for key, value in expandend_env.items():
+            expandend_env[key] = expand_user(value, False)
+        self._expandend_env = expandend_env
+        return expandend_env
 
     @property
     def denoise(self):
@@ -226,11 +227,11 @@ class RunId(object):
     def add_reporting(self, reporting):
         self._reporters.update(reporting.get_reporters())
 
-    def report_run_failed(self, cmdline, return_code, output):
+    def report_run_failed(self, cmdline: list[str], return_code, output):
         for reporter in self._reporters:
             reporter.run_failed(self, cmdline, return_code, output)
 
-    def report_run_completed(self, cmdline):
+    def report_run_completed(self, cmdline: list[str]):
         for reporter in self._reporters:
             reporter.run_completed(self, self.statistics, cmdline)
         for persistence in self._persistence:
@@ -428,15 +429,18 @@ class RunId(object):
 
         return self.machine < other.machine
 
-    def _report_format_issue_and_exit(self, cmdline, err):
+    def _report_format_issue_and_exit(self, cmdline: list[str], err):
+        cmdline_str = " ".join(cmdline)
         msg = (
             "The configuration of the benchmark %s contains an improper Python format string.\n"
             + "{ind}The command line configured is: %s\n"
             + "{ind}Error: %s\n"
-        ) % (self.benchmark.name, cmdline, err)
+        ) % (self.benchmark.name, cmdline_str, err)
 
         # figure out which format misses a conversion type
-        without_conversion_type = re.findall(r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline)
+        without_conversion_type = re.findall(
+            r"%\(.*?\)(?![diouxXeEfFgGcrs%])", cmdline_str
+        )
         if without_conversion_type:
             msg += (
                 '{ind}The following elements do not have conversion types: "%s"'

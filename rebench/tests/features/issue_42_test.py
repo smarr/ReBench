@@ -172,11 +172,10 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         cmdline, _ = ex._construct_cmdline_and_env(
             runs[0], TimeManualAdapter(False, ex)
         )
-        self.assertRegex(
-            cmdline,
-            r" --preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT -n "
-            + r"[^\s]*denoise\.py",
+        self.assertEqual(
+            cmdline[1], "--preserve-env=IMPORTANT_ENV_VARIABLE,ALSO_IMPORTANT"
         )
+        self.assertRegex(cmdline[3], r"[^\s]*denoise\.py")
 
     @staticmethod
     def _denoise_initial_for_testing():
@@ -212,7 +211,8 @@ class Issue42SupportForEnvironmentVariables(ReBenchTestCase):
         cmdline, _ = ex._construct_cmdline_and_env(
             runs[0], TimeManualAdapter(False, ex)
         )
-        self.assertRegex(cmdline, r" --preserve-env=VAR1,VAR3 -n [^\s]*denoise\.py")
+        self.assertEqual(cmdline[1], "--preserve-env=VAR1,VAR3")
+        self.assertRegex(cmdline[3], r"[^\s]*denoise\.py")
 
     def _assert_empty_standard_env(self, log_remainder):
         env_parts = log_remainder.split(":")

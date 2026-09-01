@@ -21,6 +21,7 @@ import sys
 
 from io import StringIO
 from os import getcwd
+from shlex import join as shlex_join
 from typing import Optional, Mapping, TYPE_CHECKING
 
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
@@ -44,7 +45,7 @@ class UI(object):
         self._debug = True
 
         self._prev_run_id: Optional["RunId"] = None
-        self._prev_cmd: Optional[str] = None
+        self._prev_cmd: Optional[list[str]] = None
         self._prev_cwd: Optional[str] = None
         self._prev_env: Optional[Mapping[str, str]] = None
         self._progress_spinner = None
@@ -73,7 +74,7 @@ class UI(object):
     def _prepare_details(
         self,
         run_id: Optional["RunId"],
-        cmd: Optional[str],
+        cmd: Optional[list[str]],
         cwd: Optional[str],
         env: Optional[dict[str, str]],
     ):
@@ -84,7 +85,7 @@ class UI(object):
         if run_id and run_id is self._prev_run_id:
             return None
 
-        if cmd and cmd is self._prev_cmd:
+        if cmd and cmd == self._prev_cmd:
             return None
 
         text = None
@@ -92,9 +93,9 @@ class UI(object):
             text = "\nExecuting run:" + run_id.as_simple_string() + "\n"
 
         if cmd and text:
-            text += _DETAIL_INDENT + "cmd: " + cmd + "\n"
+            text += _DETAIL_INDENT + "cmd: " + shlex_join(cmd) + "\n"
         elif cmd:
-            text = "\nExecuting cmd: " + cmd + "\n"
+            text = "\nExecuting cmd: " + shlex_join(cmd) + "\n"
 
         assert text
         if cwd:
@@ -119,7 +120,7 @@ class UI(object):
     def _output_detail_header(
         self,
         run_id: Optional["RunId"],
-        cmd: Optional[str],
+        cmd: Optional[list[str]],
         cwd: Optional[str],
         env: Optional[dict[str, str]],
     ):
@@ -149,11 +150,27 @@ class UI(object):
         self._output_on_stream(sys.stdout, sys.stdout, text, color, *args, **kw)
         sys.stdout.flush()
 
-    def warning(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def warning(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         self._output_detail_header(run_id, cmd, cwd, env)
         self._output(text, "magenta", **kw)
 
-    def error(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def error(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         self._output_detail_header(run_id, cmd, cwd, env)
         self._output(text, "red", **kw)
 
@@ -163,7 +180,15 @@ class UI(object):
             return True
         return False
 
-    def error_once(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def error_once(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         stream = StringIO("")
         self._output_on_stream(stream, sys.stdout, text, "red", **kw)
         stream_str = stream.getvalue()
@@ -173,23 +198,53 @@ class UI(object):
             self._output(text, "red", **kw)
 
     def verbose_output_info(
-        self, text, run_id=None, cmd=None, cwd=None, env=None, **kw
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
     ):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, None, faint=True, **kw)
 
-    def verbose_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def verbose_error_info(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         if self._verbose:
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", faint=True, **kw)
 
-    def debug_output_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def debug_output_info(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         if self._debug:
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, None, faint=True, **kw)
 
-    def debug_error_info(self, text, run_id=None, cmd=None, cwd=None, env=None, **kw):
+    def debug_error_info(
+        self,
+        text,
+        run_id=None,
+        cmd: Optional[list[str]] = None,
+        cwd=None,
+        env=None,
+        **kw,
+    ):
         if self._debug:
             self._output_detail_header(run_id, cmd, cwd, env)
             self._output(text, "red", faint=True, **kw)

@@ -348,12 +348,12 @@ def minimize_noise(
 
 def construct_denoise_exec_prefix(
     env: Mapping[str, str], for_profiling, possible_settings: Denoise
-) -> str:
+) -> list[str]:
     cmd = _construct_path(for_profiling, env.keys())
     _add_denoise_exec_options(cmd, possible_settings)
 
     cmd += ["exec", "--", "sudo", "-u", get_user_name()]
-    return " ".join(cmd) + " "
+    return cmd
 
 
 def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
