@@ -69,7 +69,7 @@ class ExecutorTest(ReBenchTestCase):
             ex.execute()
         self.assertIsInstance(err.exception.source_exception, ValueError)
 
-    def _remove_executors_with_missing_exe(self, scheduler):
+    def _adapt_yaml(self):
         yaml = load_config(self._path + "/test.conf")
 
         # change config to use executable that doesn't exist
@@ -82,7 +82,9 @@ class ExecutorTest(ReBenchTestCase):
         # by setting this to true, we avoid running things in parallel on multiple threads
         yaml["executors"]["TestRunner1"]["execute_exclusively"] = True
         yaml["executors"]["TestRunner2"]["execute_exclusively"] = True
+        return yaml
 
+    def _remove_executors_with_missing_exe(self, scheduler, yaml):
         cnf = Configurator(
             yaml, DataStore(self.ui), self.ui, exp_name="Test", data_file=self._tmp_file
         )
@@ -95,18 +97,47 @@ class ExecutorTest(ReBenchTestCase):
 
         ex = Executor(initial_runs, False, self.ui, False, False, scheduler)
         ex.execute()
+        return reporter
+
+    def test_remove_executors_with_missing_exe_batch(self):
+        reporter = self._remove_executors_with_missing_exe(
+            BatchScheduler, self._adapt_yaml()
+        )
         self.assertEqual(len(reporter.runs_completed), 40)
         self.assertEqual(len(reporter.runs_failed), 1)
         self.assertEqual(len(reporter.runs_failed_without_return_code), 23)
 
-    def test_remove_executors_with_missing_exe_batch(self):
-        self._remove_executors_with_missing_exe(BatchScheduler)
-
     def test_remove_executors_with_missing_exe_round_robin(self):
-        self._remove_executors_with_missing_exe(RoundRobinScheduler)
+        reporter = self._remove_executors_with_missing_exe(
+            RoundRobinScheduler, self._adapt_yaml()
+        )
+        self.assertEqual(len(reporter.runs_completed), 40)
+        self.assertEqual(len(reporter.runs_failed), 1)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 23)
 
     def test_remove_executors_with_missing_exe_random(self):
-        self._remove_executors_with_missing_exe(RandomScheduler)
+        reporter = self._remove_executors_with_missing_exe(
+            RandomScheduler, self._adapt_yaml()
+        )
+        self.assertEqual(len(reporter.runs_completed), 40)
+        self.assertEqual(len(reporter.runs_failed), 1)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 23)
+
+    def test_with_location_being_file(self):
+        yaml = self._adapt_yaml()
+        yaml["benchmark_suites"]["TestSuite1"]["location"] = self._path + "/test.conf"
+        reporter = self._remove_executors_with_missing_exe(BatchScheduler, yaml)
+        self.assertEqual(len(reporter.runs_completed), 40)
+        self.assertEqual(len(reporter.runs_failed), 2)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 38)
+
+    def test_with_location_not_existing(self):
+        yaml = self._adapt_yaml()
+        yaml["benchmark_suites"]["TestSuite1"]["location"] = self._path + "-dont-exist"
+        reporter = self._remove_executors_with_missing_exe(BatchScheduler, yaml)
+        self.assertEqual(len(reporter.runs_completed), 40)
+        self.assertEqual(len(reporter.runs_failed), 2)
+        self.assertEqual(len(reporter.runs_failed_without_return_code), 38)
 
     def test_broken_command_format_with_TypeError(self):
         with self.assertRaises(UIError) as err:
