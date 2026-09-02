@@ -694,6 +694,8 @@ class Executor(object):
                 msg = str(err)
             self.ui.error(msg, run_id, cmdline, location, env)
             run_id.report_run_failed(cmdline, 0, output)
+            if err.filename == cmdline[0]:
+                run_id.executable_missing = True
             return True
 
         if return_code == 127:
