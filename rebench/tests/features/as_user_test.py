@@ -12,10 +12,10 @@ def make_executor_cls() -> tuple[type[Executor], list[str], list[list[str]]]:
     all_outputs = []
 
     class DebugExecutor(Executor):
-        def _eval_output(self, output, run_id, gauge_adapter, cmdline):
+        def _eval_output(self, output, run_id, gauge_adapter, cmd):
             all_outputs.append(output)
             super(DebugExecutor, self)._eval_output(
-                output, run_id, gauge_adapter, cmdline
+                output, run_id, gauge_adapter, cmd
             )
 
     return DebugExecutor, all_outputs
