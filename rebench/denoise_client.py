@@ -1,9 +1,8 @@
 import json
-from collections.abc import Collection
 
 from getpass import getuser
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Optional, Tuple, Union, Mapping
+from typing import Optional, Tuple, Union
 from cpuinfo import get_cpu_info
 
 from .denoise import (
@@ -91,18 +90,13 @@ class DenoiseInitialSettings:
         return DenoiseInitialSettings(Denoise.system_default(), {}, None)
 
 
-def _construct_basic_path(env_keys: Collection[str]) -> list[str]:
-    if len(env_keys) == 0:
-        preserve = []
-    else:
-        preserve = ["--preserve-env=" + ",".join(env_keys)]
-
-    return ["sudo"] + preserve + ["-n", paths.get_denoise(), "--json"]
+def _construct_basic_path() -> list[str]:
+    return ["sudo", "-n", paths.get_denoise(), "--json"]
 
 
-def _construct_path(for_profiling: bool, env_keys: Collection[str]) -> list[str]:
+def _construct_path(for_profiling: bool) -> list[str]:
     num_cores = get_number_of_cores()
-    cmd = _construct_basic_path(env_keys)
+    cmd = _construct_basic_path()
     cmd += ["--num-cores", str(num_cores)]
 
     if paths.has_cset():
@@ -183,7 +177,7 @@ def _exec_denoise_and_parse_result(
 
 
 def exec_denoise_init(requested: Denoise) -> Tuple[DenoiseCapabilities, bool, str]:
-    cmd = _construct_path(False, ["PYTHONPATH"])
+    cmd = _construct_path(False)
     _add_denoise_options(cmd, requested)
     cmd += ["init"]
 
@@ -282,7 +276,7 @@ def _report_on_failure(output):
             "{ind}you may need to add the following to your sudoers file (using visudo):\n"
             "{ind}{ind}"
             + get_user_name()
-            + " ALL = (root) NOPASSWD:SETENV: "
+            + " ALL = (root) NOPASSWD: "
             + paths.get_denoise()
             + "\n\n"
         )
@@ -331,7 +325,7 @@ def minimize_noise(
     if not possible_settings.needs_denoise():
         return possible_settings
 
-    cmd = _construct_path(for_profiling, ["PYTHONPATH"])
+    cmd = _construct_path(for_profiling)
     _add_denoise_options(cmd, possible_settings)
     cmd += ["minimize"]
 
@@ -347,9 +341,9 @@ def minimize_noise(
 
 
 def construct_denoise_exec_prefix(
-    env: Mapping[str, str], for_profiling, possible_settings: Denoise
+    for_profiling, possible_settings: Denoise
 ) -> list[str]:
-    cmd = _construct_path(for_profiling, env.keys())
+    cmd = _construct_path(for_profiling)
     _add_denoise_exec_options(cmd, possible_settings)
 
     cmd += ["exec", "--", "sudo", "-u", get_user_name()]
@@ -374,7 +368,7 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
             ui.error(denoise_result.warn_msg)
         return Denoise.system_default()
 
-    cmd = _construct_path(False, ["PYTHONPATH"])
+    cmd = _construct_path(False)
     _add_denoise_options(cmd, restore)
     cmd += ["restore"]
 
@@ -400,6 +394,6 @@ def restore_noise(denoise_result: DenoiseInitialSettings, show_warning, ui):
 
 
 def deliver_kill_signal(pid):
-    cmd = _construct_basic_path([])
+    cmd = _construct_basic_path()
     cmd += ["kill", str(pid)]
     _exec_denoise(cmd)

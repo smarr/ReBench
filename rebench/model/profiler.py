@@ -97,9 +97,7 @@ class PerfProfiler(Profiler):
             executor.get_denoise_initial()
         )
         if possible_settings.needs_denoise():
-            cmd = construct_denoise_exec_prefix(
-                run_id.env, True, Denoise.system_default()
-            )
+            cmd = construct_denoise_exec_prefix(True, Denoise.system_default())
         else:
             cmd = []
 

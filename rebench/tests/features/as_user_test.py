@@ -10,15 +10,15 @@ from ..rebench_test_case import ReBenchTestCase
 
 def make_executor_cls() -> tuple[type[Executor], list[str], list[list[str]]]:
     all_outputs = []
+    all_cmds: list[list[str]] = []
 
     class DebugExecutor(Executor):
         def _eval_output(self, output, run_id, gauge_adapter, cmd):
             all_outputs.append(output)
-            super(DebugExecutor, self)._eval_output(
-                output, run_id, gauge_adapter, cmd
-            )
+            all_cmds.append(cmd)
+            super(DebugExecutor, self)._eval_output(output, run_id, gauge_adapter, cmd)
 
-    return DebugExecutor, all_outputs
+    return DebugExecutor, all_outputs, all_cmds
 
 
 class AsUserTest(ReBenchTestCase):
@@ -48,7 +48,7 @@ class AsUserTest(ReBenchTestCase):
     def test_is_run_as_user(self):
         current_user = getuser()
         runs = self._make_configurator_and_runs()
-        DebugExecutor, all_outputs = make_executor_cls()
+        DebugExecutor, all_outputs, _ = make_executor_cls()
 
         ex = DebugExecutor(
             runs, False, self.ui, initials_and_capabilities=self._initial_settings
@@ -69,7 +69,7 @@ class AsUserTest(ReBenchTestCase):
 
     def test_has_the_env_variables(self):
         runs = self._make_configurator_and_runs()
-        DebugExecutor, all_outputs = make_executor_cls()
+        DebugExecutor, all_outputs, all_cmds = make_executor_cls()
 
         ex = DebugExecutor(
             runs, False, self.ui, initials_and_capabilities=self._initial_settings
@@ -116,9 +116,8 @@ class AsUserTest(ReBenchTestCase):
                     ), f"Unexpected env var: {name}. Output: {output}"
                     assert value == expected[name]
                     found_envvars += 1
-                    print(name, "=", value)
 
         assert found_envvars == 3 * 2  # the *2 is because we run the benchmark twice
 
-        print("runs[0].cmdline():", runs[0].cmdline())
-        assert "sudo" in runs[0].cmdline()
+        cmd = all_cmds[0]
+        self.assertIn(["env", "-i"], [cmd[i : i + 2] for i in range(len(cmd) - 1)])

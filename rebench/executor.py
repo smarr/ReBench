@@ -392,6 +392,13 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
+    def _construct_clean_env(self, env: Mapping[str, str]) -> list[str]:
+        clean_env = ["env", "-i"]
+
+        for key, val in env.items():
+            clean_env.append(f"{key}={val}")
+        return clean_env
+
     def _construct_cmdline_and_env(
         self, run_id: "RunId", gauge_adapter
     ) -> Tuple[list[str], Mapping[str, str]]:
@@ -400,10 +407,11 @@ class Executor(object):
         cmd: list[str] = []
         if possible_settings.needs_denoise():
             cmd = construct_denoise_exec_prefix(
-                env, run_id.is_profiling(), possible_settings
+                run_id.is_profiling(), possible_settings
             )
 
-        cmdline += shlex_split(gauge_adapter.acquire_command(run_id))
+        cmd += self._construct_clean_env(env)
+        cmd += shlex_split(gauge_adapter.acquire_command(run_id))
 
         return cmd, env
 
