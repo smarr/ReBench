@@ -25,7 +25,7 @@ import random
 import subprocess
 from threading import Thread, RLock
 from time import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple, Mapping
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .denoise_client import (
@@ -391,7 +391,9 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
-    def _construct_cmdline_and_env(self, run_id: "RunId", gauge_adapter):
+    def _construct_cmdline_and_env(
+        self, run_id: "RunId", gauge_adapter
+    ) -> Tuple[str, Mapping[str, str]]:
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         env = run_id.env
         if possible_settings.needs_denoise():
@@ -638,7 +640,12 @@ class Executor(object):
         self._active_for_profiling = None
 
     def _generate_data_point(
-        self, cmdline, env, gauge_adapter, run_id: "RunId", termination_check
+        self,
+        cmdline: str,
+        env: Mapping[str, str],
+        gauge_adapter,
+        run_id: "RunId",
+        termination_check,
     ):
         self._ensure_denoise_is_active(run_id)
         assert not self._print_execution_plan
@@ -739,7 +746,7 @@ class Executor(object):
 
         return self._check_termination_condition(run_id, termination_check, cmdline)
 
-    def _eval_output(self, output, run_id, gauge_adapter, cmdline):
+    def _eval_output(self, output, run_id: "RunId", gauge_adapter, cmdline: str):
         try:
             data_points = gauge_adapter.parse_data(
                 output, run_id, run_id.completed_invocations + 1
@@ -789,7 +796,7 @@ class Executor(object):
             run_id.report_run_failed(cmdline, 0, output)
 
     @staticmethod
-    def _check_termination_condition(run_id, termination_check, cmd):
+    def _check_termination_condition(run_id, termination_check, cmd: str):
         return termination_check.should_terminate(
             run_id.get_number_of_data_points(), cmd
         )

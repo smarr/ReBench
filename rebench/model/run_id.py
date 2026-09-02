@@ -89,13 +89,13 @@ class RunId(object):
         self.total_unit = None
 
         self._termination_check = None
-        self._cmdline = None
+        self._cmdline: Optional[str] = None
         self.executable = None
         self.executable_missing = False
         self.is_failed = True
 
         self._max_invocation = 0
-        self._expandend_env = None
+        self._expandend_env: Optional[Mapping[str, str]] = None
 
         self._hash = None
 
@@ -131,7 +131,7 @@ class RunId(object):
         return self.benchmark.run_details.invocations
 
     @property
-    def env(self):
+    def env(self) -> Mapping[str, str]:
         if self._expandend_env is not None:
             return self._expandend_env
 
@@ -355,18 +355,18 @@ class RunId(object):
             ) % (self.benchmark.name, string, err)
             raise UIError(msg, err)
 
-    def cmdline(self):
+    def cmdline(self) -> str:
         if self._cmdline:
             return self._cmdline
         return self._construct_cmdline()
 
-    def cmdline_for_next_invocation(self):
+    def cmdline_for_next_invocation(self) -> str:
         """Replace the invocation number in the command line"""
         cmdline = self.cmdline() % {"invocation": self.completed_invocations + 1}
         cmdline = expand_user(cmdline, True)
         return cmdline
 
-    def _construct_cmdline(self):
+    def _construct_cmdline(self) -> str:
         cmdline = ""
         if self.benchmark.suite.executor.path:
             cmdline = self.benchmark.suite.executor.path + "/"

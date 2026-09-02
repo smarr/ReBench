@@ -19,9 +19,14 @@
 # THE SOFTWARE.
 import re
 import subprocess
+from typing import TYPE_CHECKING
+
 from .adapter import GaugeAdapter, OutputNotParseable, ResultsIndicatedAsInvalid
 from ..model.data_point import DataPoint
 from ..model.measurement import Measurement
+
+if TYPE_CHECKING:
+    from ..model.run_id import RunId
 
 
 class TimeAdapter(GaugeAdapter):
@@ -46,7 +51,7 @@ class TimeAdapter(GaugeAdapter):
     def __init__(self, include_faulty, executor):
         GaugeAdapter.__init__(self, include_faulty, executor)
 
-    def _create_command(self, command):
+    def _create_command(self, command) -> str:
         assert self._completed_time_availability_check
         if self._use_formatted_time:
             return "%s -f %s %s" % (self._time_bin, TimeAdapter.time_format, command)
@@ -55,7 +60,7 @@ class TimeAdapter(GaugeAdapter):
             # TODO: add support for reading out memory info on OS X
             return "/usr/bin/time -p %s" % command
 
-    def acquire_command(self, run_id):
+    def acquire_command(self, run_id: "RunId") -> str:
         command = run_id.cmdline_for_next_invocation()
 
         if not self._completed_time_availability_check:
@@ -169,5 +174,5 @@ class TimeManualAdapter(TimeAdapter):
     This is useful for runs on remote machines like the Tilera or ARM boards.
     """
 
-    def acquire_command(self, run_id):
+    def acquire_command(self, run_id: "RunId") -> str:
         return run_id.cmdline_for_next_invocation()
