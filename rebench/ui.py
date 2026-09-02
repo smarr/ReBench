@@ -21,7 +21,7 @@ import sys
 
 from io import StringIO
 from os import getcwd
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Mapping, TYPE_CHECKING
 
 from humanfriendly.terminal import terminal_supports_colors, ansi_wrap, auto_encode
 from humanfriendly.terminal.spinners import Spinner
@@ -39,17 +39,17 @@ def escape_braces(string):
 
 class UI(object):
 
-    def __init__(self):
+    def __init__(self: "UI"):
         self._verbose = True
         self._debug = True
 
-        self._prev_run_id = None
-        self._prev_cmd = None
-        self._prev_cwd = None
-        self._prev_env = None
+        self._prev_run_id: Optional["RunId"] = None
+        self._prev_cmd: Optional[str] = None
+        self._prev_cwd: Optional[str] = None
+        self._prev_env: Optional[Mapping[str, str]] = None
         self._progress_spinner = None
         self._need_to_erase_spinner = False
-        self._error_once_cache = set()
+        self._error_once_cache: set[str] = set()
 
     def init(self, verbose, debug):
         self._verbose = verbose
@@ -157,7 +157,7 @@ class UI(object):
         self._output_detail_header(run_id, cmd, cwd, env)
         self._output(text, "red", **kw)
 
-    def _is_first_error_with(self, text):
+    def _is_first_error_with(self, text: str) -> bool:
         if text not in self._error_once_cache:
             self._error_once_cache.add(text)
             return True

@@ -5,6 +5,7 @@ from time import time
 
 import sys
 import signal
+from typing import Optional, Mapping
 
 from .denoise_client import deliver_kill_signal
 from .output import output_as_str
@@ -35,9 +36,9 @@ class _SubprocessThread(Thread):
 
     def __init__(
         self,
-        executable_name,
+        executable_name: str,
         args,
-        env,
+        env: Optional[Mapping[str, str]],
         shell,
         cwd,
         verbose,
@@ -48,12 +49,12 @@ class _SubprocessThread(Thread):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
         self._args = args
         self._shell = shell
-        self._cwd = cwd
+        self._cwd: Optional[str] = cwd
         self._verbose = verbose
         self._stdout = stdout
         self._stderr = stderr
         self._stdin_input = stdin_input
-        self._env = env
+        self._env: Optional[Mapping[str, str]] = env
 
         self._pid = None
         self._started_cv = Condition()
@@ -155,15 +156,15 @@ def _print_keep_alive(seconds_since_start):
 
 def run(
     args,
-    env,
-    cwd=None,
+    env: Optional[Mapping[str, str]],
+    cwd: Optional[str] = None,
     shell=False,
     kill_tree=True,
     timeout=-1,
     verbose=False,
     stdout=PIPE,
     stderr=PIPE,
-    stdin_input=None,
+    stdin_input: Optional[bytes] = None,
     keep_alive_output=_print_keep_alive,
     uses_sudo=False,
 ):

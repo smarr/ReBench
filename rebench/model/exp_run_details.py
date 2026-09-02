@@ -22,7 +22,6 @@ from . import (
     none_or_int,
     none_or_float,
     none_or_bool,
-    none_or_dict,
     remove_important,
     prefer_important,
 )
@@ -76,7 +75,9 @@ class ExpRunDetails(object):
         retries_after_failure = none_or_int(
             config.get("retries_after_failure", defaults.retries_after_failure)
         )
-        env = none_or_dict(config.get("env", defaults.env))
+
+        env: dict[str, str] = config.get("env", defaults.env)
+        assert isinstance(env, dict)
 
         denoise = Denoise.compile(config.get("denoise", {}), defaults.denoise)
 
@@ -131,7 +132,7 @@ class ExpRunDetails(object):
         parallel_interference_factor,
         execute_exclusively,
         retries_after_failure,
-        env: Optional[Mapping],
+        env: dict[str, str],
         denoise: Denoise,
         invocations_override: Optional[int],
         iterations_override: Optional[int],
@@ -146,7 +147,7 @@ class ExpRunDetails(object):
         self.parallel_interference_factor = parallel_interference_factor
         self.execute_exclusively = execute_exclusively
         self.retries_after_failure = retries_after_failure
-        self.env = env
+        self.env: dict[str, str] = env
         self.denoise = denoise
 
         self.invocations_override = invocations_override

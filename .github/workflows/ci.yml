@@ -38,7 +38,7 @@ jobs:
       - name: Run tests
         run: |
           pytest ${{ matrix.coverage }}
-          (cd rebench && ${{ matrix.coverage_rebench_prefix }} `which rebench` ../rebench.conf e:TestRunner2)
+          (cd rebench && ${{ matrix.coverage_rebench_prefix }} `which rebench` -c ../rebench.conf e:TestRunner2)
 
       - name: Install and run pylint
         run: |
@@ -84,7 +84,7 @@ jobs:
           python3 -m pip install pytest
           python3 -m pip install .
           python3 -m pytest
-          (cd rebench && rebench ../rebench.conf e:TestRunner2)
+          (cd rebench && rebench -c ../rebench.conf e:TestRunner2)
 
   test-docker:
     name: "Docker: python:3"
@@ -92,6 +92,8 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: python:3
+      env:
+        CONTAINER: "python:3"
 
     steps:
       - name: Check for dockerenv file
@@ -112,7 +114,7 @@ jobs:
         run: pip3 install .
 
       - name: Run Test Run
-        run: (cd rebench && rebench -D ../rebench.conf e:TestRunner2)
+        run: (cd rebench && rebench -c -D ../rebench.conf e:TestRunner2)
 
       - name: Run Unit Tests
         run: python3 -m pytest
@@ -123,6 +125,8 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: rockylinux/rockylinux:10
+      env:
+        CONTAINER: "rockylinux:10"
     steps:
       - name: Checkout ReBench
         uses: actions/checkout@v6
@@ -140,7 +144,7 @@ jobs:
             pip install .
     
             pytest
-            (cd rebench && rebench -D ../rebench.conf e:TestRunner2)
+            (cd rebench && rebench -c -D ../rebench.conf e:TestRunner2)
             
             python3 setup.py sdist build
             python3 setup.py sdist bdist_wheel

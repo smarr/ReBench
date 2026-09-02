@@ -24,7 +24,7 @@ from ...interop.time_adapter import TimeAdapter, TimeManualAdapter
 
 
 class _TestRunId(object):
-    def cmdline_for_next_invocation(self):
+    def cmdline_for_next_invocation(self) -> str:
         return "FOO"
 
 

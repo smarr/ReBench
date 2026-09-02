@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from .adapter import GaugeAdapter
 from ..model.profile_data import ProfileData
+
+if TYPE_CHECKING:
+    from ..model.run_id import RunId
 
 
 class PerfAdapter(GaugeAdapter):
@@ -17,7 +22,7 @@ class PerfAdapter(GaugeAdapter):
 
         return [ProfileData(run_id, json, run_id.iterations, invocation)]
 
-    def acquire_command(self, run_id):
+    def acquire_command(self, run_id: "RunId") -> str:
         profiler = self._get_profiler(run_id)
         return (
             profiler.command

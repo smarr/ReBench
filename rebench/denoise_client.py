@@ -1,8 +1,9 @@
 import getpass
 import json
+from collections.abc import Collection
 
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Mapping
 from cpuinfo import get_cpu_info
 
 from .denoise import (
@@ -81,7 +82,7 @@ class DenoiseInitialSettings:
         return DenoiseInitialSettings(Denoise.system_default(), {}, None)
 
 
-def _construct_basic_path(env_keys: list[str]) -> list[str]:
+def _construct_basic_path(env_keys: Collection[str]) -> list[str]:
     if len(env_keys) == 0:
         preserve = []
     else:
@@ -90,7 +91,7 @@ def _construct_basic_path(env_keys: list[str]) -> list[str]:
     return ["sudo"] + preserve + ["-n", paths.get_denoise(), "--json"]
 
 
-def _construct_path(for_profiling: bool, env_keys: list[str]) -> list[str]:
+def _construct_path(for_profiling: bool, env_keys: Collection[str]) -> list[str]:
     num_cores = get_number_of_cores()
     cmd = _construct_basic_path(env_keys)
     cmd += ["--num-cores", str(num_cores)]
@@ -330,7 +331,7 @@ def minimize_noise(
 
 
 def construct_denoise_exec_prefix(
-    env, for_profiling, possible_settings: Denoise
+    env: Mapping[str, str], for_profiling, possible_settings: Denoise
 ) -> str:
     cmd = _construct_path(for_profiling, env.keys())
     _add_denoise_exec_options(cmd, possible_settings)

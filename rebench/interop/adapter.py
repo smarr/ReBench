@@ -21,6 +21,10 @@ import re
 import pkgutil
 import sys
 from os.path import join
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..model.run_id import RunId
 
 
 class GaugeAdapter(object):
@@ -40,7 +44,7 @@ class GaugeAdapter(object):
         self._other_error_definitions = None
         self._executor = executor
 
-    def acquire_command(self, run_id):
+    def acquire_command(self, run_id: "RunId") -> str:
         return run_id.cmdline_for_next_invocation()
 
     def parse_data(self, data, run_id, invocation):
