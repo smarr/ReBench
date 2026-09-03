@@ -256,22 +256,24 @@ def get_initial_settings_and_capabilities(
 
 
 def _report_on_failure(output):
-    if "password is required" in output:
+    if "password is required" in output or "sudo" in output:
         return (
-            "{ind}Please make sure `sudo " + paths.get_denoise() + "`"
-            " can be used without password.\n"
+            "{ind}sudo currently can't be used to run denoise to manage the system.\n"
+            + "{ind}{ind} Error: "
+            + escape_braces(output)
+            + "{ind}Please make sure `sudo "
+            + paths.get_denoise()
+            + "` can be used without password.\n\n"
             "{ind}To be able to run denoise without password,\n"
-            "{ind}add the following to the end of your sudoers file (using visudo):\n"
+            "{ind}you may need to add the following to your sudoers file (using visudo):\n"
             "{ind}{ind}"
             + getpass.getuser()
             + " ALL = (root) NOPASSWD:SETENV: "
             + paths.get_denoise()
-            + "\n"
+            + "\n\n"
         )
     elif "command not found" in output:
         return "{ind}Please make sure " + paths.get_denoise() + " is accessible.\n"
-    elif "No such file or directory: 'sudo'" in output:
-        return "{ind}sudo is not available. Can't use denoise to manage the system.\n"
     else:
         return "{ind}Error: " + escape_braces(output)
 

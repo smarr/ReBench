@@ -690,10 +690,18 @@ class Executor(object):
                     + "{ind}{ind}It failed with: %s.\n"
                     + "{ind}{ind}File name: %s\n"
                 ) % (err.strerror, err.filename)
+            elif err.errno == 20:
+                msg = (
+                    "{ind}Failed executing run\n"
+                    + "{ind}{ind}It failed because the location caused an error: %s.\n"
+                    + "{ind}{ind}File name: %s\n"
+                ) % (err.strerror, err.filename)
             else:
                 msg = str(err)
             self.ui.error(msg, run_id, cmdline, location, env)
             run_id.report_run_failed(cmdline, 0, output)
+            if err.filename in (cmdline, location):
+                run_id.executable_missing = True
             return True
 
         if return_code == 127:
