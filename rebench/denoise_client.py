@@ -1,6 +1,7 @@
 import json
 
-from getpass import getuser
+from os import geteuid
+from pwd import getpwuid
 from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Optional, Tuple, Union
 from cpuinfo import get_cpu_info
@@ -20,11 +21,13 @@ _num_cpu_cores = None
 _user_name = None
 
 
+# There's a second implementation in environment.py
+# These two should be consistent.
 def get_user_name():
     """Get the name of the user running ReBench."""
     global _user_name  # pylint: disable=global-statement
     if _user_name is None:
-        _user_name = getuser()
+        _user_name = getpwuid(geteuid()).pw_name
     return _user_name
 
 

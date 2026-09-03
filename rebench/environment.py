@@ -1,6 +1,6 @@
-import getpass
 import os
 import subprocess
+from pwd import getpwuid
 
 from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Optional
@@ -11,6 +11,13 @@ from .output import output_as_str
 
 if TYPE_CHECKING:
     from .denoise_client import DenoiseInitialSettings
+
+
+# There's a second implementation in denoise_client.py
+# These two should be consistent.
+def get_user_name():
+    """Get the name of the user running ReBench."""
+    return getpwuid(os.geteuid()).pw_name
 
 
 def _encode_str(out):
@@ -130,7 +137,7 @@ def init_env_for_test():
 def init_environment(initial_denoise: Optional["DenoiseInitialSettings"], ui):
     u_name = os.uname()
     result = {
-        "userName": getpass.getuser(),
+        "userName": get_user_name(),
         "manualRun": not ("CI" in os.environ and os.environ["CI"] == "true"),
         "hostName": u_name[1],
         "osType": u_name[0],

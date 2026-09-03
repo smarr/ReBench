@@ -1,7 +1,5 @@
-from getpass import getuser
-
 from ...configurator import Configurator, load_config
-from ...denoise_client import get_initial_settings_and_capabilities
+from ...denoise_client import get_initial_settings_and_capabilities, get_user_name
 from ...executor import Executor
 from ...model.denoise import Denoise
 from ...persistence import DataStore
@@ -46,7 +44,7 @@ class AsUserTest(ReBenchTestCase):
         return runs
 
     def test_is_run_as_user(self):
-        current_user = getuser()
+        current_user = get_user_name()
         runs = self._make_configurator_and_runs()
         DebugExecutor, all_outputs, _ = make_executor_cls()
 
