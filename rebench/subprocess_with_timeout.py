@@ -37,7 +37,7 @@ class _SubprocessThread(Thread):
     def __init__(
         self,
         executable_name: str,
-        args,
+        args: list[str],
         env: Optional[Mapping[str, str]],
         shell,
         cwd,
@@ -47,7 +47,7 @@ class _SubprocessThread(Thread):
         stdin_input,
     ):
         Thread.__init__(self, name="Subprocess %s" % executable_name)
-        self._args = args
+        self._args: list[str] = args
         self._shell = shell
         self._cwd: Optional[str] = cwd
         self._verbose = verbose
@@ -155,7 +155,7 @@ def _print_keep_alive(seconds_since_start):
 
 
 def run(
-    args,
+    args: list[str],
     env: Optional[Mapping[str, str]],
     cwd: Optional[str] = None,
     shell=False,
@@ -173,7 +173,7 @@ def run(
     killed.
     """
     _setup_signal_handling_if_needed()
-    executable_name = args.split(" ", 1)[0]
+    executable_name = args[0]
 
     thread = _SubprocessThread(
         executable_name, args, env, shell, cwd, verbose, stdout, stderr, stdin_input

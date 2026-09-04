@@ -1,3 +1,4 @@
+from shlex import split as shlex_split
 from typing import Mapping, Optional, Sequence
 
 from .denoise import Denoise
@@ -96,18 +97,16 @@ class PerfProfiler(Profiler):
             executor.get_denoise_initial()
         )
         if possible_settings.needs_denoise():
-            cmd = construct_denoise_exec_prefix(
-                run_id.env, True, Denoise.system_default()
-            )
+            cmd = construct_denoise_exec_prefix(True, Denoise.system_default())
         else:
-            cmd = ""
+            cmd = []
 
-        return cmd + self.command + " " + self.report_args
+        return cmd + [self.command] + shlex_split(self.report_args)
 
     def process_profile(self, run_id, executor):
-        cmdline = self._construct_report_cmdline(executor, run_id)
+        cmd = self._construct_report_cmdline(executor, run_id)
         return_code, output, _ = run(
-            cmdline, run_id.env, cwd=run_id.location, shell=True, verbose=executor.debug
+            cmd, run_id.env, cwd=run_id.location, shell=False, verbose=executor.debug
         )
 
         if return_code != 0:

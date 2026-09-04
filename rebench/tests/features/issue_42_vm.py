@@ -11,6 +11,7 @@ env = sorted(env_items, key=lambda el: el[0])
 print(test)
 print(env)
 
+# also used in as_user_test.py
 known_envvars = [
     "PWD",
     "SHLVL",

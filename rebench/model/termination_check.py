@@ -59,7 +59,7 @@ class TerminationCheck(object):
             )
         )
 
-    def should_terminate(self, number_of_data_points, cmd):
+    def should_terminate(self, number_of_data_points, cmd: list[str]):
         if self._fail_immediately:
             self.ui.warning("{ind}Marked to fail immediately.\n", self._run_id, cmd)
         if self.fails_consecutively():

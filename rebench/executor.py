@@ -23,6 +23,7 @@ from multiprocessing import cpu_count
 import os
 import random
 import subprocess
+from shlex import join as shlex_join, split as shlex_split
 from threading import Thread, RLock
 from time import time
 from typing import TYPE_CHECKING, Optional, Tuple, Mapping
@@ -391,21 +392,28 @@ class Executor(object):
 
         return scheduler(self, self.ui, print_execution_plan)
 
+    def _construct_clean_env(self, env: Mapping[str, str]) -> list[str]:
+        clean_env = ["env", "-i"]
+
+        for key, val in env.items():
+            clean_env.append(f"{key}={val}")
+        return clean_env
+
     def _construct_cmdline_and_env(
         self, run_id: "RunId", gauge_adapter
-    ) -> Tuple[str, Mapping[str, str]]:
+    ) -> Tuple[list[str], Mapping[str, str]]:
         possible_settings = run_id.denoise.possible_settings(self._denoise_initial)
         env = run_id.env
+        cmd: list[str] = []
         if possible_settings.needs_denoise():
-            cmdline = construct_denoise_exec_prefix(
-                env, run_id.is_profiling(), possible_settings
+            cmd = construct_denoise_exec_prefix(
+                run_id.is_profiling(), possible_settings
             )
-        else:
-            cmdline = ""
 
-        cmdline += gauge_adapter.acquire_command(run_id)
+        cmd += self._construct_clean_env(env)
+        cmd += shlex_split(gauge_adapter.acquire_command(run_id))
 
-        return cmdline, env
+        return cmd, env
 
     def _build_executor_and_suite(self, run_id: "RunId"):
         name = "E:" + run_id.benchmark.suite.executor.name
@@ -457,7 +465,7 @@ class Executor(object):
 
         try:
             return_code, stdout_result, stderr_result = subprocess_timeout.run(
-                "/bin/sh",
+                ["/bin/sh"],
                 run_id.env,
                 path,
                 False,
@@ -468,7 +476,9 @@ class Executor(object):
         except OSError as err:
             build_command.mark_failed()
             run_id.fail_immediately()
-            run_id.report_run_failed(script, err.errno, "Build of " + name + " failed.")
+            run_id.report_run_failed(
+                shlex_split(script), err.errno, "Build of " + name + " failed."
+            )
 
             if err.errno == 2:
                 msg = (
@@ -488,7 +498,7 @@ class Executor(object):
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                script, return_code, "Build of " + name + " failed."
+                shlex_split(script), return_code, "Build of " + name + " failed."
             )
             self.ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
             if stdout_result and stdout_result.strip():
@@ -536,33 +546,31 @@ class Executor(object):
         if gauge_adapter is None:
             return True
 
-        cmdline, env = self._construct_cmdline_and_env(run_id, gauge_adapter)
+        cmd, env = self._construct_cmdline_and_env(run_id, gauge_adapter)
 
         if self._print_execution_plan:
             if run_id.location:
                 print("cd " + run_id.location)
-            print(cmdline)
+            print(shlex_join(cmd))
             return True
 
         termination_check = run_id.get_termination_check(self.ui)
 
         run_id.report_start_run()
 
-        terminate = self._check_termination_condition(
-            run_id, termination_check, cmdline
-        )
+        terminate = self._check_termination_condition(run_id, termination_check, cmd)
         if not terminate and self._do_builds:
             self._build_executor_and_suite(run_id)
 
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(
-                cmdline, env, gauge_adapter, run_id, termination_check
+                cmd, env, gauge_adapter, run_id, termination_check
             )
 
         mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
-            run_id.report_run_completed(cmdline)
+            run_id.report_run_completed(cmd)
             if (
                 not run_id.is_failed
                 and not run_id.is_profiling()
@@ -577,7 +585,7 @@ class Executor(object):
                     )
                     % (mean_of_totals, run_id.min_iteration_time),
                     run_id,
-                    cmdline,
+                    cmd,
                 )
 
         return terminate
@@ -641,7 +649,7 @@ class Executor(object):
 
     def _generate_data_point(
         self,
-        cmdline: str,
+        cmd: list[str],
         env: Mapping[str, str],
         gauge_adapter,
         run_id: "RunId",
@@ -655,28 +663,25 @@ class Executor(object):
             location = run_id.location
             if location:
                 location = os.path.expanduser(location)
-            env = run_id.env
 
-            self.ui.debug_output_info(
-                "{ind}Starting run\n", run_id, cmdline, location, env
-            )
+            self.ui.debug_output_info("{ind}Starting run\n", run_id, cmd, location, env)
 
             def _keep_alive(seconds):
                 self.ui.warning(
                     "Keep alive, current job runs for %dmin\n" % (seconds / 60),
                     run_id,
-                    cmdline,
+                    cmd,
                     location,
                     env,
                 )
 
             return_code, output, _ = subprocess_timeout.run(
-                cmdline,
+                cmd,
                 env=env,
                 cwd=location,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                shell=True,
+                shell=False,
                 verbose=self.debug,
                 timeout=run_id.max_invocation_time,
                 keep_alive_output=_keep_alive,
@@ -698,9 +703,9 @@ class Executor(object):
                 ) % (err.strerror, err.filename)
             else:
                 msg = str(err)
-            self.ui.error(msg, run_id, cmdline, location, env)
-            run_id.report_run_failed(cmdline, 0, output)
-            if err.filename in (cmdline, location):
+            self.ui.error(msg, run_id, cmd, location, env)
+            run_id.report_run_failed(cmd, 0, output)
+            if err.filename in cmd or err.filename == location:
                 run_id.executable_missing = True
             return True
 
@@ -712,8 +717,8 @@ class Executor(object):
                 + "{ind}Return code: %d\n"
                 + "{ind}{ind}%s.\n"
             ) % (run_id.benchmark.suite.executor.name, return_code, output.strip())
-            self.ui.error(msg, run_id, cmdline, location, env)
-            run_id.report_run_failed(cmdline, return_code, output)
+            self.ui.error(msg, run_id, cmd, location, env)
+            run_id.report_run_failed(cmd, return_code, output)
             run_id.executable_missing = True
             return True
         elif (
@@ -724,7 +729,7 @@ class Executor(object):
             )
         ):
             run_id.indicate_failed_execution()
-            run_id.report_run_failed(cmdline, return_code, output)
+            run_id.report_run_failed(cmd, return_code, output)
             if return_code == 126:
                 msg = (
                     "{ind}Error: Could not execute %s.\n"
@@ -742,7 +747,7 @@ class Executor(object):
             else:
                 msg = "{ind}Run failed. Return code: %d\n" % return_code
 
-            self.ui.error(msg, run_id, cmdline, location, env)
+            self.ui.error(msg, run_id, cmd, location, env)
 
             if output and output.strip():
                 lines = escape_braces(output).split("\n")
@@ -750,11 +755,11 @@ class Executor(object):
                     "{ind}Output:\n\n{ind}{ind}" + "\n{ind}{ind}".join(lines) + "\n"
                 )
         else:
-            self._eval_output(output, run_id, gauge_adapter, cmdline)
+            self._eval_output(output, run_id, gauge_adapter, cmd)
 
-        return self._check_termination_condition(run_id, termination_check, cmdline)
+        return self._check_termination_condition(run_id, termination_check, cmd)
 
-    def _eval_output(self, output, run_id: "RunId", gauge_adapter, cmdline: str):
+    def _eval_output(self, output, run_id: "RunId", gauge_adapter, cmd: list[str]):
         try:
             data_points = gauge_adapter.parse_data(
                 output, run_id, run_id.completed_invocations + 1
@@ -790,21 +795,19 @@ class Executor(object):
                 i += 1
 
             run_id.indicate_successful_execution()
-            self.ui.verbose_output_info(msg, run_id, cmdline)
+            self.ui.verbose_output_info(msg, run_id, cmd)
         except ExecutionDeliveredNoResults as e:
             if isinstance(e, OutputNotParseable):
-                self.ui.error(
-                    "{ind}Output of run could not be parsed.\n", run_id, cmdline
-                )
+                self.ui.error("{ind}Output of run could not be parsed.\n", run_id, cmd)
             elif isinstance(e, ResultsIndicatedAsInvalid):
-                self.ui.error("{ind}Results were marked as invalid.\n", run_id, cmdline)
+                self.ui.error("{ind}Results were marked as invalid.\n", run_id, cmd)
             else:
-                self.ui.error("{ind}" + e.get_message() + "\n", run_id, cmdline)
+                self.ui.error("{ind}" + e.get_message() + "\n", run_id, cmd)
             run_id.indicate_failed_execution()
-            run_id.report_run_failed(cmdline, 0, output)
+            run_id.report_run_failed(cmd, 0, output)
 
     @staticmethod
-    def _check_termination_condition(run_id, termination_check, cmd: str):
+    def _check_termination_condition(run_id, termination_check, cmd: list[str]):
         return termination_check.should_terminate(
             run_id.get_number_of_data_points(), cmd
         )
