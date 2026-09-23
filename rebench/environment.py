@@ -1,5 +1,6 @@
 import os
 import subprocess
+from getpass import getuser
 from pwd import getpwuid
 
 from urllib.parse import urlparse
@@ -14,10 +15,15 @@ if TYPE_CHECKING:
 
 
 # There's a second implementation in denoise_client.py
-# These two should be consistent.
+# These two should be consistently using the same approach.
+# Though, here we fallback to getuser() to avoid not having
+# a name in Docker and similar.
 def get_user_name():
     """Get the name of the user running ReBench."""
-    return getpwuid(os.geteuid()).pw_name
+    try:
+        return getpwuid(os.geteuid()).pw_name
+    except:  # pylint: disable=bare-except
+        return getuser()
 
 
 def _encode_str(out):
