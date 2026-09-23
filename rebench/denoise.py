@@ -4,10 +4,19 @@ import os
 import sys
 
 from argparse import ArgumentParser
+from glob import glob
 from math import log, floor
 from multiprocessing import Pool
+from os.path import isfile, join as path_join
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
-from typing import Optional, Union, Literal, TypedDict, TYPE_CHECKING
+from typing import (
+    Literal,
+    Optional,
+    Tuple,
+    TypedDict,
+    Union,
+    TYPE_CHECKING,
+)
 
 if TYPE_CHECKING:
     from typing import NotRequired
@@ -269,32 +278,73 @@ def _set_scaling_governor(governor, num_cores) -> str:
     return governor
 
 
+_INTEL_NO_TURBO = "/sys/devices/system/cpu/intel_pstate/no_turbo"
+_CPUFREQ_BOOST = "/sys/devices/system/cpu/cpufreq/boost"
+_CPUFREQ_POLICY_DIR = "/sys/devices/system/cpu/cpufreq"
+
+
+def _find_turbo_boost_control() -> Union[Tuple[list[str], bool], str]:
+    """
+    Find the paths that allow us to disable turbo boost.
+    """
+    if isfile(_INTEL_NO_TURBO):
+        return [_INTEL_NO_TURBO], True
+
+    if isfile(_CPUFREQ_BOOST):
+        return [_CPUFREQ_BOOST], False
+
+    # e.g. amd-pstate in active mode only provides per-policy boost files
+    policy_boost_files = sorted(
+        glob(path_join(_CPUFREQ_POLICY_DIR, "policy*", "boost"))
+    )
+    if policy_boost_files:
+        return policy_boost_files, False
+
+    return (
+        "failed: No turbo boost control found. Checked "
+        + _INTEL_NO_TURBO
+        + ", "
+        + _CPUFREQ_BOOST
+        + ", and "
+        + path_join(_CPUFREQ_POLICY_DIR, "policy*", "boost")
+    )
+
+
 def _read_no_turbo() -> Optional[Union[bool, str]]:
+    control = _find_turbo_boost_control()
+    if isinstance(control, str):
+        return control
+
+    files, indicates_disabled = control
     try:
-        with open(
-            "/sys/devices/system/cpu/intel_pstate/no_turbo", "r", encoding="utf-8"
-        ) as nt_file:
-            return nt_file.read().strip() == "1"
+        values = []
+        for filename in files:
+            with open(filename, "r", encoding="utf-8") as nt_file:
+                values.append(nt_file.read().strip() == "1")
     except IOError as e:
-        if e.errno == 2 and "No such file" in str(e):
-            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
         return "failed: " + str(e)
+
+    if indicates_disabled:
+        return all(values)
+    return not any(values)
 
 
 def _set_no_turbo(no_turbo_value: bool) -> Union[Literal[True], str]:
-    if no_turbo_value:
-        value = "1"
+    control = _find_turbo_boost_control()
+    if isinstance(control, str):
+        return control
+
+    files, indicates_disabled = control
+    if indicates_disabled:
+        value = "1" if no_turbo_value else "0"
     else:
-        value = "0"
+        value = "0" if no_turbo_value else "1"
 
     try:
-        with open(
-            "/sys/devices/system/cpu/intel_pstate/no_turbo", "w", encoding="utf-8"
-        ) as nt_file:
-            nt_file.write(value + "\n")
+        for filename in files:
+            with open(filename, "w", encoding="utf-8") as nt_file:
+                nt_file.write(value + "\n")
     except IOError as e:
-        if e.errno == 2 and "No such file" in str(e):
-            return "failed: No such file: /sys/devices/system/cpu/intel_pstate/no_turbo"
         return "failed: " + str(e)
 
     return True
