@@ -65,10 +65,10 @@ _by_host = {
         "can_set_scaling_governor",
         "can_minimize_perf_sampling",
     ],
-    "cassius": "sudo: a password is required",
-    "laertes": "sudo: a password is required",
-    "ophelia": "sudo: a password is required",
-    "zullie1": "sudo: a password is required",
+    "cassius": ["can_set_nice", "can_set_scaling_governor"],
+    "laertes": ["can_set_nice", "can_set_scaling_governor"],
+    "ophelia": ["can_set_nice", "can_set_scaling_governor"],
+    "zullie1": ["can_set_nice"],
 }
 _default_capabilities = [
     "can_set_nice",
