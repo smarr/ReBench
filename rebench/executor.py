@@ -47,6 +47,7 @@ from .ui import escape_braces
 if TYPE_CHECKING:
     from .model.run_id import RunId
     from .model.denoise import Denoise
+    from .ui import UI
 
 
 class FailedBuilding(Exception):
@@ -335,7 +336,7 @@ class Executor(object):
         self,
         runs,
         do_builds,
-        ui,
+        ui: "UI",
         include_faulty=False,
         debug=False,
         scheduler=BatchScheduler,
@@ -365,7 +366,7 @@ class Executor(object):
         self._print_execution_plan = print_execution_plan
 
         self._do_builds = do_builds
-        self.ui = ui
+        self.ui: "UI" = ui
         self._include_faulty = include_faulty
         self.debug = debug
         self._scheduler = self._create_scheduler(scheduler, print_execution_plan)
@@ -449,17 +450,17 @@ class Executor(object):
         if not path or path == ".":
             path = os.getcwd()
 
-        script = build_command.command
+        script: str = build_command.command
 
         self._ensure_denoise_is_inactive()
         self._scheduler.indicate_build(run_id)
-        self.ui.debug_output_info("Start build\n", None, script, path)
+        self.ui.debug_output_info("Start build\n", None, [script], path)
 
         def _keep_alive(seconds):
             self.ui.warning(
                 "Keep alive, current job runs for %dmin\n" % (seconds / 60),
                 run_id,
-                script,
+                [script],
                 path,
             )
 
@@ -477,7 +478,7 @@ class Executor(object):
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                shlex_split(script), err.errno, "Build of " + name + " failed."
+                [script], err.errno, "Build of " + name + " failed."
             )
 
             if err.errno == 2:
@@ -488,7 +489,7 @@ class Executor(object):
                 ) % (name, err.strerror, err.filename)
             else:
                 msg = str(err)
-            self.ui.error(msg, run_id, script, path)
+            self.ui.error(msg, run_id, [script], path)
             return
 
         if self.build_log:
@@ -498,9 +499,9 @@ class Executor(object):
             build_command.mark_failed()
             run_id.fail_immediately()
             run_id.report_run_failed(
-                shlex_split(script), return_code, "Build of " + name + " failed."
+                [script], return_code, "Build of " + name + " failed."
             )
-            self.ui.error("{ind}Build of " + name + " failed.\n", None, script, path)
+            self.ui.error("{ind}Build of " + name + " failed.\n", None, [script], path)
             if stdout_result and stdout_result.strip():
                 lines = escape_braces(stdout_result).split("\n")
                 self.ui.error(

@@ -42,10 +42,10 @@ class BuildCommand(object):
         return build_command
 
     def __init__(self, cmd: str, location: Optional[str]):
-        self.command = cmd
-        self.location = location
-        self.is_built = False
-        self.build_failed = False
+        self.command: str = cmd
+        self.location: Optional[str] = location
+        self.is_built: bool = False
+        self.build_failed: bool = False
 
     def mark_succeeded(self):
         self.is_built = True

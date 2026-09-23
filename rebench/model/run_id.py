@@ -325,7 +325,7 @@ class RunId(object):
             self.tag,
         )
 
-    def _expand_vars(self, string):
+    def _expand_vars(self, string: str):
         try:
             return string % {
                 "benchmark": self.benchmark.command,
@@ -342,10 +342,10 @@ class RunId(object):
                 "warmup": self.benchmark.run_details.warmup,
             }
         except ValueError as err:
-            self._report_format_issue_and_exit(string, err)
+            self._report_format_issue_and_exit([string], err)
             return None
         except TypeError as err:
-            self._report_format_issue_and_exit(string, err)
+            self._report_format_issue_and_exit([string], err)
             return None
         except KeyError as err:
             msg = (
