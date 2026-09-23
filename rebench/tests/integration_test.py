@@ -65,9 +65,24 @@ _by_host = {
         "can_set_scaling_governor",
         "can_minimize_perf_sampling",
     ],
-    "cassius": ["can_set_nice", "can_set_scaling_governor"],
-    "laertes": ["can_set_nice", "can_set_scaling_governor"],
-    "ophelia": ["can_set_nice", "can_set_scaling_governor"],
+    "cassius": [
+        "can_set_nice",
+        "can_set_scaling_governor",
+        "initial_no_turbo",
+        "can_minimize_perf_sampling",
+    ],
+    "laertes": [
+        "can_set_nice",
+        "can_set_scaling_governor",
+        "initial_no_turbo",
+        "can_minimize_perf_sampling",
+    ],
+    "ophelia": [
+        "can_set_nice",
+        "can_set_scaling_governor",
+        "initial_no_turbo",
+        "can_minimize_perf_sampling",
+    ],
     "zullie1": ["can_set_nice"],
 }
 _default_capabilities = [
@@ -111,11 +126,21 @@ def test_machine_denoise_capabilities():
         assert isinstance(
             capabilities, dict
         ), f"Expected capabilities to be a dict, but got {capabilities}"
+
+        bool_expectations = {}
+        for k, v in capabilities.items():
+            if v is True:
+                bool_expectations[k] = v
+
         for cap in expectations:
-            assert cap in capabilities, (
+            assert cap in bool_expectations, (
                 f"Expected {cap} to be in capabilities, but got {capabilities},"
                 f" got_json: {got_json}, raw_output: {raw_output} on {hostname}"
             )
             assert (
-                capabilities[cap] is True
+                bool_expectations[cap] is True
             ), f"Expected {cap} to be True, but got {capabilities} on {hostname}"
+            del bool_expectations[cap]
+        assert (
+            not bool_expectations
+        ), f"Expected no more capabilities, but got {bool_expectations}"
