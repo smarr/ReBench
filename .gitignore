@@ -11,4 +11,5 @@ build
 cover-results
 dist
 payload.json
+/rebench/tests/perf/profile.perf
 ReBench.egg-info

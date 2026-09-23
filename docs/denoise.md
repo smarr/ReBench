@@ -88,4 +88,4 @@ Denoise determines a set of cores to be used for benchmarking based on the numbe
 cores that is configured with the `--num-cores` option.
 
 The set of cores is communicated to the benchmarked process by setting the `REBENCH_DENOISE_CORE_SET`
-environment variable. This allows the benchmarked process to bind know which cores can be used.
+environment variable. This allows the benchmarked process to know which cores can be used.

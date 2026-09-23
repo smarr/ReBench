@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       fail-fast: false
@@ -14,7 +14,7 @@ jobs:
           - python-version: 3.11
             coverage: "--cov=rebench"
             coverage_rebench_prefix: "coverage run --append --data-file=../.coverage"
-    name: "Ubuntu-latest: Python ${{ matrix.python-version }}"
+    name: "Ubuntu-26.04: Python ${{ matrix.python-version }}"
     steps:
       - name: Checkout ReBench
         uses: actions/checkout@v7
@@ -88,7 +88,7 @@ jobs:
 
   test-docker:
     name: "Docker: python:3"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: python:3
@@ -121,7 +121,7 @@ jobs:
 
   test-rocky:
     name: "Rocky Linux 10"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     container:
       image: rockylinux/rockylinux:10

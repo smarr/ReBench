@@ -78,7 +78,7 @@ class CommandsPaths:
 
         return self._which_path
 
-    def _absolute_path_for_command(self, command, arguments_for_successful_exe):
+    def absolute_path_for_command(self, command, arguments_for_successful_exe):
         """
         Find and return the canonical absolute path to make sudo happy.
         If the command is not found or does not execute successfully, return None.
@@ -101,7 +101,7 @@ class CommandsPaths:
 
     def has_cset(self):
         if self._cset_path is None:
-            self._cset_path = self._absolute_path_for_command("cset", ["--help"])
+            self._cset_path = self.absolute_path_for_command("cset", ["--help"])
 
         return self._cset_path is not None and self._cset_path is not False
 
