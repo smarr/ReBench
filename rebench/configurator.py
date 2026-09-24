@@ -18,8 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 import logging
+from io import TextIOWrapper
 from os.path import dirname, abspath
-from typing import Mapping, TYPE_CHECKING
+from typing import Mapping, Optional, Union, TYPE_CHECKING
 
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
@@ -126,7 +127,7 @@ class _RunFilter(object):
         return False
 
 
-def validate_config(data, validator_list=None):
+def validate_config(data, validator_list: Optional[list[Core]] = None):
     validator = Core(
         source_data=data, schema_files=[dirname(__file__) + "/rebench-schema.yml"]
     )
@@ -135,36 +136,30 @@ def validate_config(data, validator_list=None):
     validator.validate(raise_exception=True)
 
 
-def load_config(file_name):
-    """
-    Load the file, verify that it conforms to the schema,
-    and return the configuration.
-    """
-    config_data = None
+def parse_config(
+    yaml_config: Union[str, TextIOWrapper], file_name: Optional[str] = None
+):
     try:
-        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
-            config_data = yaml.safe_load(conf_file)
-    except IOError as err:
-        if err.errno == 2:
-            assert err.strerror == "No such file or directory"
-            raise UIError(
-                "The requested config file (%s) could not be opened. %s.\n"
-                % (file_name, err.strerror),
-                err,
-            )
-        raise UIError(str(err) + "\n", err)
+        config_data = yaml.safe_load(yaml_config)
     except yaml.YAMLError as err:
-        raise UIError(
-            "Parsing of the config file "
-            + file_name
-            + " failed.\nError "
-            + str(err)
-            + "\n",
-            err,
-        )
+        if file_name is None:
+            msg = "Parsing of the config failed.\nError " + str(err) + "\n"
+        else:
+            msg = (
+                "Parsing of the config file "
+                + file_name
+                + " failed.\nError "
+                + str(err)
+                + "\n"
+            )
+
+        raise UIError(msg, err)
+
+    if file_name is None:
+        file_name = "<unknown>"
 
     try:
-        validators = []
+        validators: list[Core] = []
         validate_config(config_data, validators)
         validate_gauge_adapters(config_data)
 
@@ -174,6 +169,7 @@ def load_config(file_name):
         config_data["__dir__"] = dirname(abspath(file_name))
     except SchemaError as err:
         errors = [escape_braces(val_err) for val_err in validators[0].validation_errors]
+
         raise UIError(
             "Validation of "
             + file_name
@@ -183,6 +179,25 @@ def load_config(file_name):
             err,
         )
     return config_data
+
+
+def load_config(file_name: str):
+    """
+    Load the file, verify that it conforms to the schema,
+    and return the configuration.
+    """
+    try:
+        with open(file_name, "r") as conf_file:  # pylint: disable=unspecified-encoding
+            return parse_config(conf_file, file_name)
+    except IOError as err:
+        if err.errno == 2:
+            assert err.strerror == "No such file or directory"
+            raise UIError(
+                "The requested config file (%s) could not be opened. %s.\n"
+                % (file_name, err.strerror),
+                err,
+            )
+        raise UIError(str(err) + "\n", err)
 
 
 def validate_gauge_adapters(raw_config):
