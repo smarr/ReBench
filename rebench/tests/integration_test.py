@@ -85,6 +85,11 @@ _by_host = {
     ],
     "zullie1": ["can_set_nice"],
 }
+# GitHub seems to give us different runners
+# allow these to be present or absent:
+_optional_by_host = {
+    "gha-ubuntu": ["can_set_no_turbo", "can_set_scaling_governor"],
+}
 _default_capabilities = [
     "can_set_nice",
     "can_set_shield",
@@ -141,6 +146,12 @@ def test_machine_denoise_capabilities():
                 bool_expectations[cap] is True
             ), f"Expected {cap} to be True, but got {capabilities} on {hostname}"
             del bool_expectations[cap]
+
+        # before checking that we matched the expectations
+        # remove optional capabilities, like on GitHub
+        for cap in _optional_by_host.get(hostname, []):
+            bool_expectations.pop(cap, None)
+
         assert (
             not bool_expectations
         ), f"Expected no more capabilities, but got {bool_expectations}"
