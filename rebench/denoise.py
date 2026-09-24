@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from glob import glob
 from math import log, floor
 from multiprocessing import Pool
-from os.path import isfile, join as path_join
+from os.path import isfile, join as path_join, abspath, dirname, realpath
 from subprocess import check_output, CalledProcessError, DEVNULL, STDOUT
 from typing import (
     Literal,
@@ -21,12 +21,12 @@ from typing import (
 if TYPE_CHECKING:
     from typing import NotRequired
 
-denoise_py = os.path.abspath(__file__)
+denoise_py = abspath(__file__)
 
 if __name__ == "__main__":
     # ensure that the rebench module is available
-    rebench_module = os.path.dirname(denoise_py)
-    sys.path.append(os.path.dirname(rebench_module))
+    rebench_module = dirname(denoise_py)
+    sys.path.append(dirname(rebench_module))
 
     # pylint: disable-next=import-error
     from output import output_as_str, UIError  # type: ignore
@@ -74,7 +74,7 @@ class CommandsPaths:
 
     def get_which(self):
         if not self._which_path:
-            if os.path.isfile("/usr/bin/which"):
+            if isfile("/usr/bin/which"):
                 self._which_path = "/usr/bin/which"
             else:
                 raise UIError(
@@ -96,7 +96,7 @@ class CommandsPaths:
             selected_cmd = output_as_str(
                 check_output([self.get_which(), command], shell=False, stderr=DEVNULL)
             ).strip()
-            result_cmd = os.path.realpath(selected_cmd)
+            result_cmd = realpath(selected_cmd)
         except CalledProcessError:
             result_cmd = command
 
@@ -124,7 +124,7 @@ class CommandsPaths:
         if self._denoise_path is None:
             if os.access(denoise_py, os.X_OK):
                 self._denoise_path = denoise_py
-            elif not os.path.isfile(denoise_py):
+            elif not isfile(denoise_py):
                 raise UIError(
                     f"{denoise_py} not found. "
                     "Could it be that the user has no access to the file? "
