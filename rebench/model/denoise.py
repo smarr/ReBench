@@ -176,7 +176,7 @@ class Denoise(object):
                 capabilities.initial_scaling_governor
                 if capabilities.can_set_scaling_governor is True
                 and capabilities.initial_scaling_governor
-                else self.scaling_governor
+                else "no_change"
             ),
             (
                 capabilities.initial_no_turbo

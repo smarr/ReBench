@@ -68,3 +68,25 @@ class DenoiseTest(ReBenchTestCase):
             None,
         )
         self.assertEqual(initial.restore_initial().no_turbo, "no_change")
+
+    def test_restore_initial_scaling_governor_when_initially_performance(self):
+        initial = DenoiseInitialSettings(
+            Denoise.default(),
+            {
+                "can_set_scaling_governor": True,
+                "initial_scaling_governor": "performance",
+            },
+            None,
+        )
+        self.assertEqual(initial.restore_initial().scaling_governor, "performance")
+
+    def test_restore_initial_does_not_change_scaling_governor_when_not_settable(self):
+        initial = DenoiseInitialSettings(
+            Denoise.default(),
+            {
+                "can_set_scaling_governor": False,
+                "initial_scaling_governor": "performance",
+            },
+            None,
+        )
+        self.assertEqual(initial.restore_initial().scaling_governor, "no_change")

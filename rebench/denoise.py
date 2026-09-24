@@ -411,8 +411,9 @@ def _initial_settings_and_capabilities(args: Namespace) -> DenoiseCapabilities:
             result["can_set_nice_error"] = str(r)
             result["can_set_nice"] = False
 
+    num_cores = int(args.num_cores) if args.num_cores else None
+
     if args.use_shielding:
-        num_cores = int(args.num_cores) if args.num_cores else None
         if paths.has_cset() and num_cores:
             shield = args.shield or DEFAULT_SHIELD
             output = _activate_shielding(shield, num_cores)
@@ -446,11 +447,14 @@ def _initial_settings_and_capabilities(args: Namespace) -> DenoiseCapabilities:
         initial_governor = _read_scaling_governor()
         can_set_governor = False
 
-        if (
-            "failed" not in initial_governor
-            and initial_governor != SCALING_GOVERNOR_PERFORMANCE
-        ):
-            r = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
+        if "failed" not in initial_governor:
+            if initial_governor == SCALING_GOVERNOR_PERFORMANCE:
+                # try actually setting it
+                r = _set_scaling_governor(SCALING_GOVERNOR_POWERSAVE, num_cores)
+                if r == SCALING_GOVERNOR_POWERSAVE:
+                    r = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
+            else:
+                r = _set_scaling_governor(SCALING_GOVERNOR_PERFORMANCE, num_cores)
             can_set_governor = r == SCALING_GOVERNOR_PERFORMANCE
             if not can_set_governor:
                 result["can_set_scaling_governor_error"] = r
