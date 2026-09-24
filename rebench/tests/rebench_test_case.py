@@ -24,8 +24,23 @@ from os.path import dirname, realpath
 import sys
 from unittest import TestCase
 from tempfile import mkstemp
+
 from ..environment import init_env_for_test
+from ..executor import Executor
 from ..ui import TestDummyUI
+
+
+def make_executor_cls() -> tuple[type[Executor], list[str], list[list[str]]]:
+    all_outputs = []
+    all_cmds: list[list[str]] = []
+
+    class DebugExecutor(Executor):
+        def _eval_output(self, output, run_id, gauge_adapter, cmd):
+            all_outputs.append(output)
+            all_cmds.append(cmd)
+            super(DebugExecutor, self)._eval_output(output, run_id, gauge_adapter, cmd)
+
+    return DebugExecutor, all_outputs, all_cmds
 
 
 class ReBenchTestCase(TestCase):

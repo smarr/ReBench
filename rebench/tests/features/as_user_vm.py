@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# simple script emulating an executor generating benchmark results
 from os import environ, geteuid
 from pwd import getpwuid
 

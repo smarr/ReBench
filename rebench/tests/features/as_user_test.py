@@ -1,22 +1,9 @@
 from ...configurator import Configurator, load_config
 from ...denoise_client import get_initial_settings_and_capabilities, get_user_name
-from ...executor import Executor
+
 from ...model.denoise import Denoise
 from ...persistence import DataStore
-from ..rebench_test_case import ReBenchTestCase
-
-
-def make_executor_cls() -> tuple[type[Executor], list[str], list[list[str]]]:
-    all_outputs = []
-    all_cmds: list[list[str]] = []
-
-    class DebugExecutor(Executor):
-        def _eval_output(self, output, run_id, gauge_adapter, cmd):
-            all_outputs.append(output)
-            all_cmds.append(cmd)
-            super(DebugExecutor, self)._eval_output(output, run_id, gauge_adapter, cmd)
-
-    return DebugExecutor, all_outputs, all_cmds
+from ..rebench_test_case import ReBenchTestCase, make_executor_cls
 
 
 class AsUserTest(ReBenchTestCase):
