@@ -5,7 +5,7 @@ It adjusts the system settings to reduce interference by:
 
  - raising the process priority to minimize the impact of the process scheduler 
  - using CPU core shielding to minimize interference from other processes
- - requesting the system to avoid tubo-boosting to keep the CPU at a constant frequency
+ - requesting the system to avoid turbo-boosting to keep the CPU at a constant frequency
  - requesting the system to use a performance governor, which tries to keep the CPU at a high frequency
  - reducing the frequency with which perf events can be collected, except when in profiling mode
 
