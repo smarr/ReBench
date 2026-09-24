@@ -1,7 +1,5 @@
 from ...configurator import Configurator, load_config
-from ...denoise_client import get_initial_settings_and_capabilities, get_user_name
-
-from ...model.denoise import Denoise
+from ...denoise_client import get_user_name
 from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase, make_executor_cls
 
@@ -14,10 +12,7 @@ class AsUserTest(ReBenchTestCase):
     def setUp(self):
         super(AsUserTest, self).setUp()
         self._set_path(__file__)
-
-        self._initial_settings = get_initial_settings_and_capabilities(
-            False, self.ui, Denoise.default()
-        )
+        self._initial_settings = self._get_initial_denoise_settings_and_ensure_cleanup()
 
     def _make_configurator_and_runs(self):
         cnf = Configurator(

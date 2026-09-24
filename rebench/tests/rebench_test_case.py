@@ -25,8 +25,10 @@ import sys
 from unittest import TestCase
 from tempfile import mkstemp
 
+from ..denoise_client import get_initial_settings_and_capabilities, restore_noise
 from ..environment import init_env_for_test
 from ..executor import Executor
+from ..model.denoise import Denoise
 from ..ui import TestDummyUI
 
 
@@ -62,6 +64,14 @@ class ReBenchTestCase(TestCase):
     def tearDown(self):
         os.remove(self._tmp_file)
         sys.exit = self._sys_exit
+
+    def _get_initial_denoise_settings_and_ensure_cleanup(self):
+        initial_settings = get_initial_settings_and_capabilities(
+            False, self.ui, Denoise.default()
+        )
+        if initial_settings is not None:
+            self.addCleanup(restore_noise, initial_settings, False, self.ui)
+        return initial_settings
 
     def _assert_runs(self, cnf, num_runs, num_dps, num_invocations):
         """

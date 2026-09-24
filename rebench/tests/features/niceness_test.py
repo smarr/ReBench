@@ -1,8 +1,6 @@
 from os import nice
 
 from ...configurator import Configurator, parse_config
-from ...denoise_client import get_initial_settings_and_capabilities
-from ...model.denoise import Denoise
 from ...persistence import DataStore
 from ..rebench_test_case import ReBenchTestCase, make_executor_cls
 
@@ -48,10 +46,7 @@ class NicenessTest(ReBenchTestCase):
     def setUp(self):
         super(NicenessTest, self).setUp()
         self._set_path(__file__)
-
-        self._initial_settings = get_initial_settings_and_capabilities(
-            False, self.ui, Denoise.default()
-        )
+        self._initial_settings = self._get_initial_denoise_settings_and_ensure_cleanup()
 
     def _execute_and_get_niceness(self, exp_name):
         cnf = Configurator(
