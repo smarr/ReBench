@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from glob import glob
 from math import log, floor
 from multiprocessing import Pool
@@ -400,9 +400,7 @@ def _restore_perf_sampling() -> str:
 
 
 # pylint: disable-next=too-many-statements
-def _initial_settings_and_capabilities(
-    args,
-) -> DenoiseCapabilities:
+def _initial_settings_and_capabilities(args: Namespace) -> DenoiseCapabilities:
     result: DenoiseCapabilities = {}
 
     if args.use_nice:
@@ -432,12 +430,13 @@ def _initial_settings_and_capabilities(
         initial_no_turbo = _read_no_turbo()
         can_set_no_turbo = False
 
-        if "failed" not in str(initial_no_turbo) and not initial_no_turbo:
-            r = _set_no_turbo(True)
+        if isinstance(initial_no_turbo, bool):
+            # try actually setting it
+            r = _set_no_turbo(not initial_no_turbo)
+            if r is True:
+                r = _set_no_turbo(initial_no_turbo)
             can_set_no_turbo = r is True
-            if can_set_no_turbo:
-                _set_no_turbo(False)
-            else:
+            if not can_set_no_turbo:
                 result["can_set_no_turbo_error"] = str(r)
 
         result["can_set_no_turbo"] = can_set_no_turbo
@@ -471,7 +470,7 @@ def _initial_settings_and_capabilities(
     return result
 
 
-def _minimize_noise(args) -> DenoiseSettings:
+def _minimize_noise(args: Namespace) -> DenoiseSettings:
     num_cores = int(args.num_cores) if args.num_cores else None
     result: DenoiseSettings = {}
 
@@ -494,7 +493,7 @@ def _minimize_noise(args) -> DenoiseSettings:
     return result
 
 
-def _restore_standard_settings(args) -> DenoiseSettings:
+def _restore_standard_settings(args: Namespace) -> DenoiseSettings:
     num_cores = int(args.num_cores) if args.num_cores else None
     result: DenoiseSettings = {}
 
@@ -706,7 +705,7 @@ EXIT_CODE_EXEC_FAILED = 4
 EXIT_CODE_INVALID_SETTINGS = 5
 
 
-def _report_init(result: DenoiseCapabilities, args):
+def _report_init(result: DenoiseCapabilities, args: Namespace):
     if args.use_nice:
         print("Can set niceness: ", result.get("can_set_nice", "Unknown"))
         if "can_set_nice_error" in result:

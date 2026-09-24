@@ -1,6 +1,6 @@
 from ..model.denoise import Denoise
 from .rebench_test_case import ReBenchTestCase
-from ..denoise_client import minimize_noise
+from ..denoise_client import DenoiseInitialSettings, minimize_noise
 
 
 class DenoiseTest(ReBenchTestCase):
@@ -44,3 +44,27 @@ class DenoiseTest(ReBenchTestCase):
         union = Denoise.max_union_to_get_used_features(new_settings, sys_defaults)
         self.assertEqual(union, new_settings)
         self.assertTrue(new_settings.requested_no_turbo)
+
+    def test_restore_initial_no_turbo_when_initially_disabled(self):
+        initial = DenoiseInitialSettings(
+            Denoise.default(),
+            {"can_set_no_turbo": True, "initial_no_turbo": True},
+            None,
+        )
+        self.assertIs(initial.restore_initial().no_turbo, True)
+
+    def test_restore_initial_no_turbo_when_initially_enabled(self):
+        initial = DenoiseInitialSettings(
+            Denoise.default(),
+            {"can_set_no_turbo": True, "initial_no_turbo": False},
+            None,
+        )
+        self.assertIs(initial.restore_initial().no_turbo, False)
+
+    def test_restore_initial_does_not_change_no_turbo_when_not_settable(self):
+        initial = DenoiseInitialSettings(
+            Denoise.default(),
+            {"can_set_no_turbo": False, "initial_no_turbo": True},
+            None,
+        )
+        self.assertEqual(initial.restore_initial().no_turbo, "no_change")

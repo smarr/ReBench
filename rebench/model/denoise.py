@@ -181,8 +181,8 @@ class Denoise(object):
             (
                 capabilities.initial_no_turbo
                 if capabilities.can_set_no_turbo is True
-                and capabilities.initial_no_turbo
-                else self.no_turbo
+                and isinstance(capabilities.initial_no_turbo, bool)
+                else "no_change"
             ),
             capabilities.can_minimize_perf_sampling is True,
         )
