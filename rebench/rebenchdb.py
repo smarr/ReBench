@@ -106,7 +106,7 @@ class ReBenchDB(object):
         req = HttpRequest(
             url, payload, {"Content-Type": "application/json"}, method="PUT"
         )
-        with urlopen(req) as socket:
+        with urlopen(req, timeout=30) as socket:
             response = socket.read()
             return response
 
@@ -114,7 +114,7 @@ class ReBenchDB(object):
         url = self._server_base_url + "/results"
         req = HttpRequest(url, method="OPTIONS")
         try:
-            with urlopen(req) as socket:
+            with urlopen(req, timeout=30) as socket:
                 socket.read()
                 return socket.getheader("X-ReBenchDB-Result-API-Version")
         except:  # pylint: disable=bare-except
