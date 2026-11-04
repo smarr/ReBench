@@ -5,9 +5,11 @@ from socket import gethostname
 from subprocess import call
 
 import pytest
+from psutil import virtual_memory
 
 from ..denoise import CommandsPaths
 from ..denoise_client import exec_denoise_init
+from ..environment import get_installed_memory
 from ..model.denoise import Denoise
 
 
@@ -53,6 +55,27 @@ def test_rebench(rebench_cmd, rebench_conf, rebench_module_path, test_data_file)
         assert total_results == 80
 
 
+def _get_test_host_name():
+    """Name of the test machine, with stable names for GitHub Actions runners."""
+    hostname = gethostname()
+    on_github_actions = environ.get("GITHUB_ACTIONS", False)
+    gha_os = environ.get("RUNNER_OS", None)
+    container = environ.get("CONTAINER", None)
+    print("Hostname:", hostname)
+    print("on_github_actions:", on_github_actions)
+    print("gha_os:", gha_os)
+
+    if container is not None:
+        return f"gha-{container}"
+    if on_github_actions:
+        if gha_os == "Linux":
+            return "gha-ubuntu"
+        if gha_os == "macOS":
+            return "gha-macos"
+        return f"gha-{gha_os.lower()}"
+    return hostname
+
+
 _by_host = {
     "artemis": "sudo: a password is required",
     "gha-ubuntu": ["can_set_nice", "can_minimize_perf_sampling"],
@@ -96,23 +119,7 @@ _default_capabilities = [
 
 def test_machine_denoise_capabilities():
     capabilities, got_json, raw_output = exec_denoise_init(Denoise.default())
-    hostname = gethostname()
-    on_github_actions = environ.get("GITHUB_ACTIONS", False)
-    gha_os = environ.get("RUNNER_OS", None)
-    container = environ.get("CONTAINER", None)
-    print("Hostname:", hostname)
-    print("on_github_actions:", on_github_actions)
-    print("gha_os:", gha_os)
-
-    if container is not None:
-        hostname = f"gha-{container}"
-    elif on_github_actions:
-        if gha_os == "Linux":
-            hostname = "gha-ubuntu"
-        elif gha_os == "macOS":
-            hostname = "gha-macos"
-        else:
-            hostname = f"gha-{gha_os.lower()}"
+    hostname = _get_test_host_name()
 
     if hostname in _by_host:
         expectations = _by_host[hostname]
@@ -144,3 +151,29 @@ def test_machine_denoise_capabilities():
         assert (
             not bool_expectations
         ), f"Expected no more capabilities, but got {bool_expectations}"
+
+
+_GIB = 1024**3
+
+_memory_by_host = {
+    "vmware": 6 * _GIB,
+}
+
+
+def test_machine_installed_memory():
+    hostname = _get_test_host_name()
+    memory = get_installed_memory()
+    print("Installed memory:", memory, f"({memory / _GIB} GiB)")
+
+    assert memory >= virtual_memory().total
+
+    if hostname not in _memory_by_host:
+        pytest.skip(
+            f"No expected memory for {hostname}, measured {memory} bytes"
+            f" ({memory / _GIB} GiB)"
+        )
+
+    assert memory == _memory_by_host[hostname], (
+        f"Expected {_memory_by_host[hostname]} bytes, but got {memory} bytes"
+        f" ({memory / _GIB} GiB) on {hostname}"
+    )

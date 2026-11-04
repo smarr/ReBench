@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from getpass import getuser
 from pwd import getpwuid
 
@@ -24,6 +25,66 @@ def get_user_name():
         return getpwuid(os.geteuid()).pw_name
     except:  # pylint: disable=bare-except
         return getuser()
+
+
+_SYSFS_MEMORY = "/sys/devices/system/memory"
+_PROC_ZONEINFO = "/proc/zoneinfo"
+
+
+def _memory_from_sysfs_blocks(base: str = _SYSFS_MEMORY) -> Optional[int]:
+    """
+    Read sysfs to compute installed memory.
+    """
+    with open(os.path.join(base, "block_size_bytes"), "r", encoding="utf-8") as f:
+        block_size = int(f.read().strip(), 16)
+
+    num_blocks = 0
+    for entry in os.listdir(base):
+        if entry.startswith("memory") and entry[len("memory") :].isdigit():
+            num_blocks += 1
+
+    if num_blocks == 0 or block_size <= 0:
+        return None
+    return num_blocks * block_size
+
+
+def _memory_from_zoneinfo(path: str = _PROC_ZONEINFO) -> Optional[int]:
+    """
+    Read proc/zoneinfo to compute memory available to the kernel.
+    """
+    present_pages = 0
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            parts = line.split()
+            if len(parts) == 2 and parts[0] == "present":
+                present_pages += int(parts[1])
+
+    if present_pages == 0:
+        return None
+    return present_pages * os.sysconf("SC_PAGE_SIZE")
+
+
+def get_installed_memory() -> int:
+    """
+    Get the installed physical memory in bytes.
+
+    This is best-effort. The goal is to have a stable number that reflects
+    the physical memory installed in the machine. Though, some systems/APIs
+    give us an overly precise number, that is not very stable.
+
+    For tracking physical machines and identifying hardware changes, a more
+    stable number is preferred. Other variations should be identified by
+    kernel/OS version tracking.
+    """
+    if sys.platform.startswith("linux"):
+        for probe in (_memory_from_sysfs_blocks, _memory_from_zoneinfo):
+            try:
+                result = probe()
+                if result:
+                    return result
+            except (OSError, ValueError):
+                pass
+    return virtual_memory().total
 
 
 def _encode_str(out):
@@ -147,7 +208,7 @@ def init_environment(initial_denoise: Optional["DenoiseInitialSettings"], ui):
         "manualRun": not ("CI" in os.environ and os.environ["CI"] == "true"),
         "hostName": u_name[1],
         "osType": u_name[0],
-        "memory": virtual_memory().total,
+        "memory": get_installed_memory(),
         "denoise": initial_denoise.as_dict() if initial_denoise else None,
     }
 
