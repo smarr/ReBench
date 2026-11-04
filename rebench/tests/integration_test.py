@@ -107,6 +107,7 @@ _by_host = {
         "can_minimize_perf_sampling",
     ],
     "zullie1": ["can_set_nice"],
+    "vmware": ["can_set_nice", "can_minimize_perf_sampling"],
 }
 _default_capabilities = [
     "can_set_nice",
